@@ -1,0 +1,15 @@
+export const supportedLanguages = [
+  'en',
+  'de',
+  'es',
+  'fr',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'pl',
+  'pt',
+  'ru',
+  'tr',
+  'zh',
+];

@@ -1,0 +1,18 @@
+networks:
+  sermas_dev:
+    external: true
+
+services:
+  api:
+    entrypoint: npm
+    command: run start:debug
+    networks:
+      default:
+        aliases:
+          - api
+          - sermas-toolkit-api-api-1
+      sermas_dev:
+    image: ghcr.io/sermas-eu/api:dev
+    build: .
+    volumes:
+      - ./:/app

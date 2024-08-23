@@ -1,0 +1,73 @@
+// app / :appId / resource / scope / context[]
+export const SermasTopics = {
+  ui: {
+    assetStatus: 'app/:appId/ui/status',
+    interaction: 'app/:appId/ui/interaction/:moduleId',
+    content: 'app/:appId/ui/content',
+  },
+  detection: {
+    userDetection: 'app/:appId/detection/user',
+    interactionIntention: 'app/:appId/detection/interaction',
+    userCharacterization: 'app/:appId/detection/characterization',
+    audioClassification: 'app/:appId/detection/audio',
+    objectDetection: 'app/:appId/detection/object',
+    qrCode: 'app/:appId/detection/qr_code',
+    noise: 'app/:appId/detection/noise',
+  },
+  robotics: {
+    actuation: 'app/:appId/robotics/actuate',
+    movement: 'app/:appId/robotics/move',
+    status: 'app/:appId/robotics/status',
+    initialPose: 'app/:appId/robotics/initialpose',
+    opState: 'app/:appId/robotics/opstate',
+  },
+  session: {
+    userInteraction: 'app/:appId/session/interaction/user',
+    agentInteraction: 'app/:appId/session/interaction/agent',
+    agentHeartBeat: 'app/:appId/session/agent/heartbeat',
+    agentChanged: 'app/:appId/session/agent/changed/:agentId',
+    support: 'app/:appId/session/support',
+    storage: 'app/:appId/session/storage/:storageId',
+    sessionChanged: 'app/:appId/session/session/changed/:sessionId',
+  },
+  dialogue: {
+    languageManagement: 'app/:appId/dialogue/language',
+    messages: 'app/:appId/dialogue/messages/:sessionId',
+    agentSpeech: 'app/:appId/dialogue/speech/:sessionId/:chunkId',
+    agentStopSpeech: 'app/:appId/dialogue/stop/:sessionId',
+    dialogDocument: 'app/:appId/dialogue/document',
+    toolTriggered: 'app/:appId/dialogue/tool/:name',
+    toolChanged: 'app/:appId/dialogue/tool/changed/:repositoryId',
+    toolNotMatching: 'app/:appId/dialogue/tool/not-matching',
+    taskTriggered: 'app/:appId/dialogue/task/:taskId',
+    taskChanged: 'app/:appId/dialogue/task/changed/:taskId',
+    taskProgress: 'app/:appId/dialogue/task/progress/:taskId',
+    taskRecordChanged: 'app/:appId/dialogue/task/record/:taskId',
+    taskFieldHandler: 'app/:appId/dialogue/task/handler',
+  },
+  xr: {
+    occlusion: 'app/:appId/xr/occlusion',
+    markerDetected: 'app/:appId/xr/marker/detected',
+    markerChanged: 'app/:appId/xr/marker/changed/:markerId',
+  },
+  auth: {
+    update: 'app/:appId/auth/update',
+    create: 'app/:appId/auth/create',
+    login: 'app/:appId/auth/login',
+    management: 'app/:appId/auth/management',
+  },
+  platform: {
+    appChanged: 'app/:appId/platform/app/changed/:appId',
+    clientChanged: 'app/:appId/platform/client/changed/:clientId',
+    tokenRequested: 'app/:appId/platform/token',
+    appModuleChanged: 'app/:appId/platform/module',
+    monitoringRecord: 'app/:appId/platform/monitoring',
+    moduleChanged: 'system/platform/module/changed/:moduleId',
+  },
+  monitoring: {
+    dataset: 'app/:appId/monitoring/dataset',
+  },
+  datacollection: {
+    datacollection: 'app/:appId/datacollection/interaction',
+  },
+} as const;

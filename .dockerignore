@@ -1,0 +1,10 @@
+/node_modules
+/dist
+/data
+.env*
+.env
+.env.dev
+.env.development
+.env.production
+google_apis.json
+.git
