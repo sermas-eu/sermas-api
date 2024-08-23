@@ -2,11 +2,11 @@
 TEST_FILTER?=
 
 dev:
-	docker compose kill | true
-	docker compose rm | true
-	docker rm -f sermas-toolkit-api-api-1 | true
+	docker compose kill || true
+	docker compose rm || true
+	docker rm -f sermas-toolkit-api-api-1 || true
 	docker compose up -d
-	docker restart sermas-toolkit-api-proxy-1 | true
+	docker restart sermas-toolkit-api-proxy-1 || true
 	docker compose logs -f
 
 test: test/watch
