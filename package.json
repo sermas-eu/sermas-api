@@ -1,16 +1,14 @@
 {
   "name": "@sermas/api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "SERMAS Toolkit API",
   "author": "SpindoxLabs",
   "license": "Apache-2.0",
-  "private": true,
   "repository": {
-		"type": "git",
-		"url": "https://github.com/sermas-eu/sermas-api.git"
-	},
-  "license": "Apache-2.0",
+    "type": "git",
+    "url": "https://github.com/sermas-eu/sermas-api.git"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
