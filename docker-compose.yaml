@@ -16,3 +16,5 @@ services:
     build: .
     volumes:
       - ./:/app
+    ports:
+      - 9229:9229

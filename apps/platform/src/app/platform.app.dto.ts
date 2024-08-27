@@ -316,6 +316,13 @@ export class RepositoryAssetDto<T = RepositoryAssetMetadataDto>
   metadata?: T;
 }
 
+export class AvatarTTSOptions {
+  @ApiPropertyOptional()
+  provider: string;
+  @ApiPropertyOptional()
+  model: string;
+}
+
 export class RepositoryAvatarDto extends RepositoryAssetDto {
   @ApiProperty({ enum: ModelTypes, enumName: 'ModelType' })
   modelType: ModelType;
@@ -330,6 +337,8 @@ export class RepositoryAvatarDto extends RepositoryAssetDto {
   cameraMobile?: AvatarCameraConfig;
   @ApiPropertyOptional()
   prompt?: string;
+  @ApiPropertyOptional()
+  tts?: AvatarTTSOptions;
 }
 
 export class RobotMapDto implements Record<string, any> {

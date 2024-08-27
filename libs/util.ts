@@ -16,8 +16,11 @@ export { v4 as uuidv4 } from 'uuid';
 const logger = new Logger('util');
 
 export const getMongoDbUrl = (configService: ConfigService) => {
-  const mongodbUri =
-    configService.get<string>('MONGODB_URI') || 'mongodb://mongodb:27017';
+  const mongodbUri = configService.get<string>('MONGODB_URI');
+  if (!mongodbUri)
+    throw new Error(
+      `MONGODB_URI env is missing. Please set this variable to continue`,
+    );
   return `${mongodbUri}${isNodeEnv('test') ? '-test' : ''}`;
 };
 

@@ -8,6 +8,9 @@ export const SermasDefaultConfig = {
   // API_URL_INTERNAL Internal API url
   API_URL_INTERNAL: 'http://127.0.0.1:3000/api',
 
+  // MONGODB_URI mongodb connection url
+  MONGODB_URI: 'mongodb://mongodb:27017/sermas',
+
   // AUTH_KEYCLOAK_URL set the keycloack endpoint URL
   AUTH_KEYCLOAK_URL: 'http://172.17.0.1:8080/keycloak',
   // AUTH_KEYCLOAK_REALM set the keycloack realm
@@ -128,6 +131,13 @@ export const SermasDefaultConfig = {
     'gpt-4o,gpt-4o-mini,gpt-4,gpt-4-turbo,gpt-3.5-turbo,gpt-3.5-turbo-16k',
   // OPENAI_MODEL Default OpenAI model used as fallback
   OPENAI_MODEL: 'gpt-4o',
+
+  // OPENAI_TTS_MODEL OpenAI TTS model, one of tts-1 or tts-1-hd
+  OPENAI_TTS_MODEL: 'tts-1',
+  // OPENAI_TTS_VOICE_F Openai female TTS voice model
+  OPENAI_TTS_VOICE_F: 'shimmer',
+  // OPENAI_TTS_VOICE_M Openai male TTS voice model
+  OPENAI_TTS_VOICE_M: 'onyx',
 
   // LITELLM_URL LiteLLM endpoint URL
   LITELLM_URL: 'http://litellm',

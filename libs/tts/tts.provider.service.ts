@@ -12,7 +12,7 @@ import { SessionService } from 'apps/session/src/session.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { mapLanguageCode } from '../language/language';
 import { SSMLService } from './ssml/ssml.service';
-import { DialogueTextToSpeechDto } from './tts.dto';
+import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto';
 
 @Injectable()
 export class TTSProviderService {
@@ -76,16 +76,27 @@ export class TTSProviderService {
     // const [, raw] = await this.dataset.readRecord('tts', text || ssml);
     // if (raw) return raw;
 
-    const ttsProvider = this.configService.get('TTS_SERVICE');
+    let ttsProvider = this.configService.get('TTS_SERVICE');
+    let ttsModel = undefined;
 
-    this.logger.verbose(`Generating TTS using ${ttsProvider}`);
+    const avatar = await this.session.getAvatar(ev);
+    if (avatar && avatar.tts) {
+      ttsProvider = avatar.tts?.provider || ttsProvider;
+      ttsModel = avatar.tts?.model || ttsModel;
+    }
 
-    const params = {
+    this.logger.verbose(
+      `Generating TTS using ${ttsProvider}${ttsModel ? '/' + ttsModel : ''}`,
+    );
+
+    const params: SpeakParam = {
       text,
       ssml,
       emotion: ev.emotion,
       gender: ev.gender,
       languageCode: mapLanguageCode(ev.language),
+      provider: ttsProvider,
+      model: ttsModel,
     };
 
     if (!params.ssml && params.text) {
@@ -101,6 +112,7 @@ export class TTSProviderService {
       params.languageCode,
       params.gender,
       ttsProvider,
+      ttsModel || '',
     ].join('-');
 
     const cached = await this.cache.get<Buffer>(cacheKey);

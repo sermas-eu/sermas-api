@@ -9,6 +9,9 @@ export interface SpeakParam {
   languageCode?: LanguageCode;
   gender?: string;
   emotion?: Emotion;
+
+  provider?: string;
+  model?: string;
 }
 
 export interface ITextToSpeech {
