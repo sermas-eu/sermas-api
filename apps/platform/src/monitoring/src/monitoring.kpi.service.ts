@@ -17,7 +17,7 @@ export class MonitoringKpiService {
   async onMonitoring(ev: DatasetRecordDto) {
     // console.log(JSON.stringify(ev, null, 2));
 
-    if (ev.type === 'task') {
+    if (ev.type === 'task' && ev.data?.record) {
       const payload: DialogueTaskRecordChangedDto = ev.data;
       if (
         payload.record.status === 'completed' ||
