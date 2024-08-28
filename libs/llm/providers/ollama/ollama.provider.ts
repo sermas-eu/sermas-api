@@ -14,7 +14,7 @@ import { LLMChatProvider } from '../chat.provider';
 import { TudaLLama2ModelAdapter } from './adapters/tuda-llama2/tuda.llama2.adapter';
 import { TudaLLama3ModelAdapter } from './adapters/tuda-llama3/tuda.llama3.adapter';
 
-const OLLAMA_TIMEOUT = 1000;
+const OLLAMA_TIMEOUT = 200;
 
 type OllamaModel = {
   name: string;
