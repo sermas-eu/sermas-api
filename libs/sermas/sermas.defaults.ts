@@ -93,6 +93,9 @@ export const SermasDefaultConfig = {
   // TTS_SERVICE Service for Text to Speech
   TTS_SERVICE: 'openai',
 
+  // GOOGLE_TTS_MODEL_TYPE Preferred Google TTS model type (such as Neural, Wavenet or Standard). See https://cloud.google.com/text-to-speech/docs/voices
+  GOOGLE_TTS_MODEL_TYPE: 'Neural',
+
   // ELEVENIO_APIKEY Elevenio API key
   ELEVENIO_APIKEY: '',
   // ELEVENIO_VOICEIDS Elevenio API key
