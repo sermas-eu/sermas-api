@@ -68,12 +68,14 @@ export class DialogueWelcomeService {
       ...(tools || []).map((t) => ({
         label: t.description,
         value: `tool/${t.name}`,
+        rephrase: true,
       })),
       ...(tasks || [])
         .filter((t) => t.options?.list !== false)
         .map((t) => ({
-          label: t.description,
+          label: t.label || t.description,
           value: `task/${t.taskId}`,
+          rephrase: t.label === undefined,
         })),
     ];
 
@@ -132,10 +134,14 @@ export class DialogueWelcomeService {
           stream: false,
           json: true,
           system: [
-            `Rephrase this list as buttons labels to propose to the user.`,
-            language ? `Translate to language ${language}.` : '',
-            `Return a JSON array`,
-            JSON.stringify(toolsList.map((t) => t.label)),
+            `Return a JSON array with the value of 'label' field.`,
+            `If the field 'rephrase' is true, rephrase the buttons labels otherwise return the same label.`,
+            language
+              ? `Translate all the resulting labels to language ${language}.`
+              : '',
+            JSON.stringify(
+              toolsList.map((t) => ({ label: t.label, rephrase: t.rephrase })),
+            ),
           ].join('\n'),
           tag: 'translation',
         })
