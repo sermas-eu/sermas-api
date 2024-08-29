@@ -222,6 +222,11 @@ export class DialogueTaskDto {
   })
   name: string;
 
+  @ApiProperty({
+    description: 'Task label',
+  })
+  label?: string;
+
   @ApiPropertyOptional({
     description: 'Task description',
   })

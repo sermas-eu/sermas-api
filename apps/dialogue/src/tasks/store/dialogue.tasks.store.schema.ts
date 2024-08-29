@@ -24,6 +24,9 @@ export class DialogueTaskStore extends DialogueTaskDto {
   @Prop({ index: true })
   name: string;
 
+  @Prop({ index: true, required: false })
+  label?: string;
+
   @Prop({ index: true })
   description?: string;
 
