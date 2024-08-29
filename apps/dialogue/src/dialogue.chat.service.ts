@@ -43,34 +43,34 @@ export class DialogueChatService {
     private readonly monitor: MonitorService,
   ) {}
 
-  private ENABLE_TEST = false;
-  async onModuleInit(): Promise<void> {
-    if (this.ENABLE_TEST) {
-      setTimeout(async () => {
-        const sessionId = 'session' + Math.random() * Date.now();
-        // await this.testSend('Move robot to cristiano office', sessionId);
-        await this.testSend(
-          'Which technology topic do you work on ?',
-          sessionId,
-        );
-      }, 1000);
-    }
-  }
+  // private ENABLE_TEST = false;
+  // async onModuleInit(): Promise<void> {
+  //   if (this.ENABLE_TEST) {
+  //     setTimeout(async () => {
+  //       const sessionId = 'session' + Math.random() * Date.now();
+  //       // await this.testSend('Move robot to cristiano office', sessionId);
+  //       await this.testSend(
+  //         'Which technology topic do you work on ?',
+  //         sessionId,
+  //       );
+  //     }, 1000);
+  //   }
+  // }
 
-  async testSend(text: string, sessionId: string) {
-    this.logger.warn(`testSend: send message ${text}`);
-    const message: DialogueMessageDto = {
-      text,
-      clientId: 'test',
-      language: 'en-GB',
-      actor: 'user',
-      appId: 'spxl',
-      sessionId,
-      emotion: 'angry',
-      gender: 'M',
-    } as DialogueMessageDto;
-    await this.inference(message, undefined, true);
-  }
+  // async testSend(text: string, sessionId: string) {
+  //   this.logger.warn(`testSend: send message ${text}`);
+  //   const message: DialogueMessageDto = {
+  //     text,
+  //     clientId: 'test',
+  //     language: 'en-GB',
+  //     actor: 'user',
+  //     appId: 'spxl',
+  //     sessionId,
+  //     emotion: 'angry',
+  //     gender: 'M',
+  //   } as DialogueMessageDto;
+  //   await this.inference(message, undefined, true);
+  // }
 
   async inference(
     message: DialogueMessageDto,

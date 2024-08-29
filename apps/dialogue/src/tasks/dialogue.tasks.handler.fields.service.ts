@@ -435,7 +435,7 @@ export class DialogueTasksHandlerFieldsService {
       label: 'task.handle-field',
     });
 
-    let label = context.field.label;
+    let label = context.field?.label;
     if (label) {
       Object.keys(context.record?.values || {}).forEach((k) => {
         let val = context.record.values[k] || '';
