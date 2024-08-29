@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { RegistrationRequestDto } from 'apps/auth/src/auth.dto';
+import { DialogueDocumentService } from 'apps/dialogue/src/document/dialogue.document.service';
 import { KeycloakUserRecord } from 'apps/keycloak/src/keycloak.admin.dto';
 import { createHash } from 'crypto';
 import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
@@ -31,7 +32,6 @@ import {
   PlatformAppExportFilterDto,
 } from './platform.app.dto';
 import { PlatformApp, PlatformAppDocument } from './platform.app.schema';
-import { DialogueDocumentService } from 'apps/dialogue/src/document/dialogue.document.service';
 
 @Injectable()
 export class PlatformAppService implements OnModuleInit {
@@ -192,7 +192,18 @@ export class PlatformAppService implements OnModuleInit {
     return app || null;
   }
 
-  async removeApps(filter: FilterQuery<PlatformApp> = {}, skipClients = false) {
+  async removeApps(query?: PlatformAppExportFilterDto, skipClients = false) {
+    const filter: FilterQuery<PlatformApp> = {};
+
+    if (query) {
+      if (query.appId && query.appId.length) {
+        filter.appId = query.appId;
+      }
+      if (query.name) {
+        filter.name = query.name;
+      }
+    }
+
     const apps = await this.platformApp.find(filter).exec();
     for (const app of apps) {
       await this.removeApp(app.appId, skipClients);
