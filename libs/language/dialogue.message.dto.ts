@@ -54,4 +54,10 @@ export class DialogueMessageDto extends SermasSessionDto {
       'Unique sortable ID used to sort chunks from the same messageId',
   })
   chunkId?: string;
+
+  @ApiPropertyOptional({
+    default: true,
+    description: 'Toggle TTS rendering for this message',
+  })
+  ttsEnabled?: boolean;
 }

@@ -475,6 +475,7 @@ export class SessionService {
       language: ev.language,
       avatar: ev.avatar,
       llm: ev.llm,
+      ttsEnabled: ev.ttsEnabled,
     };
 
     await this.handleSessionFromEvent({

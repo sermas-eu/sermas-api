@@ -41,7 +41,13 @@ export class TTSProviderService {
 
     const settings = await this.session.getSettings(ev);
     // skip tts generation
-    if (settings && settings.ttsEnabled === false) {
+    if (
+      ev.ttsEnabled === false ||
+      (settings && settings.ttsEnabled === false)
+    ) {
+      this.logger.debug(
+        `TTS disabled by settings for sessionId=${ev.sessionId}`,
+      );
       return Buffer.from([]);
     }
 

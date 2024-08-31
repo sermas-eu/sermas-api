@@ -107,6 +107,7 @@ export class DialogueSpeechController {
 
       ts: data.ts ? new Date(data.ts) : new Date(),
       chunkId: data.chunkId || getChunkId(data.ts),
+      ttsEnabled: data.ttsEnabled === false ? false : true,
     };
 
     return this.speech.speechToText(ev);
