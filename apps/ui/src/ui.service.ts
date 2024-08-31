@@ -114,9 +114,10 @@ export class UIService {
         // buttons
         if (content.list) {
           for (const b of content.list) {
-            if (!b.label) continue;
+            const srcLabel = b.label || b.value;
+            if (!srcLabel) continue;
             const label = await this.translation.translate(
-              b.label,
+              srcLabel,
               fromLanguage,
               toLanguage,
             );
