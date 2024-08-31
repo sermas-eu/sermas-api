@@ -121,6 +121,8 @@ export const SermasDefaultConfig = {
 
   // LLM_PRINT_PROMPT Print prompts to console for debug purposes
   LLM_PRINT_PROMPT: '0',
+  // LLM_PRINT_RESPONSE Print LLM response to console for debug purposes
+  LLM_PRINT_RESPONSE: '0',
   // LLM_EMBEDDINGS_SERVICE Embedding service to use
   LLM_EMBEDDINGS_SERVICE: 'openai',
   // LLM_EMBEDDINGS_BINARY_QUANTIZATION Enable binary quantization for embeddings

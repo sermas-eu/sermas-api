@@ -547,8 +547,18 @@ export class LLMProviderService implements OnModuleInit {
             let toolsFound: boolean | undefined = undefined;
             return new Promise<LLMParallelResult>((resolve, reject) => {
               if (stream === null) return reject();
+
+              let gotToolsResponse = false;
+              // fail if tools does not provide response
+              setTimeout(() => {
+                if (!gotToolsResponse) reject();
+              }, 1000);
+
               stream.on('data', (res: ToolResponse | AnswerResponse) => {
                 // console.warn(res);
+
+                gotToolsResponse = true;
+
                 if (toolsFound !== undefined) return;
                 toolsFound =
                   res.type === 'tools' && res.data && res.data.length > 0;

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Transform } from 'stream';
 import {
   AnswerResponse,
@@ -7,12 +8,14 @@ import {
 } from '../tools/tool.dto';
 
 export class ToolWithAnswerTransformer extends Transform {
+  private logger = new Logger();
+
   private buffer: string;
 
   private toolsFound = false;
   private toolSchemas: Record<string, LLMTool>;
 
-  private toolsTag = '[TOOLS]';
+  private toolsTag = '[MATCHES]';
   private answerTag = '[ANSWER]';
   constructor(tools: LLMTool[]) {
     super({
@@ -39,6 +42,10 @@ export class ToolWithAnswerTransformer extends Transform {
 
     // Append the chunk to the buffer
     this.buffer += chunk.toString();
+
+    this.buffer
+      ?.split('\n')
+      .forEach((line) => this.logger.debug(`buffer | ${line}`));
 
     // Find the indices of the start and end markers
     const ucbuffer = this.buffer.toUpperCase();
@@ -75,11 +82,16 @@ export class ToolWithAnswerTransformer extends Transform {
         }
 
         this.push(res);
-      } catch (error) {
+      } catch (e) {
         // If parsing fails, emit an error
+        this.logger.warn(`Failed to parse tools content: ${e.message}`);
+        this.buffer
+          ?.split('\n')
+          .forEach((line) => this.logger.debug(`buffer | ${line}`));
+
         this.emit(
           'error',
-          new Error(`Invalid JSON format in [TOOLS] section: ${toolsText}`),
+          `Invalid JSON format in TOOLS section: ${toolsText}`,
         );
       }
 
@@ -98,13 +110,16 @@ export class ToolWithAnswerTransformer extends Transform {
       this.buffer = '';
     }
 
-    // assume the model is not respecting the proposed structure and send the buffer as answer
+    // assume the model is not respecting the proposed structure and send the buffer as empty tools
     if (
       this.buffer.length >= this.toolsTag.length &&
       !this.toolsFound &&
       startIndex === -1
     ) {
-      this.toolsFound = true;
+      this.push({
+        type: 'tools',
+        data: [],
+      });
     }
 
     callback();

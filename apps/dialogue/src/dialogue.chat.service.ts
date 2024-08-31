@@ -24,12 +24,14 @@ import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { DialogueToolsRepositoryDto } from './tools/repository/dialogue.tools.repository.dto';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
 import { extractToolValues } from './tools/utils';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DialogueChatService {
   private readonly logger = new Logger(DialogueChatService.name);
 
   constructor(
+    private readonly config: ConfigService,
     private readonly emitter: EventEmitter2,
     private readonly platformAppService: PlatformAppService,
     private readonly session: SessionService,
@@ -148,9 +150,8 @@ export class DialogueChatService {
       // TODO enable fallback answer if no options matches
     }
 
-    const isToolExclusive = repositories.filter(
-      (r) => r.options?.exclusive,
-    ).length;
+    const isToolExclusive =
+      repositories.filter((r) => r.options?.exclusive).length > 0;
 
     const tools = repositories
       .sort((a, b) =>
@@ -239,8 +240,11 @@ export class DialogueChatService {
       return matchingRepository || null;
     };
 
-    let skipResponse = isToolExclusive || app.settings?.skipToolResponse;
+    let skipResponse = isToolExclusive;
+
     if (res.tools) {
+      skipResponse = isToolExclusive || app.settings?.skipToolResponse;
+
       // tools matched
       this.logger.debug(`Matching tools ${JSON.stringify(res.tools)} `);
 
@@ -344,6 +348,10 @@ export class DialogueChatService {
 
     let chunkBuffer = '';
 
+    if (skipResponse) {
+      this.logger.debug(`Skipping chat response.`);
+    }
+
     res.stream
       .on('data', (chunk) => {
         let text = chunk;
@@ -365,7 +373,10 @@ export class DialogueChatService {
           return;
         }
 
-        if (skipResponse) return;
+        if (skipResponse) {
+          this.logger.debug(`Skip chat response chunk`);
+          return;
+        }
 
         chunkBuffer += text;
 
@@ -380,10 +391,12 @@ export class DialogueChatService {
           chunkBuffer = chunkBuffer.substring(toSend.length);
 
           // sometimes, somehow it starts the answer like this
-          const trimPrefix = 'ASSISTANT:';
-          if (toSend.startsWith(trimPrefix)) {
-            toSend = toSend.substring(trimPrefix.length);
-          }
+          const trimPrefixes = ['ASSISTANT:', 'USER:', 'UTENTE:'];
+          trimPrefixes.forEach((trimPrefix) => {
+            if (toSend.startsWith(trimPrefix)) {
+              toSend = toSend.substring(trimPrefix.length);
+            }
+          });
 
           this.sendMessage(message, messageId, toSend);
         }
@@ -394,6 +407,7 @@ export class DialogueChatService {
         if (chunkBuffer.length > 1) {
           this.sendMessage(message, messageId, chunkBuffer);
         }
+        this.logger.debug(`chat response stream completed`);
       });
   }
 
@@ -443,7 +457,9 @@ export class DialogueChatService {
     // ensure links are sent as text
     text = this.convertMarkdownLinksToHtml(text);
 
-    this.logger.debug(`Sending message: "${text}"`);
+    if (this.config.get('LLM_PRINT_RESPONSE') === '1') {
+      text.split('\n').forEach((line) => `LLM | ${line}`);
+    }
 
     const responseMessage: DialogueTextToSpeechDto = {
       ...message,
