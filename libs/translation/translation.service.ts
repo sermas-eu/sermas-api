@@ -53,18 +53,27 @@ Answer the user exclusively with the language code, avoid any further reasoning.
       label: 'translation-translate',
     });
 
+    text.split('\n').forEach((line) => this.logger.debug(`| ${line}`));
+
     try {
       const translation = await this.llmProvider.chat({
-        system: `Your task is to translate to language identified by code ${toLanguage}. ${
+        system: `
+Your task is to translate to language identified by code ${toLanguage}. ${
           fromLanguage
             ? 'Original language code is ' + fromLanguage
             : 'Please infer the original language of the text.'
-        }. Answer the user exclusively with the translated text, avoid any further reasoning. If you cannot translate, return the exact user text. Never add Notes or Explanations.`,
+        }.
+Answer the user exclusively with the translated text, avoid any further reasoning. 
+Keep the original text formatting. 
+If you cannot translate, return the exact user text. 
+Never add Notes or Explanations.`,
         message: text,
         stream: false,
       });
 
       perf('openai');
+
+      translation.split('\n').forEach((line) => this.logger.debug(`| ${line}`));
 
       return translation;
     } catch (e) {

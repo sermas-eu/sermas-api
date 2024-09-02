@@ -200,6 +200,7 @@ export class DialogueSpeechService {
     // user message
     if (ev.actor === 'user') {
       try {
+        this.emitter.emit('dialogue.chat.message.user', ev);
         await this.sendPrompt(ev);
       } catch (e) {
         this.logger.error(`LLM request error: ${e.stack}`);
@@ -230,6 +231,7 @@ export class DialogueSpeechService {
     };
 
     await this.sendAgentSpeech(agentResponseEvent);
+    this.emitter.emit('dialogue.chat.message.agent', agentResponseEvent);
     this.asyncApi.dialogueMessages(agentResponseEvent);
   }
 

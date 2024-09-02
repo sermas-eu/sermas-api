@@ -36,11 +36,19 @@ export class DialogueMemoryEventsService {
 
     const params = { ...(ev.values || {}) } as Record<string, any>;
 
+    // const schema = (ev.schema?.schema || [])
+    //   .map((tool) => ({ [tool.parameter]: tool.value }))
+    //   .reduce((o, t) => ({ ...o, ...t }), {} as Record<string, string>);
+
     // console.warn('DIALOGUE TRIGGER ------', params);
 
     // match button value
     if (params.button && params.button['label']) {
       content = params.button['label'];
+    }
+
+    if (params.answerId) {
+      content = params.selection;
     }
 
     if (!content) return;
@@ -55,7 +63,16 @@ export class DialogueMemoryEventsService {
     ]);
   }
 
-  @OnEvent('dialogue.chat.message', { async: true })
+  @OnEvent('dialogue.chat.message.user', { async: true })
+  async handleUserChatMessage(ev: DialogueMessageDto): Promise<void> {
+    this.handleMessage(ev);
+  }
+
+  @OnEvent('dialogue.chat.message.agent', { async: true })
+  async handleAgentChatMessage(ev: DialogueMessageDto): Promise<void> {
+    this.handleMessage(ev);
+  }
+
   async handleMessage(ev: DialogueMessageDto) {
     if (!ev.sessionId) return;
 

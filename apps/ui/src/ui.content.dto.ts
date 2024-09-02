@@ -276,6 +276,8 @@ export class ButtonsUIContentDto extends UIContentDto<ButtonsContentDto> {
 // Quiz
 export class QuizAnswerDto {
   @ApiProperty()
+  answerId: string;
+  @ApiProperty()
   answer: string;
   @ApiProperty()
   reason: string;

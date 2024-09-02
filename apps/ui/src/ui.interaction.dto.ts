@@ -11,3 +11,17 @@ export class UiInteractionButtonDto extends UIInteractionDTO {
     button: ButtonDto;
   };
 }
+
+export class UiInteractionQuizDto extends UIInteractionDTO {
+  @ApiProperty({
+    type: Object,
+  })
+  context: {
+    [key: string]: any;
+    answer: {
+      answerId: string;
+      stage: string;
+      quizId: string;
+    };
+  };
+}
