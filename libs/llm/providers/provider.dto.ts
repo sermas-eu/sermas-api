@@ -11,7 +11,13 @@ export const LLMPromptTagList = [
 ] as const;
 export type LLMPromptTag = (typeof LLMPromptTagList)[number];
 
-export const LLMProviderList = ['ollama', 'openai', 'groq', 'antrophic'];
+export const LLMProviderList = [
+  'ollama',
+  'openai',
+  'groq',
+  'antrophic',
+  'mistral',
+];
 export type LLMProvider = (typeof LLMProviderList)[number];
 
 export const LLMRoleList = ['system', 'user', 'assistant'] as const;
