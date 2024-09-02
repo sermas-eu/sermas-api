@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
@@ -24,7 +25,6 @@ import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { DialogueToolsRepositoryDto } from './tools/repository/dialogue.tools.repository.dto';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
 import { extractToolValues } from './tools/utils';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DialogueChatService {
@@ -82,11 +82,12 @@ export class DialogueChatService {
     const { appId, sessionId } = message;
 
     const app = await this.platformAppService.readApp(appId);
-
     if (!app) {
       this.logger.warn(`appId=${appId} not found`);
       return;
     }
+
+    const settings = await this.session.getSettings(message);
 
     if (!llmArgs) {
       const llm = await this.session.getLLM(sessionId);
@@ -169,7 +170,8 @@ export class DialogueChatService {
     }
 
     // load app and avatar params
-    const appPrompt = app.settings?.prompt?.text || '';
+    const appPrompt =
+      settings?.prompt?.text || app.settings?.prompt?.text || '';
 
     let avatarPrompt = '';
     let avatarName = '';
@@ -243,7 +245,10 @@ export class DialogueChatService {
     let skipResponse = isToolExclusive;
 
     if (res.tools) {
-      skipResponse = isToolExclusive || app.settings?.skipToolResponse;
+      skipResponse =
+        isToolExclusive ||
+        settings?.skipToolResponse ||
+        app.settings?.skipToolResponse;
 
       // tools matched
       this.logger.debug(`Matching tools ${JSON.stringify(res.tools)} `);
@@ -348,7 +353,10 @@ export class DialogueChatService {
 
     let chunkBuffer = '';
 
-    if (skipResponse) {
+    const skipChatResponse =
+      settings?.chatModeEnabled === false || skipResponse;
+
+    if (skipChatResponse) {
       this.logger.debug(`Skipping chat response.`);
     }
 
@@ -373,7 +381,7 @@ export class DialogueChatService {
           return;
         }
 
-        if (skipResponse) {
+        if (skipChatResponse) {
           this.logger.debug(`Skip chat response chunk`);
           return;
         }
@@ -402,7 +410,7 @@ export class DialogueChatService {
         }
       })
       .on('end', async () => {
-        if (skipResponse) return;
+        if (skipChatResponse) return;
 
         if (chunkBuffer.length > 1) {
           this.sendMessage(message, messageId, chunkBuffer);

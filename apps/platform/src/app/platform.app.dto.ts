@@ -212,6 +212,11 @@ export class AppSettingsDto implements Record<string, any> {
   @ApiProperty({
     description: 'Avatar ID',
   })
+  chatModeEnabled?: boolean;
+  @ApiProperty({
+    description: 'Toggle the free chat mode, enabled by default',
+    default: true,
+  })
   avatar: string;
   @ApiPropertyOptional({
     description: 'Default interaction language such as en-GB ',
