@@ -91,7 +91,7 @@ export class DialogueWelcomeService {
       ...this.llmProvider.extractProviderName(llm?.tools),
       system: createWelcomePrompt(app, avatarSettings),
       stream: true,
-      tag: 'tools',
+      tag: 'chat',
     });
 
     perf();

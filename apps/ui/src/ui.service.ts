@@ -164,7 +164,7 @@ export class UIService {
       }
     }
 
-    this.emitter.emit('ui.content', uiContent);
+    // this.emitter.emit('ui.content', uiContent);
     await this.async.content(uiContent);
   }
 
