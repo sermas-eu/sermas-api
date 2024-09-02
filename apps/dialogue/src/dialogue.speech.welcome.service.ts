@@ -135,7 +135,7 @@ export class DialogueWelcomeService {
           json: true,
           system: [
             `Return a JSON array with the value of 'label' field.`,
-            `If the field 'rephrase' is true, rephrase the buttons labels otherwise return the same label.`,
+            `If the field 'rephrase' is true, rephrase to be a button label otherwise return the same label.`,
             language
               ? `Translate all the resulting labels to language ${language}.`
               : '',
