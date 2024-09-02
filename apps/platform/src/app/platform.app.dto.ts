@@ -209,13 +209,13 @@ export class AppSettingsDto implements Record<string, any> {
     description: 'App requires login',
   })
   login?: boolean;
-  @ApiProperty({
-    description: 'Avatar ID',
+  @ApiPropertyOptional({
+    description: 'Toggle the free chat mode, enabled by default',
+    default: true,
   })
   chatModeEnabled?: boolean;
   @ApiProperty({
-    description: 'Toggle the free chat mode, enabled by default',
-    default: true,
+    description: 'Avatar ID',
   })
   avatar: string;
   @ApiPropertyOptional({
