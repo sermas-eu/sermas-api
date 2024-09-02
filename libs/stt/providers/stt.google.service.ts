@@ -6,10 +6,10 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DefaultLanguage } from 'libs/language/lang-codes';
 import { mapLanguageCode } from 'libs/language/language';
 import { ISpeechToText, SpeechToTextResponse } from '../stt.dto';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GoogleSpeechToText implements ISpeechToText {
@@ -56,7 +56,8 @@ export class GoogleSpeechToText implements ISpeechToText {
     languageCode = languageCode || DefaultLanguage;
     const phrases = this.config
       .get<string>('STT_GOOGLE_IMPROVED_RECOGNITION')
-      .split(',');
+      .split(',')
+      .map((t) => t.trim());
 
     const request: google.cloud.speech.v1.IRecognizeRequest = {
       audio: audio,

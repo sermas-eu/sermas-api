@@ -88,7 +88,7 @@ export const SermasDefaultConfig = {
   // STT_SERVICE Service for Speech to Text
   STT_SERVICE: 'openai',
   // STT_GOOGLE_IMPROVED_RECOGNITION List of short words that need better recognition when using GOOGLE as STT
-  STT_GOOGLE_IMPROVED_RECOGNITION: 'si,no,ok',
+  STT_GOOGLE_IMPROVED_RECOGNITION: 'si,no,ok,fatto,sì,yes,done,continue,wait',
 
   // TTS_SERVICE Service for Text to Speech
   TTS_SERVICE: 'openai',
