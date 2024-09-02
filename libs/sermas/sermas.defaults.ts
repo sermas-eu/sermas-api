@@ -162,6 +162,16 @@ export const SermasDefaultConfig = {
   GROQ_CHAT_MODELS:
     'gemma-7b-it,gemma2-9b-it,llama2-70b-4096,llama3-70b-8192,llama3-8b-8192,mixtral-8x7b-32768,llama3-groq-8b-8192-tool-use-preview,llama3-groq-70b-8192-tool-use-preview',
 
+  // MISTRAL_API_KEY Mistral api key
+  MISTRAL_API_KEY: '',
+  // MISTRAL_EMBEDDINGS_MODEL OpenAi Embedding model
+  MISTRAL_EMBEDDINGS_MODEL: 'mistral-embed',
+  // OPENAI_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
+  MISTRAL_CHAT_MODELS:
+    'open-mistral-nemo,open-mistral-7b,open-mixtral-8x7b,open-mixtral-8x22b,mistral-large-latest',
+  // OPENAI_MODEL Default OpenAI model used as fallback
+  MISTRAL_MODEL: 'open-mistral-nemo',
+
   // ANTROPHIC_API_KEY Antrophic api key
   ANTROPHIC_API_KEY: '',
   // ANTROPHIC_MODEL Default Antrophic model used as fallback

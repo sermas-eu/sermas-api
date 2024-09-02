@@ -17,6 +17,7 @@ import { AntrophicChatProvider } from './providers/antrophic/antrophic.chat.prov
 import { LLMChatProvider } from './providers/chat.provider';
 import { LLMEmbeddingProvider } from './providers/embeddings.provider';
 import { GroqChatProvider } from './providers/groq/groq.provider';
+import { MistralEmbeddingProvider } from './providers/mistral/mistral.embeddings.provider';
 import { OllamaEmbeddingProvider } from './providers/ollama/ollama.embeddings.provider';
 import { OllamaChatProvider } from './providers/ollama/ollama.provider';
 import { OpenAIChatProvider } from './providers/openai/openai.chat.provider';
@@ -34,16 +35,19 @@ import { SentenceTransformer } from './stream/sentence.transformer';
 import { ToolWithAnswerTransformer } from './stream/tool-with-answer.transformer';
 import { readResponse } from './stream/util';
 import { AnswerResponse, SelectedTool, ToolResponse } from './tools/tool.dto';
+import { MistralChatProvider } from './providers/mistral/mistral.chat.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
   ollama: 'mistral:latest',
   groq: 'mixtral-8x7b-32768',
+  mistral: 'open-mixtral-8x22b',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'text-embedding-3-small',
   ollama: 'nomic-embed-text:latest',
+  mistral: 'mistral-embed',
 };
 
 @Injectable()
@@ -192,6 +196,16 @@ export class LLMProviderService implements OnModuleInit {
         });
         break;
 
+      case 'mistral':
+        provider = new MistralChatProvider({
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('MISTRAL_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('MISTRAL_API_KEY'),
+          availableModels,
+        });
+        break;
+
       case 'groq':
         provider = new GroqChatProvider({
           provider: config.provider,
@@ -308,6 +322,20 @@ export class LLMProviderService implements OnModuleInit {
           baseURL: config.baseURL || this.config.get('OLLAMA_BASEURL'),
           model,
           apiKey: config.apiKey || this.config.get('OLLAMA_API_KEY'),
+          binaryQuantization,
+        });
+        break;
+      case 'mistral':
+        model =
+          config.model ||
+          this.config.get('MISTRAL_EMBEDDINGS_MODEL') ||
+          embeddingsModelsDefaults.mistral;
+
+        provider = new MistralEmbeddingProvider({
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('MISTRAL_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('MISTRAL_API_KEY'),
           binaryQuantization,
         });
         break;
