@@ -6,7 +6,11 @@ import { getChunkId } from 'libs/sermas/sermas.utils';
 import { LLMTranslationService } from 'libs/translation/translation.service';
 import { toDataURL } from 'qrcode';
 import { UIAsyncApiService } from './ui.async.service';
-import { UIContentDto } from './ui.content.dto';
+import {
+  ButtonsContentDto,
+  QuizContentDto,
+  UIContentDto,
+} from './ui.content.dto';
 import { QrCodeDto, QrCodePayloadDto, UIInteractionEventDto } from './ui.dto';
 
 @Injectable()
@@ -101,36 +105,100 @@ export class UIService {
       if (toLanguage) {
         const fromLanguage = uiContent.options?.language;
 
-        const content = uiContent.content as any;
-        if (content.label) {
-          const label = await this.translation.translate(
-            content.label,
+        const content1 = uiContent.content as any;
+
+        // buttons
+        if (content1.list) {
+          const buttonContent = content1 as ButtonsContentDto;
+
+          const parts: string[] = [];
+
+          if (buttonContent.label) parts.push(buttonContent.label);
+
+          parts.push(...buttonContent.list.map((b) => b.label || b.value));
+
+          const translations = await this.translateTexts(
+            parts,
             fromLanguage,
             toLanguage,
           );
-          if (label) content.label = label;
-        }
 
-        // buttons
-        if (content.list) {
-          for (const b of content.list) {
-            const srcLabel = b.label || b.value;
-            if (!srcLabel) continue;
-            const label = await this.translation.translate(
-              srcLabel,
-              fromLanguage,
-              toLanguage,
-            );
-            if (label) b.label = label;
+          if (buttonContent.label) {
+            const label = translations.shift();
+            if (label) {
+              buttonContent.label = label;
+            }
           }
+
+          translations.forEach((t, i) => {
+            if (buttonContent.list[i]) buttonContent.list[i].label = t;
+          });
+
+          uiContent.content = buttonContent;
         }
 
-        uiContent.content = content;
+        // quiz
+        if (content1.answers) {
+          const quizContent = content1 as QuizContentDto;
+
+          const parts = [
+            quizContent.question || '',
+            ...quizContent.answers.map((a) => a.answer),
+          ];
+
+          const translations = await this.translateTexts(
+            parts,
+            fromLanguage,
+            toLanguage,
+          );
+
+          quizContent.question = translations.shift();
+
+          quizContent.answers = quizContent.answers.map((a, i) => {
+            a.answer = translations[i];
+            return a;
+          });
+
+          uiContent.content = quizContent;
+        }
       }
     }
 
     this.emitter.emit('ui.content', uiContent);
     await this.async.content(uiContent);
+  }
+
+  async translateTexts(
+    sources: string[],
+    fromLanguage: string,
+    toLanguage: string,
+  ): Promise<string[]> {
+    try {
+      if (!sources || fromLanguage === toLanguage) return sources;
+
+      const raw = await this.translation.translate(
+        JSON.stringify(sources),
+        fromLanguage,
+        toLanguage,
+      );
+
+      if (raw) {
+        try {
+          const translations = JSON.parse(raw);
+          return translations;
+        } catch (e) {
+          this.logger.warn(
+            `Translation failed, cannot parse LLM response: ${e.message}`,
+          );
+          this.logger.debug(raw);
+        }
+      }
+
+      return sources;
+    } catch (e) {
+      this.logger.warn(`Translation failed: ${e.message}`);
+      return sources;
+    }
   }
 
   async interaction(payload: UIInteractionEventDto) {

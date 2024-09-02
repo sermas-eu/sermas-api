@@ -11,8 +11,7 @@ import {
   QuizContentDto,
   UIContentDto,
 } from 'apps/ui/src/ui.content.dto';
-import { UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import { UiInteractionButtonDto } from 'apps/ui/src/ui.interaction.dto';
+import { UIInteractionDTO, UIInteractionEventDto } from 'apps/ui/src/ui.dto';
 import { ToolParamType, ToolSchemaTypeList } from 'libs/llm/tools/tool.dto';
 import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
@@ -212,7 +211,18 @@ export class DialogueToolsEventsService {
       case 'quiz':
         const quiz = ev.content as QuizContentDto;
         await addTools(
-          quiz.answers.map((answer) => ({ description: answer.answer })),
+          quiz.answers.map((answer) => ({
+            description: answer.answer,
+            schema: [
+              {
+                description: 'Ignore: answerId',
+                parameter: 'answerId',
+                type: 'string',
+                value: answer.answerId,
+                ignore: true,
+              },
+            ],
+          })),
         );
         break;
       case 'clear-screen':
@@ -239,58 +249,54 @@ export class DialogueToolsEventsService {
       return;
     }
 
-    if (payload.interaction.element === 'button') {
-      const buttonInteraction = payload.interaction as UiInteractionButtonDto;
-
-      // console.log(`trigger`, JSON.stringify(tools, null, 2), buttonInteraction);
-
-      const filteredRepositories = repositories.filter(
-        (r) =>
-          (r.tools || []).filter(
-            (tool) =>
-              (tool.schema || []).filter(
-                (schema) =>
-                  schema.parameter === 'value' &&
-                  schema.value === buttonInteraction.value,
-              ).length,
-          ).length,
-      );
-
-      if (!filteredRepositories.length) return;
-
-      const repository = filteredRepositories[0];
-
-      const filteredTools = (repository.tools || []).filter(
-        (tool) =>
-          (tool.schema || []).filter(
-            (schema) =>
-              schema.parameter === 'value' &&
-              schema.value === buttonInteraction.value,
-          ).length,
-      );
-
-      if (!filteredTools.length) return;
-
-      const tool = filteredTools[0];
-
-      this.logger.debug(
-        `Triggering tool ${tool.name} on ${buttonInteraction.element} interaction`,
-      );
-
-      const ev: ToolTriggerEventDto = {
-        name: tool.name,
-        schema: tool,
-        values: {
-          ...buttonInteraction.context,
-          ...extractToolValues(tool),
-        },
-        appId: payload.appId,
-        sessionId: payload.sessionId,
-        repositoryId: repository.repositoryId,
-        source: 'ui',
-      };
-
-      this.emitter.emit('dialogue.tool.trigger', ev);
+    type ToolSelectionFilter = (schema: ToolsParameterSchema) => boolean;
+    let selectionValue: ToolSelectionFilter = (schema) =>
+      schema.parameter === 'value' &&
+      schema.value === payload.interaction.value;
+    if (payload.interaction.element === 'quiz') {
+      selectionValue = (schema) =>
+        schema.parameter === 'answerId' &&
+        schema.value === payload.interaction.context.answerId;
     }
+
+    const uiInteraction = payload.interaction as UIInteractionDTO;
+
+    const filteredRepositories = repositories.filter(
+      (r) =>
+        (r.tools || []).filter(
+          (tool) => (tool.schema || []).filter(selectionValue).length,
+        ).length,
+    );
+
+    if (!filteredRepositories.length) return;
+
+    const repository = filteredRepositories[0];
+
+    const filteredTools = (repository.tools || []).filter(
+      (tool) => (tool.schema || []).filter(selectionValue).length,
+    );
+
+    if (!filteredTools.length) return;
+
+    const tool = filteredTools[0];
+
+    this.logger.debug(
+      `Triggering tool ${tool.name} on ${uiInteraction.element} interaction`,
+    );
+
+    const ev: ToolTriggerEventDto = {
+      name: tool.name,
+      schema: tool,
+      values: {
+        ...uiInteraction.context,
+        ...extractToolValues(tool),
+      },
+      appId: payload.appId,
+      sessionId: payload.sessionId,
+      repositoryId: repository.repositoryId,
+      source: 'ui',
+    };
+
+    this.emitter.emit('dialogue.tool.trigger', ev);
   }
 }

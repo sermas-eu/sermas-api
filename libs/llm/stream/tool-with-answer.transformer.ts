@@ -43,9 +43,9 @@ export class ToolWithAnswerTransformer extends Transform {
     // Append the chunk to the buffer
     this.buffer += chunk.toString();
 
-    this.buffer
-      ?.split('\n')
-      .forEach((line) => this.logger.debug(`buffer | ${line}`));
+    // this.buffer
+    //   ?.split('\n')
+    //   .forEach((line) => this.logger.debug(`buffer | ${line}`));
 
     // Find the indices of the start and end markers
     const ucbuffer = this.buffer.toUpperCase();

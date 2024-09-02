@@ -3,7 +3,10 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { UIContentDto } from 'apps/ui/src/ui.content.dto';
 import { UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import { UiInteractionButtonDto } from 'apps/ui/src/ui.interaction.dto';
+import {
+  UiInteractionButtonDto,
+  UiInteractionQuizDto,
+} from 'apps/ui/src/ui.interaction.dto';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
@@ -33,24 +36,30 @@ export class DialogueSpeechEventService {
   ) {
     if (!payload.sessionId) return;
 
+    const message: DialogueMessageDto = {
+      actor: 'user',
+      appId: payload.appId,
+      sessionId: payload.sessionId,
+      text: payload.interaction.value,
+      messageId: getChunkId(),
+      chunkId: getChunkId(),
+      language: null,
+      ts: payload.ts || new Date(),
+    };
+
     if (payload.interaction.element === 'button') {
       const buttonInteraction = payload.interaction as UiInteractionButtonDto;
-      await this.async.dialogueMessages({
-        actor: 'user',
-        appId: payload.appId,
-        sessionId: payload.sessionId,
-        text:
-          buttonInteraction.context.button.label ||
-          buttonInteraction.context.button.value,
-        messageId: getChunkId(),
-        chunkId: getChunkId(),
-        language: null,
-        ts: payload.ts || new Date(),
-      });
+      message.text =
+        buttonInteraction.context.button.label ||
+        buttonInteraction.context.button.value;
     }
+
     if (payload.interaction.element === 'quiz') {
-      this.logger.warn('*** TODO add QUIZ response to chat messages ***');
+      const quizInteraction = payload.interaction as UiInteractionQuizDto;
+      message.text = quizInteraction.value;
     }
+
+    await this.async.dialogueMessages(message);
   }
 
   @OnEvent('session.changed')
