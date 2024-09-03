@@ -153,6 +153,8 @@ export const SermasDefaultConfig = {
   OLLAMA_MODEL: 'sermas-llama3',
   // OLLAMA_CHAT_MODELS Supported chat models from Ollama. Leave empty to allow all available.
   OLLAMA_CHAT_MODELS: 'sermas-llama3:*,mistral:*',
+  // OLLAMA_EMBEDDINGS_MODEL Default embedding model
+  OLLAMA_EMBEDDINGS_MODEL: 'nomic-embed-text',
 
   // GROQ_API_KEY Groq api key
   GROQ_API_KEY: '',
