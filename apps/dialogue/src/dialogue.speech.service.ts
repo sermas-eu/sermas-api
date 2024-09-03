@@ -238,7 +238,12 @@ export class DialogueSpeechService {
   async sendAgentSpeech(agentResponseEvent: DialogueMessageDto) {
     let buffer: Buffer;
 
-    this.logger.debug(`Sending TTS for ${agentResponseEvent.text}`);
+    if (agentResponseEvent.text) {
+      agentResponseEvent.text
+        .split('\n')
+        .forEach((t) => this.logger.debug(`TTS | ${t}`));
+    }
+
     try {
       buffer = await this.ttsProvider.generateTTS(agentResponseEvent);
     } catch (e) {

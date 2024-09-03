@@ -139,6 +139,7 @@ export class DialogueWelcomeService {
             language
               ? `Translate all the resulting labels to language ${language}.`
               : '',
+            `Never add comments or explanations.`,
             JSON.stringify(
               toolsList.map((t) => ({ label: t.label, rephrase: t.rephrase })),
             ),

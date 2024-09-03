@@ -144,7 +144,7 @@ export class UIAssetService {
 
     try {
       // Download the file from Minio
-      this.logger.log(
+      this.logger.debug(
         `Download asset bucket=${this.repository} path=${modelPath}`,
       );
 
