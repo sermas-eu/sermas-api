@@ -25,8 +25,9 @@ import { DefaultLanguage } from 'libs/language/lang-codes';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { isNodeEnv, toDTO } from 'libs/util';
+import { isDate, isNodeEnv, toDTO } from 'libs/util';
 import { FilterQuery, Model } from 'mongoose';
+
 import { v4 as uuidv4 } from 'uuid';
 import { AgentChangedDto } from './agent/session.agent.dto';
 import { SessionAgentService } from './agent/session.agent.service';
@@ -124,7 +125,20 @@ export class SessionService {
     };
 
     if (filter.query) {
-      //
+      if (filter.query.from) {
+        if (!isDate(filter.query.from))
+          throw new BadRequestException(`query.from is not a valid date`);
+        q.createdAt = {
+          $gte: new Date(filter.query.from),
+        };
+      }
+      if (filter.query.to) {
+        if (!isDate(filter.query.to))
+          throw new BadRequestException(`query.to is not a valid date`);
+        q.closedAt = {
+          $lte: new Date(filter.query.to),
+        };
+      }
     }
 
     const query = this.sessionModel

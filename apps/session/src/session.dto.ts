@@ -97,7 +97,20 @@ export class SessionChangedDto extends SermasRecordChangedDto<SessionDto> {
   record: SessionDto;
 }
 
+export class SearchFilterQuery {
+  @ApiPropertyOptional({
+    description: 'Search after this date',
+  })
+  from?: Date;
+  @ApiPropertyOptional({
+    description: 'Search before this date',
+  })
+  to?: Date;
+}
+
 export class SessionSearchFilter extends SearchFilter {
-  @ApiPropertyOptional()
-  query: any;
+  @ApiPropertyOptional({
+    description: 'Query filter',
+  })
+  query: SearchFilterQuery;
 }

@@ -207,3 +207,13 @@ export const deepcopy = <T = any>(value: any): T => {
 
   return value as T;
 };
+
+export const isDate = (date: string | Date) => {
+  if (!date) return false;
+  try {
+    date = new Date(date);
+    return !isNaN(date.getTime());
+  } catch {
+    return false;
+  }
+};
