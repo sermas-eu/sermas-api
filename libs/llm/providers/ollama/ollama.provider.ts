@@ -42,16 +42,21 @@ export class OllamaChatProvider extends LLMChatProvider {
   }
 
   private async listModels(cached = true): Promise<OllamaModel[]> {
-    const res = await this.ollama.list();
+    try {
+      const res = await this.ollama.list();
 
-    if (!cached || !this.modelsList.length) {
-      this.modelsList = res.models.map(({ name, details }) => ({
-        name,
-        family: details.family,
-      }));
+      if (!cached || !this.modelsList.length) {
+        this.modelsList = res.models.map(({ name, details }) => ({
+          name,
+          family: details.family,
+        }));
+      }
+
+      return this.modelsList;
+    } catch (e) {
+      this.logger.warn(`ollama.listModels failed: ${e.message}`);
+      return this.modelsList || [];
     }
-
-    return this.modelsList;
   }
 
   async available(): Promise<boolean> {

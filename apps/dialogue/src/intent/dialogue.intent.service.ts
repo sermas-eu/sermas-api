@@ -21,6 +21,7 @@ import {
   DialogueTaskProgressDto,
 } from '../tasks/dialogue.tasks.dto';
 import { DialogueTaskRecordService } from '../tasks/record/dialogue.tasks.record.service';
+import { DialogueTaskDto } from '../tasks/store/dialogue.tasks.store.dto';
 
 const ANSWER_TIMEOUT = 1500;
 
@@ -38,6 +39,11 @@ type TaskQuestionWrapper = {
   direct: boolean;
   askTaskId?: string;
   askTaskName?: string;
+};
+
+type TaskIntentMatch = {
+  result: TaskQuestionWrapper;
+  matches: DialogueTaskDto[];
 };
 
 type PrompIntent = {
@@ -347,8 +353,33 @@ export class DialogueIntentService implements OnModuleInit, OnModuleDestroy {
     return intents;
   }
 
-  async match(ev: DialogueMessageDto) {
-    if (this.cache[ev.sessionId] && this.cache[ev.sessionId].triggered) return;
+  async matchOnEvent(ev: DialogueMessageDto) {
+    const res = await this.match(ev);
+
+    if (!res) return;
+
+    this.logger.debug(`Cached taskId=${res.result.taskId}`);
+    this.cache[ev.sessionId] = {
+      sessionId: ev.sessionId,
+      appId: ev.appId,
+      ts: new Date(),
+      taskId: res.result.taskId,
+      question: res.result.question,
+      continue: res.result.continue,
+      cancel: res.result.cancel,
+      language: ev.language,
+      intent: res.result?.intent,
+      direct: res.result?.direct,
+    };
+  }
+
+  async match(ev: {
+    sessionId: string;
+    appId: string;
+    language?: string;
+  }): Promise<TaskIntentMatch | null> {
+    if (this.cache[ev.sessionId] && this.cache[ev.sessionId].triggered)
+      return null;
 
     const currentRecord = await this.tasks.getCurrentRecord(ev.sessionId);
     if (currentRecord) {
@@ -356,12 +387,12 @@ export class DialogueIntentService implements OnModuleInit, OnModuleDestroy {
       this.logger.debug(
         `Skip intent detecion during an ongoing task ${currentTask ? 'name=' + currentTask.name : ''}`,
       );
-      return;
+      return null;
     }
 
     const messages: DialogueMemoryMessageDto[] = [];
     const allMessages = await this.memory.getMessages(ev.sessionId);
-    if (!allMessages.length) return;
+    if (!allMessages.length) return null;
 
     // drop older message, remove those part of a task
 
@@ -385,7 +416,7 @@ export class DialogueIntentService implements OnModuleInit, OnModuleDestroy {
     if (history.length < 2) return;
 
     const app = await this.platformApp.readApp(ev.appId, false);
-    if (!app) return;
+    if (!app) return null;
 
     const avatar = await this.session.getAvatar(ev);
 
@@ -404,10 +435,13 @@ export class DialogueIntentService implements OnModuleInit, OnModuleDestroy {
     const tasks = await this.tasks.search({
       appId: ev.appId,
     });
-    if (!tasks) return;
+    if (!tasks) return null;
 
     const intents = await this.getIntents(ev.appId);
-    if (!intents.length) return;
+    if (!intents.length) return null;
+
+    const sessionLanguage = await this.session.getLanguage(ev, false);
+    const language = ev.language || sessionLanguage;
 
     prompt.push(
       `Analyze user interaction in HISTORY and match one of TASKS.',
@@ -417,7 +451,8 @@ export class DialogueIntentService implements OnModuleInit, OnModuleDestroy {
       '3. if the user confirmed a task in the last interaction',
       '4. if the assistant provided an answer for the task',
       `Find a matching task from the discussion with the user.`,
-      `Answer asking a confirmation based on taskDescription but adapted to the discussion in a short form. Add labels for Continue and Cancel options. Use language ${ev.language}`,
+      `Answer asking a confirmation based on taskDescription but adapted to the discussion in a short form. Add labels for Continue and Cancel options.`,
+      language ? `Use language ${language}` : '',
       `Return a parsable JSON object with structure { result: { taskId: string, intent: "exact name of matching intent", direct: boolean, question: "question about task description", cancel: 'label', continue: 'label' } }`,
       'Never add notes or explanations',
       `TASKS:\n${intents.map((i) => JSON.stringify(i)).join('\n')}`,
@@ -431,9 +466,7 @@ export class DialogueIntentService implements OnModuleInit, OnModuleDestroy {
 
     const llm = await this.session.getLLM(ev.sessionId);
 
-    const res = await this.llm.chat<{
-      result: TaskQuestionWrapper | null;
-    }>({
+    const res = await this.llm.chat<TaskIntentMatch>({
       ...this.llm.extractProviderName(llm?.intent),
       stream: false,
       json: true,
@@ -445,25 +478,13 @@ export class DialogueIntentService implements OnModuleInit, OnModuleDestroy {
 
     if (res?.result && res?.result.taskId) {
       const matches = tasks.filter((t) => t.taskId === res.result.taskId);
-
       if (!matches.length) return;
 
-      this.cache[ev.sessionId] = {
-        sessionId: ev.sessionId,
-        appId: ev.appId,
-        ts: new Date(),
-        taskId: res.result.taskId,
-        question: res.result.question,
-        continue: res.result.continue,
-        cancel: res.result.cancel,
-        language: ev.language,
-        intent: res.result?.intent,
-        direct: res.result?.direct,
-      };
-
-      this.logger.debug(`Cached taskId=${res.result.taskId}`);
-    } else {
-      this.logger.debug(`Intent not found for sessionId=${ev.sessionId}`);
+      res.matches = matches;
+      return res;
     }
+
+    this.logger.debug(`Intent not found for sessionId=${ev.sessionId}`);
+    return null;
   }
 }

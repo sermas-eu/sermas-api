@@ -14,6 +14,6 @@ export class DialogueIntentEventsService {
     topic: SermasTopics.dialogue.messages,
   })
   async onChatMessage(@Payload() payload: DialogueMessageDto) {
-    this.intent.match(payload);
+    this.intent.matchOnEvent(payload);
   }
 }
