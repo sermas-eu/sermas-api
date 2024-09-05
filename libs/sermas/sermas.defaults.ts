@@ -103,9 +103,9 @@ export const SermasDefaultConfig = {
 
   // ELEVENIO_APIKEY Elevenio API key
   ELEVENIO_APIKEY: '',
-  // ELEVENIO_VOICEIDS Elevenio API key
-  ELEVENIO_VOICEIDS: '5Q0t7uMcjvnagumLfvZi,21m00Tcm4TlvDq8ikWAM',
-  // ELEVENIO_MODELS Elevenio API key
+  // ELEVENIO_VOICEIDS Elevenio voice id, separated by comma
+  ELEVENIO_VOICEIDS: '',
+  // ELEVENIO_MODELS Elevenio models
   ELEVENIO_MODELS: 'eleven_multilingual_v2',
 
   // LLM_SERVICE default LLM service to use (supported: openai, groq, ollama)
