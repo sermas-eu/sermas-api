@@ -87,6 +87,7 @@ export class STTProviderService {
           const resAzure = await this.azurestt.text(buffer, language);
           perf('azure');
           text = resAzure.text;
+          break;
         case 'whisper':
           const res2 = await this.whisperstt.text(buffer, language);
           perf('whisper');
