@@ -7,6 +7,7 @@ import { GoogleSpeechToText } from './providers/stt.google.service';
 import { OpenAISpeechToText } from './providers/stt.openai.service';
 import { WhisperSpeechToText } from './providers/stt.whisper.service';
 import { DialogueSpeechToTextDto } from './stt.dto';
+import { AzureSpeechToText } from './providers/stt.azure.service';
 
 export type STTResponse = {
   provider: string;
@@ -22,6 +23,7 @@ export class STTProviderService {
     private readonly googlestt: GoogleSpeechToText,
     private readonly openaistt: OpenAISpeechToText,
     private readonly whisperstt: WhisperSpeechToText,
+    private readonly azurestt: AzureSpeechToText,
 
     private readonly configService: ConfigService,
 
@@ -81,16 +83,16 @@ export class STTProviderService {
           perf('google');
           text = res1.text;
           break;
+        case 'azure':
+          const resAzure = await this.azurestt.text(buffer, language);
+          perf('azure');
+          text = resAzure.text;
         case 'whisper':
-          // // convert to wav
-          // buffer = await convertRawToWav(buffer);
           const res2 = await this.whisperstt.text(buffer, language);
           perf('whisper');
           text = res2.text;
         case 'openai':
         default:
-          // // convert to wav
-          // const buffer1 = await convertRawToWav(buffer);
           const res3 = await this.openaistt.text(buffer, language);
           perf('openai');
           text = res3.text;
