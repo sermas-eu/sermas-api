@@ -67,7 +67,7 @@ export class AzureSpeechToText implements ISpeechToText {
 
     return new Promise((resolve, reject) => {
       speechRecognizer.recognizeOnceAsync((result) => {
-        const success = false;
+        let success = false;
 
         let failureMessage = '';
         const response = {
@@ -77,6 +77,7 @@ export class AzureSpeechToText implements ISpeechToText {
         switch (result.reason) {
           case sdk.ResultReason.RecognizedSpeech:
             response.text = result.text;
+            success = true;
             break;
           case sdk.ResultReason.NoMatch:
             break;
