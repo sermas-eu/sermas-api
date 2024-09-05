@@ -85,10 +85,15 @@ export const SermasDefaultConfig = {
 
   // TRANSLATION_SERVICE Provider name to translate messages
   TRANSLATION_SERVICE: 'openai',
-  // STT_SERVICE Service for Speech to Text
+  // STT_SERVICE Service for Speech to Text. Provided are openai, google, whisper, azure. Each need it's own setup.
   STT_SERVICE: 'openai',
   // STT_GOOGLE_IMPROVED_RECOGNITION List of short words that need better recognition when using GOOGLE as STT
   STT_GOOGLE_IMPROVED_RECOGNITION: 'si,no,ok,fatto,sì,yes,done,continue,wait',
+
+  // STT_AZURE_KEY Azure subscription key
+  STT_AZURE_KEY: '',
+  // STT_AZURE_REGION Azure region
+  STT_AZURE_REGION: '',
 
   // TTS_SERVICE Service for Text to Speech
   TTS_SERVICE: 'openai',
