@@ -293,7 +293,7 @@ export class SessionService {
       const exists = await this.load(session.sessionId);
       if (exists) {
         this.logger.warn(
-          `Reusing session sessionId=${session.sessionId} exists`,
+          `Reusing session sessionId=${session.sessionId} exists appId=${session.appId}`,
         );
         exists.closedAt = undefined;
         exists.modifiedAt = new Date();

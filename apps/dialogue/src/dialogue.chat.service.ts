@@ -85,9 +85,6 @@ export class DialogueChatService {
     // search rag context
     const knowledge = await this.vectorStore.search(appId, message.text);
 
-    // load tools repositories
-    let repositories = await this.tools.loadFromSession(message);
-
     // load tasks
     // const tasks = await this.tasks.list(appId);
     let tasks: DialogueTaskDto[] = [];
@@ -96,7 +93,7 @@ export class DialogueChatService {
     const intent = await this.intent.match(message);
     if (intent) {
       this.logger.debug(
-        `Found taskId=${intent.result?.taskId} trigger=${intent.result?.trigger}`,
+        `Found taskId=${intent.result?.taskId} ongoing=${intent.record ? true : false} match=${intent.result?.match} trigger=${intent.result?.trigger} cancel=${intent.result?.cancel}`,
       );
 
       tasks = [intent.task];
@@ -152,6 +149,9 @@ export class DialogueChatService {
 
     let matchOrRemoveTask = false;
 
+    // load tools repositories
+    let repositories = await this.tools.loadFromSession(message);
+
     if (currentTask) {
       currentField = await this.tasks.getCurrentField(
         currentTask.taskId,
@@ -170,14 +170,27 @@ export class DialogueChatService {
 
       matchOrRemoveTask = currentTask.options?.matchOrRemove === true;
 
-      this.logger.debug(`Selecting tools matching ${currentTask.name}`);
+      this.logger.debug(`Enabled tools for task name=${currentTask.name}`);
     }
 
     let skipChat = false;
-    if (currentField) {
-      this.logger.debug(`Task field is ${currentField.name}`);
+    if (currentTask && currentField) {
+      this.logger.debug(`Current task field is ${currentField.name}`);
       skipChat = currentField.required === true && !matchOrRemoveTask;
       // TODO enable fallback answer if no options matches
+    }
+
+    // filter out cancelled tools for a task, since removal is async and could have not been completed yet
+    if (taskCancelled) {
+      repositories = repositories.filter(
+        (r) =>
+          r.tools.filter(
+            (t) =>
+              (t.schema || []).filter(
+                (s) => s.parameter === 'taskId' && s.value === taskCancelled,
+              ).length,
+          ).length === 0,
+      );
     }
 
     const isToolExclusive =
@@ -190,7 +203,9 @@ export class DialogueChatService {
       .map((r) => (r.tools?.length ? r.tools : []))
       .flat();
 
-    // this.logger.debug(`Tools: ${tools.map((t) => t.name)}`);
+    this.logger.debug(
+      `Active tools: ${tools.map((t) => `${t.name}: ${t.description}`)}`,
+    );
 
     let hasCatchAll: AppToolsDTO;
     const matchCatchAll = tools.filter((t) => t.name === TOOL_CATCH_ALL);

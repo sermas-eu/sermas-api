@@ -36,7 +36,7 @@ export class DialogueToolsService {
   publishNotMatching(ev: DialogueToolNotMatchingDto) {
     this.async.toolNotMatching({
       appId: ev.appId,
-      sessionId: ev.appId,
+      sessionId: ev.sessionId,
       taskId: ev.currentTask?.taskId,
       repositories: ev.repositories.map((r) => r.repositoryId),
       tools: ev.tools,

@@ -84,7 +84,7 @@ export class SessionStorageService {
 
     const dto = toDTO<SessionStorageRecordDto>(record);
     await this.publish(dto, exists ? 'updated' : 'created');
-    this.logger.log(
+    this.logger.verbose(
       `Store ${exists ? 'updated' : 'created'} storageId=${dto.storageId} userId=${record.userId || ''}`,
     );
 
@@ -100,7 +100,7 @@ export class SessionStorageService {
       throw new NotFoundException('record not found');
     }
 
-    this.logger.log(
+    this.logger.verbose(
       `Store loaded storageId=${record.storageId} userId=${userId}`,
     );
     return toDTO<SessionStorageRecordDto>(record);
