@@ -147,9 +147,8 @@ export class DialogueIntentService {
       '- if there is no match',
       '- if the assistant already asked for a task in the last two interactions',
       '- if the user confirmed a task in the last interaction',
-      '- if the assistant provided an answer for the task',
 
-      'If the last user message confirm a task, set the field "trigger" to true',
+      'If the last user message confirm a task proposed by the assistant, set the field "trigger" to true',
       'If the last user message indicate they want to cancel the task, set the field "cancel" to true',
 
       `Return a parsable JSON object with structure { result: { taskId: string, match: boolean, trigger: boolean, cancel: boolean } }`,
