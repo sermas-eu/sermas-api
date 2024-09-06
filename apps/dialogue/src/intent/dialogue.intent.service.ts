@@ -111,8 +111,6 @@ export class DialogueIntentService {
 
     if (history.length < 2) return;
 
-    console.warn(history);
-
     const app = await this.platformApp.readApp(ev.appId, false);
     const avatar = await this.session.getAvatar(ev);
 
