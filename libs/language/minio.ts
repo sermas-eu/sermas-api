@@ -59,7 +59,6 @@ export const minioReadMetadata = async <T = any>(
   prefix = ASSET_METADATA_PREFIX,
 ) => {
   const res = await minio.statObject(repository, filepath);
-  console.warn(filepath, '-->', res);
 
   if (!res.metaData) return {} as T;
 
