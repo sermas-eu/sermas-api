@@ -103,8 +103,8 @@ export abstract class BasePrompt {
         params: {
           ...params,
           history: data.history
-            .map((message) => {
-              return `${message.role.toUpperCase()}: ${message.content}`;
+            .map((message, i) => {
+              return `${i + 1}. ${message.role.toUpperCase()}: ${message.content}`;
             })
             .join('\n'),
         },

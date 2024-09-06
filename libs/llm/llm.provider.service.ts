@@ -17,6 +17,7 @@ import { AntrophicChatProvider } from './providers/antrophic/antrophic.chat.prov
 import { LLMChatProvider } from './providers/chat.provider';
 import { LLMEmbeddingProvider } from './providers/embeddings.provider';
 import { GroqChatProvider } from './providers/groq/groq.provider';
+import { MistralChatProvider } from './providers/mistral/mistral.chat.provider';
 import { MistralEmbeddingProvider } from './providers/mistral/mistral.embeddings.provider';
 import { OllamaEmbeddingProvider } from './providers/ollama/ollama.embeddings.provider';
 import { OllamaChatProvider } from './providers/ollama/ollama.provider';
@@ -35,7 +36,6 @@ import { SentenceTransformer } from './stream/sentence.transformer';
 import { ToolWithAnswerTransformer } from './stream/tool-with-answer.transformer';
 import { readResponse } from './stream/util';
 import { AnswerResponse, SelectedTool, ToolResponse } from './tools/tool.dto';
-import { MistralChatProvider } from './providers/mistral/mistral.chat.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -418,7 +418,7 @@ export class LLMProviderService implements OnModuleInit {
     }
 
     // create full user chat message
-    if (args.message) {
+    if (args.message || args.history?.length) {
       const content = await this.createModelPrompt(args, provider, {
         ...args,
         system: undefined,
@@ -430,6 +430,7 @@ export class LLMProviderService implements OnModuleInit {
         });
       }
     }
+
     try {
       const { stream, abort } = await provider.call(messages, {
         stream: args.stream,

@@ -17,9 +17,17 @@ export class DialogueMemoryService implements OnModuleInit {
     //
   }
 
-  async getMessages(sessionId: string) {
+  async getMessages(sessionId: string, limit?: number) {
     const record = await this.memory.findOne({ sessionId });
-    return record?.messages || [];
+
+    if (!record) return [];
+
+    let messages = record.toObject().messages;
+    if (limit && limit < messages.length) {
+      messages = messages.slice(messages.length - limit);
+    }
+
+    return messages;
   }
 
   async addMessages(sessionId: string, messages: DialogueMemoryMessageDto[]) {

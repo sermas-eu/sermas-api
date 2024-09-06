@@ -93,7 +93,7 @@ export class DialogueChatService {
     const intent = await this.intent.match(message);
     if (intent) {
       this.logger.debug(
-        `Found taskId=${intent.result?.taskId} ongoing=${intent.record ? true : false} match=${intent.result?.match} trigger=${intent.result?.trigger} cancel=${intent.result?.cancel}`,
+        `Found task '${intent.task?.name}' taskId=${intent.result?.taskId} ongoing=${intent.record ? true : false} match=${intent.result?.match} trigger=${intent.result?.trigger} cancel=${intent.result?.cancel}`,
       );
 
       tasks = [intent.task];
@@ -117,7 +117,7 @@ export class DialogueChatService {
         !intent.result.cancel
       ) {
         const task = intent.task;
-        this.logger.log(`Trigger task ${intent.result.taskId}`);
+        this.logger.log(`Trigger task ${intent.task.name}`);
         const ev: ToolTriggerEventDto = {
           appId: task.appId,
           name: task.name,
@@ -134,10 +134,15 @@ export class DialogueChatService {
       }
     }
 
-    const tasksList = (tasks || []).map((t) => ({
-      name: t.name,
-      description: t.description,
-    }));
+    let tasksList = '[]';
+    if (tasks && tasks.length) {
+      tasksList = JSON.stringify(
+        (tasks || []).map((t) => ({
+          name: t.name,
+          description: t.description,
+        })),
+      );
+    }
 
     let currentTask = await this.tasks.getCurrentTask(message.sessionId);
 
@@ -248,8 +253,7 @@ export class DialogueChatService {
       toolFallback:
         isToolExclusive && tools.length === 1 ? tools[0].name : undefined,
 
-      tasks: JSON.stringify(tasksList),
-      // tasks: '',
+      tasks: tasksList,
     };
 
     // inference
@@ -263,7 +267,7 @@ export class DialogueChatService {
       ...(llmArgs || {}),
       params,
       system: chatPrompt,
-      message: message.text,
+      // message: message.text,
       history,
       tools,
       knowledge,

@@ -106,10 +106,12 @@ export class DialogueIntentService {
     }
 
     const history = messages
-      // .filter((m) => m.role === 'user')
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
       .map((m) => `${m.role}: ${m.content.replace('\n', ' ')}`);
 
     if (history.length < 2) return;
+
+    console.warn(history);
 
     const app = await this.platformApp.readApp(ev.appId, false);
     const avatar = await this.session.getAvatar(ev);
