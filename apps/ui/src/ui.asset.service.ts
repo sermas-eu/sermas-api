@@ -23,7 +23,7 @@ const BACKGROUND_EXTENSIONS = ['jpg', 'jpeg', 'png'];
 const DOCUMENTS_EXTENSIONS = ['txt'];
 const AVATAR_EXTENSIONS = ['glb', 'fbx'];
 
-export const ASSET_METADATA_PREFIX = 'asset__';
+export const ASSET_METADATA_PREFIX = 'asset-';
 
 @Injectable()
 export class UIAssetService {
