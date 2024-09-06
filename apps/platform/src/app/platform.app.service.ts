@@ -10,7 +10,6 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { RegistrationRequestDto } from 'apps/auth/src/auth.dto';
-import { DialogueDocumentService } from 'apps/dialogue/src/document/dialogue.document.service';
 import { KeycloakUserRecord } from 'apps/keycloak/src/keycloak.admin.dto';
 import { createHash } from 'crypto';
 import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
@@ -43,7 +42,6 @@ export class PlatformAppService implements OnModuleInit {
     private keycloack: PlatformKeycloakService,
     private config: ConfigService,
     private emitter: EventEmitter2,
-    private documentService: DialogueDocumentService,
   ) {}
 
   async onModuleInit() {

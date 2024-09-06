@@ -33,7 +33,7 @@ export class OllamaChatProvider extends LLMChatProvider {
   };
 
   private reachable: boolean | undefined;
-  private hearthbit: NodeJS.Timeout;
+  private heartbeat: NodeJS.Timeout;
 
   constructor(protected config: LLMProviderConfig) {
     super(config);
@@ -68,8 +68,8 @@ export class OllamaChatProvider extends LLMChatProvider {
 
   async available(): Promise<boolean> {
     // check periodically
-    if (!this.hearthbit) {
-      this.hearthbit = setInterval(async () => {
+    if (!this.heartbeat) {
+      this.heartbeat = setInterval(async () => {
         this.reachable = undefined;
         try {
           await this.available();

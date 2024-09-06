@@ -23,6 +23,8 @@ const BACKGROUND_EXTENSIONS = ['jpg', 'jpeg', 'png'];
 const DOCUMENTS_EXTENSIONS = ['txt'];
 const AVATAR_EXTENSIONS = ['glb', 'fbx'];
 
+export const ASSET_METADATA_PREFIX = 'asset__';
+
 @Injectable()
 export class UIAssetService {
   private readonly logger = new Logger(UIAssetService.name);
@@ -35,8 +37,8 @@ export class UIAssetService {
     private readonly minioService: MinioService,
     private readonly async: UIAsyncApiService,
     private readonly config: ConfigService,
-    private readonly app: PlatformAppService,
     private readonly emitter: EventEmitter2,
+    private readonly app: PlatformAppService,
   ) {
     this.repository = this.config.get('REPOSITORY_BUCKET');
     this.defaults = {
@@ -207,6 +209,32 @@ export class UIAssetService {
       );
     }
 
+    let metadata: any = {};
+    if (data.metadata) {
+      // ????
+      if (typeof data.metadata === 'string') {
+        try {
+          metadata = JSON.parse(data.metadata);
+        } catch (e) {
+          this.logger.warn(
+            `Cannot parse metadata as json: ${data.metadata}: ${e.stack}`,
+          );
+        }
+      } else {
+        metadata = data.metadata;
+      }
+    }
+
+    // minio metadata are in format Record<string, string>
+    // add prefix asset__{key} to extract back at read time
+    metadata = Object.keys(metadata).reduce(
+      (o, key) => ({
+        ...o,
+        [`${ASSET_METADATA_PREFIX}${key}`]: JSON.stringify(metadata[key]),
+      }),
+      {} as Record<string, string>,
+    );
+
     const filename = data.filename || file.originalname;
     const assetPath = `${data.appId}/${data.type}/${filename}`;
     try {
@@ -214,7 +242,7 @@ export class UIAssetService {
         this.repository,
         assetPath,
         file.buffer,
-        data.metadata || {},
+        metadata,
       );
 
       const ev: UIAssetChangedDto = {
