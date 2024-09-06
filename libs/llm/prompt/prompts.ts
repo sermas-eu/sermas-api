@@ -7,7 +7,7 @@ TASKS should be proposed to the user, be precise in the task offering descriptio
 You must always follow these rules:
 - Reply briefly to the user. 
 - Never ask questions
-- Propose a task based on the last user message
+- Propose a task based only on the more recent user messages
 
 APPLICATION:
 {appPrompt}
