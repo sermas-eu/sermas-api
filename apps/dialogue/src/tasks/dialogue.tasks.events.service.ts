@@ -40,6 +40,11 @@ export class DialogueTasksEventsService {
     await this.tools.delete(task.options.repositoryId);
   }
 
+  @OnEvent('task.cancel')
+  async onTaskCancel(ev: { sessionId: string; taskId: string }) {
+    this.handler.cancelTask(ev);
+  }
+
   @OnEvent('dialogue.tool.trigger')
   async onTrigger(ev: ToolTriggerEventDto) {
     this.handler.onToolTriggered(ev);

@@ -125,10 +125,27 @@ export class DialogueTasksHandlerService {
   async onTaskStarted(ev: DialogueTaskProgressDto) {
     if (ev.type !== 'started') return;
 
-    // add option to cancel task
-    if (!ev.task.options?.triggerOnce) {
-      await this.fieldHandler.ensureCancelTaskTool(ev);
+    //NOTE: handled via intents
+    // // add option to cancel task
+    // if (!ev.task.options?.triggerOnce) {
+    //   await this.fieldHandler.ensureCancelTaskTool(ev);
+    // }
+  }
+
+  async cancelTask(ev: { taskId: string; sessionId: string }) {
+    this.logger.debug(`Cancelling task ${ev.taskId}`);
+    const task = await this.tasks.read(ev.taskId);
+    if (!task) {
+      this.logger.warn(
+        `Cannot remove cancel option, task not found taskId=${ev.taskId}`,
+      );
     }
+    const record = await this.ensureRecord(ev.sessionId, task);
+    await this.updateTaskProgress('aborted', task, record);
+    this.emitter.emit('task.user-aborted', {
+      record,
+      task,
+    });
   }
 
   async onToolTriggered(ev: ToolTriggerEventDto) {
@@ -144,18 +161,9 @@ export class DialogueTasksHandlerService {
         this.logger.warn(`Cannot remove cancel option, missing taskId`);
         return;
       }
-      this.logger.debug(`Cancelling task ${ev.values?.taskId}`);
-      const task = await this.tasks.read(ev.values?.taskId);
-      if (!task) {
-        this.logger.warn(
-          `Cannot remove cancel option, task not found taskId=${ev.values?.taskId}`,
-        );
-      }
-      const record = await this.ensureRecord(ev.sessionId, task);
-      await this.updateTaskProgress('aborted', task, record);
-      this.emitter.emit('task.user-aborted', {
-        record,
-        task,
+      await this.cancelTask({
+        sessionId: ev.sessionId,
+        taskId: ev.values.taskId,
       });
       return;
     }

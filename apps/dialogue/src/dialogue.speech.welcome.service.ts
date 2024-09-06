@@ -38,7 +38,7 @@ export class DialogueWelcomeService {
   async handleWelcomeText(ev: SessionChangedDto) {
     if (ev.operation !== 'created') return;
 
-    this.logger.debug(
+    this.logger.verbose(
       `Sending welcome message appId=${ev.appId} sessionId=${ev.record.sessionId}`,
     );
 
@@ -181,7 +181,7 @@ export class DialogueWelcomeService {
           await this.broker.publish(SermasTopics.ui.content, buttons);
         }
       }
-      this.logger.debug(`Welcome message sent`);
+      this.logger.verbose(`Welcome message sent`);
       perf('welcome-text.completed');
     });
     // });

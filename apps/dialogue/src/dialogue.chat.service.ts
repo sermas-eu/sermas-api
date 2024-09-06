@@ -14,9 +14,14 @@ import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { DialogueToolNotMatchingDto } from './dialogue.chat.dto';
 import { DialogueVectorStoreService } from './document/dialogue.vectorstore.service';
+import { DialogueIntentService } from './intent/dialogue.intent.service';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
+import { DialogueTasksHandlerService } from './tasks/dialogue.tasks.handler.service';
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
-import { TaskFieldDto } from './tasks/store/dialogue.tasks.store.dto';
+import {
+  DialogueTaskDto,
+  TaskFieldDto,
+} from './tasks/store/dialogue.tasks.store.dto';
 import {
   TOOL_CATCH_ALL,
   TOOL_CATCH_ALL_VALUE as TOOL_CATCH_ALL_PARAMETER,
@@ -41,38 +46,11 @@ export class DialogueChatService {
     private readonly vectorStore: DialogueVectorStoreService,
     private readonly tools: DialogueToolsService,
     private readonly tasks: DialogueTasksService,
+    private readonly tasksHandler: DialogueTasksHandlerService,
+    private readonly intent: DialogueIntentService,
 
     private readonly monitor: MonitorService,
   ) {}
-
-  // private ENABLE_TEST = false;
-  // async onModuleInit(): Promise<void> {
-  //   if (this.ENABLE_TEST) {
-  //     setTimeout(async () => {
-  //       const sessionId = 'session' + Math.random() * Date.now();
-  //       // await this.testSend('Move robot to cristiano office', sessionId);
-  //       await this.testSend(
-  //         'Which technology topic do you work on ?',
-  //         sessionId,
-  //       );
-  //     }, 1000);
-  //   }
-  // }
-
-  // async testSend(text: string, sessionId: string) {
-  //   this.logger.warn(`testSend: send message ${text}`);
-  //   const message: DialogueMessageDto = {
-  //     text,
-  //     clientId: 'test',
-  //     language: 'en-GB',
-  //     actor: 'user',
-  //     appId: 'spxl',
-  //     sessionId,
-  //     emotion: 'angry',
-  //     gender: 'M',
-  //   } as DialogueMessageDto;
-  //   await this.inference(message, undefined, true);
-  // }
 
   async inference(
     message: DialogueMessageDto,
@@ -111,13 +89,64 @@ export class DialogueChatService {
     let repositories = await this.tools.loadFromSession(message);
 
     // load tasks
-    const tasks = await this.tasks.list(appId);
+    // const tasks = await this.tasks.list(appId);
+    let tasks: DialogueTaskDto[] = [];
+    let taskCancelled: string;
+
+    const intent = await this.intent.match(message);
+    if (intent) {
+      this.logger.debug(
+        `Found taskId=${intent.result?.taskId} trigger=${intent.result?.trigger}`,
+      );
+
+      tasks = [intent.task];
+
+      if (intent.result?.cancel && intent.record) {
+        this.logger.log(
+          `Cancelling ongoing task taskId=${intent.task?.taskId}`,
+        );
+        await this.tasksHandler.cancelTask({
+          sessionId: message.sessionId,
+          taskId: intent.task.taskId,
+        });
+        tasks = [];
+        taskCancelled = intent.task.taskId;
+      }
+
+      if (
+        intent.result?.match &&
+        intent.result?.trigger &&
+        !intent.record &&
+        !intent.result.cancel
+      ) {
+        const task = intent.task;
+        this.logger.log(`Trigger task ${intent.result.taskId}`);
+        const ev: ToolTriggerEventDto = {
+          appId: task.appId,
+          name: task.name,
+          repositoryId: task.taskId,
+          sessionId: message.sessionId,
+          schema: null,
+          source: 'agent',
+          values: {
+            taskId: task.taskId,
+          },
+        };
+        await this.tasks.trigger(ev);
+        return;
+      }
+    }
+
     const tasksList = (tasks || []).map((t) => ({
       name: t.name,
       description: t.description,
     }));
 
-    const currentTask = await this.tasks.getCurrentTask(message.sessionId);
+    let currentTask = await this.tasks.getCurrentTask(message.sessionId);
+
+    if (currentTask && currentTask.taskId === taskCancelled) {
+      currentTask = null;
+    }
 
     let currentField: TaskFieldDto;
 
@@ -161,7 +190,7 @@ export class DialogueChatService {
       .map((r) => (r.tools?.length ? r.tools : []))
       .flat();
 
-    this.logger.debug(`Tools: ${tools.map((t) => t.name)}`);
+    // this.logger.debug(`Tools: ${tools.map((t) => t.name)}`);
 
     let hasCatchAll: AppToolsDTO;
     const matchCatchAll = tools.filter((t) => t.name === TOOL_CATCH_ALL);
@@ -251,7 +280,7 @@ export class DialogueChatService {
         app.settings?.skipToolResponse;
 
       // tools matched
-      this.logger.debug(`Matching tools ${JSON.stringify(res.tools)} `);
+      // this.logger.debug(`Matching tools ${res.tools.map((t) => t.name)}`);
 
       for (const tool of res.tools) {
         const matchingRepository = getRepositoryByTool(repositories, tool);
@@ -276,6 +305,7 @@ export class DialogueChatService {
           skipResponse = true;
         }
 
+        this.logger.debug(`Trigger tool ${tool.name} sessionId=${sessionId}`);
         this.triggerTool({
           tool,
           repository: matchingRepository,
@@ -371,18 +401,17 @@ export class DialogueChatService {
           if (res.tools) {
             // tools matched
             if (chunk.type && chunk.type === 'answer') {
-              this.logger.debug(`RESPONSE ${chunk.data} `);
+              this.logger.debug(`RESPONSE | ${chunk.data} `);
             }
             return;
           }
           (chunk || '')
             .split('\n')
-            .map((text) => this.logger.debug(`RESPONSE ${text}`));
+            .map((text) => this.logger.debug(`RESPONSE | ${text}`));
           return;
         }
 
         if (skipChatResponse) {
-          this.logger.debug(`Skip chat response chunk`);
           return;
         }
 
@@ -415,7 +444,7 @@ export class DialogueChatService {
         if (chunkBuffer.length > 1) {
           this.sendMessage(message, messageId, chunkBuffer);
         }
-        this.logger.debug(`chat response stream completed`);
+        this.logger.verbose(`chat response stream completed`);
       });
   }
 

@@ -16,8 +16,7 @@ import {
   DialogueDocument,
   DialogueDocumentSchema,
 } from './document/dialogue.document.schema';
-import { DialogueIntentEventsService } from './intent/dialogue.intent.events.service';
-import { DialogueIntentService } from './intent/dialogue.intent.service';
+import { DialogueIntentModule } from './intent/dialogue.intent.module';
 import { DialogueMemoryModule } from './memory/dialogue.memory.module';
 import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
 
@@ -31,6 +30,7 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
     DialogueMemoryModule,
     DialogueTaskModule,
     DialogueDocumentModule,
+    DialogueIntentModule,
   ],
   controllers: [DialogueDocumentController, DialogueSpeechController],
   providers: [
@@ -40,8 +40,6 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
     DialogueEmotionService,
     LLMTranslationService,
     DialogueChatService,
-    DialogueIntentService,
-    DialogueIntentEventsService,
     DialogueWelcomeService,
   ],
   exports: [DialogueSpeechService],

@@ -75,7 +75,7 @@ export class DialogueToolsService {
       repository: DialogueToolsRepositoryRecordDto,
     ) => Promise<void> | void,
   ): Promise<DialogueToolsRepositoryRecordDto[]> {
-    this.logger.debug(`Searching by context=${JSON.stringify(context)}`);
+    this.logger.verbose(`Searching by context=${JSON.stringify(context)}`);
 
     if (Object.keys(context).length === 0) {
       this.logger.warn(`Empty query, skip`);
@@ -83,11 +83,11 @@ export class DialogueToolsService {
     }
 
     const repositories = await this.toolsRepository.search(context);
-    this.logger.debug(`Found ${repositories.length} repositories`);
+    this.logger.verbose(`Found ${repositories.length} repositories`);
 
     if (recordCallback) {
       for (const repository of repositories) {
-        this.logger.debug(
+        this.logger.verbose(
           `Processing repository repositoryId=${repository.repositoryId}`,
         );
         try {
@@ -147,7 +147,9 @@ export class DialogueToolsService {
 
       repository.tools = repo.tools;
 
-      this.logger.debug(`Set tools to repositoryId=${repository.repositoryId}`);
+      this.logger.verbose(
+        `Set tools to repositoryId=${repository.repositoryId} sessionId=${repository.sessionId}`,
+      );
 
       await this.toolsRepository.save(repository);
       this.publishChanged('created', repository);
@@ -175,8 +177,8 @@ export class DialogueToolsService {
 
       repository.options = repo.options;
 
-      this.logger.debug(
-        `Added tools to repositoryId=${repository.repositoryId}`,
+      this.logger.verbose(
+        `Added tools to repositoryId=${repository.repositoryId} sessionId=${repository.sessionId}`,
       );
       await this.toolsRepository.save(repository);
 
@@ -193,8 +195,8 @@ export class DialogueToolsService {
     const repository = await this.get(repositoryId, false);
     if (!repository) return;
 
-    this.logger.debug(
-      `Delete record for repositoryId=${repository.repositoryId}`,
+    this.logger.verbose(
+      `Delete record for repositoryId=${repository.repositoryId} sessionId=${repository.sessionId}`,
     );
     await this.toolsRepository.remove(repository.repositoryId);
     this.publishChanged('deleted', repository);
