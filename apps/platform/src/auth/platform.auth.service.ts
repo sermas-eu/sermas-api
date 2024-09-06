@@ -83,7 +83,7 @@ export class PlatformAuthService {
         if (payload.appId && !payload.clientId.startsWith(payload.appId)) {
           clientId = getKeycloakClientId(payload.appId, payload.clientId);
         }
-        this.logger.debug(
+        this.logger.verbose(
           `Client ${payload.clientId} not found, trying ${clientId}`,
         );
         client = await this.keycloak.getClientByName(clientId);

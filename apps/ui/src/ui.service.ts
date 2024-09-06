@@ -83,7 +83,7 @@ export class UIService {
       return;
     }
 
-    this.logger.debug(`Send clear screen sessionId=${ev.record.sessionId}`);
+    this.logger.verbose(`Send clear screen sessionId=${ev.record.sessionId}`);
     this.showContent({
       appId: ev.appId,
       sessionId: ev.record.sessionId,
@@ -93,7 +93,7 @@ export class UIService {
   }
 
   async showContent(uiContent: UIContentDto) {
-    this.logger.debug(
+    this.logger.verbose(
       `send content contentType=${uiContent.contentType} appId=${uiContent.appId} sessionId=${uiContent.sessionId}`,
     );
 

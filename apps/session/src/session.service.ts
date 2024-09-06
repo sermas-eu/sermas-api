@@ -315,7 +315,7 @@ export class SessionService {
       settings: session.settings || app?.settings || {},
     });
 
-    this.logger.debug(`Creating session sessionId=${newSession.sessionId}`);
+    this.logger.log(`Creating session sessionId=${newSession.sessionId}`);
     await newSession.save();
     await this.publishSessionChange(newSession, 'created');
 
@@ -344,7 +344,7 @@ export class SessionService {
     await sessionRecord.save();
     await this.publishSessionChange(sessionRecord, 'updated');
 
-    this.logger.debug(
+    this.logger.verbose(
       `Updated sessionId=${session.sessionId} appId=${session.appId} modifiedAt=${sessionRecord.modifiedAt}`,
     );
 
@@ -469,7 +469,7 @@ export class SessionService {
       settings: ev.settings,
     });
 
-    this.logger.debug(
+    this.logger.verbose(
       `Created a new session on first interaction sessionId=${session.sessionId} appId=${ev.appId} userId=${ev.userId}`,
     );
   }

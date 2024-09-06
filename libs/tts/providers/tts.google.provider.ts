@@ -74,7 +74,7 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
 
       // console.log(this.voiceModels);
       // console.log(JSON.stringify(res1, null, 2));
-      this.logger.debug(`Loaded Google TTS voices`);
+      this.logger.verbose(`Loaded Google TTS voices`);
     } catch (e) {
       this.logger.error(`Failed to load Google TTS voices: ${e.message}`);
       this.logger.debug(e.stack);
