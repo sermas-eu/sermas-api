@@ -154,7 +154,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     for (const document of documents) {
       const chunks = this.extractChunks(
         document.content,
-        document.options?.parser,
+        document.metadata?.options?.parser,
       );
 
       let i = 0;

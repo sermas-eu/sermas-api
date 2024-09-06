@@ -94,7 +94,7 @@ export class MonitoringDatasetService {
           actor: payload.actor,
         },
       );
-      this.logger.debug(`Saved audio chunck path=${assetPath}`);
+      this.logger.verbose(`Saved audio chunck path=${assetPath}`);
     } catch (e: any) {
       this.logger.warn(`Failed to save audio chunk ${assetPath}: ${e.stack}`);
     }
@@ -137,7 +137,7 @@ export class MonitoringDatasetService {
     await record.save();
 
     const dto = toDTO<DatasetRecordDto>(record);
-    this.logger.debug(`${dto.type}: ${dto.label}`);
+    this.logger.verbose(`${dto.type}: ${dto.label}`);
 
     this.emitter.emit('monitoring.record', dto);
 

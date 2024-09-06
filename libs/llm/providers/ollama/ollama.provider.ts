@@ -32,6 +32,9 @@ export class OllamaChatProvider extends LLMChatProvider {
     'sermas-llama3:*': new TudaLLama3ModelAdapter(),
   };
 
+  private reachable: boolean | undefined;
+  private heartbeat: NodeJS.Timeout;
+
   constructor(protected config: LLMProviderConfig) {
     super(config);
     this.ollama = this.createClient();
@@ -42,6 +45,10 @@ export class OllamaChatProvider extends LLMChatProvider {
   }
 
   private async listModels(cached = true): Promise<OllamaModel[]> {
+    // check if avail
+    const avail = await this.available();
+    if (!avail) return [];
+
     try {
       const res = await this.ollama.list();
 
@@ -60,14 +67,32 @@ export class OllamaChatProvider extends LLMChatProvider {
   }
 
   async available(): Promise<boolean> {
+    // check periodically
+    if (!this.heartbeat) {
+      this.heartbeat = setInterval(async () => {
+        this.reachable = undefined;
+        try {
+          await this.available();
+        } catch {}
+      }, 5000);
+    }
+
     try {
-      if (!this.config.baseURL) return false;
-      const res = axios.get(this.config.baseURL, {
+      if (!this.config.baseURL) {
+        this.reachable = false;
+        return false;
+      }
+      const res = await axios.get(this.config.baseURL, {
         timeout: OLLAMA_TIMEOUT,
       });
-      if (!res) return false;
+      if (!res) {
+        this.reachable = false;
+        return false;
+      }
+      this.reachable = true;
       return true;
     } catch (e) {
+      this.reachable = false;
       return false;
     }
   }
@@ -115,6 +140,20 @@ export class OllamaChatProvider extends LLMChatProvider {
     chatMessages: LLMChatMessage[],
     options?: LLMChatOptions,
   ): Promise<LLMCallResult> {
+    const stream = new ChatMessageStream();
+
+    const emptyResponse = () => {
+      setTimeout(() => stream.close(), 100);
+      return {
+        stream,
+        abort: () => {
+          //
+        },
+      };
+    };
+
+    if (!this.reachable) return emptyResponse();
+
     const isStream = options?.stream === true || false;
 
     const messages: Message[] = [];
@@ -134,7 +173,6 @@ export class OllamaChatProvider extends LLMChatProvider {
       num_predict: 1500,
     };
 
-    const stream = new ChatMessageStream();
     const callOllama = async (args: ChatRequest & { stream: boolean }) => {
       try {
         if (args.stream === true) {
@@ -145,16 +183,6 @@ export class OllamaChatProvider extends LLMChatProvider {
         this.logger.error(`Ollama call failed: ${e.message}`);
       }
       return null;
-    };
-
-    const emptyResponse = () => {
-      setTimeout(() => stream.close(), 100);
-      return {
-        stream,
-        abort: () => {
-          //
-        },
-      };
     };
 
     if (!isStream) {

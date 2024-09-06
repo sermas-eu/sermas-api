@@ -248,7 +248,7 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
       token: this.token,
       name: client.id,
     });
-    this.logger.log(`clientId=${clientId} removed`);
+    this.logger.verbose(`clientId=${clientId} removed`);
   }
 
   extractResources(

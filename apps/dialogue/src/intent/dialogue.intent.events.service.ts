@@ -10,10 +10,10 @@ export class DialogueIntentEventsService {
 
   constructor(private readonly intent: DialogueIntentService) {}
 
-  @Subscribe({
-    topic: SermasTopics.dialogue.messages,
-  })
-  async onChatMessage(@Payload() payload: DialogueMessageDto) {
-    this.intent.matchOnEvent(payload);
-  }
+  // @Subscribe({
+  //   topic: SermasTopics.dialogue.messages,
+  // })
+  // async onChatMessage(@Payload() payload: DialogueMessageDto) {
+  //   this.intent.matchOnEvent(payload);
+  // }
 }

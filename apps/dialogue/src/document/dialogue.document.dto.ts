@@ -7,21 +7,6 @@ export interface RepositoryDocument {
   name: string;
 }
 
-export class DialogueDocumentMetadataDto {
-  [k: string]: any;
-  @ApiPropertyOptional()
-  uri?: string;
-  @ApiPropertyOptional()
-  source?: string;
-}
-
-export const DocumentParseModeList = [
-  'sentence',
-  'single-line',
-  'double-line',
-] as const;
-export type DocumentParseMode = (typeof DocumentParseModeList)[number];
-
 export class DialogueDocumentOptionsDto {
   [k: string]: any;
   @ApiPropertyOptional({
@@ -30,6 +15,27 @@ export class DialogueDocumentOptionsDto {
   })
   parser?: DocumentParseMode;
 }
+
+export class DialogueDocumentMetadataDto {
+  [k: string]: any;
+  @ApiPropertyOptional()
+  uri?: string;
+  @ApiPropertyOptional()
+  source?: string;
+  @ApiPropertyOptional()
+  filename?: string;
+  @ApiPropertyOptional({
+    description: 'Configure the document import handling, such as parser',
+  })
+  options?: DialogueDocumentOptionsDto;
+}
+
+export const DocumentParseModeList = [
+  'sentence',
+  'single-line',
+  'double-line',
+] as const;
+export type DocumentParseMode = (typeof DocumentParseModeList)[number];
 
 export class DialogueDocumentDto {
   @ApiProperty()
@@ -41,13 +47,8 @@ export class DialogueDocumentDto {
   @ApiProperty()
   content?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   metadata?: DialogueDocumentMetadataDto;
-
-  @ApiProperty({
-    description: 'Configure the document import handling, such as parser',
-  })
-  options?: DialogueDocumentOptionsDto;
 }
 
 export class RagWebsiteDto {

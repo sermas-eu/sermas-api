@@ -53,7 +53,7 @@ Answer the user exclusively with the language code, avoid any further reasoning.
       label: 'translation-translate',
     });
 
-    text.split('\n').forEach((line) => this.logger.debug(`| ${line}`));
+    text.split('\n').forEach((line) => this.logger.verbose(`| ${line}`));
 
     try {
       const translation = await this.llmProvider.chat({
@@ -73,7 +73,9 @@ Never add Notes or Explanations.`,
 
       perf('openai');
 
-      translation.split('\n').forEach((line) => this.logger.debug(`| ${line}`));
+      translation
+        .split('\n')
+        .forEach((line) => this.logger.verbose(`| ${line}`));
 
       return translation;
     } catch (e) {

@@ -45,7 +45,7 @@ export class MonitorService {
 
       const fullLabel = `${label || ''} ${label2 || ''}`;
 
-      if (print) this.logger.debug(`${fullLabel} ${Math.floor(elapsed)}ms`);
+      if (print) this.logger.verbose(`${fullLabel} ${Math.floor(elapsed)}ms`);
 
       const ev: MonitorRecordDto = {
         appId: context.appId,

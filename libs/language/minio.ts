@@ -1,3 +1,4 @@
+import { ASSET_METADATA_PREFIX } from 'apps/ui/src/ui.asset.service';
 import { MinioClient } from 'nestjs-minio-client';
 import { Readable, Transform } from 'stream';
 
@@ -51,6 +52,29 @@ export const minioListFiles = async <T = any>(
   return list;
 };
 
+export const minioReadMetadata = async <T = any>(
+  minio: MinioClient,
+  repository: string,
+  filepath: string,
+  prefix = ASSET_METADATA_PREFIX,
+) => {
+  const res = await minio.statObject(repository, filepath);
+  console.warn(filepath, '-->', res);
+
+  if (!res.metaData) return {} as T;
+
+  const metadata = Object.keys(res.metaData)
+    .filter((key) => key.startsWith(prefix))
+    .reduce(
+      (o, k) => ({
+        ...o,
+        [k.replace(prefix, '')]: JSON.parse(res.metaData[k]),
+      }),
+      {} as Record<string, any>,
+    );
+
+  return metadata as T;
+};
 export const minioReadFile = async <T = string>(
   minio: MinioClient,
   repository: string,

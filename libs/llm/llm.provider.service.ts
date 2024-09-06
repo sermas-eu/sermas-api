@@ -148,7 +148,7 @@ export class LLMProviderService implements OnModuleInit {
         if (tagProvider) {
           config.provider = tagProvider;
           config.model = tagModel;
-          this.logger.debug(
+          this.logger.verbose(
             `Using LLM provider ${tagProvider}/${tagModel} for tag ${config.tag}`,
           );
         }
@@ -235,7 +235,7 @@ export class LLMProviderService implements OnModuleInit {
       );
     }
 
-    this.logger.debug(
+    this.logger.verbose(
       `Initialized LLM provider provider=${config.provider} model=${model}`,
     );
     this.chatProviders[providerId] = provider;

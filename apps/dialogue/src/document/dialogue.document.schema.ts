@@ -3,7 +3,6 @@ import { HydratedDocument } from 'mongoose';
 import {
   DialogueDocumentDto,
   DialogueDocumentMetadataDto,
-  DialogueDocumentOptionsDto,
 } from './dialogue.document.dto';
 
 export type DialogueDocumentDocument = HydratedDocument<DialogueDocument>;
@@ -18,8 +17,6 @@ export class DialogueDocument extends DialogueDocumentDto {
   content: string;
   @Prop({ index: true, type: Object, default: () => ({}) })
   metadata?: DialogueDocumentMetadataDto;
-  @Prop({ index: true, type: Object, default: () => ({}) })
-  options?: DialogueDocumentOptionsDto;
   @Prop({ default: () => new Date() })
   created: Date;
   @Prop({ default: () => new Date() })

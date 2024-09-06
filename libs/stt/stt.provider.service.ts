@@ -49,7 +49,7 @@ export class STTProviderService {
     const provider = this.configService.get('STT_SERVICE');
     let text = '';
 
-    this.logger.log(
+    this.logger.verbose(
       `Processing speech input with ${provider} language=${language}`,
     );
 

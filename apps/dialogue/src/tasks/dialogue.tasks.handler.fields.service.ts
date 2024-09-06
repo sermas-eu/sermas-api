@@ -136,7 +136,7 @@ export class DialogueTasksHandlerFieldsService {
         {
           name: TOOL_CANCEL_TASK_NAME,
           description:
-            'User explicitly indicates the intention to leave or cancel an ongoing interaction',
+            'User explicitly indicates the intention to leave or cancel an ongoing task',
           schema: [
             {
               parameter: 'context',
@@ -157,7 +157,7 @@ export class DialogueTasksHandlerFieldsService {
       ],
     });
 
-    this.logger.debug(`Added cancel tool for task ${ev.task.taskId}`);
+    this.logger.debug(`Added cancel tool for taskId=${ev.task.taskId}`);
   }
 
   async triggerTool(context: {
@@ -456,7 +456,7 @@ export class DialogueTasksHandlerFieldsService {
       });
     }
 
-    switch (context.field.type) {
+    switch (context?.field?.type) {
       case 'external':
         if (context.field.type === 'external') {
           this.logger.debug(

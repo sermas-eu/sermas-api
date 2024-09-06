@@ -718,7 +718,7 @@ export class KeycloakAdminService implements OnModuleInit {
         }
       }
 
-      this.logger.log(`Creating client ${data.name}`);
+      this.logger.verbose(`Creating client ${data.name}`);
       await this.client.post(
         `${this.keycloakUrl}/admin/realms/${data.realm}/clients`,
         payload,
@@ -860,7 +860,7 @@ export class KeycloakAdminService implements OnModuleInit {
         );
       }),
     );
-    this.logger.log(`Permissions created for clientId=${clientId}.`);
+    this.logger.verbose(`Permissions created for clientId=${clientId}.`);
   }
 
   async deleteClient(data: KeycloakClientsCreationDto): Promise<any> {
@@ -949,7 +949,7 @@ export class KeycloakAdminService implements OnModuleInit {
     clientId: string,
     data: KeycloakRoleCreateDto,
   ): Promise<void> {
-    this.logger.log(`Add role ${data.name}`);
+    this.logger.verbose(`Add role ${data.name}`);
     try {
       await this.client.post(
         `${this.keycloakUrl}/admin/realms/${realm}/clients/${clientId}/roles`,
@@ -969,7 +969,7 @@ export class KeycloakAdminService implements OnModuleInit {
   async addClientRolePolicy(
     req: KeycloakRolePolicyCreateRequestDto,
   ): Promise<void> {
-    this.logger.log(`Add client role-based policy ${req.data.name}`);
+    this.logger.verbose(`Add client role-based policy ${req.data.name}`);
     try {
       await this.client.post(
         `${this.keycloakUrl}/admin/realms/${req.realm}/clients/${req.clientId}/authz/resource-server/policy/role`,
@@ -989,7 +989,7 @@ export class KeycloakAdminService implements OnModuleInit {
   async addClientGroupPolicy(
     req: { clientId: string } & KcApiParam<KeycloakGroupPolicyCreateDto>,
   ): Promise<void> {
-    this.logger.log(`Add client role-based policy ${req.data.name}`);
+    this.logger.verbose(`Add client role-based policy ${req.data.name}`);
     try {
       await this.client.post(
         `${this.keycloakUrl}/admin/realms/${req.realm}/clients/${req.clientId}/authz/resource-server/policy/group`,
@@ -1011,7 +1011,7 @@ export class KeycloakAdminService implements OnModuleInit {
     realm: string,
     data: KeycloakRoleCreateDto,
   ): Promise<void> {
-    this.logger.log(`Add role ${data.name}`);
+    this.logger.verbose(`Add role ${data.name}`);
     try {
       await this.client.post(
         `${this.keycloakUrl}/admin/realms/${realm}/roles`,
@@ -1108,7 +1108,7 @@ export class KeycloakAdminService implements OnModuleInit {
   }
 
   async saveUser(token: string, realm: string, data: KeycloakUser) {
-    this.logger.log(`Add user username=${data.username}`);
+    this.logger.verbose(`Add user username=${data.username}`);
     try {
       const filtered = await this.listUsers(token, realm, {
         username: data.username,
@@ -1133,7 +1133,7 @@ export class KeycloakAdminService implements OnModuleInit {
           },
         );
       } else {
-        this.logger.log('Update user');
+        this.logger.verbose('Update user');
         //do not update credentials
         delete payload.credentials;
         await this.client.put(

@@ -112,7 +112,7 @@ export class DialogueSpeechService {
   }
 
   async chat(ev: DialogueMessageDto): Promise<void> {
-    this.logger.debug(
+    this.logger.verbose(
       `Received chat message actor=${ev.actor} sessionId=${ev.sessionId} appId=${ev.appId}`,
     );
     this.emitter.emit('dialogue.chat.message', ev);
@@ -153,14 +153,14 @@ export class DialogueSpeechService {
         return;
       }
 
-      this.logger.log(`STT result: [${payload.language}] ${text}`);
+      this.logger.verbose(`STT result: [${payload.language}] ${text}`);
       // this.dataset.saveRecord('stt', text, buffer, clientId, 'wav');
 
       const emotion = this.emotion.getUserEmotion(
         dialogueMessagePayload.sessionId,
       );
 
-      this.logger.log(`User main emotion: ${emotion}`);
+      this.logger.verbose(`User main emotion: ${emotion}`);
 
       const ttsEvent: DialogueMessageDto = {
         ...dialogueMessagePayload,
@@ -241,7 +241,7 @@ export class DialogueSpeechService {
     if (agentResponseEvent.text) {
       agentResponseEvent.text
         .split('\n')
-        .forEach((t) => this.logger.debug(`TTS | ${t}`));
+        .forEach((t) => this.logger.verbose(`TTS | ${t}`));
     }
 
     try {

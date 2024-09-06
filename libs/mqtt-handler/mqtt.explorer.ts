@@ -128,7 +128,7 @@ export class MqttExplorer implements OnModuleInit, OnModuleDestroy {
     );
     options.topic = topics;
 
-    topics.forEach((topic) => this.logger.debug(`SUB ${topic}`));
+    topics.forEach((topic) => this.logger.verbose(`SUB ${topic}`));
 
     // / @SERMAS
 

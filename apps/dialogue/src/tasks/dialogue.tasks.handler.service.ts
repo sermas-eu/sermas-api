@@ -125,10 +125,27 @@ export class DialogueTasksHandlerService {
   async onTaskStarted(ev: DialogueTaskProgressDto) {
     if (ev.type !== 'started') return;
 
-    // add option to cancel task
-    if (!ev.task.options?.triggerOnce) {
-      await this.fieldHandler.ensureCancelTaskTool(ev);
+    //NOTE: handled via intents
+    // // add option to cancel task
+    // if (!ev.task.options?.triggerOnce) {
+    //   await this.fieldHandler.ensureCancelTaskTool(ev);
+    // }
+  }
+
+  async cancelTask(ev: { taskId: string; sessionId: string }) {
+    this.logger.debug(`Cancelling task ${ev.taskId}`);
+    const task = await this.tasks.read(ev.taskId);
+    if (!task) {
+      this.logger.warn(
+        `Cannot remove cancel option, task not found taskId=${ev.taskId}`,
+      );
     }
+    const record = await this.ensureRecord(ev.sessionId, task);
+    await this.updateTaskProgress('aborted', task, record);
+    this.emitter.emit('task.user-aborted', {
+      record,
+      task,
+    });
   }
 
   async onToolTriggered(ev: ToolTriggerEventDto) {
@@ -144,18 +161,9 @@ export class DialogueTasksHandlerService {
         this.logger.warn(`Cannot remove cancel option, missing taskId`);
         return;
       }
-      this.logger.debug(`Cancelling task ${ev.values?.taskId}`);
-      const task = await this.tasks.read(ev.values?.taskId);
-      if (!task) {
-        this.logger.warn(
-          `Cannot remove cancel option, task not found taskId=${ev.values?.taskId}`,
-        );
-      }
-      const record = await this.ensureRecord(ev.sessionId, task);
-      await this.updateTaskProgress('aborted', task, record);
-      this.emitter.emit('task.user-aborted', {
-        record,
-        task,
+      await this.cancelTask({
+        sessionId: ev.sessionId,
+        taskId: ev.values.taskId,
       });
       return;
     }
@@ -329,9 +337,13 @@ export class DialogueTasksHandlerService {
     task: DialogueTaskDto,
     record: DialogueTaskRecordDto,
   ) {
+    this.logger.debug(
+      `Update task status ${record.status} -> ${type} task=${task.name}`,
+    );
+
     if (
-      (record.status === type && type === 'completed') ||
-      type === 'aborted'
+      record.status === type &&
+      (type === 'completed' || type === 'aborted')
     ) {
       this.logger.log(`Task status is already ${type}. Skip update`);
       return record;
@@ -534,9 +546,14 @@ export class DialogueTasksHandlerService {
 
     const completed =
       record.status === 'completed' ||
-      (record.status === 'ongoing' && currentField === undefined) ||
+      (record.status === 'ongoing' &&
+        (currentField === undefined ||
+          (!currentField?.name && !currentField?.type))) ||
       fields.length === 0;
-    this.logger.debug(`Task ${completed ? '' : 'not '}completed`);
+
+    this.logger.debug(
+      `Task ${completed ? '' : 'not '}completed taskId=${task.taskId} sessionId=${record.sessionId}`,
+    );
 
     if (completed) {
       record = await this.updateTaskProgress('completed', task, record);
@@ -544,15 +561,22 @@ export class DialogueTasksHandlerService {
     }
 
     this.logger.log(
-      `Current field name=${currentField?.name} type=${currentField?.type}`,
+      `Current field name=${currentField?.name} type=${currentField?.type} taskId=${task.taskId} sessionId=${record.sessionId}`,
     );
 
     record = await this.updateTaskProgress('ongoing', task, record);
-    await this.fieldHandler.handleField({
-      field: currentField,
-      task,
-      record,
-    });
+    try {
+      await this.fieldHandler.handleField({
+        field: currentField,
+        task,
+        record,
+      });
+    } catch (e) {
+      this.logger.error(
+        `Failed to handle field name=${currentField?.name}: ${e.message} taskId=${task.taskId} sessionId=${record.sessionId}`,
+      );
+      this.logger.debug(e.stack);
+    }
     perf('field');
   }
 }

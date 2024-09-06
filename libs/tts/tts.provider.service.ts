@@ -45,7 +45,7 @@ export class TTSProviderService {
       ev.ttsEnabled === false ||
       (settings && settings.ttsEnabled === false)
     ) {
-      this.logger.debug(
+      this.logger.verbose(
         `TTS disabled by settings for sessionId=${ev.sessionId}`,
       );
       return Buffer.from([]);
@@ -75,7 +75,7 @@ export class TTSProviderService {
       return Buffer.from([]);
     }
     if (text.length < 2) {
-      this.logger.debug('Empty text, skip');
+      this.logger.verbose('Empty text, skip');
       return Buffer.from([]);
     }
 

@@ -8,12 +8,16 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { UIAssetChangedDto } from 'apps/ui/src/ui.asset.dto';
+import {
+  minioListFiles,
+  minioReadFile,
+  minioReadMetadata,
+} from 'libs/language/minio';
 import { toDTO, uuidv4 } from 'libs/util';
 import { Client as MinioClient } from 'minio';
 import { Model } from 'mongoose';
 import { MinioService } from 'nestjs-minio-client';
 import * as path from 'path';
-import { minioListFiles, minioReadFile } from 'libs/language/minio';
 import {
   DialogueDocumentDto,
   RagWebsiteDto,
@@ -21,9 +25,9 @@ import {
 } from './dialogue.document.dto';
 import { DialogueDocument } from './dialogue.document.schema';
 // import axios from 'axios';
+import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
 import { CheerioCrawler, Sitemap } from 'crawlee';
 import { compile } from 'html-to-text';
-import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
 
 const QUEUE_TIMEOUT_SEC = 10 * 1000;
 type ImportQueueItem = {
@@ -91,6 +95,22 @@ export class DialogueDocumentService implements OnModuleInit {
     }
   }
 
+  async loadFileMetadata<T = Record<string, any>>(filepath: string) {
+    try {
+      return await minioReadMetadata<T>(
+        this.minioService.client,
+        this.repository,
+        filepath,
+      );
+    } catch (e) {
+      this.logger.error(
+        `Failed to load metadata for ${filepath}: ${e.message}`,
+      );
+      this.logger.debug(e.stack);
+    }
+    return {};
+  }
+
   async listFiles(prefix?: string) {
     const minio: MinioClient = this.minioService.client;
 
@@ -144,6 +164,8 @@ export class DialogueDocumentService implements OnModuleInit {
 
       this.logger.debug(`Importing appId=${doc.appId} ${doc.name}`);
 
+      const metadata = await this.loadFileMetadata(doc.name);
+
       const filepath = doc.name;
       const basename = path.basename(filepath);
       const ext = path.extname(filepath);
@@ -152,7 +174,8 @@ export class DialogueDocumentService implements OnModuleInit {
       const document: DialogueDocumentDto = {
         metadata: {
           source: 'import-datasets',
-          filename: doc.name.replace(`${doc.appId}/${doc.type}`, ''),
+          filename: doc.name.replace(`${doc.appId}/${doc.type}/`, ''),
+          ...metadata,
         },
         content: '',
         appId,

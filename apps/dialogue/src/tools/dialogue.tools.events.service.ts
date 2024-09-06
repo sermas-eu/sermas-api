@@ -134,7 +134,7 @@ export class DialogueToolsEventsService {
           triggerOnce: true,
         },
         tools: list.map((param): AppToolsDTO => {
-          this.logger.debug(`Adding UI tool for '${param.description}'`);
+          this.logger.verbose(`Adding UI tool for '${param.description}'`);
           const schema: ToolsParameterSchema[] = [
             {
               description: 'selection',

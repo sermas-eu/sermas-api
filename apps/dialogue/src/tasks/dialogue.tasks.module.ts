@@ -48,6 +48,7 @@ import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service';
     DialogueTasksService,
     DialogueToolsModule,
     DialogueTaskRecordService,
+    DialogueTasksHandlerService,
   ],
 })
 export class DialogueTaskModule {}
