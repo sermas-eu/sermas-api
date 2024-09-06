@@ -267,7 +267,7 @@ export class DialogueChatService {
       ...(llmArgs || {}),
       params,
       system: chatPrompt,
-      // message: message.text,
+      message: message.text,
       history,
       tools,
       knowledge,
