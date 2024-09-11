@@ -1,8 +1,9 @@
 // Imports the Google Cloud client library
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosError } from 'axios';
 import { Sema } from 'async-sema';
+import axios, { AxiosError } from 'axios';
+import { stripTags } from '../ssml/util';
 import { ITextToSpeech, SpeakParam } from '../tts.dto';
 
 @Injectable()
@@ -43,7 +44,10 @@ export class ElevenIOTextToSpeech implements ITextToSpeech {
   }
 
   private async processRequest(params: SpeakParam): Promise<Buffer> {
-    const { text } = params;
+    let text = params.text;
+    if (!params.text && params.ssml) {
+      text = stripTags(params.ssml);
+    }
 
     if (!text)
       throw new BadRequestException(`Field text is required to perform TTS`);

@@ -2,6 +2,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { stripTags } from '../ssml/util';
 import { ITextToSpeech, SpeakParam } from '../tts.dto';
 import { supportedLanguages } from '../utils/barkai-languages';
 
@@ -16,7 +17,10 @@ export class BarkAITextToSpeech implements ITextToSpeech {
   }
 
   public async speak(params: SpeakParam): Promise<Buffer> {
-    const { text } = params;
+    let text = params.text;
+    if (!params.text && params.ssml) {
+      text = stripTags(params.ssml);
+    }
 
     const languageCode = params.languageCode;
 

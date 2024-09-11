@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as toBuffer from 'typedarray-to-buffer';
+import { fixSSML } from '../ssml/util';
 import { ITextToSpeech, SpeakParam } from '../tts.dto';
 
 // { lang: { gender: [ model names ] } }
@@ -92,7 +93,7 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
 
     const modelType = this.config.get('GOOGLE_TTS_MODEL_TYPE') || 'Neural';
 
-    const { text, ssml } = params;
+    let { text, ssml } = params;
 
     const languageCode = params.languageCode;
 
@@ -163,6 +164,14 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
     this.logger.debug(
       `TTS model for languageCode=${languageCode} gender=${gender} ${ttsModelName}`,
     );
+
+    if (ssml) {
+      const ssmlCheck = await fixSSML(ssml, text, 'google');
+      if (!ssmlCheck.ssml) {
+        ssml = '';
+        text = text || ssmlCheck.text;
+      }
+    }
 
     // Construct the request
     const request: protos.google.cloud.texttospeech.v1.ISynthesizeSpeechRequest =

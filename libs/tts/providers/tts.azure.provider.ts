@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 import * as toBuffer from 'typedarray-to-buffer';
 import { ITextToSpeech, SpeakParam } from '../tts.dto';
+import { fixSSML } from '../ssml/util';
 
 // { lang: { gender: [ model names ] } }
 // { 'it-IT': { 'F': [ ... ] } }
@@ -86,7 +87,7 @@ export class AzureTextToSpeech implements ITextToSpeech, OnModuleInit {
   }
 
   public async speak(params: SpeakParam): Promise<Buffer> {
-    const { text, ssml } = params;
+    let { text, ssml } = params;
 
     const languageCode = params.languageCode;
 
@@ -133,8 +134,15 @@ export class AzureTextToSpeech implements ITextToSpeech, OnModuleInit {
       `TTS model for languageCode=${languageCode} gender=${gender} ${ttsModelName}`,
     );
 
-    speechConfig.speechSynthesisVoiceName = ttsModelName;
+    if (ssml) {
+      const ssmlCheck = await fixSSML(ssml, text);
+      if (!ssmlCheck.ssml) {
+        ssml = '';
+        text = text || ssmlCheck.text;
+      }
+    }
 
+    speechConfig.speechSynthesisVoiceName = ttsModelName;
     const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
 
     // convert callback function to promise

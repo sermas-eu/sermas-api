@@ -2,6 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LLMService } from 'libs/llm/llm.service';
+import { stripTags } from '../ssml/util';
 import { ITextToSpeech, SpeakParam } from '../tts.dto';
 
 type OpenaiVoiceModels =
@@ -52,10 +53,15 @@ export class OpenAITextToSpeech implements ITextToSpeech {
     const model =
       this.config.get('OPENAI_TTS_MODEL') === 'tts-1' ? 'tts-1' : 'tts-1-hd';
 
+    let text = params.text;
+    if (!params.text && params.ssml) {
+      text = stripTags(params.ssml);
+    }
+
     const audio = await openai.audio.speech.create({
       model,
       voice,
-      input: params.text,
+      input: text,
       response_format: 'wav',
     });
     return Buffer.from(await audio.arrayBuffer());
