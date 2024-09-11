@@ -13,12 +13,14 @@ interface CachedUserCharacterizationEventDto
   ts: Date;
 }
 
+// Keep the detected emotion reference for EMOTION_LIFESPAN
+export const EMOTION_LIFESPAN = 30 * 1000;
+
 @Injectable()
 export class EmotionTrackerService {
   private readonly logger = new Logger(EmotionTrackerService.name);
 
-  // 10sec before reset
-  private timerLength = 10 * 1000;
+  private timerLength = EMOTION_LIFESPAN;
   private timer: NodeJS.Timeout;
 
   private threshold = 0.5;
