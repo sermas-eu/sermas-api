@@ -126,9 +126,6 @@ export class AzureTextToSpeech implements ITextToSpeech, OnModuleInit {
     }
 
     if (!ttsModelName) {
-      this.logger.warn(
-        `Failed to load a TTS voice model, using default fallback`,
-      );
       ttsModelName = defaultModelName;
     }
 

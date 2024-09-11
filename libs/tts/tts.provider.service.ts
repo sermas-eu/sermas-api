@@ -108,9 +108,22 @@ export class TTSProviderService {
     };
 
     if (!params.ssml && params.text) {
-      const ssmlGenerate = this.config.get('SSML_GENERATE') === '1';
-      if (ssmlGenerate && params.emotion && params.emotion !== 'neutral') {
-        params.ssml = await this.ssmlService.generate(text, params.emotion);
+      const ssmlGenerate =
+        params.emotion !== undefined &&
+        this.config.get('SSML_GENERATE') === '1';
+      if (ssmlGenerate) {
+        const session = await this.session.read(ev.sessionId, false);
+        let context = '';
+        if (session && session.settings?.prompt?.text) {
+          context = `Your application context is: ${session.settings?.prompt?.text?.replace(/\n/g, ' ')}`;
+        }
+
+        params.ssml = await this.ssmlService.generate({
+          text,
+          language: params.languageCode,
+          emotion: params.emotion,
+          context,
+        });
       }
     }
 
