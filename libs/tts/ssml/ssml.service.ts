@@ -52,6 +52,7 @@ Used to add or remove emphasis from text contained by the element. The <emphasis
 
 <say-as interpret-as="string" format="string" detail="string"> 
 Use to wrap acronyms, numbers and sequences
+- interpret-as (optional) values: currency telephone verbatim time characters cardinal ordinal fraction beep unit time
 
 `;
 

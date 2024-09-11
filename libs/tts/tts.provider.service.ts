@@ -108,9 +108,7 @@ export class TTSProviderService {
     };
 
     if (!params.ssml && params.text) {
-      const ssmlGenerate =
-        params.emotion !== undefined &&
-        this.config.get('SSML_GENERATE') === '1';
+      const ssmlGenerate = this.config.get('SSML_GENERATE') === '1';
       if (ssmlGenerate) {
         const session = await this.session.read(ev.sessionId, false);
         let context = '';
