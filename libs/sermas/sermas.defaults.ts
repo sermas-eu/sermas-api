@@ -198,7 +198,9 @@ export const SermasDefaultConfig = {
   DATASET_BUCKET: 'sermas-dataset',
 
   // SSML_GENERATE Enable empathic LLM-generated SSML for TTS
-  SSML_GENERATE: '1',
+  SSML_GENERATE: '0',
+  // SSML_GENERATE Log generated SSML content
+  SSML_PRINT: '0',
 
   // AZURE_KEY Azure subscription key (used as fallback to more specific ones)
   AZURE_KEY: '',

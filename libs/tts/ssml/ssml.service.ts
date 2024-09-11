@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { LanguageCode } from 'libs/language/lang-codes';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { Emotion } from 'libs/sermas/sermas.dto';
@@ -14,7 +15,10 @@ export class SSMLParams {
 export class SSMLService {
   private readonly logger = new Logger(SSMLService.name);
 
-  constructor(private readonly llmProvider: LLMProviderService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly llmProvider: LLMProviderService,
+  ) {}
 
   async generate(params: SSMLParams) {
     if (!params.text) return params.text;
@@ -74,7 +78,8 @@ Use to wrap acronyms, numbers and sequences
         }
       }
 
-      ssml.split('\n').forEach((line) => this.logger.debug(`SSML | ${line}`));
+      if (this.config.get('SSML_PRINT') === '1')
+        ssml.split('\n').forEach((line) => this.logger.debug(`SSML | ${line}`));
 
       return ssml;
     } catch (e: any) {
