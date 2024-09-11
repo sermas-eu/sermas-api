@@ -1,5 +1,4 @@
 // Imports the Google Cloud client library
-import { type SpeechClient as GSpeechClient } from '@google-cloud/speech';
 import {
   Injectable,
   InternalServerErrorException,
@@ -16,34 +15,30 @@ import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 export class AzureSpeechToText implements ISpeechToText {
   private readonly logger = new Logger(AzureSpeechToText.name);
 
-  private client: GSpeechClient;
-
-  private speechConfig: sdk.SpeechConfig;
-
   constructor(private readonly config: ConfigService) {}
 
   private async loadSpeechConfig(
     language: string,
   ): Promise<sdk.SpeechConfig | null> {
-    if (this.speechConfig) return this.speechConfig;
+    const azureKey =
+      this.config.get('STT_AZURE_KEY') || this.config.get('AZURE_KEY');
+    const azureRegion =
+      this.config.get('STT_AZURE_REGION') || this.config.get('AZURE_REGION');
 
-    if (
-      !this.config.get('STT_AZURE_KEY') ||
-      !this.config.get('STT_AZURE_REGION')
-    ) {
+    if (!azureKey || !azureRegion) {
       this.logger.warn(
         `process.env.STT_AZURE_KEY and process.env.STT_AZURE_REGION are missing. Cannot use azure STT as a provider`,
       );
       return null;
     }
 
-    this.speechConfig = sdk.SpeechConfig.fromSubscription(
-      this.config.get('STT_AZURE_KEY'),
-      this.config.get('STT_AZURE_REGION'),
+    const speechConfig = sdk.SpeechConfig.fromSubscription(
+      azureKey,
+      azureRegion,
     );
-    // this.speechConfig.speechRecognitionLanguage = 'en-US';
-    this.speechConfig.speechRecognitionLanguage = language;
-    return this.speechConfig;
+
+    speechConfig.speechRecognitionLanguage = language;
+    return speechConfig;
   }
 
   public async text(

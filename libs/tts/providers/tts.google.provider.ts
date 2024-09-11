@@ -25,7 +25,7 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit() {
-    await this.loadVoices();
+    this.loadVoices();
   }
 
   //

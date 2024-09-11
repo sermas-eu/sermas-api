@@ -11,6 +11,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SessionService } from 'apps/session/src/session.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { mapLanguageCode } from '../language/language';
+import { AzureTextToSpeech } from './providers/tts.azure.provider';
 import { SSMLService } from './ssml/ssml.service';
 import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto';
 
@@ -22,6 +23,7 @@ export class TTSProviderService {
     private readonly googletts: GoogleTextToSpeech,
     private readonly barkaitts: BarkAITextToSpeech,
     private readonly openaitts: OpenAITextToSpeech,
+    private readonly azuretts: AzureTextToSpeech,
     private readonly eleveniotts: ElevenIOTextToSpeech,
 
     private readonly configService: ConfigService,
@@ -136,6 +138,10 @@ export class TTSProviderService {
       case 'google':
         data = await this.googletts.speak(params);
         perf('google');
+        break;
+      case 'azure':
+        data = await this.azuretts.speak(params);
+        perf('azure');
         break;
       case 'elevenio':
         data = await this.eleveniotts.speak(params);

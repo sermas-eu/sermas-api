@@ -101,6 +101,11 @@ export const SermasDefaultConfig = {
   // GOOGLE_TTS_MODEL_TYPE Preferred Google TTS model type (such as Neural, Wavenet or Standard). See https://cloud.google.com/text-to-speech/docs/voices
   GOOGLE_TTS_MODEL_TYPE: 'Neural',
 
+  // TTS_AZURE_KEY Azure subscription key
+  TTS_AZURE_KEY: '',
+  // TTS_AZURE_REGION Azure region
+  TTS_AZURE_REGION: '',
+
   // ELEVENIO_APIKEY Elevenio API key
   ELEVENIO_APIKEY: '',
   // ELEVENIO_VOICEIDS Elevenio voice id, separated by comma
@@ -194,6 +199,11 @@ export const SermasDefaultConfig = {
 
   // SSML_GENERATE Enable empathic LLM-generated SSML for TTS
   SSML_GENERATE: '1',
+
+  // AZURE_KEY Azure subscription key (used as fallback to more specific ones)
+  AZURE_KEY: '',
+  // AZURE_REGION Azure region (used as fallback to more specific ones)
+  AZURE_REGION: '',
 };
 
 export type SermasApiConfig = typeof SermasDefaultConfig;
