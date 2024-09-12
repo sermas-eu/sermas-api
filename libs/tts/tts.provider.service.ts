@@ -1,4 +1,4 @@
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -9,6 +9,7 @@ import { OpenAITextToSpeech } from './providers/tts.openai.provider';
 
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SessionService } from 'apps/session/src/session.service';
+import { Cache } from 'cache-manager';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { mapLanguageCode } from '../language/language';
 import { AzureTextToSpeech } from './providers/tts.azure.provider';
