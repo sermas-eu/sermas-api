@@ -7,6 +7,7 @@ import {
 } from 'libs/llm/providers/provider.dto';
 import { ChatMessageStream } from '../../stream/chat-message.stream';
 import { LLMChatProvider } from '../chat.provider';
+import { ChatCompletionMessageParam } from 'groq-sdk/resources/chat/completions';
 
 export class GroqChatProvider extends LLMChatProvider {
   private readonly groq: Groq;
@@ -47,11 +48,11 @@ export class GroqChatProvider extends LLMChatProvider {
   ): Promise<LLMCallResult> {
     const isStream = options?.stream === true || false;
 
-    const messages: Groq.Chat.CompletionCreateParams.Message[] = [];
+    const messages: ChatCompletionMessageParam[] = [];
 
     for (const msg of chatMessages) {
       // TODO handle function
-      const message: Groq.Chat.CompletionCreateParams.Message = {
+      const message: ChatCompletionMessageParam = {
         role: msg.role,
         content: msg.content,
       };

@@ -14,9 +14,9 @@ import {
   minioReadMetadata,
 } from 'libs/language/minio';
 import { toDTO, uuidv4 } from 'libs/util';
-import { Client as MinioClient } from 'minio';
+
 import { Model } from 'mongoose';
-import { MinioService } from 'nestjs-minio-client';
+import { MinioClient, MinioService } from 'nestjs-minio-client';
 import * as path from 'path';
 import {
   DialogueDocumentDto,
