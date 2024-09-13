@@ -2,83 +2,61 @@ import {
   PlatformAppDto,
   RepositoryAvatarDto,
 } from 'apps/platform/src/app/platform.app.dto';
+import { PromptTemplate } from 'libs/llm/prompt/template.prompt';
 
-export const createBaseAppPrompt = (
-  app: PlatformAppDto,
-  avatar?: RepositoryAvatarDto,
-) => {
-  const appPrompt: string[] = [
-    'This is your context, do not mention it in the answer.\n',
-  ];
-
-  if (app.settings?.prompt) {
-    appPrompt.push(`${app.settings?.prompt?.text}`);
-  }
-  if (app.settings?.language) {
-    appPrompt.push(
-      `Your message should use the language ${app.settings?.language}`,
-    );
-  }
-
-  let avatarPrompt = '';
-  if (avatar) {
-    avatarPrompt += `You are a digital avatar.`;
-    if (avatar.name) avatarPrompt += `Your name is ${avatar.name}.`;
-    if (avatar.gender) avatarPrompt += `Your gender is ${avatar.gender}`;
-    if (avatar.prompt) avatarPrompt += `\n${avatar.prompt}`;
-  }
-  if (avatarPrompt) {
-    // appPrompt.push(`CONTEXT:`);
-    appPrompt.push(avatarPrompt);
-  }
-
-  return appPrompt.join('\n');
+type AppPromptParams = {
+  type: 'welcome' | 'goodbye';
+  appPrompt?: string;
+  language?: string;
+  avatar?: {
+    name?: string;
+    gender?: string;
+    prompt?: string;
+  };
 };
 
-export const createListToolsPrompt = (
-  app: PlatformAppDto,
-  tools: string[],
-  avatar?: RepositoryAvatarDto,
-) => {
-  const prompt = [
-    `Welcome shortly the user offering to answer any question from INSTRUCTIONS.`,
-    `Inform the user you cover following capabilities as list, in a coincise form:`,
-  ];
-  const list = tools.join('\n');
-  prompt.push(list);
+const promptTemplate = PromptTemplate.create<AppPromptParams>(`
+This is your context, do not mention it in the answer.
+{{ appPrompt }}
 
-  return `${createBaseAppPrompt(app, avatar)}\n\n${prompt.join('\n')}`;
-};
+{{#if language }}Your message should use the language {{language}}.{{/if}}
 
-export const createAppPrompt = (
+You are a digital avatar.
+{{#if avatar.name}} Your name is {{avatar.name}}.{{/if}}
+{{#if avatar.gender}} Your gender is {{avatar.gender}}.{{/if}}
+{{#if avatar.prompt}} {{avatar.prompt}}.{{/if}}
+
+
+{{#if type === 'welcome' }}
+Provide a brief welcome message to the user
+{{else}}
+Provide a brief goodbye message to the user
+{{/if}}
+`);
+
+export const createAppPromptParams = (
+  type: 'welcome' | 'goodbye',
   app: PlatformAppDto,
   avatar?: RepositoryAvatarDto,
-  additionalPrompts?: string[],
-) => {
-  const prompt = [
-    ...(additionalPrompts && additionalPrompts.length ? additionalPrompts : []),
-  ];
-  return `${createBaseAppPrompt(app, avatar)}\n\n${prompt.join('\n')}`;
+): AppPromptParams => {
+  return {
+    type,
+    appPrompt: app.settings?.prompt?.text,
+    language: app.settings?.language,
+    avatar,
+  };
 };
 
 export const createWelcomePrompt = (
   app: PlatformAppDto,
   avatar?: RepositoryAvatarDto,
-  additionalPrompts?: string[],
 ) => {
-  return createAppPrompt(app, avatar, [
-    `Provide a brief welcome message to the user`,
-    ...(additionalPrompts && additionalPrompts.length ? additionalPrompts : []),
-  ]);
+  return promptTemplate.render(createAppPromptParams('welcome', app, avatar));
 };
 
 export const createGoodbyePrompt = (
   app: PlatformAppDto,
   avatar?: RepositoryAvatarDto,
-  additionalPrompts?: string[],
 ) => {
-  return createAppPrompt(app, avatar, [
-    `Provide a brief goodbye message to the user`,
-    ...(additionalPrompts && additionalPrompts.length ? additionalPrompts : []),
-  ]);
+  return promptTemplate.render(createAppPromptParams('goodbye', app, avatar));
 };

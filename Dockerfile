@@ -1,4 +1,4 @@
-FROM node:18 AS builder
+FROM node:20 AS builder
 
 RUN apt update -q && apt install -y sox
 
@@ -6,8 +6,7 @@ WORKDIR /app
 ADD package.json ./
 
 # fix husky error in minio-client
-RUN mkdir -p .git/hooks
-RUN npm install husky -g
+RUN mkdir -p .git/hooks && npm install husky -g
 
 RUN npm i
 
@@ -18,7 +17,7 @@ RUN npm run build
 # ENTRYPOINT [ "npm" ]
 # CMD [ "run", "start:debug" ]
 
-FROM node:18
+FROM node:20
 
 RUN apt update -q && apt install -y sox
 
