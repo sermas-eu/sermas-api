@@ -32,6 +32,7 @@ import {
   LLMProviderConfig,
   LLMProviderList,
 } from './providers/provider.dto';
+import { LogTransformer } from './stream/log.transformer';
 import { SentenceTransformer } from './stream/sentence.transformer';
 import { ToolWithAnswerTransformer } from './stream/tool-with-answer.transformer';
 import { readResponse } from './stream/util';
@@ -60,6 +61,7 @@ export class LLMProviderService implements OnModuleInit {
   } = {};
 
   private printPrompt = false;
+  private printResponse = false;
 
   constructor(
     private readonly config: ConfigService,
@@ -68,6 +70,7 @@ export class LLMProviderService implements OnModuleInit {
     private readonly monitor: MonitorService,
   ) {
     this.printPrompt = this.config.get('LLM_PRINT_PROMPT') === '1';
+    this.printResponse = this.config.get('LLM_PRINT_RESPONSE') === '1';
   }
 
   onModuleInit() {
@@ -451,6 +454,10 @@ export class LLMProviderService implements OnModuleInit {
           streamAdapter = provider.getAdapter(config.model)?.getStreamAdapter();
 
           returnStream = returnStream.pipe(streamAdapter);
+        }
+
+        if (this.printResponse) {
+          returnStream = returnStream.pipe(new LogTransformer());
         }
 
         if (args.tools && args.tools.length) {
