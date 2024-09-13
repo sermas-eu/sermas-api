@@ -143,7 +143,8 @@ export const SermasDefaultConfig = {
   OPENAI_EMBEDDINGS_MODEL: 'text-embedding-3-small',
   // OPENAI_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
   OPENAI_CHAT_MODELS:
-    'gpt-4o,gpt-4o-mini,gpt-4,gpt-4-turbo,gpt-3.5-turbo,gpt-3.5-turbo-16k',
+    'gpt-4o,gpt-4o-mini,gpt-4,gpt-4-turbo,gpt-3.5-turbo,gpt-3.5-turbo-16k,o1-preview,o1-mini',
+
   // OPENAI_MODEL Default OpenAI model used as fallback
   OPENAI_MODEL: 'gpt-4o',
 
