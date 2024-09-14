@@ -7,7 +7,7 @@ import { SessionService } from 'apps/session/src/session.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { AvatarChat } from 'libs/llm/llm.provider.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { chatPrompt } from 'libs/llm/prompt/prompts';
+import { chatPrompt } from './prompt.chat';
 import { SelectedTool } from 'libs/llm/tools/tool.dto';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';

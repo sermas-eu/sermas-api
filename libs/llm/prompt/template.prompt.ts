@@ -28,7 +28,8 @@ const init = () => {
 export interface PromptTemplateParams {}
 export class PromptTemplate<T extends object = any> {
   static create<T extends object = any>(name: string, prompt: string) {
-    return new PromptTemplate<T>(name, prompt);
+    const tpl = new PromptTemplate<T>(name, prompt);
+    return (data?: T) => tpl.render(data);
   }
 
   constructor(

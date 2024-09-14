@@ -60,12 +60,12 @@ export const welcomePrompt = (
   app: PlatformAppDto,
   avatar?: RepositoryAvatarDto,
 ) => {
-  return promptTemplate.render(createAppPromptParams('welcome', app, avatar));
+  return promptTemplate(createAppPromptParams('welcome', app, avatar));
 };
 
 export const goodbyePrompt = (
   app: PlatformAppDto,
   avatar?: RepositoryAvatarDto,
 ) => {
-  return promptTemplate.render(createAppPromptParams('goodbye', app, avatar));
+  return promptTemplate(createAppPromptParams('goodbye', app, avatar));
 };
