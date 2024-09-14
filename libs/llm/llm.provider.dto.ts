@@ -22,6 +22,8 @@ export interface LLMPromptArgs {
   message?: string | LLMPrompt;
 
   json?: boolean;
+
+  llmCallId?: string;
 }
 
 export type LLMChatArgs = LLMProviderConfig &

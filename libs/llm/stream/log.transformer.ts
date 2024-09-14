@@ -5,25 +5,37 @@ export class LogTransformer extends Transform {
   private logger = new Logger('llm.response');
   private buffer: string;
 
-  constructor() {
+  private started = false;
+
+  constructor(private readonly llmCallId?: string) {
     super({
       objectMode: true,
     });
     this.buffer = '';
     this.on('close', () => {
-      this.print();
+      this.print('', true);
+      this.logger.debug(`RES ${this.llmCallId || ''} ]`);
     });
   }
 
-  print(chunk?: string | Buffer) {
+  print(chunk?: string | Buffer, flush = false) {
     chunk = chunk || '';
 
     if (chunk) this.buffer += chunk.toString();
 
-    if (!this.buffer || this.buffer.length) return;
-    if (this.buffer.indexOf('\n') === -1) return;
+    if (!this.buffer) return;
+    if (!flush && this.buffer.indexOf('\n') === -1) return;
 
-    this.buffer.split('\n').forEach((line) => this.logger.debug(`| ${line}`));
+    if (!this.started) {
+      this.logger.debug(`RES ${this.llmCallId || ''} [`);
+      this.started = true;
+    }
+
+    this.buffer
+      .split('\n')
+      .forEach((line) =>
+        this.logger.debug(`RES ${this.llmCallId || ''} | ${line}`),
+      );
     this.buffer = '';
   }
 

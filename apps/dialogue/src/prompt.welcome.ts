@@ -4,7 +4,7 @@ import {
 } from 'apps/platform/src/app/platform.app.dto';
 import { PromptTemplate } from 'libs/llm/prompt/template.prompt';
 
-type AppPromptParams = {
+type WelcomePromptParams = {
   type: 'welcome' | 'goodbye';
   appPrompt?: string;
   language?: string;
@@ -15,30 +15,39 @@ type AppPromptParams = {
   };
 };
 
-const promptTemplate = PromptTemplate.create<AppPromptParams>(`
+const promptTemplate = PromptTemplate.create<WelcomePromptParams>(
+  'welcome-message',
+  `
 This is your context, do not mention it in the answer.
-{{ appPrompt }}
+<%= appPrompt %>
 
-{{#if language }}Your message should use the language {{language}}.{{/if}}
+<% if (language) { %>
+Your message should use the language <%= language %>.
+<% } %>
 
 You are a digital avatar.
-{{#if avatar.name}} Your name is {{avatar.name}}.{{/if}}
-{{#if avatar.gender}} Your gender is {{avatar.gender}}.{{/if}}
-{{#if avatar.prompt}} {{avatar.prompt}}.{{/if}}
+<% if (avatar.name) { %>
+- Your name is <%= avatar.name %>.
+<% } %>
+<% if (avatar.gender) { %>
+- Your gender is <%= avatar.gender %>.
+<% } %>
+<% if (avatar.prompt) { %>
+- <%= avatar.prompt %>.
+<% } %>
 
-
-{{#if type === 'welcome' }}
+<% if (type === 'welcome') { %>
 Provide a brief welcome message to the user
-{{else}}
+<% } else { %>
 Provide a brief goodbye message to the user
-{{/if}}
-`);
+<% } %>`,
+);
 
 export const createAppPromptParams = (
   type: 'welcome' | 'goodbye',
   app: PlatformAppDto,
   avatar?: RepositoryAvatarDto,
-): AppPromptParams => {
+): WelcomePromptParams => {
   return {
     type,
     appPrompt: app.settings?.prompt?.text,
@@ -47,14 +56,14 @@ export const createAppPromptParams = (
   };
 };
 
-export const createWelcomePrompt = (
+export const welcomePrompt = (
   app: PlatformAppDto,
   avatar?: RepositoryAvatarDto,
 ) => {
   return promptTemplate.render(createAppPromptParams('welcome', app, avatar));
 };
 
-export const createGoodbyePrompt = (
+export const goodbyePrompt = (
   app: PlatformAppDto,
   avatar?: RepositoryAvatarDto,
 ) => {

@@ -3,7 +3,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MonitorService } from 'libs/monitor/monitor.service';
-import { hash } from 'libs/util';
+import { hash, uuidv4 } from 'libs/util';
 import { Transform } from 'stream';
 import {
   AvatarChat,
@@ -360,13 +360,18 @@ export class LLMProviderService implements OnModuleInit {
     return provider;
   }
 
+  outputPrompt(prompt: string, llmCallId?: string) {
+    if (!this.printPrompt) return;
+    this.logger.debug(`PROMPT ${llmCallId || ''} [`);
+    prompt
+      .split('\n')
+      .map((part) => this.logger.debug(`PROMPT ${llmCallId || ''} | ${part}`));
+    this.logger.debug(`PROMPT ${llmCallId || ''} ]`);
+  }
+
   createDefaultPrompt(data: LLMPromptArgs): string {
     const prompt = new ChatPrompt(data).toString();
-    if (this.printPrompt) {
-      this.logger.debug(`PROMPT [`);
-      prompt.split('\n').map((part) => this.logger.debug(`PROMPT   ${part}`));
-      this.logger.debug(`PROMPT ]`);
-    }
+    this.outputPrompt(prompt, data.llmCallId);
     return prompt;
   }
 
@@ -399,6 +404,8 @@ export class LLMProviderService implements OnModuleInit {
         : '';
     }
 
+    const llmCallId = uuidv4().split('-').shift();
+
     const config = await provider.getConfig();
     const perf = this.monitor.performance({
       label: `chat.${args.stream ? 'stream' : 'no-stream'}${args.json ? '.json' : '.no-json'}.${args.tools ? 'tools' : 'no-tools'}`,
@@ -411,6 +418,7 @@ export class LLMProviderService implements OnModuleInit {
       const content = await this.createModelPrompt(args, provider, {
         system: args.system,
         params: args.params,
+        llmCallId,
       });
       if (content) {
         messages.push({
@@ -425,6 +433,7 @@ export class LLMProviderService implements OnModuleInit {
       const content = await this.createModelPrompt(args, provider, {
         ...args,
         system: undefined,
+        llmCallId,
       });
       if (content) {
         messages.push({
@@ -457,7 +466,7 @@ export class LLMProviderService implements OnModuleInit {
         }
 
         if (this.printResponse) {
-          returnStream = returnStream.pipe(new LogTransformer());
+          returnStream = returnStream.pipe(new LogTransformer(llmCallId));
         }
 
         if (args.tools && args.tools.length) {
