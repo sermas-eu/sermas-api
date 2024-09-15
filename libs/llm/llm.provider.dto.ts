@@ -1,11 +1,19 @@
 import {
   LLMCallResult,
-  LLMChatMessage,
+  LLMMessage,
   LLMPrompt,
+  LLMPromptTag,
   LLMProvider,
   LLMProviderConfig,
 } from './providers/provider.dto';
 import { LLMTool, SelectedTool } from './tools/tool.dto';
+
+export type LLMSendArgs = LLMProviderConfig & {
+  messages: LLMMessage[];
+  stream: boolean;
+  json: boolean;
+  llmCallId?: string;
+};
 
 export interface LLMPromptArgs {
   // key-value with placeholders
@@ -16,7 +24,7 @@ export interface LLMPromptArgs {
 
   tools?: LLMTool[];
 
-  history?: LLMChatMessage[];
+  history?: LLMMessage[];
   knowledge?: string | LLMPrompt;
 
   message?: string | LLMPrompt;
@@ -29,16 +37,28 @@ export interface LLMPromptArgs {
 export type LLMChatArgs = LLMProviderConfig &
   LLMPromptArgs & {
     stream?: boolean;
+    llmCallId?: string;
   };
 
-export type LLMChatRequest = {
+export type LLMBaseArgs = {
   provider?: LLMProvider;
-  system?: string;
-  message?: string;
   model?: string;
+
+  tag?: LLMPromptTag;
+};
+
+export type LLMChatRequest = {
   stream?: boolean;
   json?: boolean;
-};
+
+  messages?: LLMMessage[];
+  system?: string;
+  user?: string;
+} & LLMBaseArgs;
+
+export type LLMToolsArgs = {
+  tools: LLMTool[];
+} & LLMBaseArgs;
 
 export type LLMParallelResult = LLMCallResult & {
   tools?: SelectedTool[];

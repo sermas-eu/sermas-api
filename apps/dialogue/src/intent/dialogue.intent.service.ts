@@ -134,7 +134,7 @@ export class DialogueIntentService {
       ...this.llm.extractProviderName(llm?.intent),
       stream: false,
       json: true,
-      message: intentPrompt({
+      user: intentPrompt({
         app,
         avatar,
         history: history.join('\n'),

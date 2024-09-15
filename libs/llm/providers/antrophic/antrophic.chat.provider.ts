@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Stream } from '@anthropic-ai/sdk/streaming';
 import {
   LLMCallResult,
-  LLMChatMessage,
+  LLMMessage,
   LLMChatOptions,
   LLMProviderConfig,
 } from 'libs/llm/providers/provider.dto';
@@ -37,7 +37,7 @@ export class AntrophicChatProvider extends LLMChatProvider {
   }
 
   async call(
-    chatMessages: LLMChatMessage[],
+    chatMessages: LLMMessage[],
     options?: LLMChatOptions,
   ): Promise<LLMCallResult> {
     const isStream = options?.stream === true || false;

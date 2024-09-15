@@ -2,7 +2,7 @@ import {
   PlatformAppDto,
   RepositoryAvatarDto,
 } from 'apps/platform/src/app/platform.app.dto';
-import { PromptTemplate } from 'libs/llm/prompt/template.prompt';
+import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 
 type IntentTypePrompt = {
   app?: PlatformAppDto;

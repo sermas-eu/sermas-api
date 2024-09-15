@@ -42,7 +42,7 @@ export class LLMPrompt {
   params?: Record<string, any>;
 }
 
-export class LLMChatMessage {
+export class LLMMessage {
   role: LLMRole;
   content: string;
 }

@@ -30,12 +30,12 @@ export class UIModelService {
     const model = await this.llmProvider.chat<UIModelMapBlendShapesResponseDto>(
       {
         system: PROMPT_BLENDSHAPE_MAP,
-        message: modelBlendShapesText,
+        user: modelBlendShapesText,
         stream: false,
         json: true,
       },
     );
 
-    return model;
+    return model as UIModelMapBlendShapesResponseDto;
   }
 }

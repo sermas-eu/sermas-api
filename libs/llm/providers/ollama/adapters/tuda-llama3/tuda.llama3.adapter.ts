@@ -2,10 +2,8 @@ import { Logger } from '@nestjs/common';
 import { LLMPromptArgs } from 'libs/llm/llm.provider.dto';
 
 import { appendFileSync, mkdirSync } from 'fs';
-import { ChatPrompt } from 'libs/llm/prompt/chat.prompt';
 import { Transform } from 'stream';
 import { LLMModelAdapter } from '../../../adapter';
-import { llama3Prompt } from './tuda.llama3.prompts';
 import { TudaLLama3ChatMessageStream } from './tuda.llama3.stream';
 
 export class TudaLLama3ModelAdapter extends LLMModelAdapter {
@@ -33,15 +31,19 @@ export class TudaLLama3ModelAdapter extends LLMModelAdapter {
 
     const emotion = args.params?.emotion || 'neutral';
 
-    const chatPrompt = new ChatPrompt(args);
-    const prompt = chatPrompt.mapPrompt({
-      prompt: llama3Prompt,
-      params: {
-        knowledge: args.knowledge || '',
-        history,
-        emotion,
-      },
-    });
+    console.warn('****TODO********* tuda llama3');
+
+    // const chatPrompt = new ChatPrompt(args);
+    // const prompt = chatPrompt.mapPrompt({
+    //   prompt: llama3Prompt,
+    //   params: {
+    //     knowledge: args.knowledge || '',
+    //     history,
+    //     emotion,
+    //   },
+    // });
+
+    const prompt = '';
 
     this.logger.debug(`PROMPT [`);
     prompt.split('\n').map((t) => this.logger.debug(`PROMPT  ${t}`));

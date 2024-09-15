@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.decorator';
 import {
-  LLMChatMessage,
+  LLMMessage,
   LLMRole,
   LLMRoleList,
 } from 'libs/llm/providers/provider.dto';
@@ -13,7 +13,7 @@ export class MessageMetadataDto {
   [key: string]: any;
 }
 
-export class DialogueMemoryMessageDto extends LLMChatMessage {
+export class DialogueMemoryMessageDto extends LLMMessage {
   @ApiProperty()
   content: string;
 

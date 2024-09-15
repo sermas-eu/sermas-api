@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import axios from 'axios';
 import {
   LLMCallResult,
-  LLMChatMessage,
+  LLMMessage,
   LLMChatOptions,
   LLMProviderConfig,
 } from 'libs/llm/providers/provider.dto';
@@ -137,7 +137,7 @@ export class OllamaChatProvider extends LLMChatProvider {
   }
 
   async call(
-    chatMessages: LLMChatMessage[],
+    chatMessages: LLMMessage[],
     options?: LLMChatOptions,
   ): Promise<LLMCallResult> {
     const stream = new ChatMessageStream();

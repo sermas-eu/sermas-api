@@ -1,10 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { LLMPromptArgs } from 'libs/llm/llm.provider.dto';
 
-import { ChatPrompt } from 'libs/llm/prompt/chat.prompt';
 import { Transform } from 'stream';
 import { LLMModelAdapter } from '../../../adapter';
-import { llama2Prompt } from './tuda.llama2.prompts';
 import { TudaLLama2ChatMessageStream } from './tuda.llama2.stream';
 
 export class TudaLLama2ModelAdapter extends LLMModelAdapter {
@@ -18,15 +16,16 @@ export class TudaLLama2ModelAdapter extends LLMModelAdapter {
       : '';
     const emotion = args.params?.emotion || 'neutral';
 
-    const chatPrompt = new ChatPrompt(args);
-
-    let prompt = chatPrompt.mapPrompt({
-      prompt: llama2Prompt,
-      params: {
-        history,
-        emotion,
-      },
-    });
+    // const chatPrompt = new ChatPrompt(args);
+    // let prompt = chatPrompt.mapPrompt({
+    //   prompt: llama2Prompt,
+    //   params: {
+    //     history,
+    //     emotion,
+    //   },
+    // });
+    console.warn('****TODO********* tuda llama2');
+    let prompt = '';
 
     if (args.message) prompt += `<user> ${args.message}`;
 

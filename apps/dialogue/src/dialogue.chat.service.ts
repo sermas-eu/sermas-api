@@ -7,12 +7,12 @@ import { SessionService } from 'apps/session/src/session.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { AvatarChat } from 'libs/llm/llm.provider.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { chatPrompt } from './prompt.chat';
 import { SelectedTool } from 'libs/llm/tools/tool.dto';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { DialogueToolNotMatchingDto } from './dialogue.chat.dto';
+import { avatarChatPrompt } from './dialogue.chat.prompt';
 import { DialogueVectorStoreService } from './document/dialogue.vectorstore.service';
 import { DialogueIntentService } from './intent/dialogue.intent.service';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
@@ -222,39 +222,26 @@ export class DialogueChatService {
     const appPrompt =
       settings?.prompt?.text || app.settings?.prompt?.text || '';
 
-    let avatarPrompt = '';
-    let avatarName = '';
-    let avatarGender = message.gender;
+    const avatar = await this.session.getAvatar(message, message.avatar);
 
-    const avatarSettings = await this.session.getAvatar(
-      message,
-      message.avatar,
-    );
+    // const params = {
+    //   appId: message.appId,
+    //   language: message.language,
+    //   emotion: message.emotion || 'neutral',
+    //   gender: avatarGender
+    //     ? avatarGender === 'M'
+    //       ? 'male'
+    //       : 'female'
+    //     : 'not defined',
+    //   appPrompt,
+    //   avatarPrompt,
+    //   avatarName,
+    //   // use the tool as fallback if it is exclusive.
+    //   toolFallback:
+    //     isToolExclusive && tools.length === 1 ? tools[0].name : undefined,
 
-    if (avatarSettings) {
-      avatarPrompt = avatarSettings.prompt;
-      avatarGender = avatarGender || avatarSettings.gender;
-      avatarName = avatarSettings.name;
-    }
-
-    const params = {
-      appId: message.appId,
-      language: message.language,
-      emotion: message.emotion || 'neutral',
-      gender: avatarGender
-        ? avatarGender === 'M'
-          ? 'male'
-          : 'female'
-        : 'not defined',
-      appPrompt,
-      avatarPrompt,
-      avatarName,
-      // use the tool as fallback if it is exclusive.
-      toolFallback:
-        isToolExclusive && tools.length === 1 ? tools[0].name : undefined,
-
-      tasks: tasksList,
-    };
+    //   tasks: tasksList,
+    // };
 
     // inference
 
@@ -265,12 +252,19 @@ export class DialogueChatService {
 
     const req: AvatarChat = {
       ...(llmArgs || {}),
-      params,
-      system: chatPrompt,
-      message: message.text,
-      history,
-      tools,
-      knowledge,
+      system: avatarChatPrompt({
+        appPrompt,
+        language: message.language,
+        emotion: message.emotion || 'neutral',
+        avatar,
+        history: history
+          .filter((h) => h.type === 'message')
+          .map((h) => ` - ${h.role}: ${h.content}`)
+          .join('\n'),
+        knowledge,
+        tasks: tasksList,
+        user: message.text,
+      }),
       skipChat,
     };
 

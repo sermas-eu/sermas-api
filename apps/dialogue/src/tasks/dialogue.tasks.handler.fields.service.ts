@@ -239,7 +239,7 @@ export class DialogueTasksHandlerFieldsService {
       ...this.llm.extractProviderName(llm?.tools),
       stream: false,
       json: true,
-      message: taskFieldConditionPrompt({
+      user: taskFieldConditionPrompt({
         condition,
         values: JSON.stringify(context.record.values),
       }),
@@ -278,7 +278,7 @@ export class DialogueTasksHandlerFieldsService {
       const res = await this.llm.chat<{ result: boolean }>({
         stream: false,
         json: true,
-        message: taskFieldExpressionPrompt({
+        user: taskFieldExpressionPrompt({
           fieldPrompt,
           values: JSON.stringify(context.record.values),
         }),
@@ -359,7 +359,8 @@ Return the 'value' field value`;
       values: '',
     });
 
-    const res = await this.llm.chat<{ value: any | null; reason?: string }>({
+    type ValidationResponse = { value: any | null; reason?: string };
+    const res = await this.llm.chat<ValidationResponse>({
       stream: false,
       json: true,
       system: this.replaceValues(prompt, {
@@ -406,7 +407,7 @@ Return the 'value' field value`;
       stream: false,
       json: false,
       system: prompt,
-      message: context.label,
+      user: context.label,
       tag: 'translation',
     });
   }

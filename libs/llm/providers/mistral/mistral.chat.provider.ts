@@ -2,7 +2,7 @@ import { Mistral } from '@mistralai/mistralai';
 import { ChatCompletionResponse } from '@mistralai/mistralai/models/components';
 import {
   LLMCallResult,
-  LLMChatMessage,
+  LLMMessage,
   LLMChatOptions,
   LLMProviderConfig,
 } from 'libs/llm/providers/provider.dto';
@@ -45,7 +45,7 @@ export class MistralChatProvider extends LLMChatProvider {
   }
 
   async call(
-    messages: LLMChatMessage[],
+    messages: LLMMessage[],
     options?: LLMChatOptions,
   ): Promise<LLMCallResult> {
     const isStream = options?.stream === true || false;

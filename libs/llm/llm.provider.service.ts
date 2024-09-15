@@ -7,12 +7,12 @@ import { hash, uuidv4 } from 'libs/util';
 import { Transform } from 'stream';
 import {
   AvatarChat,
-  LLMChatArgs,
   LLMChatRequest,
   LLMParallelResult,
-  LLMPromptArgs,
+  LLMSendArgs,
+  LLMToolsArgs,
 } from './llm.provider.dto';
-import { ChatPrompt } from './prompt/chat.prompt';
+import { convertToolsToPrompt, toolsPrompt } from './prompt/prompt.tools';
 import { AntrophicChatProvider } from './providers/antrophic/antrophic.chat.provider';
 import { LLMChatProvider } from './providers/chat.provider';
 import { LLMEmbeddingProvider } from './providers/embeddings.provider';
@@ -25,8 +25,8 @@ import { OpenAIChatProvider } from './providers/openai/openai.chat.provider';
 import { OpenAIEmbeddingProvider } from './providers/openai/openai.embeddings.provider';
 import {
   LLMCallResult,
-  LLMChatMessage,
   LLMEmbeddingConfig,
+  LLMMessage,
   LLMPromptTag,
   LLMProvider,
   LLMProviderConfig,
@@ -369,25 +369,60 @@ export class LLMProviderService implements OnModuleInit {
     this.logger.debug(`PROMPT ${llmCallId || ''} ]`);
   }
 
-  createDefaultPrompt(data: LLMPromptArgs): string {
-    const prompt = new ChatPrompt(data).toString();
-    this.outputPrompt(prompt, data.llmCallId);
-    return prompt;
-  }
+  // createDefaultPrompt(data: LLMPromptArgs): string {
+  //   const prompt = new ChatPrompt(data).toString();
+  //   this.outputPrompt(prompt, data.llmCallId);
+  //   return prompt;
+  // }
 
-  async createModelPrompt(
-    args: LLMChatArgs,
-    provider: LLMChatProvider,
-    promptArgs: LLMPromptArgs,
-  ) {
+  // async createModelPrompt(
+  //   args: LLMChatArgs,
+  //   provider: LLMChatProvider,
+  //   promptArgs: LLMPromptArgs,
+  // ) {
+  //   const config = await provider.getConfig();
+  //   if (config.model && provider.getAdapter(config.model)?.createPrompt) {
+  //     return provider.getAdapter(config.model)?.createPrompt(promptArgs);
+  //   }
+  //   return this.createDefaultPrompt(promptArgs);
+  // }
+
+  async embeddings(text: string | string[], args?: LLMEmbeddingConfig) {
+    const provider = await this.getEmbeddingsProvider(args);
+
+    const perf = this.monitor.performance({
+      label: 'embeddings',
+    });
+    const embeddings = await provider.generate(text);
+
     const config = await provider.getConfig();
-    if (config.model && provider.getAdapter(config.model)?.createPrompt) {
-      return provider.getAdapter(config.model)?.createPrompt(promptArgs);
-    }
-    return this.createDefaultPrompt(promptArgs);
+
+    perf(`${provider.getName()}/${config.model}`);
+
+    return embeddings;
   }
 
-  async send(args: LLMChatArgs) {
+  private emptyResponse(args: {
+    stream?: boolean;
+    json?: boolean;
+  }): LLMCallResult | string | null {
+    return args.stream
+      ? ({
+          stream: undefined,
+        } as LLMCallResult)
+      : args.json
+        ? null
+        : ('' as string);
+  }
+
+  // send(args: LLMSendArgs & { stream: false; json: false }): Promise<string>;
+  // send<T = any>(
+  //   args: LLMSendArgs & { stream: false; json: true },
+  // ): Promise<T | null>;
+  // send(args: LLMSendArgs & { stream: true }): Promise<LLMCallResult>;
+  async send<T = any>(
+    args: LLMSendArgs,
+  ): Promise<LLMCallResult | T | string | null> {
     let provider: LLMChatProvider;
     try {
       provider = await this.getChatProvider(args);
@@ -397,51 +432,17 @@ export class LLMProviderService implements OnModuleInit {
         `Failed to initialize provider ${args.provider}: ${e.message}`,
       );
       this.logger.debug(e.stack);
-      return args.stream
-        ? {
-            stream: undefined,
-          }
-        : '';
+      return this.emptyResponse(args);
     }
 
     const llmCallId = uuidv4().split('-').shift();
 
     const config = await provider.getConfig();
     const perf = this.monitor.performance({
-      label: `chat.${args.stream ? 'stream' : 'no-stream'}${args.json ? '.json' : '.no-json'}.${args.tools ? 'tools' : 'no-tools'}`,
+      label: `llm.${args.stream ? 'stream' : 'no-stream'}`,
     });
 
-    const messages: LLMChatMessage[] = [];
-
-    // add configuration system message
-    if (args.system) {
-      const content = await this.createModelPrompt(args, provider, {
-        system: args.system,
-        params: args.params,
-        llmCallId,
-      });
-      if (content) {
-        messages.push({
-          role: 'system',
-          content,
-        });
-      }
-    }
-
-    // create full user chat message
-    if (args.message || args.history?.length) {
-      const content = await this.createModelPrompt(args, provider, {
-        ...args,
-        system: undefined,
-        llmCallId,
-      });
-      if (content) {
-        messages.push({
-          role: 'user',
-          content,
-        });
-      }
-    }
+    const messages = args.messages || [];
 
     try {
       const { stream, abort } = await provider.call(messages, {
@@ -469,12 +470,8 @@ export class LLMProviderService implements OnModuleInit {
           returnStream = returnStream.pipe(new LogTransformer(llmCallId));
         }
 
-        if (args.tools && args.tools.length) {
-          returnStream = returnStream
-            .pipe(new ToolWithAnswerTransformer(args.tools))
-            .pipe(new SentenceTransformer());
-        } else {
-          // split text response by sentence
+        // add sentence transformer
+        if (args.tag !== 'tools') {
           returnStream = returnStream.pipe(new SentenceTransformer());
         }
 
@@ -498,11 +495,12 @@ export class LLMProviderService implements OnModuleInit {
 
           perf(`${provider.getName()}/${config.model}`);
 
-          return JSON.parse(response);
+          return JSON.parse(response) as T;
         } catch (e: any) {
           this.logger.error(`Failed to parse JSON: ${e.message}`);
           this.logger.debug(`RAW response: ${response}`);
-          return null;
+
+          return this.emptyResponse(args);
         }
       }
 
@@ -512,54 +510,158 @@ export class LLMProviderService implements OnModuleInit {
     } catch (e) {
       this.logger.error(`Provider ${provider.getName()} error: ${e.message}`);
       this.logger.debug(e.stack);
-      return args.stream
-        ? {
-            stream: undefined,
-          }
-        : '';
+
+      return this.emptyResponse(args);
     }
   }
 
   chat(
-    req: LLMChatRequest & { stream: true; tag?: LLMPromptTag },
+    args: LLMChatRequest & { stream: true; json?: false | undefined },
   ): Promise<LLMCallResult>;
+  chat<T = any>(
+    args: LLMChatRequest & { stream?: false | undefined; json: true },
+  ): Promise<T | null>;
   chat(
-    req: LLMChatRequest & { stream: false; tag?: LLMPromptTag },
+    args: LLMChatRequest & { json: false; stream?: boolean | undefined },
   ): Promise<string>;
   chat<T = any>(
-    req: LLMChatRequest & { stream: false; json: true; tag?: LLMPromptTag },
-  ): Promise<T>;
-  chat(req: LLMChatRequest) {
-    return this.send({
+    args: LLMChatRequest & { json?: true; stream?: boolean | undefined },
+  ): Promise<T | null>;
+  chat<T = any>(
+    args: LLMChatRequest,
+  ): Promise<LLMCallResult | T | string | null>;
+  async chat<T = any>(
+    args: LLMChatRequest,
+  ): Promise<LLMCallResult | T | string | null> {
+    const perf = this.monitor.performance({ label: 'chat' });
+    const messages: LLMMessage[] = args.messages || [];
+
+    // add system message
+    if (args.system) {
+      // const content = await this.createModelPrompt(args, provider, {
+      //   system: args.system,
+      //   params: args.params,
+      //   llmCallId,
+      // });
+
+      // if (content) {
+      messages.push({
+        role: 'system',
+        content: args.system,
+      });
+      // }
+    }
+
+    // create user message
+    if (args.user) {
+      // const content = await this.createModelPrompt(args, provider, {
+      //   ...args,
+      //   system: undefined,
+      //   llmCallId,
+      // });
+      // if (content) {
+      messages.push({
+        role: 'user',
+        content: args.user,
+      });
+      // }
+    }
+
+    if (!messages) {
+      this.logger.debug(`No chat messages provided`);
+      perf();
+      return null;
+    }
+
+    const isStream = args.stream === undefined ? true : false;
+    const isJson = !isStream && args.json === undefined ? false : true;
+
+    const res = await this.send<T>({
       tag: 'chat',
-      ...req,
-    });
-  }
-
-  async tools(args: LLMChatArgs): Promise<LLMCallResult> {
-    const res: LLMCallResult = await this.send({
-      tag: 'tools',
+      messages,
+      stream: isStream,
+      json: isJson,
       ...args,
-      knowledge: undefined,
-      history: undefined,
-      stream: true,
     });
-    return res;
+
+    if (!isStream) {
+      perf();
+      return res;
+    }
+
+    perf();
+    return res as LLMCallResult;
   }
 
-  async embeddings(text: string | string[], args?: LLMEmbeddingConfig) {
-    const provider = await this.getEmbeddingsProvider(args);
+  async tools(args: LLMToolsArgs): Promise<LLMCallResult> {
+    const perf = this.monitor.performance({ label: 'tools' });
+    const tools = args.tools || [];
 
-    const perf = this.monitor.performance({
-      label: 'embeddings',
+    if (!tools.length) {
+      this.logger.debug(`Skip call for empty tools list`);
+      perf();
+      return this.emptyResponse({ stream: true }) as LLMCallResult;
+    }
+
+    const req = await this.send({
+      tag: 'tools',
+      stream: true,
+      json: false,
+      messages: [
+        {
+          role: 'user',
+          content: toolsPrompt({
+            tools: convertToolsToPrompt(tools),
+          }),
+        },
+      ],
     });
-    const embeddings = await provider.generate(text);
 
-    const config = await provider.getConfig();
+    const res = req as LLMCallResult;
 
-    perf(`${provider.getName()}/${config.model}`);
+    if (res.stream) {
+      res.stream = res.stream
+        .pipe(new ToolWithAnswerTransformer(tools))
+        .pipe(new SentenceTransformer());
+    }
 
-    return embeddings;
+    const { stream, abort } = res;
+    let toolsFound: boolean | undefined = undefined;
+
+    return new Promise<LLMParallelResult>((resolve, reject) => {
+      if (stream === null) return reject();
+
+      let gotToolsResponse = false;
+      // fail if tools does not provide response
+      setTimeout(() => {
+        if (!gotToolsResponse) {
+          perf();
+          reject();
+        }
+      }, 1000);
+
+      stream.on('data', (res: ToolResponse | AnswerResponse) => {
+        // console.warn(res);
+
+        gotToolsResponse = true;
+
+        if (toolsFound !== undefined) return;
+        toolsFound = res.type === 'tools' && res.data && res.data.length > 0;
+        if (toolsFound) {
+          // console.log('tools', JSON.stringify(res, null, 2));
+          resolve({
+            tools: res.data as SelectedTool[],
+            stream,
+            abort,
+          });
+          perf();
+        } else {
+          reject();
+          abort && abort();
+          perf();
+        }
+      });
+    });
   }
 
   // parallelize calls to tools and chat.
@@ -581,10 +683,9 @@ export class LLMProviderService implements OnModuleInit {
     const results = await Promise.allSettled([
       args.tools && args.tools.length
         ? this.tools({
-            ...args,
+            tools: args.tools,
             provider: toolProvider,
             model: toolModel,
-            stream: true,
           }).then((res) => {
             if (!res) return Promise.reject();
 
@@ -623,13 +724,13 @@ export class LLMProviderService implements OnModuleInit {
           })
         : Promise.reject(),
       args.skipChat !== true
-        ? this.send({
+        ? this.chat({
             tag: 'chat',
-            ...args,
             provider: chatProvider,
             model: chatModel,
-            tools: undefined,
             stream: true,
+            json: false,
+            // TODO missing params
           }).then((res: LLMCallResult) => {
             if (!res) return Promise.reject();
             if (res.stream === null) return Promise.reject();

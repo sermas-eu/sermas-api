@@ -73,6 +73,8 @@ export class SessionPromptService {
       avatarName: avatarSettings?.name,
     };
 
+    console.warn('****TODO********* session.prompt.service');
+
     const perf = this.monitor.performance({
       ...payload,
       label: 'session.prompt',
@@ -80,11 +82,13 @@ export class SessionPromptService {
 
     const result = await this.llm.send({
       stream: false,
-      message: payload.prompt,
+      messages: [
+        {
+          role: 'user',
+          content: payload.prompt,
+        },
+      ],
       json,
-      params,
-      knowledge,
-      history,
       provider,
       model,
     });
