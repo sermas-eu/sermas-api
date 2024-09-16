@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DialogueVectorStoreService } from 'apps/dialogue/src/document/dialogue.vectorstore.service';
 import { DialogueMemoryMessageDto } from 'apps/dialogue/src/memory/dialogue.memory.dto';
 import { DialogueMemoryService } from 'apps/dialogue/src/memory/dialogue.memory.service';
-import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
+import {
+  AppSettingsDto,
+  RepositoryAvatarDto,
+} from 'apps/platform/src/app/platform.app.dto';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { DefaultLanguage } from 'libs/language/lang-codes';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
@@ -12,6 +15,7 @@ import {
   AgentEvaluatePromptDto,
   AgentEvaluatePromptResponseDto,
 } from './session.prompt.dto';
+import { sessionPrompt } from './session.prompt.service.prompt';
 
 @Injectable()
 export class SessionPromptService {
@@ -44,36 +48,21 @@ export class SessionPromptService {
       history = await this.memory.getMessages(sessionId);
     }
 
-    const app = await this.platformApp.readApp(appId, false);
+    let settings: Partial<AppSettingsDto>;
+    let avatar: RepositoryAvatarDto;
 
-    let avatarSettings: RepositoryAvatarDto;
-    let appPrompt: string;
-    if (app) {
-      const useAvatar = payload.options?.avatar;
-      if (useAvatar) {
-        avatarSettings = await this.session.getAvatar(payload, useAvatar);
-      }
-      const useApp = payload.options?.app;
-      if (useApp) {
-        appPrompt = app.settings?.prompt?.text || '';
-      }
+    const useAvatar = payload.options?.avatar;
+    if (useAvatar) {
+      avatar = await this.session.getAvatar(payload, useAvatar);
     }
 
-    const params: any = {
-      appId: appId,
-      language: payload.options?.language || DefaultLanguage,
-      emotion: 'neutral',
-      gender: avatarSettings?.gender
-        ? avatarSettings?.gender === 'M'
-          ? 'male'
-          : 'female'
-        : 'not defined',
-      appPrompt,
-      avatarPrompt: avatarSettings?.prompt,
-      avatarName: avatarSettings?.name,
-    };
+    const useApp = payload.options?.app;
+    if (useApp) {
+      settings = await this.session.getSettings(payload);
+    }
 
-    console.warn('****TODO********* session.prompt.service');
+    const language =
+      payload.options?.language || settings?.language || DefaultLanguage;
 
     const perf = this.monitor.performance({
       ...payload,
@@ -83,6 +72,18 @@ export class SessionPromptService {
     const result = await this.llm.send({
       stream: false,
       messages: [
+        {
+          role: 'system',
+          content: sessionPrompt({
+            avatar: avatar,
+            language,
+            history: history
+              .map((m) => ` - ${m.role}: ${m.content}`)
+              .join('\n'),
+            knowledge,
+            json,
+          }),
+        },
         {
           role: 'user',
           content: payload.prompt,
