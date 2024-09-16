@@ -15,28 +15,19 @@ export type LLMSendArgs = LLMProviderConfig & {
   llmCallId?: string;
 };
 
-export interface LLMPromptArgs {
+export type LLMChatArgs = LLMProviderConfig & {
   system?: PromptTemplateOutput | string;
   user?: PromptTemplateOutput | string;
 
-  tools?: LLMTool[];
-
-  json?: boolean;
-
+  stream?: boolean;
   llmCallId?: string;
-}
-
-export type LLMChatArgs = LLMProviderConfig &
-  LLMPromptArgs & {
-    stream?: boolean;
-    llmCallId?: string;
-  };
+};
 
 export type LLMBaseArgs = {
   provider?: LLMProvider;
   model?: string;
-
   tag?: LLMPromptTag;
+  llmCallId?: string;
 };
 
 export type LLMChatRequest = {
@@ -50,16 +41,21 @@ export type LLMChatRequest = {
 
 export type LLMToolsArgs = {
   tools: LLMTool[];
-  user: PromptTemplateOutput | string;
+  message: PromptTemplateOutput | string;
 } & LLMBaseArgs;
 
 export type LLMParallelResult = LLMCallResult & {
   tools?: SelectedTool[];
 };
 
-export type AvatarChat = LLMChatArgs & {
-  chatArgs?: Partial<LLMChatArgs>;
-  toolsArgs?: Partial<LLMChatArgs>;
-  provider?: LLMProvider;
-  skipChat?: boolean;
-};
+export type AvatarChat = {
+  chat?: PromptTemplateOutput | string;
+
+  tools?: LLMTool[];
+  message?: PromptTemplateOutput | string;
+} & LLMProviderConfig & {
+    chatArgs?: Partial<LLMChatArgs>;
+    toolsArgs?: Partial<LLMChatArgs>;
+    provider?: LLMProvider;
+    skipChat?: boolean;
+  };

@@ -28,7 +28,7 @@ Output in parsable JSON, following exactly this structure:
       "a matching TOOL argument name": "the value extracted from USER message" 
     } 
   },
-  answer: your answer
+  answer: "your contextual answer"
 }
 
 

@@ -227,27 +227,6 @@ export class DialogueChatService {
 
     const avatar = await this.session.getAvatar(message, message.avatar);
 
-    // const params = {
-    //   appId: message.appId,
-    //   language: message.language,
-    //   emotion: message.emotion || 'neutral',
-    //   gender: avatarGender
-    //     ? avatarGender === 'M'
-    //       ? 'male'
-    //       : 'female'
-    //     : 'not defined',
-    //   appPrompt,
-    //   avatarPrompt,
-    //   avatarName,
-    //   // use the tool as fallback if it is exclusive.
-    //   toolFallback:
-    //     isToolExclusive && tools.length === 1 ? tools[0].name : undefined,
-
-    //   tasks: tasksList,
-    // };
-
-    // inference
-
     const perf = this.monitor.performance({
       ...message,
       label: 'chat.user',
@@ -255,7 +234,7 @@ export class DialogueChatService {
 
     const req: AvatarChat = {
       ...(llmArgs || {}),
-      system: avatarChatPrompt({
+      chat: avatarChatPrompt({
         appPrompt,
         language: message.language,
         emotion: message.emotion || 'neutral',
@@ -268,8 +247,10 @@ export class DialogueChatService {
         tasks: tasksList,
         // user: message.text,
       }),
+
       tools,
-      user: message.text,
+      message: message.text,
+
       skipChat,
     };
 

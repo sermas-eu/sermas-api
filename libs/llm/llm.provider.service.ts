@@ -636,7 +636,7 @@ export class LLMProviderService implements OnModuleInit {
     const perf = this.monitor.performance({ label: 'tools' });
     const tools = args.tools || [];
 
-    if (!tools.length || !args.user) {
+    if (!tools.length || !args.message) {
       this.logger.debug(`Skip call, empty tools list or user message`);
       perf();
       return {
@@ -658,7 +658,7 @@ export class LLMProviderService implements OnModuleInit {
           role: 'user',
           content: toolsPrompt({
             tools: convertToolsToPrompt(tools),
-            user: args.user,
+            user: args.message,
           }),
         },
       ],
@@ -709,25 +709,24 @@ export class LLMProviderService implements OnModuleInit {
     const toolModel = args.toolsArgs?.model || args.model;
 
     const toolsRequest =
-      args.tools && args.tools.length
+      args.tools && args.tools.length && args.message
         ? this.tools({
             tools: args.tools,
-            user: args.user,
+            message: args.message,
             provider: toolProvider,
             model: toolModel,
           })
         : Promise.reject();
 
     const chatRequest =
-      args.skipChat !== true
+      args.skipChat !== true && args.chat
         ? this.chat({
             tag: 'chat',
             provider: chatProvider,
             model: chatModel,
             stream: true,
             json: false,
-            system: args.system,
-            user: args.user,
+            user: args.chat,
           }).then((res: LLMCallResult) => {
             if (!res) return Promise.reject();
             if (res.stream === null) return Promise.reject();
@@ -744,7 +743,7 @@ export class LLMProviderService implements OnModuleInit {
     const selectedTools =
       toolsPromise.status === 'fulfilled' ? toolsPromise.value : undefined;
 
-    if (selectedTools) {
+    if (selectedTools && selectedTools.tools?.length) {
       chatResult?.abort && chatResult?.abort();
       perf.tools('tools', true);
       return {

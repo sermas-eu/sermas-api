@@ -139,7 +139,7 @@ export class PromptTemplate<T extends object = any> {
       this.getArgs(),
     ) as unknown as PromptTemplateOutput;
 
-    output.getPromptTemplate = () => this;
+    (output as any).__proto__.getPromptTemplate = () => this;
 
     return output;
   }
