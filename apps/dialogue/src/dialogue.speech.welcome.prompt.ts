@@ -9,12 +9,12 @@ export const welcomeToolsPrompt = PromptTemplate.create<{
   `
 Return a JSON array of strings with the value of 'label' field.
 If the field 'rephrase' is true, rephrase to be a button label otherwise return the same label.
-<%  if (language) { %>
-Translate all the resulting labels to language <%= language %>.
+<%  if (data.language) { %>
+Translate all the resulting labels to language <%= data.language %>.
 <% } %>
 Never add comments or explanations.
 
-<%= tools %>`,
+<%= data.tools %>`,
 );
 
 export const welcomeMessagePrompt = PromptTemplate.create<{
@@ -29,24 +29,24 @@ export const welcomeMessagePrompt = PromptTemplate.create<{
   'welcome-message',
   `
 This is your context, do not mention it in the answer.
-<%= settings?.prompt?.text %>
+<%= data.settings?.prompt?.text %>
 
-<% if (settings?.language) { %>
-Your message should use the language <%= settings?.language %>.
+<% if (data.settings?.language) { %>
+Your message should use the language <%= data.settings?.language %>.
 <% } %>
 
 You are a digital avatar.
-<% if (avatar.name) { %>
-- Your name is <%= avatar.name %>.
+<% if (data.avatar.name) { %>
+- Your name is <%= data.avatar.name %>.
 <% } %>
-<% if (avatar.gender) { %>
-- Your gender is <%= avatar.gender %>.
+<% if (data.avatar.gender) { %>
+- Your gender is <%= data.avatar.gender %>.
 <% } %>
-<% if (avatar.prompt) { %>
-- <%= avatar.prompt %>.
+<% if (data.avatar.prompt) { %>
+- <%= data.avatar.prompt %>.
 <% } %>
 
-<% if (type === 'welcome') { %>
+<% if (data.type === 'welcome') { %>
 Provide a brief welcome message to the user
 <% } else { %>
 Provide a brief goodbye message to the user

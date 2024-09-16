@@ -1,20 +1,16 @@
 import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
+import { PlatformSettingsDto } from 'apps/platform/src/platform.dto';
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
-import { Emotion } from 'libs/sermas/sermas.dto';
 
-type AvatarChatPrompt = {
-  appPrompt: string;
-  language: string;
-  emotion?: Emotion;
-  avatar: RepositoryAvatarDto;
+export const sessionPrompt = PromptTemplate.create<{
+  settings?: PlatformSettingsDto;
+  language?: string;
   history?: string;
-  tasks?: string;
   knowledge?: string;
-  user?: string;
+  avatar?: RepositoryAvatarDto;
   json?: boolean;
-};
-export const avatarChatPrompt = PromptTemplate.create<AvatarChatPrompt>(
-  'chat',
+}>(
+  'session-prompt',
   `
 GENERAL RULES:
 You are an AVATAR discussing with USER on topics described in APPLICATION.
@@ -24,20 +20,12 @@ Use KNOWLEDGE as trustable information.
 <% if (data.history) { %>
 HISTORY provides the conversation
 <% } %>
-<% if (data.tasks) { %>
-TASKS should be proposed to the user, be precise in the task offering description.
-<% } %>
 <% if (data.json) { %>
 Respond in parsable JSON format.
 <% } %>
 
-You must always follow these rules:
-- Reply briefly to the user. 
-- Never ask questions
-- Propose a task based only on the more recent user messages
-
 APPLICATION:
-<%= data.appPrompt %>
+<%= data.settings?.prompt?.text %>
 <% if (data.language) { %>
 Your answer must be in language identified by code <%= data.language %>.
 <% } %>
@@ -54,11 +42,6 @@ Your gender is {data.avatar.gender}.
 Consider the detected user emotion is <%= data.emotion %>, adapt the conversation but do not make it explcit in answer.
 <% } %>
 
-<% if (data.tasks) { %>
-TASKS:
-<%= data.tasks %>
-<% } %>
-
 <% if (data.knowledge) { %>
 KNOWLEDGE:
 <%= data.knowledge %>
@@ -67,10 +50,5 @@ KNOWLEDGE:
 <% if (data.history) { %>
 HISTORY:
 <%= data.history %>
-<% } %>
-
-<% if (data.user) { %>
-USER:
-<%= data.user %>
 <% } %>`,
 );

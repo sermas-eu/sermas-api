@@ -8,16 +8,16 @@ export const ssmlPrompt = PromptTemplate.create<{
 }>(
   'ssml-generation',
   `
-<% if (context) { %><%= context %><% } %>
+<% if (data.context) { %><%= data.context %><% } %>
 
 You must create compliant Speech Synthesis Markup Language (SSML) for the user message.
 
 Alter the user message adding the appropriate SSML tags to create an empathic output.
-<% if (emotion) { %>
-Consider the emotion of the user is <%= emotion %>
+<% if (data.emotion) { %>
+Consider the emotion of the user is <%= data.emotion %>
 <% } %>
-<% if (language) { %>
-User language is <%= language %>
+<% if (data.language) { %>
+User language is <%= data.language %>
 <% } %>
 
 Answer exclusively in the SSML format, do not add notes or explanation

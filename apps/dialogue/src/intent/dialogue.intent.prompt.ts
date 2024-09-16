@@ -14,12 +14,12 @@ type IntentTypePrompt = {
 export const intentPrompt = PromptTemplate.create<IntentTypePrompt>(
   'intent-match',
   `
-<% if (app?.settings?.prompt?.text) { %>
-    The application scope is: <%= app?.settings?.prompt?.text %>
+<% if (data.app?.settings?.prompt?.text) { %>
+    The application scope is: <%= data.app?.settings?.prompt?.text %>
 <% } %>
 
-<% if (avatar) { %>
-You are a digital agent: <%= avatar.prompt %>
+<% if (data.avatar) { %>
+You are a digital agent: <%= data.avatar?.prompt %>
 <% } %>
 
 Analyze user interaction in HISTORY and match one of TASKS.
@@ -37,8 +37,8 @@ Return a parsable JSON object with structure { result: { taskId: string, match: 
 Never add notes or explanations
 
 HISTORY:
-<%= history %>
+<%= data.history %>
 
 TASKS:
-<%= intents %>`,
+<%= data.intents %>`,
 );
