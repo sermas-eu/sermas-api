@@ -1,7 +1,10 @@
-import { LLMTool } from '../tools/tool.dto';
-import { PromptTemplate } from './prompt.template';
+import { PromptTemplate } from '../prompt/prompt.template';
+import { LLMTool } from './tool.dto';
 
-export const toolsPrompt = PromptTemplate.create(
+export const toolsPrompt = PromptTemplate.create<{
+  tools: string;
+  user: string;
+}>(
   'tools',
   `
 Your task is to match one of the TOOLS with the USER message.
@@ -17,13 +20,25 @@ Confirm in one short sentence the selected tool but never ask or engage the user
 Do not mention the name of tools. 
 Never add Notes or Explanations.
 
-Output in plain text, following exactly this structure:
-[MATCHES] { "matching TOOL name": { "inferred TOOL argument name": "value extracted from USER message" } }
-[ANSWER] your answer
+Output in parsable JSON, following exactly this structure:
+{
+  "matches": { 
+    "matching TOOL name": { 
+      // optional, set only if in TOOL signature
+      "a matching TOOL argument name": "the value extracted from USER message" 
+    } 
+  },
+  answer: your answer
+}
+
 
 TOOLS:
-<%= tools %>
-`,
+<%= data.tools %>
+
+<% if (data.user) { %>
+USER:
+<%= data.user %>
+<% } %>`,
 );
 
 export const convertToolsToPrompt = (list: LLMTool[]): string => {

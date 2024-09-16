@@ -1,7 +1,7 @@
+import { PromptTemplateOutput } from './prompt/prompt.template';
 import {
   LLMCallResult,
   LLMMessage,
-  LLMPrompt,
   LLMPromptTag,
   LLMProvider,
   LLMProviderConfig,
@@ -16,18 +16,10 @@ export type LLMSendArgs = LLMProviderConfig & {
 };
 
 export interface LLMPromptArgs {
-  // key-value with placeholders
-  params?: { [key: string]: any };
-
-  system?: string | LLMPrompt;
-  intro?: string | LLMPrompt;
+  system?: PromptTemplateOutput | string;
+  user?: PromptTemplateOutput | string;
 
   tools?: LLMTool[];
-
-  history?: LLMMessage[];
-  knowledge?: string | LLMPrompt;
-
-  message?: string | LLMPrompt;
 
   json?: boolean;
 
@@ -52,12 +44,13 @@ export type LLMChatRequest = {
   json?: boolean;
 
   messages?: LLMMessage[];
-  system?: string;
-  user?: string;
+  system?: PromptTemplateOutput | string;
+  user?: PromptTemplateOutput | string;
 } & LLMBaseArgs;
 
 export type LLMToolsArgs = {
   tools: LLMTool[];
+  user: PromptTemplateOutput | string;
 } & LLMBaseArgs;
 
 export type LLMParallelResult = LLMCallResult & {
