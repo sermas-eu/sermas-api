@@ -180,7 +180,7 @@ export class DialogueSpeechService {
       const errorMessage = await this.translateMessage(
         {
           ...dialogueMessagePayload,
-          text: 'Sorry, could you retry ?',
+          text: 'Sorry, could you retry?',
           language: 'en-GB',
         },
         language,
