@@ -9,6 +9,7 @@ type AvatarChatPrompt = {
   avatar: RepositoryAvatarDto;
   history?: string;
   tasks?: string;
+  field?: string;
   knowledge?: string;
   user?: string;
   json?: boolean;
@@ -26,6 +27,11 @@ HISTORY provides the conversation
 <% } %>
 <% if (data.tasks) { %>
 TASKS should be proposed to the user, be precise in the task offering description.
+<% } %>
+<% if (data.field) { %>
+FIELD indicates the ongoing task, enforce the field details.
+Use the previous assistant messages to answer the user. Only offer options already proposed, never create new ones.
+Avoid user deviations and suggest the user to complete the field.
 <% } %>
 <% if (data.json) { %>
 Respond in parsable JSON format.
@@ -57,6 +63,11 @@ Consider the detected user emotion is <%= data.emotion %>, adapt the conversatio
 <% if (data.tasks) { %>
 TASKS:
 <%= data.tasks %>
+<% } %>
+
+<% if (data.field) { %>
+FIELD:
+<%= data.field %>
 <% } %>
 
 <% if (data.knowledge) { %>

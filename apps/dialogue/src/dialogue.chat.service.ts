@@ -181,10 +181,10 @@ export class DialogueChatService {
       this.logger.debug(`Enabled tools for task name=${currentTask.name}`);
     }
 
-    let skipChat = false;
+    const skipChat = false;
     if (currentTask && currentField) {
       this.logger.debug(`Current task field is ${currentField.name}`);
-      skipChat = currentField.required === true && !matchOrRemoveTask;
+      // skipChat = currentField.required === true && !matchOrRemoveTask;
       // TODO enable fallback answer if no options matches
     }
 
@@ -245,7 +245,7 @@ export class DialogueChatService {
           .join('\n'),
         knowledge,
         tasks: tasksList,
-        // user: message.text,
+        field: currentField ? JSON.stringify(currentField) : undefined,
       }),
 
       tools,

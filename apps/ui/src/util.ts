@@ -21,7 +21,7 @@ export const uiContentToText = (
               .filter((b) => b.options?.ttsEnabled === true)
               .map((b) => b.label || b.value)
               .join('\n')
-          : `\n${buttons.map((b) => `- ${b.label || b.value}`).join('\n')}`;
+          : `\n${buttons.map((b) => `  - ${b.label || b.value}`).join('\n')}`;
 
       const buttonsList =
         !buttons.content?.list?.length || options.withOptions !== true
