@@ -245,6 +245,7 @@ export class DialogueChatService {
           .join('\n'),
         knowledge,
         tasks: tasksList,
+        task: currentTask ? JSON.stringify(currentTask) : undefined,
         field: currentField ? JSON.stringify(currentField) : undefined,
       }),
 

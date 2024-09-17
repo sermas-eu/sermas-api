@@ -60,6 +60,8 @@ export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
 export class LLMProviderService implements OnModuleInit {
   private readonly logger = new Logger(LLMProviderService.name);
 
+  private readonly LLMLogger = new Logger('LLM');
+
   private readonly chatProviders: { [key: string]: LLMChatProvider } = {};
   private readonly embeddingsProviders: {
     [key: string]: LLMEmbeddingProvider;
@@ -365,18 +367,27 @@ export class LLMProviderService implements OnModuleInit {
     return provider;
   }
 
-  printMessages(messages: LLMMessage[], llmCallId?: string) {
+  logPrompt(messages: LLMMessage[], llmCallId?: string) {
     if (!this.printPrompt) return;
     messages.forEach((m) => {
       const { role, content } = m;
-      this.logger.debug(`PROMPT ${llmCallId || ''} ${role} [`);
+      this.LLMLogger.debug(`PROMPT ${llmCallId || ''} ${role} |---`);
       content
         .split('\n')
         .map((part) =>
-          this.logger.debug(`PROMPT ${llmCallId || ''} ${role} | ${part}`),
+          this.LLMLogger.debug(`PROMPT ${llmCallId || ''} ${role} | ${part}`),
         );
-      this.logger.debug(`PROMPT ${llmCallId || ''} ${role} ]`);
+      this.LLMLogger.debug(`PROMPT ${llmCallId || ''} ${role} |---`);
     });
+  }
+
+  logResponse(response: string, llmCallId: string) {
+    if (!this.printResponse) return;
+    this.LLMLogger.debug(`RES ${llmCallId} |---`);
+    response
+      .split('\n')
+      .forEach((m) => this.LLMLogger.debug(`RES ${llmCallId} | ${m}`));
+    this.LLMLogger.debug(`RES ${llmCallId} |---`);
   }
 
   // createDefaultPrompt(data: LLMPromptArgs): string {
@@ -486,7 +497,7 @@ export class LLMProviderService implements OnModuleInit {
       };
     });
 
-    this.printMessages(messages, llmCallId);
+    this.logPrompt(messages, llmCallId);
 
     try {
       const { stream, abort } = await provider.call(messages, {
@@ -510,7 +521,9 @@ export class LLMProviderService implements OnModuleInit {
         }
 
         if (this.printResponse) {
-          returnStream = returnStream.pipe(new LogTransformer(llmCallId));
+          returnStream = returnStream.pipe(
+            new LogTransformer(this.LLMLogger, llmCallId),
+          );
         }
 
         // add sentence transformer
@@ -525,13 +538,7 @@ export class LLMProviderService implements OnModuleInit {
 
       const response = await readResponse(stream);
 
-      if (this.printResponse) {
-        this.logger.debug(`RESPONSE ${llmCallId} [`);
-        response
-          .split('\n')
-          .forEach((m) => this.logger.debug(`RESPONSE ${llmCallId} | ${m}`));
-        this.logger.debug(`RESPONSE ${llmCallId} ]`);
-      }
+      this.logResponse(response, llmCallId);
 
       if (args.json) {
         const result = parseJSON<T>(response);

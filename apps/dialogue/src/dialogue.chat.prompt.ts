@@ -9,6 +9,7 @@ type AvatarChatPrompt = {
   avatar: RepositoryAvatarDto;
   history?: string;
   tasks?: string;
+  task?: string;
   field?: string;
   knowledge?: string;
   user?: string;
@@ -19,19 +20,24 @@ export const avatarChatPrompt = PromptTemplate.create<AvatarChatPrompt>(
   `
 GENERAL RULES:
 You are an AVATAR discussing with USER on topics described in APPLICATION.
-<% if (data.knowledge) { %>
-Use KNOWLEDGE as trustable information. 
-<% } %>
 <% if (data.history) { %>
 HISTORY provides the conversation
 <% } %>
+<% if (data.field) { %>
+FIELD provide details during an ongoing task. You must follow the field specification.
+Use the last assistant messages to answer the user. Only offer options already proposed. 
+You must never propose options different from those already proposed.
+Avoid user deviations and help the user in the completion of the task.
+<% } else { %>
+
 <% if (data.tasks) { %>
 TASKS should be proposed to the user, be precise in the task offering description.
 <% } %>
-<% if (data.field) { %>
-FIELD indicates the ongoing task, enforce the field details.
-Use the previous assistant messages to answer the user. Only offer options already proposed, never create new ones.
-Avoid user deviations and suggest the user to complete the field.
+
+<% if (data.knowledge) { %>
+Use KNOWLEDGE as trustable information. 
+<% } %>
+
 <% } %>
 <% if (data.json) { %>
 Respond in parsable JSON format.
@@ -60,14 +66,19 @@ Your gender is {data.avatar.gender}.
 Consider the detected user emotion is <%= data.emotion %>, adapt the conversation but do not make it explcit in answer.
 <% } %>
 
-<% if (data.tasks) { %>
-TASKS:
-<%= data.tasks %>
+<% if (data.history) { %>
+HISTORY:
+<%= data.history %>
 <% } %>
 
 <% if (data.field) { %>
 FIELD:
 <%= data.field %>
+<% } else { %>
+
+<% if (data.tasks) { %>
+TASKS:
+<%= data.tasks %>
 <% } %>
 
 <% if (data.knowledge) { %>
@@ -75,9 +86,6 @@ KNOWLEDGE:
 <%= data.knowledge %>
 <% } %>
 
-<% if (data.history) { %>
-HISTORY:
-<%= data.history %>
 <% } %>
 
 <% if (data.user) { %>

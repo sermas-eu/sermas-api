@@ -54,6 +54,12 @@ export class TaskFieldDto {
   label?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Provide context to be injected in the LLM prompt to improve handling user interactions',
+  })
+  hint?: string;
+
+  @ApiPropertyOptional({
     description: 'Priority order (lower first)',
   })
   order?: number;
@@ -211,6 +217,12 @@ export class DialogueTaskDto {
     description: 'Application ID references',
   })
   appId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Provide context to be injected in the LLM prompt to improve handling user interactions',
+  })
+  hint?: string;
 
   @ApiPropertyOptional({
     description: 'Session ID references',
