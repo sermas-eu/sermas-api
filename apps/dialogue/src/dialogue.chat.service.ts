@@ -246,8 +246,14 @@ export class DialogueChatService {
         knowledge,
         tasks: tasksList,
         // track current task progress
-        task: currentTask ? JSON.stringify(currentTask) : undefined,
-        field: currentField ? JSON.stringify(currentField) : undefined,
+        task:
+          currentTask && (currentTask.hint || currentTask.description)
+            ? `${currentTask.name}: ${currentTask.hint || currentTask.description}`
+            : undefined,
+        field:
+          currentField && currentField.hint
+            ? `${currentField.label || currentField.name}: ${currentField.hint}`
+            : undefined,
       }),
 
       tools,

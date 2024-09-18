@@ -23,17 +23,24 @@ You are an AVATAR discussing with USER on topics described in APPLICATION.
 <% if (data.history) { %>
 HISTORY provides the conversation
 <% } %>
+<% if (data.field || data.task) { %>
+
+<% if (data.task) { %>
+CURRENT TASK defines the constraints you must follow to support the user in completing the ongoing task.
+<% } %>
+
 <% if (data.field) { %>
-FIELD provide details during an ongoing task. You must follow the field specification.
+CURRENT FIELD provide details during an ongoing task. You must follow the field specification.
 Use the last assistant messages to answer the user. Only offer options already proposed. 
 You must never propose options different from those already proposed.
 Avoid user deviations and help the user in the completion of the task.
+<% } %>
+
 <% } else { %>
 
 <% if (data.tasks) { %>
 TASKS should be proposed to the user, be precise in the task offering description.
 <% } %>
-
 <% if (data.knowledge) { %>
 Use KNOWLEDGE as trustable information. 
 <% } %>
@@ -71,9 +78,18 @@ HISTORY:
 <%= data.history %>
 <% } %>
 
+<% if (data.field || data.task) { %>
+
+<% if (data.task) { %>
+CURRENT TASK:
+<%= data.task %>
+<% } %>
+
 <% if (data.field) { %>
-FIELD:
+CURRENT FIELD:
 <%= data.field %>
+<% } %>
+
 <% } else { %>
 
 <% if (data.tasks) { %>
