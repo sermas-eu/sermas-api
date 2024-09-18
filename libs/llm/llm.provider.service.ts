@@ -643,8 +643,8 @@ export class LLMProviderService implements OnModuleInit {
     const perf = this.monitor.performance({ label: 'tools' });
     const tools = args.tools || [];
 
-    if (!tools.length || !args.message) {
-      this.logger.debug(`Skip call, empty tools list or user message`);
+    if (!tools.length || !args.history?.length) {
+      this.logger.debug(`Skip call, empty tools list or history`);
       perf();
       return {
         tools: [],
@@ -665,7 +665,8 @@ export class LLMProviderService implements OnModuleInit {
           role: 'user',
           content: toolsPrompt({
             tools: convertToolsToPrompt(tools),
-            user: args.message,
+            history: args.history,
+            user: args.user,
           }),
         },
       ],
@@ -716,10 +717,11 @@ export class LLMProviderService implements OnModuleInit {
     const toolModel = args.toolsArgs?.model || args.model;
 
     const toolsRequest =
-      args.tools && args.tools.length && args.message
+      args.tools && args.tools.length && args.history
         ? this.tools({
             tools: args.tools,
-            message: args.message,
+            history: args.history,
+            user: args.user,
             provider: toolProvider,
             model: toolModel,
           })

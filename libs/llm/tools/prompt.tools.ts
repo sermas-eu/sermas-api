@@ -3,11 +3,21 @@ import { LLMTool } from './tool.dto';
 
 export const toolsPrompt = PromptTemplate.create<{
   tools: string;
-  user: string;
+  history?: string;
+  user?: string;
 }>(
   'tools',
   `
-Your task is to match one of the TOOLS with the USER message.
+Your task is to match one of the TOOLS with the user messages.
+
+<% if (data.user) { %>
+USER indicates the last user message
+<% } %>
+
+<% if (data.history) { %>
+HISTORY report the recent interaction of user and assistant. 
+Based on the interaction, identify a matching tool and compose the arguments.
+<% } %>
 
 Follow strictly all of the following rules:
 - find an item based on the 'description' field of each TOOLS.
@@ -38,6 +48,11 @@ TOOLS:
 <% if (data.user) { %>
 USER:
 <%= data.user %>
+<% } %>
+
+<% if (data.history) { %>
+HISTORY:
+<%= data.history %>
 <% } %>`,
 );
 

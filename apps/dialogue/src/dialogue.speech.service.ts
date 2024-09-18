@@ -45,19 +45,26 @@ export class DialogueSpeechService {
     private readonly monitor: MonitorService,
   ) {}
 
-  async textToSpeech(payload: DialogueTextToSpeechDto): Promise<Buffer> {
-    return await this.ttsProvider.generateTTS(payload);
-  }
-
   async translateMessage(
     payload: DialogueMessageDto,
-    targetLanguage?: string,
+    toLanguage?: string,
   ): Promise<string> {
-    if (!targetLanguage) {
-      targetLanguage = await this.session.getLanguage(payload, false);
+    if (!toLanguage) {
+      toLanguage = await this.session.getLanguage(payload, false);
     }
 
-    if (!targetLanguage) return payload.text;
+    if (!toLanguage) return payload.text;
+
+    const fromLanguage = payload.text;
+
+    // handle partial language names to match cases such as en == en-US
+    if (
+      fromLanguage &&
+      toLanguage &&
+      fromLanguage.split('-')[0] === toLanguage.split('-')[0]
+    ) {
+      return payload.text;
+    }
 
     try {
       let translation: string;
@@ -69,7 +76,7 @@ export class DialogueSpeechService {
           translation = await this.translation.translate(
             payload.text,
             payload.language,
-            targetLanguage,
+            toLanguage,
           );
           break;
       }
@@ -78,6 +85,10 @@ export class DialogueSpeechService {
       this.logger.error(`Failed to translate: ${e.stack}`);
       return payload.text;
     }
+  }
+
+  async textToSpeech(payload: DialogueTextToSpeechDto): Promise<Buffer> {
+    return await this.ttsProvider.generateTTS(payload);
   }
 
   async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
@@ -201,17 +212,22 @@ export class DialogueSpeechService {
     if (ev.actor === 'user') {
       try {
         this.emitter.emit('dialogue.chat.message.user', ev);
-        await this.sendPrompt(ev);
+        await this.handleUserMessage(ev);
       } catch (e) {
-        this.logger.error(`LLM request error: ${e.stack}`);
+        this.logger.error(`Failed to handle user message: ${e.stack}`);
       }
       return;
     }
 
+    try {
+      await this.handleAgentMessage(ev);
+    } catch (e) {
+      this.logger.error(`Failed to handle agent message: ${e.stack}`);
+    }
+  }
+
+  async handleAgentMessage(ev: DialogueMessageDto) {
     const sessionLanguage = await this.session.getLanguage(ev);
-    // if (!ev.language) {
-    //
-    // }
 
     // agent message
     let translation = ev.text;
@@ -270,7 +286,7 @@ export class DialogueSpeechService {
     }
   }
 
-  async sendPrompt(message: DialogueMessageDto) {
+  async handleUserMessage(message: DialogueMessageDto) {
     const emotion = this.emotion.getUserEmotion(message.sessionId);
     if (emotion) message.emotion = emotion;
     await this.chatProvider.inference(message);

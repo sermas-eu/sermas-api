@@ -26,7 +26,7 @@ HISTORY provides the conversation
 <% if (data.field || data.task) { %>
 
 <% if (data.task) { %>
-CURRENT TASK defines the constraints you must follow to support the user in completing the ongoing task.
+CURRENT TASK defines the constraints you must follow to support the user in completing the ongoing task. 
 <% } %>
 
 <% if (data.field) { %>

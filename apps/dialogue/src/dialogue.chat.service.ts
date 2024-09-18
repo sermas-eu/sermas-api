@@ -232,6 +232,11 @@ export class DialogueChatService {
       label: 'chat.user',
     });
 
+    const historyList = history
+      .filter((h) => h.type === 'message')
+      .map((h) => ` - ${h.role}: ${h.content}`)
+      .join('\n');
+
     const req: AvatarChat = {
       ...(llmArgs || {}),
       chat: avatarChatPrompt({
@@ -239,10 +244,7 @@ export class DialogueChatService {
         language: message.language,
         emotion: message.emotion || 'neutral',
         avatar,
-        history: history
-          .filter((h) => h.type === 'message')
-          .map((h) => ` - ${h.role}: ${h.content}`)
-          .join('\n'),
+        history: historyList,
         knowledge,
         tasks: tasksList,
         // track current task progress
@@ -257,7 +259,7 @@ export class DialogueChatService {
       }),
 
       tools,
-      message: message.text,
+      history: historyList,
 
       skipChat,
     };

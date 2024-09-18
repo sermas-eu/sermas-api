@@ -41,7 +41,8 @@ export type LLMChatRequest = {
 
 export type LLMToolsArgs = {
   tools: LLMTool[];
-  message: PromptTemplateOutput | string;
+  history?: string;
+  user?: string;
 } & LLMBaseArgs;
 
 export type LLMParallelResult = LLMCallResult & {
@@ -52,7 +53,8 @@ export type AvatarChat = {
   chat?: PromptTemplateOutput | string;
 
   tools?: LLMTool[];
-  message?: PromptTemplateOutput | string;
+  history?: string;
+  user?: string;
 } & LLMProviderConfig & {
     chatArgs?: Partial<LLMChatArgs>;
     toolsArgs?: Partial<LLMChatArgs>;
