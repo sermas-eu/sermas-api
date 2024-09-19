@@ -158,7 +158,8 @@ export class DialogueChatService {
     let matchOrRemoveTask = false;
 
     // load tools repositories
-    let repositories = await this.tools.loadFromSession(message);
+    const sessionRepositories = await this.tools.loadFromSession(message);
+    let repositories: DialogueToolsRepositoryDto[] = [];
 
     if (currentTask) {
       currentField = await this.tasks.getCurrentField(
@@ -166,7 +167,7 @@ export class DialogueChatService {
         message.sessionId,
       );
 
-      repositories = repositories.filter((r) => {
+      repositories = sessionRepositories.filter((r) => {
         if (!r.tools) return false;
         return r.tools.filter(
           (t) =>
@@ -188,9 +189,9 @@ export class DialogueChatService {
       // TODO enable fallback answer if no options matches
     }
 
-    // filter out cancelled tools for a task, since removal is async and could have not been completed yet
+    // restore tools but filter out cancelled tools for a task, since removal is async and could have not been completed yet
     if (taskCancelled) {
-      repositories = repositories.filter(
+      repositories = sessionRepositories.filter(
         (r) =>
           r.tools.filter(
             (t) =>
@@ -212,7 +213,7 @@ export class DialogueChatService {
       .flat();
 
     this.logger.debug(
-      `Active tools: ${tools.map((t) => `${t.name}: ${t.description}`)}`,
+      `Active tools: [${tools.map((t) => `${t.name}: ${t.description}`)}]`,
     );
 
     let hasCatchAll: AppToolsDTO;

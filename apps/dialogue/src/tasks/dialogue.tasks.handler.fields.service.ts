@@ -418,6 +418,11 @@ Return the 'value' field value`;
       label: 'task.handle-field',
     });
 
+    if (!context.field) {
+      this.logger.warn(`Field is empty for task=${context.task.name}`);
+      return;
+    }
+
     let label = context.field?.label;
     if (label) {
       Object.keys(context.record?.values || {}).forEach((k) => {
@@ -535,7 +540,7 @@ Return the 'value' field value`;
         break;
     }
 
-    perf(context.field.type);
+    perf(context.field?.type);
   }
 
   createMetadata(context: TaskFieldContext): Record<string, any> {

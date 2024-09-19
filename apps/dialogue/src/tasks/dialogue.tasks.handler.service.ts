@@ -504,6 +504,7 @@ export class DialogueTasksHandlerService {
         if (!conditionMet) {
           this.logger.debug(`Skipping field ${currentField.name}`);
           record.values[currentField.name] = null;
+          record = await this.record.save(record);
           currentField = undefined;
           continue;
         }
@@ -546,6 +547,8 @@ export class DialogueTasksHandlerService {
 
     const completed =
       record.status === 'completed' ||
+      (record.status === 'started' &&
+        Object.keys(record.values).length === fields.length) ||
       (record.status === 'ongoing' &&
         (currentField === undefined ||
           (!currentField?.name && !currentField?.type))) ||

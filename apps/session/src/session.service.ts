@@ -165,12 +165,18 @@ export class SessionService {
 
       let settings: Partial<AppSettingsDto> = app ? app.settings || {} : {};
 
-      if (payload.sessionId) {
-        const session = await this.read(payload.sessionId, false);
+      let sessionId = payload.sessionId;
+      if (!sessionId) {
+        const data = payload as any;
+        if (data.record?.sessionId) sessionId = data.record?.sessionId;
+      }
+
+      if (sessionId) {
+        const session = await this.read(sessionId, false);
         if (session && session?.settings) {
           settings = {
             ...settings,
-            ...(session?.settings || {}),
+            ...session.settings,
           };
         }
       }

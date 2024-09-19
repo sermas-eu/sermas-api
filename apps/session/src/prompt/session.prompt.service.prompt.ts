@@ -35,7 +35,7 @@ AVATAR:
 Your name is <%= data.avatar?.name %>. 
 <% } %>
 <% if (data.avatar?.gender) { %>
-Your gender is {data.avatar.gender}.
+Your gender is <%= data.avatar.gender %>.
 <% } %>
 <%= data.avatar?.prompt %>
 <% if (data.emotion) { %>
