@@ -1,5 +1,6 @@
 // https://www.deskriders.dev/posts/1702742595-function-calling-ollama-models/
 import { Readable } from 'stream';
+import { PromptTemplateOutput } from '../prompt/prompt.template';
 
 export const LLMPromptTagList = [
   'chat',
@@ -42,9 +43,9 @@ export class LLMPrompt {
   params?: Record<string, any>;
 }
 
-export class LLMChatMessage {
+export class LLMMessage {
   role: LLMRole;
-  content: string;
+  content: string | PromptTemplateOutput;
 }
 
 export interface LLMChatOptions {

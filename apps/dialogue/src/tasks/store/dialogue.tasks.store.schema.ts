@@ -30,6 +30,9 @@ export class DialogueTaskStore extends DialogueTaskDto {
   @Prop({ index: true })
   description?: string;
 
+  @Prop({ index: true, required: false })
+  hint?: string;
+
   @Prop({ index: true, type: MongooseSchema.Types.Array })
   events?: TaskEventDto[];
 

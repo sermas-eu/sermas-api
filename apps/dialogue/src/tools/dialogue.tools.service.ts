@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
+import { SelectedTool } from 'libs/llm/tools/tool.dto';
 import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
 import { deepcopy, uuidv4 } from 'libs/util';
 import { DialogueToolNotMatchingDto } from '../dialogue.chat.dto';
@@ -232,5 +233,20 @@ export class DialogueToolsService {
   getSchemaValue(tool: AppToolsDTO, parameterName: string) {
     const values = this.getSchemaValues(tool);
     return values[parameterName];
+  }
+
+  getRepositoryByTool(
+    repositories: DialogueToolsRepositoryDto[],
+    tool: SelectedTool<{
+      [param: string]: any;
+    }>,
+  ): DialogueToolsRepositoryDto | null {
+    const matchingRepositories = (repositories || []).filter(
+      (r) => (r.tools || []).filter((t) => t.name === tool.name).length,
+    );
+    const matchingRepository = matchingRepositories.length
+      ? matchingRepositories[0]
+      : null;
+    return matchingRepository || null;
   }
 }

@@ -48,3 +48,8 @@ export interface AnswerResponse {
 }
 
 export type ToolWithAnswerResponse = AnswerResponse | ToolResponse;
+
+export type LLMToolsResponse = {
+  tools: SelectedTool[];
+  answer?: string;
+};

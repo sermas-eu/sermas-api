@@ -28,6 +28,12 @@ import {
   ValidationResultDto,
 } from './dialogue.tasks.handler.dto';
 import {
+  taskFieldConditionPrompt,
+  taskFieldExpressionPrompt,
+  taskFieldRephrasePrompt,
+  taskFieldValidationPrompt,
+} from './dialogue.tasks.handler.fields.prompt';
+import {
   TOOL_CANCEL_TASK_NAME,
   TOOL_CONTEXT_TASK_FIELD,
 } from './dialogue.tasks.handler.service';
@@ -223,16 +229,6 @@ export class DialogueTasksHandlerFieldsService {
       return true;
     }
 
-    const prompt = [
-      `Evaluate CONDITION based on VALUES`,
-      `Return a parsable JSON object with format { "result": boolean }`,
-      `Never add explanation or comments.`,
-      `VALUES:`,
-      JSON.stringify(context.record.values),
-      `CONDITION:`,
-      condition,
-    ];
-
     const perf = this.monitor.performance({
       ...context.record,
       label: 'task.evaluate-condition',
@@ -243,7 +239,10 @@ export class DialogueTasksHandlerFieldsService {
       ...this.llm.extractProviderName(llm?.tools),
       stream: false,
       json: true,
-      message: prompt.join('\n'),
+      user: taskFieldConditionPrompt({
+        condition,
+        values: JSON.stringify(context.record.values),
+      }),
       tag: 'tools',
     });
 
@@ -270,13 +269,6 @@ export class DialogueTasksHandlerFieldsService {
       }
     }
 
-    const prompt = [
-      `Given this JSON object:`,
-      JSON.stringify(context.record.values),
-      fieldPrompt,
-      `Return a parsable JSON object with format { "result": value }`,
-    ];
-
     try {
       const perf = this.monitor.performance({
         ...context.record,
@@ -286,7 +278,10 @@ export class DialogueTasksHandlerFieldsService {
       const res = await this.llm.chat<{ result: boolean }>({
         stream: false,
         json: true,
-        message: prompt.join('\n'),
+        user: taskFieldExpressionPrompt({
+          fieldPrompt,
+          values: JSON.stringify(context.record.values),
+        }),
         tag: 'tools',
       });
 
@@ -323,39 +318,26 @@ export class DialogueTasksHandlerFieldsService {
 
     const language = await this.session.getLanguage(context.record);
 
-    const prompt = [
-      `Validate and convert the USER value to type ${field.type} following RULES.`,
-      `Provide a reason if the USER value cannot be validated or converted and set value to null`,
-      `Answer in parsable JSON format with structure { value: "converted value", reason: "non-technical motivation in case of failure" }`,
-      'Do not additional notes or explanation',
-      language ? `Use language ${language} in your answers` : '',
-      `USER`,
-      values.value,
-    ];
-
-    prompt.push(`RULES`);
-
+    let rules = '';
     switch (field.type) {
       case 'boolean':
-        prompt.push(`Convert to true or false.`);
+        rules = `Convert to true or false.`;
         break;
       case 'text':
-        prompt.push(`Any text is valid. Should not be empty.`);
+        rules = `Any text is valid. Should not be empty.`;
         break;
       case 'date':
-        prompt.push(
-          `Ensure date is valid then convert to javascript Date format.`,
-        );
+        rules = `Ensure date is valid then convert to javascript Date format.`;
         break;
       case 'select':
         if (field.options?.length) {
           const options = (field.options || [])
             .map((o) => '- ' + JSON.stringify(o))
             .join('\n');
-          prompt.push(
-            `Should match with one of the following JSON items:\n${options}`,
-          );
-          prompt.push(`Return the 'value' field value`);
+          rules = `
+Should match with one of the following JSON items:
+${options}
+Return the 'value' field value`;
         }
         break;
       default:
@@ -364,19 +346,23 @@ export class DialogueTasksHandlerFieldsService {
         break;
     }
 
-    if (prompt) {
-      prompt.push(field.validation);
-    }
-
     const perf = this.monitor.performance({
       ...context.record,
       label: 'task.validation',
     });
 
-    const res = await this.llm.chat<{ value: any | null; reason?: string }>({
+    const prompt = taskFieldValidationPrompt({
+      field,
+      rules,
+      language,
+      value: values.value,
+    });
+
+    type ValidationResponse = { value: any | null; reason?: string };
+    const res = await this.llm.chat<ValidationResponse>({
       stream: false,
       json: true,
-      system: this.replaceValues(prompt.join('\n'), {
+      system: this.replaceValues(prompt, {
         [values.field]: values.value,
       }),
       tag: 'tools',
@@ -407,24 +393,20 @@ export class DialogueTasksHandlerFieldsService {
   async rephrase(context: {
     record: DialogueTaskRecordDto;
     label: string;
-    promptContext?: string[];
+    basePrompt?: string;
   }) {
     const language = await this.session.getLanguage(context.record);
 
-    const prompt = [
-      ...(context.promptContext && context.promptContext.length
-        ? context.promptContext
-        : []),
-      `You have to rephrase the user message.`,
-      `Do not add notes or explanations.`,
-      language ? `Translate to language ${language}` : '',
-    ];
+    const prompt = taskFieldRephrasePrompt({
+      basePrompt: context.basePrompt || '',
+      language,
+    });
 
     return await this.llm.chat({
       stream: false,
       json: false,
-      system: prompt.join('\n'),
-      message: context.label,
+      system: prompt,
+      user: context.label,
       tag: 'translation',
     });
   }

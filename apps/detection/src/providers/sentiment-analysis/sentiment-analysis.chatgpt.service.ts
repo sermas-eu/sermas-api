@@ -31,7 +31,7 @@ Never generate an answer, by default anser with ${defaultEmotion}|1.0`;
     try {
       content = await this.llmProvider.chat({
         system,
-        message,
+        user: message,
         stream: false,
         tag: 'sentiment',
       });

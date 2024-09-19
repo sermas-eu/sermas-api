@@ -9,6 +9,7 @@ import { DialogueMemoryMessageDto } from '../memory/dialogue.memory.dto';
 import { DialogueTaskRecordDto } from '../tasks/record/dialogue.tasks.record.dto';
 import { DialogueTaskRecordService } from '../tasks/record/dialogue.tasks.record.service';
 import { DialogueTaskDto } from '../tasks/store/dialogue.tasks.store.dto';
+import { intentPrompt } from './dialogue.intent.prompt';
 
 type TaskQuestionWrapper = {
   taskId: string;
@@ -114,21 +115,6 @@ export class DialogueIntentService {
     const app = await this.platformApp.readApp(ev.appId, false);
     const avatar = await this.session.getAvatar(ev);
 
-    let appPrompt = '';
-    if (app) {
-      appPrompt = app?.settings?.prompt?.text || '';
-    }
-
-    const prompt: string[] = [];
-
-    if (appPrompt) {
-      prompt.push(`The application scope is: ${appPrompt}`);
-    }
-
-    if (avatar && avatar.prompt) {
-      prompt.push(`You are a digital agent: ${avatar.prompt}`);
-    }
-
     const tasks = await this.tasks.search({
       appId: ev.appId,
     });
@@ -136,28 +122,6 @@ export class DialogueIntentService {
 
     const intents = await this.getIntents(ev.appId);
     if (!intents.length) return null;
-
-    // const sessionLanguage = await this.session.getLanguage(ev, false);
-    // const language = ev.language || sessionLanguage;
-
-    prompt.push(
-      `Analyze user interaction in HISTORY and match one of TASKS.`,
-
-      `Set the  field 'match' to 'false' in those cases:`,
-      '- if there is no match',
-      '- if the assistant already asked for a task in the last two interactions',
-      '- if the user confirmed a task in the last interaction',
-
-      'If the last user message confirm a task proposed by the assistant, set the field "trigger" to true',
-      'If the last user message indicate they want to cancel the task, set the field "cancel" to true',
-
-      `Return a parsable JSON object with structure { result: { taskId: string, match: boolean, trigger: boolean, cancel: boolean } }`,
-
-      'Never add notes or explanations',
-
-      `HISTORY:\n${history.join('\n')}`,
-      `TASKS:\n${JSON.stringify(intents)}`,
-    );
 
     const perf = this.monitor.performance({
       ...ev,
@@ -170,7 +134,12 @@ export class DialogueIntentService {
       ...this.llm.extractProviderName(llm?.intent),
       stream: false,
       json: true,
-      message: prompt.join('\n'),
+      user: intentPrompt({
+        app,
+        avatar,
+        history: history.join('\n'),
+        intents: JSON.stringify(intents),
+      }),
       tag: 'intent',
     });
 

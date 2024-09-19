@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { ITranslate } from './itranslate';
+import { translationPrompt } from './translation.prompt';
 
 @Injectable()
 export class LLMTranslationService implements ITranslate {
@@ -23,7 +24,7 @@ export class LLMTranslationService implements ITranslate {
       const language = await this.llmProvider.chat({
         system: `Your task is to detect precisely the language as a two letter code.
 Answer the user exclusively with the language code, avoid any further reasoning. If you cannot detect the language, return unknown. Never add Notes or Explanations.`,
-        message: text,
+        user: text,
         stream: false,
         tag: 'translation',
       });
@@ -53,29 +54,23 @@ Answer the user exclusively with the language code, avoid any further reasoning.
       label: 'translation-translate',
     });
 
-    text.split('\n').forEach((line) => this.logger.verbose(`| ${line}`));
+    // text.split('\n').forEach((line) => this.logger.verbose(`| ${line}`));
 
     try {
       const translation = await this.llmProvider.chat({
-        system: `
-Your task is to translate to language identified by code ${toLanguage}. ${
-          fromLanguage
-            ? 'Original language code is ' + fromLanguage
-            : 'Please infer the original language of the text.'
-        }.
-Answer the user exclusively with the translated text, avoid any further reasoning. 
-Keep the original text formatting. 
-If you cannot translate, return the exact user text. 
-Never add Notes or Explanations.`,
-        message: text,
+        system: translationPrompt({
+          fromLanguage,
+          toLanguage,
+        }),
+        user: text,
         stream: false,
       });
 
       perf('openai');
 
-      translation
-        .split('\n')
-        .forEach((line) => this.logger.verbose(`| ${line}`));
+      // translation
+      //   .split('\n')
+      //   .forEach((line) => this.logger.verbose(`| ${line}`));
 
       return translation;
     } catch (e) {

@@ -14,7 +14,10 @@ import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueSpeechService } from './dialogue.speech.service';
-import { createWelcomePrompt } from './prompts';
+import {
+  welcomeMessagePrompt,
+  welcomeToolsPrompt,
+} from './dialogue.speech.welcome.prompt';
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
@@ -49,7 +52,9 @@ export class DialogueWelcomeService {
       return;
     }
 
-    if (app.settings?.skipWelcomeMessage === true) return;
+    const settings = await this.session.getSettings(ev);
+
+    if (settings?.skipWelcomeMessage === true) return;
 
     const avatarSettings = await this.session.getAvatar(ev);
     const gender = avatarSettings.gender;
@@ -89,7 +94,11 @@ export class DialogueWelcomeService {
     const welcomeMessageChat = await this.llmProvider.chat({
       // system: createListToolsPrompt(app, toolsList, avatarSettings),
       ...this.llmProvider.extractProviderName(llm?.tools),
-      system: createWelcomePrompt(app, avatarSettings),
+      system: welcomeMessagePrompt({
+        type: 'welcome',
+        settings,
+        avatar: avatarSettings,
+      }),
       stream: true,
       tag: 'chat',
     });
@@ -133,17 +142,12 @@ export class DialogueWelcomeService {
         .chat<ButtonsList>({
           stream: false,
           json: true,
-          system: [
-            `Return a JSON array of strings with the value of 'label' field.`,
-            `If the field 'rephrase' is true, rephrase to be a button label otherwise return the same label.`,
-            language
-              ? `Translate all the resulting labels to language ${language}.`
-              : '',
-            `Never add comments or explanations.`,
-            JSON.stringify(
+          system: welcomeToolsPrompt({
+            tools: JSON.stringify(
               toolsList.map((t) => ({ label: t.label, rephrase: t.rephrase })),
             ),
-          ].join('\n'),
+            language,
+          }),
           tag: 'translation',
         })
         .then((list) => {

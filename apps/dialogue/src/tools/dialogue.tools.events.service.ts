@@ -194,7 +194,7 @@ export class DialogueToolsEventsService {
         await addTools(
           buttons.list.map(
             (button): UiToolParam => ({
-              description: `${button.description ? `${button.description} : ` : ''}${button.label || button.value}`,
+              description: `${button.description ? `${button.description} : ` : `${button.label || button.value}`}`,
               schema: [
                 {
                   description: 'Ignore: btn value',

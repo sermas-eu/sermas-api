@@ -1,50 +1,63 @@
+import { PromptTemplateOutput } from './prompt/prompt.template';
 import {
   LLMCallResult,
-  LLMChatMessage,
-  LLMPrompt,
+  LLMMessage,
+  LLMPromptTag,
   LLMProvider,
   LLMProviderConfig,
 } from './providers/provider.dto';
 import { LLMTool, SelectedTool } from './tools/tool.dto';
 
-export interface LLMPromptArgs {
-  // key-value with placeholders
-  params?: { [key: string]: any };
+export type LLMSendArgs = LLMProviderConfig & {
+  messages: LLMMessage[];
+  stream: boolean;
+  json: boolean;
+  llmCallId?: string;
+};
 
-  system?: string | LLMPrompt;
-  intro?: string | LLMPrompt;
+export type LLMChatArgs = LLMProviderConfig & {
+  system?: PromptTemplateOutput | string;
+  user?: PromptTemplateOutput | string;
 
-  tools?: LLMTool[];
+  stream?: boolean;
+  llmCallId?: string;
+};
 
-  history?: LLMChatMessage[];
-  knowledge?: string | LLMPrompt;
-
-  message?: string | LLMPrompt;
-
-  json?: boolean;
-}
-
-export type LLMChatArgs = LLMProviderConfig &
-  LLMPromptArgs & {
-    stream?: boolean;
-  };
+export type LLMBaseArgs = {
+  provider?: LLMProvider;
+  model?: string;
+  tag?: LLMPromptTag;
+  llmCallId?: string;
+};
 
 export type LLMChatRequest = {
-  provider?: LLMProvider;
-  system?: string;
-  message?: string;
-  model?: string;
   stream?: boolean;
   json?: boolean;
-};
+
+  messages?: LLMMessage[];
+  system?: PromptTemplateOutput | string;
+  user?: PromptTemplateOutput | string;
+} & LLMBaseArgs;
+
+export type LLMToolsArgs = {
+  tools: LLMTool[];
+  history?: string;
+  user?: string;
+} & LLMBaseArgs;
 
 export type LLMParallelResult = LLMCallResult & {
   tools?: SelectedTool[];
 };
 
-export type AvatarChat = LLMChatArgs & {
-  chatArgs?: Partial<LLMChatArgs>;
-  toolsArgs?: Partial<LLMChatArgs>;
-  provider?: LLMProvider;
-  skipChat?: boolean;
-};
+export type AvatarChat = {
+  chat?: PromptTemplateOutput | string;
+
+  tools?: LLMTool[];
+  history?: string;
+  user?: string;
+} & LLMProviderConfig & {
+    chatArgs?: Partial<LLMChatArgs>;
+    toolsArgs?: Partial<LLMChatArgs>;
+    provider?: LLMProvider;
+    skipChat?: boolean;
+  };
