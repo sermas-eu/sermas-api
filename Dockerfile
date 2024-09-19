@@ -3,7 +3,7 @@ FROM node:20 AS builder
 RUN apt update -q && apt install -y sox
 
 WORKDIR /app
-ADD package.json ./
+ADD package.json package-lock.json ./
 
 # fix husky error in minio-client
 RUN mkdir -p .git/hooks && npm install husky -g
