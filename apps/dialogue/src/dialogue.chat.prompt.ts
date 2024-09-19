@@ -70,7 +70,7 @@ Your gender is {data.avatar.gender}.
 <% } %>
 <%= data.avatar?.prompt %>
 <% if (data.emotion) { %>
-Consider the detected user emotion is <%= data.emotion %>, adapt the conversation but do not make it explcit in answer.
+Consider the detected user emotion is <%= data.emotion %>, adapt the conversation but do not make it explicit in answer.
 <% } %>
 
 <% if (data.history) { %>

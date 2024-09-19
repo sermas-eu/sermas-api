@@ -29,8 +29,8 @@ Set the  field 'match' to 'false' in those cases:
 - if the assistant already asked for a task in the last two interactions
 - if the user confirmed a task in the last interaction
 
-If the last user message confirm a task proposed by the assistant, set the field "trigger" to true
-If the last user message indicate they want to cancel the task, set the field "cancel" to true
+If the last user message confirms a task proposed by the assistant, set the field "trigger" to true
+If the last user message indicates they want to cancel the task, set the field "cancel" to true
 
 Return a parsable JSON object with structure { result: { taskId: string, match: boolean, trigger: boolean, cancel: boolean } }
 
