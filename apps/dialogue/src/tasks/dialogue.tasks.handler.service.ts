@@ -345,7 +345,7 @@ export class DialogueTasksHandlerService {
       record.status === type &&
       (type === 'completed' || type === 'aborted')
     ) {
-      this.logger.log(`Task status is already ${type}. Skip update`);
+      this.logger.debug(`Task status is already ${type}. Skip update`);
       return record;
     }
 
@@ -353,7 +353,7 @@ export class DialogueTasksHandlerService {
     record.status = type;
     record = await this.record.save(record);
 
-    this.logger.log(`Task updated status=${type} taskId=${task.taskId}`);
+    this.logger.debug(`Task updated status=${type} taskId=${task.taskId}`);
 
     const ev: DialogueTaskProgressDto = {
       type,
@@ -480,13 +480,13 @@ export class DialogueTasksHandlerService {
       a.order || 0 > b.order || 0 ? 1 : -1,
     );
     for (const field of fields) {
-      this.logger.debug(
+      this.logger.verbose(
         `Processing field ${field.name} order=${field.order || 0}`,
       );
 
       const hasValue = record.values[field.name] !== undefined;
       if (hasValue) {
-        this.logger.debug(`Field ${field.name} is set, skip`);
+        this.logger.verbose(`Field ${field.name} is set, skip`);
         continue;
       }
 
@@ -563,7 +563,7 @@ export class DialogueTasksHandlerService {
       return;
     }
 
-    this.logger.log(
+    this.logger.debug(
       `Current field name=${currentField?.name} type=${currentField?.type} taskId=${task.taskId} sessionId=${record.sessionId}`,
     );
 

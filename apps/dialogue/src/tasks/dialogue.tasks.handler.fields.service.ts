@@ -419,7 +419,7 @@ Return the 'value' field value`;
     });
 
     if (!context.field) {
-      this.logger.warn(`Field is empty for task=${context.task.name}`);
+      this.logger.warn(`Field is empty, task=${context.task.name}`);
       return;
     }
 
