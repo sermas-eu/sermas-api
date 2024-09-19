@@ -16,7 +16,7 @@ export const intentPrompt = PromptTemplate.create<IntentTypePrompt>(
   'intent-match',
   `
 <% if (data.settings?.prompt?.text) { %>
-    The application scope is: <%= data.app?.settings?.prompt?.text %>
+    The application scope is: <%= data.settings?.prompt?.text %>
 <% } %>
 
 <% if (data.avatar) { %>
