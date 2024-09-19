@@ -356,7 +356,6 @@ Return the 'value' field value`;
       rules,
       language,
       value: values.value,
-      values: '',
     });
 
     type ValidationResponse = { value: any | null; reason?: string };

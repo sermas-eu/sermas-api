@@ -55,7 +55,7 @@ export class DialogueSpeechService {
 
     if (!toLanguage) return payload.text;
 
-    const fromLanguage = payload.text;
+    const fromLanguage = payload.language;
 
     // handle partial language names to match cases such as en == en-US
     if (
@@ -191,7 +191,7 @@ export class DialogueSpeechService {
       const errorMessage = await this.translateMessage(
         {
           ...dialogueMessagePayload,
-          text: 'Sorry, could you retry ?',
+          text: 'Sorry, could you retry?',
           language: 'en-GB',
         },
         language,
