@@ -112,7 +112,7 @@ export class DialogueIntentService {
 
     if (history.length < 2) return;
 
-    const app = await this.platformApp.readApp(ev.appId, false);
+    const settings = await this.session.getSettings(ev);
     const avatar = await this.session.getAvatar(ev);
 
     const tasks = await this.tasks.search({
@@ -135,10 +135,11 @@ export class DialogueIntentService {
       stream: false,
       json: true,
       user: intentPrompt({
-        app,
+        settings,
         avatar,
         history: history.join('\n'),
         intents: JSON.stringify(intents),
+        currentTask: currentTask?.name,
       }),
       tag: 'intent',
     });

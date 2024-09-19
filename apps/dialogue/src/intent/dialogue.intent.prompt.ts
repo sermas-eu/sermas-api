@@ -1,36 +1,43 @@
 import {
-  PlatformAppDto,
+  AppSettingsDto,
   RepositoryAvatarDto,
 } from 'apps/platform/src/app/platform.app.dto';
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 
 type IntentTypePrompt = {
-  app?: PlatformAppDto;
+  settings?: AppSettingsDto;
   avatar?: RepositoryAvatarDto;
   intents: string;
   history: string;
+  currentTask?: string;
 };
 
 export const intentPrompt = PromptTemplate.create<IntentTypePrompt>(
   'intent-match',
   `
-<% if (data.app?.settings?.prompt?.text) { %>
-    The application scope is: <%= data.app?.settings?.prompt?.text %>
+<% if (data.settings?.prompt?.text) { %>
+    The application scope is: <%= data.settings?.prompt?.text %>
 <% } %>
 
 <% if (data.avatar) { %>
 You are a digital agent: <%= data.avatar?.prompt %>
 <% } %>
 
-Analyze user interaction in HISTORY and match one of TASKS.
+<% if (data.currentTask) { %>
+Active task name is <%= data.currentTask %>
+<% } %>
 
-Set the  field 'match' to 'false' in those cases:
-- if there is no match
-- if the assistant already asked for a task in the last two interactions
-- if the user confirmed a task in the last interaction
+Analyze the interaction in HISTORY and match one of TASKS.
+
+Set the field 'match' to 'true' in those cases:
+- if there is a match
+- if the assistant proposed that task in the last two interactions
+- if the user had not yet confirmed the task in the last interaction
 
 If the last user message confirms a task proposed by the assistant, set the field "trigger" to true
-If the last user message indicates they want to cancel the task, set the field "cancel" to true
+<% if (data.currentTask) { %>
+If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
+<% } %>
 
 Return a parsable JSON object with structure { result: { taskId: string, match: boolean, trigger: boolean, cancel: boolean } }
 

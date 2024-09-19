@@ -247,6 +247,7 @@ export class DialogueSpeechService {
     };
 
     await this.sendAgentSpeech(agentResponseEvent);
+
     this.emitter.emit('dialogue.chat.message.agent', agentResponseEvent);
     this.asyncApi.dialogueMessages(agentResponseEvent);
   }

@@ -56,16 +56,8 @@ export class DialogueWelcomeService {
 
     if (settings?.skipWelcomeMessage === true) return;
 
-    const avatarSettings = await this.session.getAvatar(ev);
-    const gender = avatarSettings.gender;
-
-    // const welcomeChat = await this.llmProvider.chat({
-    //   system: createWelcomeMessagePrompt(app, avatar),
-    //   stream: true,
-    // });
-
+    const avatar = await this.session.getAvatar(ev);
     const tasks = await this.tasks.list(ev.appId);
-
     const repositories = await this.tools.loadFromSession(ev);
     const tools = (repositories || []).map((r) => r.tools || []).flat();
 
@@ -97,7 +89,7 @@ export class DialogueWelcomeService {
       system: welcomeMessagePrompt({
         type: 'welcome',
         settings,
-        avatar: avatarSettings,
+        avatar,
       }),
       stream: true,
       tag: 'chat',
@@ -112,16 +104,14 @@ export class DialogueWelcomeService {
 
     const messageId = getMessageId();
 
-    const language = await this.session.getLanguage(ev);
-
     const onChatData = async (text: string) => {
       const msg: DialogueMessageDto = {
         actor: 'agent',
         appId: ev.appId,
-        language,
+        language: settings.language,
         sessionId: ev.record.sessionId,
         text,
-        gender: gender,
+        gender: avatar.gender,
         emotion,
         ts: new Date(),
         messageId,
@@ -146,7 +136,7 @@ export class DialogueWelcomeService {
             tools: JSON.stringify(
               toolsList.map((t) => ({ label: t.label, rephrase: t.rephrase })),
             ),
-            language,
+            language: settings.language,
           }),
           tag: 'translation',
         })

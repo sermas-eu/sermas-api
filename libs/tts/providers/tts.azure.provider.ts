@@ -60,7 +60,7 @@ export class AzureTextToSpeech implements ITextToSpeech, OnModuleInit {
   async loadVoiceModels(): Promise<AzureVoiceModels> {
     const speechConfig = await this.loadSpeechConfig();
     if (!speechConfig) {
-      this.logger.warn(`Missing speech config, skip loading voice models`);
+      this.logger.verbose(`Missing speech config, skip loading voice models`);
       return this.voices;
     }
 
