@@ -125,8 +125,10 @@ export class LLMProviderService implements OnModuleInit {
     return [defaultProvider, defaultModel];
   }
 
-  getAvalableModels(provider: LLMProvider): string[] | undefined {
-    const list = this.config.get(`${provider.toUpperCase()}_CHAT_MODELS`);
+  getAvailableModels(provider: LLMProvider): string[] | undefined {
+    const configKey: string = `${provider.toUpperCase()}_CHAT_MODELS`;    
+    const list = this.config.get(configKey);
+    this.logger.verbose(`Retrieved configured models for ${configKey}: ${list}`);
     if (!list) return undefined;
     return list.split(',').map((m) => m.trim());
   }
@@ -184,7 +186,7 @@ export class LLMProviderService implements OnModuleInit {
     const model =
       config.model || this.getDefaultChatProviderModel(config.provider);
 
-    const availableModels = this.getAvalableModels(config.provider);
+    const availableModels = this.getAvailableModels(config.provider);  // TODO - K: Maybe rename to "getAllowedModels"?
 
     switch (config.provider) {
       case 'ollama':
@@ -240,8 +242,10 @@ export class LLMProviderService implements OnModuleInit {
 
     const valid = await provider.checkModel(model);
     if (!valid) {
+      const providerModels = await provider.getModels();
       throw new Error(
-        `Model ${model} is not available from provider ${config.provider}`,
+        `Model ${model} is not available from provider ${config.provider}. \
+        Available models are: ${providerModels}`,
       );
     }
 
