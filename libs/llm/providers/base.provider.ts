@@ -27,18 +27,19 @@ export abstract class LLMProvider<
   }
 
   public async checkModel(model: string) {
+    // This tries to load models into this.models.
     await this.getModels();
-    // ignore if unset
+    // If no model list is available, we skip the check
     if (this.models === undefined) return true;
-    return (
-      this.models.filter((m) => {
+    const modelName: string = model.split(':')[0];
+    return this.models.some((m) => {
         const parts = m.split(':');
-        if (m === model || parts[0] === model) return true;
-
         const isWildcard = parts.length > 1 && parts[1] === '*';
-        return isWildcard;
-      }).length > 0
-    );
+        return (
+          m === model ||  // Perfect match 
+          (parts[0] === modelName && isWildcard)  // Wildcard match
+        );
+      });
   }
 
   getAdapter(model: string) {
