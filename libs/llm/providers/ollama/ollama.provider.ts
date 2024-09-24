@@ -14,7 +14,7 @@ import { LLMChatProvider } from '../chat.provider';
 import { TudaLLama2ModelAdapter } from './adapters/tuda-llama2/tuda.llama2.adapter';
 import { TudaLLama3ModelAdapter } from './adapters/tuda-llama3/tuda.llama3.adapter';
 
-const OLLAMA_TIMEOUT = 200;
+const OLLAMA_TIMEOUT = 2000;
 
 type OllamaModel = {
   name: string;
@@ -66,35 +66,46 @@ export class OllamaChatProvider extends LLMChatProvider {
     }
   }
 
+  private async isOllamaReachable(): Promise<boolean> {
+    if (!this.config.baseURL) {
+      this.logger.debug('ollama unreachable: no baseURL provided');
+      return false;
+    }
+    let res: any;
+    try {
+      res = await axios.get(this.config.baseURL, {
+        timeout: OLLAMA_TIMEOUT,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `ollama unreachable: error connecting to ${this.config.baseURL}. ${e.message}}`
+      );
+      return false;
+    }
+    if (!res) {
+      this.logger.warn(
+        `ollama unreachable: no response from ${this.config.baseURL}`
+      );
+      return false;
+    }
+    return true;
+  }
+
   async available(): Promise<boolean> {
     // check periodically
     if (!this.heartbeat) {
       this.heartbeat = setInterval(async () => {
-        this.reachable = undefined;
+        this.reachable = undefined;  // TODO - K: Are we sure about this? If this is the first run, this assignment is redundant. Otherwise, maybe it's better to set it inside the cath block? What does undefined reachability mean here anyway? 
         try {
-          await this.available();
+          this.reachable = await this.isOllamaReachable();
         } catch {}
       }, 5000);
     }
 
-    try {
-      if (!this.config.baseURL) {
-        this.reachable = false;
-        return false;
-      }
-      const res = await axios.get(this.config.baseURL, {
-        timeout: OLLAMA_TIMEOUT,
-      });
-      if (!res) {
-        this.reachable = false;
-        return false;
-      }
-      this.reachable = true;
-      return true;
-    } catch (e) {
-      this.reachable = false;
-      return false;
+    if (this.reachable === undefined || !this.reachable) {  // TODO - K: Check with Luca
+      this.reachable = await this.isOllamaReachable();
     }
+    return this.reachable;
   }
 
   private createClient() {
