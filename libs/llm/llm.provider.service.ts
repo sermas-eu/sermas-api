@@ -192,9 +192,8 @@ export class LLMProviderService implements OnModuleInit {
       case 'ollama':
         provider = new OllamaChatProvider({
           provider: config.provider,
-          baseURL: config.baseURL || this.config.get('OLLAMA_URL'),
+          baseURL: config.baseURL || this.config.get('OLLAMA_BASEURL'),
           model,
-          apiKey: config.apiKey || '',
           availableModels,
         });
         break;

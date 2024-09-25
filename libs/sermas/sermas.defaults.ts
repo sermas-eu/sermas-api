@@ -158,8 +158,8 @@ export const SermasDefaultConfig = {
   // LITELLM_URL LiteLLM endpoint URL
   LITELLM_URL: 'http://litellm',
 
-  // OLLAMA_URL Url to Ollama
-  OLLAMA_URL: 'http://ollama:11434',
+  // OLLAMA_BASEURL Url to Ollama
+  OLLAMA_BASEURL: 'http://ollama:11434',
   // OLLAMA_MODEL Default Ollama model used as fallback
   OLLAMA_MODEL: 'sermas-llama3',
   // OLLAMA_CHAT_MODELS Supported chat models from Ollama. Leave empty to allow all available.
