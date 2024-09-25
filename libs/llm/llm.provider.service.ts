@@ -243,8 +243,8 @@ export class LLMProviderService implements OnModuleInit {
     if (!valid) {
       const providerModels = await provider.getModels();
       throw new Error(
-        `Model ${model} is not available from provider ${config.provider}. \
-        Available models are: ${providerModels}`,
+        `Model ${model} is not available from provider ${config.provider}. ` +
+        `Available models are: ${providerModels}`,
       );
     }
 
