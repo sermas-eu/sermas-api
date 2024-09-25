@@ -37,6 +37,7 @@ export abstract class LLMProvider<
         const isWildcard = parts.length > 1 && parts[1] === '*';
         return (
           m === model ||  // Perfect match 
+          (parts[0] === modelName && model === modelName) ||  // Name match (tag was not specified)
           (parts[0] === modelName && isWildcard)  // Wildcard match
         );
       });
