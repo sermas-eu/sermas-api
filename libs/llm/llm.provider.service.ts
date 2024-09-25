@@ -334,7 +334,6 @@ export class LLMProviderService implements OnModuleInit {
           provider: config.provider,
           baseURL: config.baseURL || this.config.get('OLLAMA_BASEURL'),
           model,
-          apiKey: config.apiKey || this.config.get('OLLAMA_API_KEY'),
           binaryQuantization,
         });
         break;
