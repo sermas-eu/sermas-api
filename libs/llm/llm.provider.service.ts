@@ -125,7 +125,7 @@ export class LLMProviderService implements OnModuleInit {
     return [defaultProvider, defaultModel];
   }
 
-  getAvailableModels(provider: LLMProvider): string[] | undefined {
+  getAllowedModels(provider: LLMProvider): string[] | undefined {
     const configKey: string = `${provider.toUpperCase()}_CHAT_MODELS`;    
     const list = this.config.get(configKey);
     this.logger.verbose(`Retrieved configured models for ${configKey}: ${list}`);
@@ -186,7 +186,7 @@ export class LLMProviderService implements OnModuleInit {
     const model =
       config.model || this.getDefaultChatProviderModel(config.provider);
 
-    const availableModels = this.getAvailableModels(config.provider);  // TODO - K: Maybe rename to "getAllowedModels"?
+    const availableModels = this.getAllowedModels(config.provider);
 
     switch (config.provider) {
       case 'ollama':
