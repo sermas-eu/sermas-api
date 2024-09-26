@@ -25,7 +25,7 @@ export class ChatGPTSentimentAnalysisService {
     const system = `Please provide a sentiment of this context. 
 Answer using pipe separated format where the first value is a sentiment from the list: ${emotionList} and the second value is the associated probability. 
 example:${defaultEmotion}|I am here to help you 
-Never generate an answer, by default anser with ${defaultEmotion}|1.0`;
+Never generate an answer, by default answer with ${defaultEmotion}|1.0`;
 
     let content = '';
     try {

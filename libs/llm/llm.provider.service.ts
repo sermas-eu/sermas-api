@@ -125,8 +125,10 @@ export class LLMProviderService implements OnModuleInit {
     return [defaultProvider, defaultModel];
   }
 
-  getAvalableModels(provider: LLMProvider): string[] | undefined {
-    const list = this.config.get(`${provider.toUpperCase()}_CHAT_MODELS`);
+  getAllowedModels(provider: LLMProvider): string[] | undefined {
+    const configKey: string = `${provider.toUpperCase()}_CHAT_MODELS`;    
+    const list = this.config.get(configKey);
+    this.logger.verbose(`Retrieved configured models for ${configKey}: ${list}`);
     if (!list) return undefined;
     return list.split(',').map((m) => m.trim());
   }
@@ -184,15 +186,14 @@ export class LLMProviderService implements OnModuleInit {
     const model =
       config.model || this.getDefaultChatProviderModel(config.provider);
 
-    const availableModels = this.getAvalableModels(config.provider);
+    const availableModels = this.getAllowedModels(config.provider);
 
     switch (config.provider) {
       case 'ollama':
         provider = new OllamaChatProvider({
           provider: config.provider,
-          baseURL: config.baseURL || this.config.get('OLLAMA_URL'),
+          baseURL: config.baseURL || this.config.get('OLLAMA_BASEURL'),
           model,
-          apiKey: config.apiKey || '',
           availableModels,
         });
         break;
@@ -240,8 +241,10 @@ export class LLMProviderService implements OnModuleInit {
 
     const valid = await provider.checkModel(model);
     if (!valid) {
+      const providerModels = await provider.getModels();
       throw new Error(
-        `Model ${model} is not available from provider ${config.provider}`,
+        `Model ${model} is not available from provider ${config.provider}. ` +
+        `Available models are: ${providerModels}`,
       );
     }
 
@@ -331,7 +334,6 @@ export class LLMProviderService implements OnModuleInit {
           provider: config.provider,
           baseURL: config.baseURL || this.config.get('OLLAMA_BASEURL'),
           model,
-          apiKey: config.apiKey || this.config.get('OLLAMA_API_KEY'),
           binaryQuantization,
         });
         break;
