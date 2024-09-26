@@ -95,14 +95,16 @@ export class OllamaChatProvider extends LLMChatProvider {
     // check periodically
     if (!this.heartbeat) {
       this.heartbeat = setInterval(async () => {
-        this.reachable = undefined;  // TODO - K: Are we sure about this? If this is the first run, this assignment is redundant. Otherwise, maybe it's better to set it inside the cath block? What does undefined reachability mean here anyway? 
         try {
           this.reachable = await this.isOllamaReachable();
-        } catch {}
+        } catch {
+          this.reachable = false;
+        }
       }, 5000);
     }
 
-    if (this.reachable === undefined || !this.reachable) {  // TODO - K: Check with Luca
+    // Check the first time
+    if (this.reachable === undefined) {
       this.reachable = await this.isOllamaReachable();
     }
     return this.reachable;
