@@ -117,17 +117,17 @@ export const SermasDefaultConfig = {
   LLM_SERVICE: 'openai',
 
   // LLM_SERVICE_CHAT LLM service to use for textual chat in format provider/model. If not provided will use LLM_SERVICE
-  LLM_SERVICE_CHAT: 'openai/gpt-4o',
+  // LLM_SERVICE_CHAT: 'openai/gpt-4o',
   // LLM_SERVICE_TOOLS LLM service to use for tools matching  in format provider/model. If not provided will use LLM_SERVICE
-  LLM_SERVICE_TOOLS: 'openai/gpt-4o',
+  // LLM_SERVICE_TOOLS: 'openai/gpt-4o',
   // LLM_SERVICE_SENTIMENT LLM service to use for sentiment analysis  in format provider/model. If not provided will use LLM_SERVICE
-  LLM_SERVICE_SENTIMENT: 'openai/gpt-4o-mini',
+  // LLM_SERVICE_SENTIMENT: 'openai/gpt-4o-mini',
   // LLM_SERVICE_TASKS LLM service to use for task management in format provider/model. If not provided will use LLM_SERVICE
-  LLM_SERVICE_TASKS: 'openai/gpt-4o-mini',
+  // LLM_SERVICE_TASKS: 'openai/gpt-4o-mini',
   // LLM_SERVICE_INTENT LLM service to use for intent detection in format provider/model. If not provided will use LLM_SERVICE
-  LLM_SERVICE_INTENT: 'openai/gpt-4o',
+  // LLM_SERVICE_INTENT: 'openai/gpt-4o',
   // LLM_SERVICE_TRANSLATION LLM service to use for translation and rephrasing in format provider/model. If not provided will use LLM_SERVICE
-  LLM_SERVICE_TRANSLATION: 'openai/gpt-4o-mini',
+  // LLM_SERVICE_TRANSLATION: 'openai/gpt-4o-mini',
 
   // LLM_PRINT_PROMPT Print prompts to console for debug purposes
   LLM_PRINT_PROMPT: '0',
