@@ -180,6 +180,8 @@ export class DialogueChatService {
       matchOrRemoveTask = currentTask.options?.matchOrRemove === true;
 
       this.logger.debug(`Enabled tools for task name=${currentTask.name}`);
+    } else {
+      repositories = sessionRepositories;
     }
 
     const skipChat = false;

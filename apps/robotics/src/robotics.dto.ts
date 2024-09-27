@@ -77,7 +77,9 @@ export class OperationalStateDto {
 }
 
 export class ActuationEventDto extends SermasBaseDto {
-  @ApiProperty()
+  @ApiProperty({
+    type: [ActuationDto],
+  })
   actuations: ActuationDto[];
 }
 

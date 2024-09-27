@@ -2,8 +2,8 @@ import { Logger } from '@nestjs/common';
 import axios from 'axios';
 import {
   LLMCallResult,
-  LLMMessage,
   LLMChatOptions,
+  LLMMessage,
   LLMProviderConfig,
 } from 'libs/llm/providers/provider.dto';
 import { ChatRequest, ChatResponse, Message, Ollama } from 'ollama';
@@ -77,14 +77,14 @@ export class OllamaChatProvider extends LLMChatProvider {
         timeout: OLLAMA_TIMEOUT,
       });
     } catch (e) {
-      this.logger.warn(
-        `ollama unreachable: error connecting to ${this.config.baseURL}. ${e.message}}`
+      this.logger.verbose(
+        `ollama unreachable: error connecting to ${this.config.baseURL}. ${e.message}}`,
       );
       return false;
     }
     if (!res) {
-      this.logger.warn(
-        `ollama unreachable: no response from ${this.config.baseURL}`
+      this.logger.verbose(
+        `ollama unreachable: no response from ${this.config.baseURL}`,
       );
       return false;
     }
