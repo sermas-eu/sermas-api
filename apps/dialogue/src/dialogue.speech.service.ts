@@ -21,6 +21,7 @@ import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { TTSProviderService } from 'libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
 import { DialogueChatService } from './dialogue.chat.service';
+import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
 
 @Injectable()
 export class DialogueSpeechService {
@@ -42,8 +43,33 @@ export class DialogueSpeechService {
     private readonly llmProvider: LLMProviderService,
     private readonly chatProvider: DialogueChatService,
 
+    private readonly speechbrainProvider: SpeechBrainService,
+
     private readonly monitor: MonitorService,
   ) {}
+
+  private async replyToUser(
+    messageInEnglish: string,
+    dialogueMessagePayload: DialogueMessageDto,
+  ) {
+    const agentMessage = await this.translateMessage(
+      {
+        ...dialogueMessagePayload,
+        text: messageInEnglish,
+        language: 'en-GB',
+      },
+      dialogueMessagePayload.language,
+    );
+
+    const ttsEvent = {
+      ...dialogueMessagePayload,
+      text: agentMessage,
+    };
+
+    this.asyncApi.dialogueMessages(ttsEvent);
+    this.emitter.emit('dialogue.chat.message', ttsEvent);
+    // perf('convertToText.empty-text');
+  }
 
   async translateMessage(
     payload: DialogueMessageDto,
@@ -132,35 +158,36 @@ export class DialogueSpeechService {
   async convertToText(payload: DialogueSpeechToTextDto) {
     try {
       // set default
-
       if (!payload.language) {
         payload.language = await this.session.getLanguage(payload);
       }
 
+      const counter = await this.speechbrainProvider.countSpeakers(
+        payload.buffer,
+      );
+      if (
+        counter &&
+        counter.speakerCount.value != 1 &&
+        counter.speakerCount.probability > 0.5
+      ) {
+        this.logger.warn(
+          `STT aborted: ${counter.speakerCount.value} speakers detected.`,
+        );
+        await this.replyToUser(
+          'Sorry, could you retry? If the room is too noisy, please use the keyboard',
+          payload,
+        );
+        return;
+      }
       const { text, dialogueMessagePayload } =
         await this.sttProvider.convertToText(payload);
 
       if (!text) {
-        this.logger.warn(`cannot detect text from audio clip.`);
-
-        // const agentMessage = await this.translateMessage(
-        //   {
-        //     ...dialogueMessagePayload,
-        //     text: 'Sorry, could you repeat?',
-        //     language: 'en-GB',
-        //   },
-        //   dialogueMessagePayload.language,
+        this.logger.warn(`STT failed: cannot detect text from audio clip.`);
+        // await this.replyToUser(
+        //   'Sorry, could you retry?',
+        //   dialogueMessagePayload,
         // );
-
-        // const ttsEvent = {
-        //   ...dialogueMessagePayload,
-        //   text: agentMessage,
-        // };
-
-        // this.asyncApi.dialogueMessages(ttsEvent);
-        // this.emitter.emit('dialogue.chat.message', ttsEvent);
-        // perf('convertToText.empty-text');
-
         return;
       }
 
@@ -187,23 +214,10 @@ export class DialogueSpeechService {
         dialogueMessagePayload: DialogueMessageDto;
         language: string;
       };
-
-      const errorMessage = await this.translateMessage(
-        {
-          ...dialogueMessagePayload,
-          text: 'Sorry, could you retry?',
-          language: 'en-GB',
-        },
-        language,
-      );
-
-      const ttsEvent: DialogueMessageDto = {
-        ...dialogueMessagePayload,
-        text: errorMessage,
-      };
-
-      this.asyncApi.dialogueMessages(ttsEvent);
-      this.emitter.emit('dialogue.chat.message', ttsEvent);
+      if (!dialogueMessagePayload.language) {
+        dialogueMessagePayload.language = language;
+      }
+      await this.replyToUser('Sorry, could you retry?', dialogueMessagePayload);
     }
   }
 
@@ -294,7 +308,6 @@ export class DialogueSpeechService {
   }
 
   async stopAgentSpeech(ev: SermasSessionDto) {
-    // console.log('stop message', stopMessage);
     this.emitter.emit('dialogue.chat.stop', ev);
     this.asyncApi.agentStopSpeech(ev);
   }
