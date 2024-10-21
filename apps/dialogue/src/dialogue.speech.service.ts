@@ -8,6 +8,7 @@ import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { DialogueAsyncApiService } from './dialogue.async.service';
 import { DialogueEmotionService } from './dialogue.emotion.service';
 
+import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
 import { SessionService } from 'apps/session/src/session.service';
 import { UIContentDto } from 'apps/ui/src/ui.content.dto';
 import { uiContentToText } from 'apps/ui/src/util';
@@ -21,11 +22,14 @@ import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { TTSProviderService } from 'libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
 import { DialogueChatService } from './dialogue.chat.service';
-import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
+
+const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
 @Injectable()
 export class DialogueSpeechService {
   private readonly logger = new Logger(DialogueSpeechService.name);
+
+  private sttMessagesCache: Record<string, Date> = {};
 
   constructor(
     private readonly emotion: DialogueEmotionService,
@@ -118,6 +122,41 @@ export class DialogueSpeechService {
     return await this.ttsProvider.generateTTS(payload);
   }
 
+  async hasMultipleSpeakers(ev: DialogueSpeechToTextDto) {
+    const counter = await this.speechbrainProvider.countSpeakers(ev.buffer);
+    if (
+      counter &&
+      counter.speakerCount.value != 1 &&
+      counter.speakerCount.probability > 0.5
+    ) {
+      this.logger.warn(
+        `STT aborted: ${counter.speakerCount.value} speakers detected for sessionId=${ev.sessionId}`,
+      );
+
+      if (!this.sttMessagesCache[ev.sessionId]) {
+        this.sttMessagesCache[ev.sessionId] = new Date();
+      } else {
+        if (
+          Date.now() - this.sttMessagesCache[ev.sessionId].getTime() <
+          STT_MESSAGE_CACHE
+        ) {
+          return true;
+        } else {
+          // reset cache
+          delete this.sttMessagesCache[ev.sessionId];
+        }
+      }
+
+      await this.replyToUser(
+        'Sorry, could you retry? If the room is too noisy, please use the keyboard',
+        ev,
+      );
+
+      return true;
+    }
+    return false;
+  }
+
   async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
     const isWav = ev.mimetype === 'audio/wav';
 
@@ -146,6 +185,9 @@ export class DialogueSpeechService {
       perf();
     }
 
+    const skip = await this.hasMultipleSpeakers(ev);
+    if (skip) return;
+
     this.emitter.emit('dialogue.speech.audio', ev);
   }
 
@@ -163,23 +205,6 @@ export class DialogueSpeechService {
         payload.language = await this.session.getLanguage(payload);
       }
 
-      const counter = await this.speechbrainProvider.countSpeakers(
-        payload.buffer,
-      );
-      if (
-        counter &&
-        counter.speakerCount.value != 1 &&
-        counter.speakerCount.probability > 0.5
-      ) {
-        this.logger.warn(
-          `STT aborted: ${counter.speakerCount.value} speakers detected.`,
-        );
-        await this.replyToUser(
-          'Sorry, could you retry? If the room is too noisy, please use the keyboard',
-          payload,
-        );
-        return;
-      }
       const { text, dialogueMessagePayload } =
         await this.sttProvider.convertToText(payload);
 
