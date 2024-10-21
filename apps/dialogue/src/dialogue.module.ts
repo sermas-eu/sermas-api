@@ -19,6 +19,7 @@ import {
 import { DialogueIntentModule } from './intent/dialogue.intent.module';
 import { DialogueMemoryModule } from './memory/dialogue.memory.module';
 import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
+import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
     LLMTranslationService,
     DialogueChatService,
     DialogueWelcomeService,
+    SpeechBrainService,
   ],
   exports: [DialogueSpeechService],
 })

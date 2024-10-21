@@ -229,7 +229,7 @@ export class DetectionService {
 
     const detection: UserCharacterizationDto = {
       emotion: sc.emotion,
-      user: [sc.speakerId],
+      user: sc.speakerId ? [sc.speakerId] : [],
     };
 
     const userCharacterizationEventDto: UserCharacterizationEventDto = {

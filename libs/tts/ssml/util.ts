@@ -11,6 +11,11 @@ export const fixSSML = async (
   text?: string,
   platform = 'all',
 ): Promise<{ ssml?: string; text?: string }> => {
+  if (ssml && ssml.indexOf('```ssml') > -1) {
+    ssml = ssml.replace('```ssml', '');
+    ssml = ssml.substring(0, ssml.length - 3);
+  }
+
   const ssmlCheckResult = await ssmlCheck.verifyAndFix(ssml, {
     platform,
   });
