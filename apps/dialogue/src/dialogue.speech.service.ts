@@ -61,9 +61,10 @@ export class DialogueSpeechService {
       dialogueMessagePayload.language,
     );
 
-    const ttsEvent = {
+    const ttsEvent: DialogueMessageDto = {
       ...dialogueMessagePayload,
       text: agentMessage,
+      actor: 'agent',
     };
 
     this.asyncApi.dialogueMessages(ttsEvent);

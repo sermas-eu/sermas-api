@@ -8,6 +8,7 @@ export class SpeechBrainClassification {
   language: StringInferenceValue;
   emotion: EmotionInferenceValue;
   embeddings: StringInferenceValue;
+  speakerId?: StringInferenceValue;
 }
 
 export class SpeechBrainSpeakerCount {

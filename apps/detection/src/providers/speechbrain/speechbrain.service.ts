@@ -22,7 +22,9 @@ export class SpeechBrainService {
       case 'hap':
         return 'happy';
       case 'sad':
-        return 'surprise'; // TODO: This seems wrong
+        return 'sad';
+      case 'surprise':
+        return 'surprise';
       case 'neu':
       default:
         return 'neutral';

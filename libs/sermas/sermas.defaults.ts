@@ -50,7 +50,7 @@ export const SermasDefaultConfig = {
   REPOSITORY_BUCKET_REGION: '',
 
   // SPEECHBRAIN_URL Url to the speechbrain service (for audio detection)
-  SPEECHBRAIN_URL: 'http://speechbrain',
+  SPEECHBRAIN_URL: 'http://speechbrain:5011',
 
   // FORCE_LANGUAGE default language to use if not provided, it will be used to translate messages or select a TTS model
   FORCE_LANGUAGE: 'en-GB',

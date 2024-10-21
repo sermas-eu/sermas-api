@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as toBuffer from 'typedarray-to-buffer';
-import { fixSSML } from '../ssml/util';
+import { fixSSML, stripTags } from '../ssml/util';
 import { ITextToSpeech, SpeakParam } from '../tts.dto';
 
 // { lang: { gender: [ model names ] } }
@@ -189,10 +189,23 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
         // select the type of audio encoding
         audioConfig: { audioEncoding: 'MP3' },
       };
+    try {
+      // Performs the text-to-speech request
+      const [res] = await client.synthesizeSpeech(request);
+      return toBuffer(res.audioContent as Uint8Array);
+    } catch (e) {
+      this.logger.error(`Google STT error: ${e.message}`);
 
-    // Performs the text-to-speech request
-    const [res] = await client.synthesizeSpeech(request);
+      if (ssml && e.message.indexOf('Invalid SSML') > -1) {
+        this.logger.debug(`Faulty SSML:`);
+        ssml.split('\n').forEach((line) => this.logger.debug(line));
 
-    return toBuffer(res.audioContent as Uint8Array);
+        // retry as text
+        request.input.ssml = undefined;
+        request.input.text = text || stripTags(ssml);
+        const [res] = await client.synthesizeSpeech(request);
+        return toBuffer(res.audioContent as Uint8Array);
+      }
+    }
   }
 }
