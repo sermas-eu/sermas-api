@@ -1,11 +1,10 @@
 jest.mock('openai');
 
 import { Logger } from '@nestjs/common';
-import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
-import { uuidv4 } from 'libs/dataset/src';
 import { Emotion } from 'libs/sermas/sermas.dto';
-import { sleep } from 'libs/test';
+import { uuidv4 } from 'libs/util';
 import { DetectionAsyncApiService } from '../../detection.async.service';
 import { EmotionTrackerService } from './emotion-tracker.service';
 
@@ -15,7 +14,6 @@ describe('EmotionTrackerService', () => {
   let moduleRef: TestingModule;
 
   let emotionTrackerService: EmotionTrackerService;
-  let emitter: EventEmitter2;
 
   beforeAll(async () => {
     moduleRef = await Test.createTestingModule({
@@ -25,7 +23,8 @@ describe('EmotionTrackerService', () => {
     })
       .overrideProvider(DetectionAsyncApiService)
       .useValue({
-        userCharacterization(e: unknown) {
+        userCharacterization(e: any) {
+          e;
           //
         },
       })
@@ -34,7 +33,6 @@ describe('EmotionTrackerService', () => {
     moduleRef.useLogger(new Logger());
 
     emotionTrackerService = moduleRef.get(EmotionTrackerService);
-    emitter = moduleRef.get<EventEmitter2>(EventEmitter2);
 
     await moduleRef.init();
   });

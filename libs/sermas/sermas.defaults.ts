@@ -207,6 +207,9 @@ export const SermasDefaultConfig = {
   AZURE_KEY: '',
   // AZURE_REGION Azure region (used as fallback to more specific ones)
   AZURE_REGION: '',
+
+  // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
+  ENABLE_EMOTION_RECOGNITION: '0',
 };
 
 export type SermasApiConfig = typeof SermasDefaultConfig;
