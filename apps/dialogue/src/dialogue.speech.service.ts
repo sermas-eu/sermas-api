@@ -31,6 +31,11 @@ export class DialogueSpeechService {
 
   private sttMessagesCache: Record<string, Date> = {};
 
+  outgoingMessageQueue: Record<
+    string,
+    Record<string, { message: DialogueMessageDto; data: Buffer }>
+  > = {};
+
   constructor(
     private readonly emotion: DialogueEmotionService,
 
@@ -292,15 +297,10 @@ export class DialogueSpeechService {
     this.asyncApi.dialogueMessages(agentResponseEvent);
   }
 
-  async sendAgentSpeech(agentResponseEvent: DialogueMessageDto) {
+  protected async processAgentSpeech(
+    agentResponseEvent: DialogueMessageDto,
+  ): Promise<Buffer | undefined> {
     let buffer: Buffer;
-
-    if (agentResponseEvent.text) {
-      agentResponseEvent.text
-        .split('\n')
-        .forEach((t) => this.logger.verbose(`TTS | ${t}`));
-    }
-
     try {
       buffer = await this.ttsProvider.generateTTS(agentResponseEvent);
     } catch (e) {
@@ -312,18 +312,55 @@ export class DialogueSpeechService {
       return;
     }
 
-    try {
-      agentResponseEvent.ts = agentResponseEvent.ts
-        ? new Date(agentResponseEvent.ts)
-        : new Date();
-      agentResponseEvent.chunkId =
-        agentResponseEvent.chunkId || getChunkId(agentResponseEvent.ts);
-      agentResponseEvent.messageId =
-        agentResponseEvent.messageId || getMessageId(agentResponseEvent.ts);
+    return buffer;
+  }
 
-      await this.asyncApi.agentSpeech(agentResponseEvent, buffer);
-    } catch (e) {
-      this.logger.error(`Failed to send agent speech: ${e.stack}`);
+  async sendAgentSpeech(agentResponseEvent: DialogueMessageDto) {
+    agentResponseEvent.ts = agentResponseEvent.ts
+      ? new Date(agentResponseEvent.ts)
+      : new Date();
+
+    agentResponseEvent.chunkId =
+      agentResponseEvent.chunkId || getChunkId(agentResponseEvent.ts);
+
+    agentResponseEvent.messageId =
+      agentResponseEvent.messageId || getMessageId(agentResponseEvent.ts);
+
+    if (agentResponseEvent.text) {
+      agentResponseEvent.text
+        .split('\n')
+        .forEach((t) => this.logger.verbose(`TTS | ${t}`));
+    }
+
+    const data = await this.processAgentSpeech(agentResponseEvent);
+    if (!data) return;
+
+    const queueKey = `${agentResponseEvent.chunkId}`;
+    this.outgoingMessageQueue[agentResponseEvent.sessionId] =
+      this.outgoingMessageQueue[agentResponseEvent.sessionId] || {};
+
+    this.outgoingMessageQueue[agentResponseEvent.sessionId][queueKey] = {
+      message: agentResponseEvent,
+      data,
+    };
+
+    this.processOutgoingQueue();
+  }
+
+  // send messages keeping the correct order
+  async processOutgoingQueue() {
+    for (const sessionId in this.outgoingMessageQueue) {
+      const chunks = this.outgoingMessageQueue[sessionId];
+      for (const chunkId in chunks) {
+        const { data, message } = chunks[chunkId];
+        try {
+          await this.asyncApi.agentSpeech(message, data);
+        } catch (e) {
+          this.logger.error(
+            `Failed to send agent speech sessionId=${message.sessionId}: ${e.stack}`,
+          );
+        }
+      }
     }
   }
 
