@@ -33,7 +33,7 @@ export class DialogueSpeechService {
 
   private sttMessagesCache: Record<string, Date> = {};
 
-  outgoingMessageSemaphore: Record<string, boolean> = {};
+  outgoingMessageSemaphore: Set<string> = new Set<string>();
   outgoingMessageQueue: Record<
     string,
     Record<string, Promise<OutgoingQueueMessage>>
@@ -353,13 +353,7 @@ export class DialogueSpeechService {
   }
 
   async processOutgoingQueue(sessionId: string) {
-    // setup semaphore
-    this.outgoingMessageSemaphore[sessionId] =
-      this.outgoingMessageSemaphore[sessionId] === undefined
-        ? false
-        : this.outgoingMessageSemaphore[sessionId];
-
-    if (this.outgoingMessageSemaphore[sessionId]) return;
+    if (this.outgoingMessageSemaphore.has(sessionId)) return;
 
     const chunks = this.outgoingMessageQueue[sessionId];
     if (!chunks) return;
@@ -369,7 +363,7 @@ export class DialogueSpeechService {
 
     const chunkId = keys[0];
 
-    this.outgoingMessageSemaphore[sessionId] = true;
+    this.outgoingMessageSemaphore.add(sessionId);
 
     try {
       const { data, message } = await chunks[chunkId];
@@ -391,7 +385,7 @@ export class DialogueSpeechService {
     } finally {
       delete this.outgoingMessageQueue[sessionId][chunkId];
 
-      this.outgoingMessageSemaphore[sessionId] = false;
+      this.outgoingMessageSemaphore.delete(sessionId);
       this.processOutgoingQueue(sessionId);
     }
   }
