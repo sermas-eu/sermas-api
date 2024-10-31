@@ -25,15 +25,18 @@ import { DialogueChatService } from './dialogue.chat.service';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
+type OutgoingQueueMessage = { message: DialogueMessageDto; data: Buffer };
+
 @Injectable()
 export class DialogueSpeechService {
   private readonly logger = new Logger(DialogueSpeechService.name);
 
   private sttMessagesCache: Record<string, Date> = {};
 
+  outgoingMessageSemaphore: Record<string, boolean> = {};
   outgoingMessageQueue: Record<
     string,
-    Record<string, { message: DialogueMessageDto; data: Buffer }>
+    Record<string, Promise<OutgoingQueueMessage>>
   > = {};
 
   constructor(
@@ -315,52 +318,81 @@ export class DialogueSpeechService {
     return buffer;
   }
 
-  async sendAgentSpeech(agentResponseEvent: DialogueMessageDto) {
-    agentResponseEvent.ts = agentResponseEvent.ts
-      ? new Date(agentResponseEvent.ts)
-      : new Date();
+  async sendAgentSpeech(message: DialogueMessageDto) {
+    message.ts = message.ts ? new Date(message.ts) : new Date();
 
-    agentResponseEvent.chunkId =
-      agentResponseEvent.chunkId || getChunkId(agentResponseEvent.ts);
+    message.chunkId = message.chunkId || getChunkId(message.ts);
+    message.messageId = message.messageId || getMessageId(message.ts);
 
-    agentResponseEvent.messageId =
-      agentResponseEvent.messageId || getMessageId(agentResponseEvent.ts);
-
-    if (agentResponseEvent.text) {
-      agentResponseEvent.text
+    if (message.text) {
+      message.text
         .split('\n')
         .forEach((t) => this.logger.verbose(`TTS | ${t}`));
     }
 
-    const data = await this.processAgentSpeech(agentResponseEvent);
-    if (!data) return;
+    const promise = this.processAgentSpeech(message)
+      .then((data) => Promise.resolve({ data, message }))
+      .catch(() => Promise.resolve({ data: null, message }));
 
-    const queueKey = `${agentResponseEvent.chunkId}`;
-    this.outgoingMessageQueue[agentResponseEvent.sessionId] =
-      this.outgoingMessageQueue[agentResponseEvent.sessionId] || {};
+    // console.warn(`+ chunkId=${message.chunkId} message=${message.text}`);
 
-    this.outgoingMessageQueue[agentResponseEvent.sessionId][queueKey] = {
-      message: agentResponseEvent,
-      data,
-    };
-
-    this.processOutgoingQueue();
+    this.addToOutgoingQueue(message.sessionId, message.chunkId, promise);
   }
 
-  // send messages keeping the correct order
-  async processOutgoingQueue() {
-    for (const sessionId in this.outgoingMessageQueue) {
-      const chunks = this.outgoingMessageQueue[sessionId];
-      for (const chunkId in chunks) {
-        const { data, message } = chunks[chunkId];
-        try {
+  async addToOutgoingQueue(
+    sessionId: string,
+    chunkId: string,
+    loader: Promise<OutgoingQueueMessage>,
+  ) {
+    // add to queue
+    this.outgoingMessageQueue[sessionId] =
+      this.outgoingMessageQueue[sessionId] || {};
+    this.outgoingMessageQueue[sessionId][chunkId] = loader;
+
+    this.processOutgoingQueue(sessionId);
+  }
+
+  async processOutgoingQueue(sessionId: string) {
+    // setup semaphore
+    this.outgoingMessageSemaphore[sessionId] =
+      this.outgoingMessageSemaphore[sessionId] === undefined
+        ? false
+        : this.outgoingMessageSemaphore[sessionId];
+
+    if (this.outgoingMessageSemaphore[sessionId]) return;
+
+    const chunks = this.outgoingMessageQueue[sessionId];
+    if (!chunks) return;
+
+    const keys = Object.keys(chunks);
+    if (!keys.length) return;
+
+    const chunkId = keys[0];
+
+    this.outgoingMessageSemaphore[sessionId] = true;
+
+    try {
+      const { data, message } = await chunks[chunkId];
+
+      try {
+        if (data && data.length) {
+          // console.warn(
+          //   `sending chunkId=${message.chunkId} message=${message.text}`,
+          // );
           await this.asyncApi.agentSpeech(message, data);
-        } catch (e) {
-          this.logger.error(
-            `Failed to send agent speech sessionId=${message.sessionId}: ${e.stack}`,
-          );
         }
+      } catch (e) {
+        this.logger.error(
+          `Failed to send agent speech sessionId=${message.sessionId}: ${e.stack}`,
+        );
       }
+    } catch (e) {
+      this.logger.error(`Failed to process agent speech: ${e.stack}`);
+    } finally {
+      delete this.outgoingMessageQueue[sessionId][chunkId];
+
+      this.outgoingMessageSemaphore[sessionId] = false;
+      this.processOutgoingQueue(sessionId);
     }
   }
 
