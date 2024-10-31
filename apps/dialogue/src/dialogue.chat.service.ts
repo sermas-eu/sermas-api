@@ -82,9 +82,6 @@ export class DialogueChatService {
       };
     }
 
-    // get history
-    const history = await this.memory.getMessages(sessionId);
-
     // search rag context
     const knowledge = await this.vectorStore.search(appId, message.text);
 
@@ -235,10 +232,8 @@ export class DialogueChatService {
       label: 'chat.user',
     });
 
-    const historyList = history
-      .filter((h) => h.type === 'message')
-      .map((h) => ` - ${h.role}: ${h.content}`)
-      .join('\n');
+    // get history
+    const historyList = await this.memory.getConversation(sessionId);
 
     const req: AvatarChat = {
       ...(llmArgs || {}),

@@ -19,8 +19,10 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs/promises';
 import * as yaml from 'js-yaml';
-import { toDTO } from 'libs/util';
-import { uuidv4 } from 'libs/dataset/src';
+import { toDTO, uuidv4 } from 'libs/util';
+
+import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
+import { getConfigPath } from 'libs/sermas/sermas.utils';
 import { DeleteResult } from 'mongodb';
 import { Model } from 'mongoose';
 import * as path from 'path';
@@ -29,8 +31,6 @@ import {
   DataCollectionSession,
   DataCollectionSessionDocument,
 } from './data-collection.schema';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { getConfigPath } from 'libs/sermas/sermas.utils';
 
 @Injectable()
 export class DataCollectionService {
@@ -529,7 +529,16 @@ export class DataCollectionService {
     return await this.dataCollectionModel.deleteMany({ sessionId });
   }
 
-  @OnEvent('dialogue.chat.message')
+  @OnEvent('dialogue.chat.message.agent')
+  onAgentSpeech(ev: DialogueMessageDto) {
+    this.onSpeech(ev);
+  }
+
+  @OnEvent('dialogue.chat.message.user')
+  onUserSpeech(ev: DialogueMessageDto) {
+    this.onSpeech(ev);
+  }
+
   async onSpeech(tts: DialogueMessageDto) {
     const record = {
       subject: tts.actor,

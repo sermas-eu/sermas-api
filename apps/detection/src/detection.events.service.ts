@@ -14,12 +14,12 @@ export class DetectionEventsService {
   private readonly logger = new Logger(DetectionEventsService.name);
   constructor(private readonly detection: DetectionService) {}
 
-  @OnEvent('dialogue.chat.message', { async: true })
+  @OnEvent('dialogue.chat.message.user', { async: true })
   analyseText(payload: DialogueMessageDto) {
     this.detection.analyseText(payload);
   }
 
-  @OnEvent('dialogue.chat.message', { async: true })
+  @OnEvent('dialogue.chat.message.user', { async: true })
   detectActivationWord(payload: DialogueMessageDto) {
     this.detection.detectWakeWord(payload);
   }

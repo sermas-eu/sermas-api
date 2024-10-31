@@ -72,9 +72,8 @@ export class MonitoringDatasetEventsService {
     );
   }
 
-  @OnEvent('dialogue.chat.message')
+  @OnEvent('dialogue.chat.message.user')
   async onChat(event: DialogueMessageDto) {
-    if (event.actor !== 'user') return;
     await this.dataset.save(`User chat message`, event, 'chat');
   }
 
