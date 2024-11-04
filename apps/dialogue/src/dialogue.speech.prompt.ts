@@ -46,7 +46,7 @@ HISTORY:
 <% } %>
 
 <% if (data.user) { %>
-USER:
+MESSAGE:
 <%= data.user %>
 <% } %>
 
