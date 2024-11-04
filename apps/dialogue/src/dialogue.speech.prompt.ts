@@ -1,15 +1,15 @@
 import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 
-export type EvaluateUserMessagePromptParam = {
+export type CheckIfUserTalkingToAvatarPromptParam = {
   user: string;
   history?: string;
   appPrompt: string;
   avatar: RepositoryAvatarDto;
 };
 
-export const avatarEvaluateUserMessagePrompt =
-  PromptTemplate.create<EvaluateUserMessagePromptParam>(
+export const checkIfUserTalkingToAvatarPrompt =
+  PromptTemplate.create<CheckIfUserTalkingToAvatarPromptParam>(
     'evaluate-user-message',
     `
 The task is to detect if the user MESSAGE should be considered part of the conversation with the AVATAR considering those factors:
@@ -24,7 +24,7 @@ Answer in JSON format following this structure
 }
 
 MESSAGE is a textual input converted from a microphone.
-APPLICATION define the context of the conversation.
+APPLICATION defines the context of the conversation.
 <% if (data.history) { %>
 HISTORY provides the conversation.
 <% } %>

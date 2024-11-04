@@ -23,8 +23,8 @@ import { TTSProviderService } from 'libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
 import { DialogueChatService } from './dialogue.chat.service';
 import {
-  avatarEvaluateUserMessagePrompt,
-  EvaluateUserMessagePromptParam,
+  checkIfUserTalkingToAvatarPrompt,
+  CheckIfUserTalkingToAvatarPromptParam,
 } from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
 
@@ -395,7 +395,7 @@ export class DialogueSpeechService {
     }
   }
 
-  async evaluateUserMessage(params: EvaluateUserMessagePromptParam) {
+  async isUserTalkingToAvatar(params: CheckIfUserTalkingToAvatarPromptParam) {
     const res = await this.llmProvider.chat<{
       skip: boolean;
       probability: number;
@@ -403,7 +403,7 @@ export class DialogueSpeechService {
     }>({
       stream: false,
       json: true,
-      user: avatarEvaluateUserMessagePrompt(params),
+      user: checkIfUserTalkingToAvatarPrompt(params),
     });
 
     this.logger.debug(
@@ -420,7 +420,7 @@ export class DialogueSpeechService {
 
     const historyList = await this.memory.getConversation(message.sessionId);
 
-    const skip = await this.evaluateUserMessage({
+    const skip = await this.isUserTalkingToAvatar({
       appPrompt: settings.prompt?.text,
       avatar,
       user: message.text,
