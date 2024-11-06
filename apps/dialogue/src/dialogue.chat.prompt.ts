@@ -2,7 +2,7 @@ import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import { Emotion } from 'libs/sermas/sermas.dto';
 
-type AvatarChatPrompt = {
+export const avatarChatPrompt = PromptTemplate.create<{
   appPrompt: string;
   language: string;
   emotion?: Emotion;
@@ -14,8 +14,7 @@ type AvatarChatPrompt = {
   knowledge?: string;
   user?: string;
   json?: boolean;
-};
-export const avatarChatPrompt = PromptTemplate.create<AvatarChatPrompt>(
+}>(
   'chat',
   `
 GENERAL RULES:

@@ -22,6 +22,11 @@ import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { TTSProviderService } from 'libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
 import { DialogueChatService } from './dialogue.chat.service';
+import {
+  checkIfUserTalkingToAvatarPrompt,
+  CheckIfUserTalkingToAvatarPromptParam,
+} from './dialogue.speech.prompt';
+import { DialogueMemoryService } from './memory/dialogue.memory.service';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -54,6 +59,8 @@ export class DialogueSpeechService {
 
     private readonly llmProvider: LLMProviderService,
     private readonly chatProvider: DialogueChatService,
+
+    private readonly memory: DialogueMemoryService,
 
     private readonly speechbrainProvider: SpeechBrainService,
 
@@ -234,15 +241,14 @@ export class DialogueSpeechService {
 
       this.logger.verbose(`User main emotion: ${emotion}`);
 
-      const ttsEvent: DialogueMessageDto = {
+      const sttEvent: DialogueMessageDto = {
         ...dialogueMessagePayload,
         actor: 'user',
         emotion,
         text,
       };
 
-      this.emitter.emit('dialogue.chat.message', ttsEvent);
-      this.asyncApi.dialogueMessages(ttsEvent);
+      this.emitter.emit('dialogue.chat.message', sttEvent);
     } catch (err) {
       const { dialogueMessagePayload, language } = err as {
         dialogueMessagePayload: DialogueMessageDto;
@@ -259,7 +265,6 @@ export class DialogueSpeechService {
     // user message
     if (ev.actor === 'user') {
       try {
-        this.emitter.emit('dialogue.chat.message.user', ev);
         await this.handleUserMessage(ev);
       } catch (e) {
         this.logger.error(`Failed to handle user message: ${e.stack}`);
@@ -390,9 +395,49 @@ export class DialogueSpeechService {
     }
   }
 
+  async isUserTalkingToAvatar(params: CheckIfUserTalkingToAvatarPromptParam) {
+    const res = await this.llmProvider.chat<{
+      skip: boolean;
+      probability: number;
+      reason: string;
+    }>({
+      stream: false,
+      json: true,
+      user: checkIfUserTalkingToAvatarPrompt(params),
+    });
+
+    this.logger.debug(
+      `User message ${params.user} reason=${res?.reason} probability=${res?.probability} skip=${res?.skip}`,
+    );
+    return res ? res.skip : false;
+  }
+
   async handleUserMessage(message: DialogueMessageDto) {
+    // evaluate message in context, skip if not matching
+
+    const avatar = await this.session.getAvatar(message);
+    const settings = await this.session.getSettings(message);
+
+    const historyList = await this.memory.getConversation(message.sessionId);
+
+    const skip = await this.isUserTalkingToAvatar({
+      appPrompt: settings.prompt?.text,
+      avatar,
+      user: message.text,
+      history: historyList,
+    });
+
+    if (skip) return;
+
+    // load emotion
     const emotion = this.emotion.getUserEmotion(message.sessionId);
     if (emotion) message.emotion = emotion;
+
+    // emit user message
+    this.emitter.emit('dialogue.chat.message.user', message);
+    await this.asyncApi.dialogueMessages(message);
+
+    // generate answer
     await this.chatProvider.inference(message);
   }
 

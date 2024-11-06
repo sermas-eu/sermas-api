@@ -126,9 +126,11 @@ export class LLMProviderService implements OnModuleInit {
   }
 
   getAllowedModels(provider: LLMProvider): string[] | undefined {
-    const configKey: string = `${provider.toUpperCase()}_CHAT_MODELS`;    
+    const configKey: string = `${provider.toUpperCase()}_CHAT_MODELS`;
     const list = this.config.get(configKey);
-    this.logger.verbose(`Retrieved configured models for ${configKey}: ${list}`);
+    this.logger.verbose(
+      `Retrieved configured models for ${configKey}: ${list}`,
+    );
     if (!list) return undefined;
     return list.split(',').map((m) => m.trim());
   }
@@ -244,7 +246,7 @@ export class LLMProviderService implements OnModuleInit {
       const providerModels = await provider.getModels();
       throw new Error(
         `Model ${model} is not available from provider ${config.provider}. ` +
-        `Available models are: ${providerModels}`,
+          `Available models are: ${providerModels}`,
       );
     }
 
