@@ -20,6 +20,7 @@ import {
 import { AntrophicChatProvider } from './providers/antrophic/antrophic.chat.provider';
 import { LLMChatProvider } from './providers/chat.provider';
 import { LLMEmbeddingProvider } from './providers/embeddings.provider';
+import { GeminiChatProvider } from './providers/gemini/gemini.chat.provider';
 import { GroqChatProvider } from './providers/groq/groq.provider';
 import { MistralChatProvider } from './providers/mistral/mistral.chat.provider';
 import { MistralEmbeddingProvider } from './providers/mistral/mistral.embeddings.provider';
@@ -42,7 +43,7 @@ import { readResponse } from './stream/util';
 import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
 import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
 import { parseJSON } from './util';
-import { GeminiChatProvider } from './providers/gemini/gemini.chat.provider';
+import { GeminiEmbeddingProvider } from './providers/gemini/gemini.embeddings.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -193,6 +194,8 @@ export class LLMProviderService implements OnModuleInit {
 
     const availableModels = this.getAllowedModels(config.provider);
 
+    this.logger.debug(`Using ${config.provider}/${config.model}`);
+
     switch (config.provider) {
       case 'ollama':
         provider = new OllamaChatProvider({
@@ -342,9 +345,9 @@ export class LLMProviderService implements OnModuleInit {
         model =
           config.model ||
           this.config.get('GEMINI_EMBEDDINGS_MODEL') ||
-          embeddingsModelsDefaults.openai;
+          embeddingsModelsDefaults.gemini;
 
-        provider = new OpenAIEmbeddingProvider({
+        provider = new GeminiEmbeddingProvider({
           provider: config.provider,
           // baseURL: config.baseURL || this.config.get('GEMINI_BASEURL'),
           model,

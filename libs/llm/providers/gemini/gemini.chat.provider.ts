@@ -65,7 +65,7 @@ export class GeminiChatProvider extends LLMChatProvider {
     for (const msg of chatMessages) {
       // TODO handle function
       const message: Content = {
-        role: msg.role === 'assistant' ? 'model' : msg.role,
+        role: msg.role === 'assistant' ? 'model' : 'user',
         parts: [
           {
             text: msg.content,
