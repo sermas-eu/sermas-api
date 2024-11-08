@@ -42,18 +42,21 @@ import { readResponse } from './stream/util';
 import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
 import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
 import { parseJSON } from './util';
+import { GeminiChatProvider } from './providers/gemini/gemini.chat.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
   ollama: 'mistral:latest',
   groq: 'mixtral-8x7b-32768',
   mistral: 'open-mixtral-8x22b',
+  gemini: 'gemini-1.5-flash',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'text-embedding-3-small',
   ollama: 'nomic-embed-text:latest',
   mistral: 'mistral-embed',
+  gemini: 'text-embedding-004',
 };
 
 @Injectable()
@@ -208,6 +211,15 @@ export class LLMProviderService implements OnModuleInit {
           availableModels,
         });
         break;
+      case 'gemini':
+        provider = new GeminiChatProvider({
+          provider: config.provider,
+          // baseURL: config.baseURL || this.config.get('GEMINI_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('GEMINI_API_KEY'),
+          availableModels,
+        });
+        break;
 
       case 'mistral':
         provider = new MistralChatProvider({
@@ -323,6 +335,20 @@ export class LLMProviderService implements OnModuleInit {
           baseURL: config.baseURL || this.config.get('OPENAI_BASEURL'),
           model,
           apiKey: config.apiKey || this.config.get('OPENAI_API_KEY'),
+          binaryQuantization,
+        });
+        break;
+      case 'gemini':
+        model =
+          config.model ||
+          this.config.get('GEMINI_EMBEDDINGS_MODEL') ||
+          embeddingsModelsDefaults.openai;
+
+        provider = new OpenAIEmbeddingProvider({
+          provider: config.provider,
+          // baseURL: config.baseURL || this.config.get('GEMINI_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('GEMINI_API_KEY'),
           binaryQuantization,
         });
         break;

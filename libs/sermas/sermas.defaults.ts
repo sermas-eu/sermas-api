@@ -179,10 +179,10 @@ export const SermasDefaultConfig = {
   MISTRAL_API_KEY: '',
   // MISTRAL_EMBEDDINGS_MODEL OpenAi Embedding model
   MISTRAL_EMBEDDINGS_MODEL: 'mistral-embed',
-  // OPENAI_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
+  // MISTRAL_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
   MISTRAL_CHAT_MODELS:
     'open-mistral-nemo,open-mistral-7b,open-mixtral-8x7b,open-mixtral-8x22b,mistral-large-latest',
-  // OPENAI_MODEL Default OpenAI model used as fallback
+  // MISTRAL_MODEL Default OpenAI model used as fallback
   MISTRAL_MODEL: 'open-mistral-nemo',
 
   // ANTROPHIC_API_KEY Antrophic api key
@@ -207,6 +207,14 @@ export const SermasDefaultConfig = {
   AZURE_KEY: '',
   // AZURE_REGION Azure region (used as fallback to more specific ones)
   AZURE_REGION: '',
+
+  // GEMINI_API_KEY Provide a Google Gemini api key for chat and embedding services
+  GEMINI_API_KEY: '',
+
+  // GEMINI_EMBEDDINGS_MODEL Supported embedding models from Google Gemini. Leave empty to allow all available.
+  GEMINI_EMBEDDINGS_MODEL: '',
+  // GEMINI_CHAT_MODELS Supported chat models from Google Gemini. Leave empty to allow all available.
+  GEMINI_CHAT_MODELS: '',
 
   // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
   ENABLE_EMOTION_RECOGNITION: '0',
