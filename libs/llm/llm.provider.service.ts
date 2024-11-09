@@ -44,6 +44,7 @@ import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
 import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
 import { parseJSON } from './util';
 import { GeminiEmbeddingProvider } from './providers/gemini/gemini.embeddings.provider';
+import { HuggingfaceChatProvider } from './providers/huggingface/huggingface.chat.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -51,6 +52,7 @@ export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   groq: 'mixtral-8x7b-32768',
   mistral: 'open-mixtral-8x22b',
   gemini: 'gemini-1.5-flash',
+  huggingface: 'meta-llama/Llama-3.1-8B-Instruct',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
@@ -223,7 +225,18 @@ export class LLMProviderService implements OnModuleInit {
           availableModels,
         });
         break;
-
+      case 'huggingface':
+        provider = new HuggingfaceChatProvider({
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('HUGGINGFACE_BASEURL'),
+          model,
+          apiKey:
+            config.apiKey ||
+            this.config.get('HUGGINGFACE_API_KEY') ||
+            this.config.get('HF_TOKEN'),
+          availableModels,
+        });
+        break;
       case 'mistral':
         provider = new MistralChatProvider({
           provider: config.provider,

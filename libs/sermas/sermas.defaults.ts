@@ -193,6 +193,20 @@ export const SermasDefaultConfig = {
   ANTROPHIC_CHAT_MODELS:
     'claude-3-opus-20240229,claude-3-sonnet-20240229,claude-3-haiku-20240307',
 
+  // GEMINI_API_KEY Provide a Google Gemini api key for chat and embedding services
+  GEMINI_API_KEY: '',
+  // GEMINI_EMBEDDINGS_MODEL Supported embedding models from Google Gemini. Leave empty to allow all available.
+  GEMINI_EMBEDDINGS_MODEL: '',
+  // GEMINI_CHAT_MODELS Supported chat models from Google Gemini. Leave empty to allow all available.
+  GEMINI_CHAT_MODELS: '',
+
+  // HUGGINGFACE_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
+  HUGGINGFACE_API_KEY: '',
+  // HUGGINGFACE_CHAT_MODELS Supported chat models from Hugging Face. Leave empty to allow any.
+  HUGGINGFACE_CHAT_MODELS: '',
+  // HUGGINGFACE_BASEURL Base URL for Hugging Face inference service
+  HUGGINGFACE_BASEURL: '',
+
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',
   // DATASET_BUCKET Data logger bucket name
@@ -207,14 +221,6 @@ export const SermasDefaultConfig = {
   AZURE_KEY: '',
   // AZURE_REGION Azure region (used as fallback to more specific ones)
   AZURE_REGION: '',
-
-  // GEMINI_API_KEY Provide a Google Gemini api key for chat and embedding services
-  GEMINI_API_KEY: '',
-
-  // GEMINI_EMBEDDINGS_MODEL Supported embedding models from Google Gemini. Leave empty to allow all available.
-  GEMINI_EMBEDDINGS_MODEL: '',
-  // GEMINI_CHAT_MODELS Supported chat models from Google Gemini. Leave empty to allow all available.
-  GEMINI_CHAT_MODELS: '',
 
   // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
   ENABLE_EMOTION_RECOGNITION: '0',
