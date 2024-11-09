@@ -74,8 +74,10 @@ export class HuggingfaceChatProvider extends LLMChatProvider {
       const res = await this.getApiClient().chatCompletion({
         ...completionOpts,
       });
-      const content = res.choices[0].message.content;
-      stream.add(content);
+      if (res && res.choices && res.choices?.length) {
+        const content = res.choices[0].message.content;
+        stream.add(content);
+      }
       stream.close();
       return {
         stream,
@@ -91,6 +93,7 @@ export class HuggingfaceChatProvider extends LLMChatProvider {
     (async () => {
       for await (const completionChunk of result) {
         if (aborted) break;
+        if (!completionChunk || !completionChunk.choices) break;
         const chunk = completionChunk.choices[0].delta.content;
         stream.add(chunk);
       }

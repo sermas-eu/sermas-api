@@ -52,7 +52,7 @@ export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   groq: 'mixtral-8x7b-32768',
   mistral: 'open-mixtral-8x22b',
   gemini: 'gemini-1.5-flash',
-  huggingface: 'meta-llama/Llama-3.1-8B-Instruct',
+  huggingface: 'microsoft/Phi-3-mini-4k-instruct',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
@@ -100,8 +100,8 @@ export class LLMProviderService implements OnModuleInit {
     if (!service) return data;
     const parts = service.split('/');
     if (parts.length) {
-      data.provider = parts[0];
-      if (parts[1]) data.model = parts[1];
+      data.provider = parts.shift();
+      if (parts.length) data.model = parts.join('/');
     }
     return data;
   }
@@ -196,7 +196,9 @@ export class LLMProviderService implements OnModuleInit {
 
     const availableModels = this.getAllowedModels(config.provider);
 
-    this.logger.debug(`Using ${config.provider}/${config.model}`);
+    this.logger.debug(
+      `Using ${config.provider}/${config.model || model || 'unknown'}`,
+    );
 
     switch (config.provider) {
       case 'ollama':

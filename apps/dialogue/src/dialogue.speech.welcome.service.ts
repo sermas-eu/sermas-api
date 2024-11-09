@@ -141,6 +141,13 @@ export class DialogueWelcomeService {
           tag: 'translation',
         })
         .then((list) => {
+          if (!list || !list.list?.length) {
+            this.logger.warn(
+              `Failed to generate welcome buttons, invalid response`,
+            );
+            return [];
+          }
+
           const buttons: ButtonsUIContentDto = {
             appId: ev.appId,
             sessionId: ev.record.sessionId,
