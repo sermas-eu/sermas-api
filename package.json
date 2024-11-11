@@ -76,6 +76,7 @@
     "minio": "^7.1.3",
     "mongoose": "^8.3.2",
     "mqtt": "^5.5.2",
+    "murmurhash-native": "^3.5.0",
     "nest-keycloak-connect": "^1.10.0",
     "nestjs-asyncapi": "^1.2.1",
     "nestjs-minio-client": "^2.2.0",

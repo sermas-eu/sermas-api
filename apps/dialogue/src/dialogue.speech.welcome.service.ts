@@ -91,13 +91,11 @@ export class DialogueWelcomeService {
         settings,
         avatar,
       }),
-      stream: true,
+      stream: false,
       tag: 'chat',
     });
 
     perf();
-
-    // this.logger.warn(welcomePrompt);
 
     const emotion =
       (await this.emotion.getUserEmotion(ev.record.sessionId)) || undefined;
@@ -120,9 +118,6 @@ export class DialogueWelcomeService {
 
       await this.speech.chat(msg);
     };
-
-    // welcomeChat.stream.on('data', onChatData).on('end', () => {
-    //   this.logger.debug(`Welcome response sent`);
 
     type ButtonsList = { label: string; list: ButtonDto[] };
     let buttonsPromise = Promise.resolve<ButtonsUIContentDto | null>(null);
@@ -168,17 +163,13 @@ export class DialogueWelcomeService {
         });
     }
 
-    welcomeMessageChat.stream?.on('data', onChatData).on('end', async () => {
-      if (toolsList.length) {
-        const buttons = await buttonsPromise;
-        if (buttons) {
-          await this.broker.publish(SermasTopics.ui.content, buttons);
-        }
-      }
-      this.logger.verbose(`Welcome message sent`);
-      perf('welcome-text.completed');
-    });
-    // });
+    await onChatData(welcomeMessageChat);
+    const buttons = await buttonsPromise;
+    if (buttons) {
+      await this.broker.publish(SermasTopics.ui.content, buttons);
+    }
+    this.logger.verbose(`Welcome message sent`);
+    perf('welcome-text.completed');
   }
 
   @OnEvent('dialogue.tool.trigger')
