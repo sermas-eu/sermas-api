@@ -4,6 +4,7 @@ import * as murmurHash from 'murmurhash-native';
 import { LLMMessage } from './providers/provider.dto';
 import { Transform } from 'stream';
 import { AnswerResponse, ToolResponse } from './tools/tool.dto';
+import { isNodeEnv } from 'libs/util';
 
 @Injectable()
 export class LLMCacheService {
@@ -14,7 +15,10 @@ export class LLMCacheService {
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
     this.hashFunction = murmurHash.murmurHash128x86;
-    this.cacheManager.reset();
+    if (process.env.CLEAR_CACHE_ON_START) {
+      this.logger.log('Clearing REDIS cache');
+      this.cacheManager.reset();
+    }
   }
 
   hashMessage(messages: LLMMessage[]) {
