@@ -42,6 +42,7 @@ import { readResponse } from './stream/util';
 import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
 import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
 import { parseJSON } from './util';
+import { LLMCacheService, SaveToCacheTransformer } from './cache.service';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -75,6 +76,7 @@ export class LLMProviderService implements OnModuleInit {
     private readonly emitter: EventEmitter2,
 
     private readonly monitor: MonitorService,
+    private readonly cache: LLMCacheService,
   ) {
     this.printPrompt = this.config.get('LLM_PRINT_PROMPT') === '1';
     this.printResponse = this.config.get('LLM_PRINT_RESPONSE') === '1';
@@ -503,6 +505,19 @@ export class LLMProviderService implements OnModuleInit {
 
     this.logPrompt(messages, llmCallId);
 
+    const cached = await this.cache.get(args.messages);
+    if (cached) {
+      this.logger.debug(`Using cached response`);
+      this.logger.verbose(
+        `Cached message:\n${JSON.stringify(args.messages)}\nresponse:\n${cached}`,
+      );
+      if (args.stream) {
+        return { stream: Readable.from(cached.toString()) } as LLMCallResult;
+      } else {
+        return cached as T;
+      }
+    }
+
     try {
       const { stream, abort } = await provider.call(messages, {
         stream: args.stream,
@@ -533,6 +548,9 @@ export class LLMProviderService implements OnModuleInit {
         // add sentence transformer
         if (args.tag !== 'tools') {
           returnStream = returnStream.pipe(new SentenceTransformer());
+          returnStream = returnStream.pipe(
+            new SaveToCacheTransformer(this.cache, args.messages),
+          );
         }
 
         perf(`${provider.getName()}/${config.model}`);
@@ -551,10 +569,16 @@ export class LLMProviderService implements OnModuleInit {
           return this.emptyResponse(args);
         }
 
+        //cache response
+        await this.cache.save(args.messages, result);
+
         return result as T;
       }
 
       perf(`${provider.getName()}/${config.model}`);
+
+      //cache response
+      await this.cache.save(args.messages, response);
 
       return response;
     } catch (e) {
