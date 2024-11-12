@@ -1,17 +1,24 @@
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import {
+  Cache,
+  CACHE_MANAGER,
+  CacheKey,
+  CacheTTL,
+} from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as murmurHash from 'murmurhash-native';
 import { LLMMessage } from './providers/provider.dto';
 import { Transform } from 'stream';
 import { AnswerResponse, ToolResponse } from './tools/tool.dto';
-import { isNodeEnv } from 'libs/util';
+
+const cacheTTL = +process.env.CACHE_TTL_SEC || 86400;
 
 @Injectable()
+@CacheTTL(cacheTTL)
+@CacheKey('llm')
 export class LLMCacheService {
   private readonly logger = new Logger(LLMCacheService.name);
 
   private hashFunction: murmurHash.MurmurHashFnH;
-  private cacheTTL = +process.env.CACHE_TTL_SEC || 86400;
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
     this.hashFunction = murmurHash.murmurHash128x86;
@@ -27,7 +34,7 @@ export class LLMCacheService {
 
   async save(messages: LLMMessage[], data: any) {
     const hash = this.hashMessage(messages);
-    await this.cacheManager.set(`${hash}`, data, this.cacheTTL * 1000);
+    await this.cacheManager.set(`${hash}`, data);
   }
 
   async get(messages: LLMMessage[]) {
