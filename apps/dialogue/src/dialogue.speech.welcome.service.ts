@@ -6,7 +6,7 @@ import { DialogueEmotionService } from './dialogue.emotion.service';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
-import { ButtonDto, ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
+import { ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
