@@ -46,7 +46,7 @@ You are a digital avatar.
 - <%= data.avatar.prompt %>.
 <% } %>
 
-Produce single phrase message, avoid details defined in context.
+Produce a single phrase message, avoid details defined in context.
 
 <% if (data.type === 'welcome') { %>
 Provide a brief welcome message to the user
