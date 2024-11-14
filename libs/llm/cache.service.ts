@@ -87,6 +87,8 @@ export class SaveToCacheTransformer extends Transform {
     if (typeof chunk === 'string') {
       this.buffer += chunk.toString();
     }
+
+    this.push(chunk);
     callback();
   }
 
@@ -98,7 +100,7 @@ export class SaveToCacheTransformer extends Transform {
     if (this.buffer.trim().length > 0) {
       this.logger.log(`saving ${this.buffer.toString()}`);
       this.addToCache();
-      this.push(this.buffer);
+      // this.push(this.buffer);
       this.buffer = '';
     }
     callback();
