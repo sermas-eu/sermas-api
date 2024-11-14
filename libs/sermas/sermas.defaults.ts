@@ -222,6 +222,9 @@ export const SermasDefaultConfig = {
   // AZURE_REGION Azure region (used as fallback to more specific ones)
   AZURE_REGION: '',
 
+  // LLM_CACHE_ENABLED Enable or disable LLM caching features
+  LLM_CACHE_ENABLED: '1',
+
   // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
   ENABLE_EMOTION_RECOGNITION: '0',
 };
