@@ -140,8 +140,8 @@ export class DialogueWelcomeService {
           }),
           tag: 'translation',
         })
-        .then((list) => {
-          if (!list || !list.list?.length) {
+        .then((buttonsList) => {
+          if (!buttonsList || !buttonsList.list?.length) {
             this.logger.warn(
               `Failed to generate welcome buttons, invalid response`,
             );
@@ -160,7 +160,7 @@ export class DialogueWelcomeService {
             content: {
               label: '',
               list: toolsList.map((t, i) => ({
-                label: list[i] || t.label,
+                label: buttonsList.list[i].label || t.label,
                 value: t.value,
               })),
             },
