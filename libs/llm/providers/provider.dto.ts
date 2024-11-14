@@ -15,6 +15,7 @@ export type LLMPromptTag = (typeof LLMPromptTagList)[number];
 export const LLMProviderList = [
   'ollama',
   'openai',
+  'gemini',
   'groq',
   'antrophic',
   'mistral',

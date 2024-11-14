@@ -5,9 +5,10 @@ import {
   CacheTTL,
 } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as murmurHash from 'murmurhash-native';
-import { LLMMessage } from './providers/provider.dto';
 import { Transform } from 'stream';
+import { LLMMessage } from './providers/provider.dto';
 import { AnswerResponse, ToolResponse } from './tools/tool.dto';
 
 const cacheTTL = +process.env.CACHE_TTL_SEC || 86400;
@@ -18,14 +19,20 @@ const cacheTTL = +process.env.CACHE_TTL_SEC || 86400;
 export class LLMCacheService {
   private readonly logger = new Logger(LLMCacheService.name);
 
+  private enabled = true;
   private hashFunction: murmurHash.MurmurHashFnH;
 
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly config: ConfigService,
+  ) {
     this.hashFunction = murmurHash.murmurHash128x86;
     if (process.env.CLEAR_CACHE_ON_START) {
       this.logger.log('Clearing REDIS cache');
       this.cacheManager.reset();
     }
+    this.enabled = config.get('LLM_CACHE_ENABLED') !== '0';
+    this.logger.log(`LLM caching ${this.enabled ? 'enabled' : 'disabled'}`);
   }
 
   hashMessage(messages: LLMMessage[]) {
@@ -33,11 +40,13 @@ export class LLMCacheService {
   }
 
   async save(messages: LLMMessage[], data: any) {
+    if (!this.enabled) return;
     const hash = this.hashMessage(messages);
     await this.cacheManager.set(`${hash}`, data);
   }
 
   async get(messages: LLMMessage[]) {
+    if (!this.enabled) return null;
     const hash = this.hashMessage(messages);
     return await this.cacheManager.get(`${hash}`);
   }

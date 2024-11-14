@@ -19,7 +19,7 @@ export const avatarChatPrompt = PromptTemplate.create<{
   `
 GENERAL RULES:
 You are an AVATAR discussing with USER on topics described in APPLICATION. 
-Reply briefly to the user.
+The conversation must be fast and coincise, reply with short answers.
 
 <% if (data.history) { %>
 HISTORY provides the conversation

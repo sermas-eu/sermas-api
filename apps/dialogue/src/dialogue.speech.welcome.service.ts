@@ -6,7 +6,7 @@ import { DialogueEmotionService } from './dialogue.emotion.service';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
-import { ButtonDto, ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
+import { ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
@@ -124,12 +124,11 @@ export class DialogueWelcomeService {
     // welcomeChat.stream.on('data', onChatData).on('end', () => {
     //   this.logger.debug(`Welcome response sent`);
 
-    type ButtonsList = { label: string; list: ButtonDto[] };
     let buttonsPromise = Promise.resolve<ButtonsUIContentDto | null>(null);
 
     if (toolsList.length) {
       buttonsPromise = this.llmProvider
-        .chat<ButtonsList>({
+        .chat<string[]>({
           stream: false,
           json: true,
           system: welcomeToolsPrompt({
@@ -140,7 +139,14 @@ export class DialogueWelcomeService {
           }),
           tag: 'translation',
         })
-        .then((list) => {
+        .then((buttonsList) => {
+          if (!buttonsList || !buttonsList.length) {
+            this.logger.warn(
+              `Failed to generate welcome buttons, invalid response`,
+            );
+            return [];
+          }
+
           const buttons: ButtonsUIContentDto = {
             appId: ev.appId,
             sessionId: ev.record.sessionId,
@@ -153,7 +159,7 @@ export class DialogueWelcomeService {
             content: {
               label: '',
               list: toolsList.map((t, i) => ({
-                label: list[i] || t.label,
+                label: buttonsList[i] || t.label,
                 value: t.value,
               })),
             },

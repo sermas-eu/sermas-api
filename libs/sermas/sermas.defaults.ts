@@ -179,10 +179,10 @@ export const SermasDefaultConfig = {
   MISTRAL_API_KEY: '',
   // MISTRAL_EMBEDDINGS_MODEL OpenAi Embedding model
   MISTRAL_EMBEDDINGS_MODEL: 'mistral-embed',
-  // OPENAI_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
+  // MISTRAL_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
   MISTRAL_CHAT_MODELS:
     'open-mistral-nemo,open-mistral-7b,open-mixtral-8x7b,open-mixtral-8x22b,mistral-large-latest',
-  // OPENAI_MODEL Default OpenAI model used as fallback
+  // MISTRAL_MODEL Default OpenAI model used as fallback
   MISTRAL_MODEL: 'open-mistral-nemo',
 
   // ANTROPHIC_API_KEY Antrophic api key
@@ -192,6 +192,20 @@ export const SermasDefaultConfig = {
   // ANTROPHIC_MODELS Supported chat models from Antrophic. Leave empty to allow all available.
   ANTROPHIC_CHAT_MODELS:
     'claude-3-opus-20240229,claude-3-sonnet-20240229,claude-3-haiku-20240307',
+
+  // GEMINI_API_KEY Provide a Google Gemini api key for chat and embedding services
+  GEMINI_API_KEY: '',
+  // GEMINI_EMBEDDINGS_MODEL Supported embedding models from Google Gemini. Leave empty to allow all available.
+  GEMINI_EMBEDDINGS_MODEL: '',
+  // GEMINI_CHAT_MODELS Supported chat models from Google Gemini. Leave empty to allow all available.
+  GEMINI_CHAT_MODELS: '',
+
+  // HUGGINGFACE_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
+  HUGGINGFACE_API_KEY: '',
+  // HUGGINGFACE_CHAT_MODELS Supported chat models from Hugging Face. Leave empty to allow any.
+  HUGGINGFACE_CHAT_MODELS: '',
+  // HUGGINGFACE_BASEURL Base URL for Hugging Face inference service
+  HUGGINGFACE_BASEURL: '',
 
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',
@@ -207,6 +221,9 @@ export const SermasDefaultConfig = {
   AZURE_KEY: '',
   // AZURE_REGION Azure region (used as fallback to more specific ones)
   AZURE_REGION: '',
+
+  // LLM_CACHE_ENABLED Enable or disable LLM caching features
+  LLM_CACHE_ENABLED: '1',
 
   // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
   ENABLE_EMOTION_RECOGNITION: '0',
