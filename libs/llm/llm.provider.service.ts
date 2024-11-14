@@ -52,7 +52,7 @@ export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   groq: 'mixtral-8x7b-32768',
   mistral: 'open-mixtral-8x22b',
   gemini: 'gemini-1.5-flash',
-  huggingface: 'microsoft/Phi-3-mini-4k-instruct',
+  huggingface: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
