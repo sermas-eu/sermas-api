@@ -124,7 +124,6 @@ export class DialogueWelcomeService {
     // welcomeChat.stream.on('data', onChatData).on('end', () => {
     //   this.logger.debug(`Welcome response sent`);
 
-    type ButtonsList = { label: string; list: ButtonDto[] };
     let buttonsPromise = Promise.resolve<ButtonsUIContentDto | null>(null);
 
     if (toolsList.length) {
