@@ -15,7 +15,7 @@ export const checkIfUserTalkingToAvatarPrompt =
 The task is to detect if the user MESSAGE should be considered part of the conversation with the AVATAR considering those factors:
 1. There may be noise caused by other people talking in the room
 2. The user may be self-talking to themself.
-3. The user talks to the avatar as real person, do not exclude messages that may be personal o colloquial.
+3. The user talks to the avatar as a real person, do not exclude messages that may be personal or colloquial.
 
 Answer in JSON format following this structure
 {
