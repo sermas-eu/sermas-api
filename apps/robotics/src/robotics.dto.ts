@@ -64,6 +64,8 @@ class VelocityDto {
 
 export class StatusDto {
   @ApiProperty()
+  available?: boolean;
+  @ApiProperty()
   actualPosition?: PoseDto;
   @ApiProperty()
   velocity?: VelocityDto;

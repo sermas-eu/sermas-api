@@ -68,7 +68,7 @@ export class RoboticsAsyncApiService {
     },
     description: 'Publish a robot operational state event',
   })
-  async opState(payload: InitialPoseEventDto) {
+  async opState(payload: OperationalStateEventDto) {
     this.broker.publish(SermasTopics.robotics.opState, payload);
   }
 }
