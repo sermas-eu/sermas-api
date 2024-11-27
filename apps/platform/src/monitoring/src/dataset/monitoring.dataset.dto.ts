@@ -29,6 +29,24 @@ export class DatasetRecordFilterDto extends SermasSessionDto {
   types?: LogType[];
 }
 
+export class AdvancedDatasetRecordFilterDto {
+  @ApiPropertyOptional()
+  appId?: string;
+  @ApiPropertyOptional()
+  sessionId?: string;
+  @ApiPropertyOptional({
+    enum: LogTypeList,
+    enumName: 'LogType',
+  })
+  type: LogType;
+  @ApiPropertyOptional()
+  label?: string;
+  @ApiPropertyOptional()
+  sinceTs?: Date;
+  @ApiPropertyOptional()
+  untilTs?: Date;
+}
+
 export class MonitoringRecordDto {
   @ApiProperty()
   appId: string;

@@ -7,6 +7,7 @@ import { AuthenticatedUser } from 'nest-keycloak-connect';
 import {
   DatasetRecordDto,
   DatasetRecordFilterDto,
+  AdvancedDatasetRecordFilterDto,
   MonitoringRecordDto,
 } from './monitoring.dataset.dto';
 import { MonitoringDatasetService } from './monitoring.dataset.service';
@@ -46,5 +47,18 @@ export class MonitoringDatasetController {
     if (!filter.appId) throw new BadRequestException(`Missing appId`);
     if (!filter.sessionId) throw new BadRequestException(`Missing sessionId`);
     return await this.datalogger.search(filter);
+  }
+
+  @Post('advanced-search')
+  @ApiScopes('monitoring')
+  @ApiOkResponse({
+    type: [MonitoringRecordDto],
+  })
+  @ApiOperationName()
+  async monitoringAdvancedSearch(
+    @AuthenticatedUser() user: AuthJwtUser,
+    @Body() filter?: AdvancedDatasetRecordFilterDto,
+  ): Promise<MonitoringRecordDto[]> {
+    return await this.datalogger.advancedSearch(filter);
   }
 }
