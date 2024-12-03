@@ -56,11 +56,16 @@ export class UIContentOptionsDto {
 }
 
 export class UIContentMetadataDto {
-  [key: string]: string;
+  [key: string]: any;
   @ApiPropertyOptional({
     description: 'Reference to a tool repository ID',
   })
   repositoryId?: string;
+  @ApiPropertyOptional({
+    // type: [DialogueMessageUIContentDto],
+    type: [],
+  })
+  chunks?: DialogueMessageUIContentDto[];
 }
 
 @ApiExtraModels(UIContentMetadataDto, UIContentOptionsDto)
