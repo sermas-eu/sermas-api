@@ -177,12 +177,12 @@ export const SermasDefaultConfig = {
 
   // MISTRAL_API_KEY Mistral api key
   MISTRAL_API_KEY: '',
-  // MISTRAL_EMBEDDINGS_MODEL OpenAi Embedding model
+  // MISTRAL_EMBEDDINGS_MODEL Mistral Embedding model
   MISTRAL_EMBEDDINGS_MODEL: 'mistral-embed',
-  // MISTRAL_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
+  // MISTRAL_CHAT_MODELS Supported chat models from Mistral. Leave empty to allow all available.
   MISTRAL_CHAT_MODELS:
     'open-mistral-nemo,open-mistral-7b,open-mixtral-8x7b,open-mixtral-8x22b,mistral-large-latest',
-  // MISTRAL_MODEL Default OpenAI model used as fallback
+  // MISTRAL_MODEL Default Mistral model used as fallback
   MISTRAL_MODEL: 'open-mistral-nemo',
 
   // ANTROPHIC_API_KEY Antrophic api key
