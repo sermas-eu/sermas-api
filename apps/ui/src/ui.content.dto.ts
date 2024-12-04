@@ -63,7 +63,7 @@ export class UIContentMetadataDto {
   repositoryId?: string;
   @ApiPropertyOptional({
     // type: [DialogueMessageUIContentDto],
-    type: [],
+    type: [Object],
   })
   chunks?: DialogueMessageUIContentDto[];
 }
