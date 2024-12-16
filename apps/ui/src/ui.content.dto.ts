@@ -23,9 +23,16 @@ export const SupportedContentTypeList = [
   'quiz',
   'clear-screen',
   'qrcode-scanner',
+  'background-audio',
 ] as const;
 
 export type SupportedContentTypes = (typeof SupportedContentTypeList)[number];
+
+export const Supported3DTypeList = ['glb', 'obj', 'fbx'] as const;
+export type Supported3DTypes = (typeof Supported3DTypeList)[number];
+
+export const SupportedAudioTypeList = ['mp3', 'wav', 'ogg'] as const;
+export type SupportedAudioTypes = (typeof SupportedAudioTypeList)[number];
 
 export class UIContentDtoOptions implements Record<string, any> {
   @ApiProperty({
@@ -137,7 +144,10 @@ export class ImageContentDto {
   height?: number;
   @ApiProperty()
   alt: string;
+  @ApiPropertyOptional()
+  isBackground?: boolean;
 }
+
 export class ImageUIContentDto extends UIContentDto<ImageContentDto> {
   @ApiProperty({
     type: ImageContentDto,
@@ -172,8 +182,15 @@ export class WebpageUIContentDto extends UIContentDto<WebpageContentDto> {
 // object
 export class ObjectContentDto {
   @ApiProperty()
-  url?: string;
+  url: string;
+
+  @ApiProperty({
+    enum: Supported3DTypeList,
+    enumName: 'Supported3DTypes',
+  })
+  type: Supported3DTypes;
 }
+
 export class ObjectUIContentDto extends UIContentDto<ObjectContentDto> {
   @ApiProperty({
     type: ObjectContentDto,
@@ -231,6 +248,25 @@ export class LinkUIContentDto extends UIContentDto<LinkContentDto> {
     type: LinkContentDto,
   })
   content: LinkContentDto;
+}
+
+// background-audio
+export class BackgroundAudioDto {
+  @ApiProperty()
+  src: string;
+
+  @ApiProperty({
+    enum: SupportedAudioTypeList,
+    enumName: 'SupportedAudioTypes',
+  })
+  type: SupportedAudioTypes;
+}
+
+export class BackgroundUIAudioDto extends UIContentDto<BackgroundAudioDto> {
+  @ApiProperty({
+    type: BackgroundAudioDto,
+  })
+  content: BackgroundAudioDto;
 }
 
 // DialogueMessage
