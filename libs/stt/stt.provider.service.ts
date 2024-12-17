@@ -8,6 +8,7 @@ import { OpenAISpeechToText } from './providers/stt.openai.service';
 import { WhisperSpeechToText } from './providers/stt.whisper.service';
 import { DialogueSpeechToTextDto } from './stt.dto';
 import { AzureSpeechToText } from './providers/stt.azure.service';
+import { MmsSpeechToText } from './providers/stt.mms.service';
 
 export type STTResponse = {
   provider: string;
@@ -24,6 +25,7 @@ export class STTProviderService {
     private readonly openaistt: OpenAISpeechToText,
     private readonly whisperstt: WhisperSpeechToText,
     private readonly azurestt: AzureSpeechToText,
+    private readonly mmsstt: MmsSpeechToText,
 
     private readonly configService: ConfigService,
 
@@ -92,11 +94,15 @@ export class STTProviderService {
           const res2 = await this.whisperstt.text(buffer, language);
           perf('whisper');
           text = res2.text;
+        case 'mms':
+          const res3 = await this.mmsstt.text(buffer, language);
+          perf('mms');
+          text = res3.text;
         case 'openai':
         default:
-          const res3 = await this.openaistt.text(buffer, language);
+          const res4 = await this.openaistt.text(buffer, language);
           perf('openai');
-          text = res3.text;
+          text = res4.text;
           break;
       }
     } catch (e) {
