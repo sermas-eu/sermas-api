@@ -82,17 +82,21 @@ export class UIContentDto<T = any> extends SermasSessionDto {
     enumName: 'SupportedContentTypes',
   })
   contentType: SupportedContentTypes;
+
   @ApiProperty()
   content: T;
+
   @ApiPropertyOptional({
     description: 'Provide a description for the content',
   })
   description?: string;
+
   @ApiGenericPropertyOptional({
     description: 'Provides metadata for the content',
     genericModels: [UIContentMetadataDto],
   })
   metadata?: UIContentMetadataDto;
+
   @ApiGenericPropertyOptional({
     description: 'Provides configuration options for the content',
     genericModels: [UIContentOptionsDto],
@@ -191,11 +195,18 @@ export class ObjectContentDto {
   type: Supported3DTypes;
 }
 
-export class ObjectUIContentDto extends UIContentDto<ObjectContentDto> {
+export class ObjectContentDtoWrapper {
   @ApiProperty({
-    type: ObjectContentDto,
+    type: [ObjectContentDto],
   })
-  content: ObjectContentDto;
+  list: ObjectContentDto[];
+}
+
+export class ObjectUIContentDto extends UIContentDto<ObjectContentDtoWrapper> {
+  @ApiProperty({
+    type: ObjectContentDtoWrapper,
+  })
+  content: ObjectContentDtoWrapper;
 }
 
 // text
