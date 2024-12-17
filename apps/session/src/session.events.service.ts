@@ -4,8 +4,8 @@ import {
   UserDetectionEventDto,
   UserInteractionIntentionDto,
 } from 'apps/detection/src/detection.dto';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { UIInteractionEventDto } from 'apps/ui/src/ui.dto';
+import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { AgentChangedDto } from './agent/session.agent.dto';
@@ -43,8 +43,13 @@ export class SessionEventsService {
     this.session.onAgentChanged(payload);
   }
 
-  @OnEvent('dialogue.chat.message', { async: true })
-  async onDialogueMessage(ev: DialogueMessageDto): Promise<void> {
+  @OnEvent('dialogue.chat.message.user')
+  async onDialogueUserMessage(ev: DialogueMessageDto): Promise<void> {
+    this.session.onDialogueMessage(ev);
+  }
+
+  @OnEvent('dialogue.chat.message.agent')
+  async onDialogueAgentMessage(ev: DialogueMessageDto): Promise<void> {
     this.session.onDialogueMessage(ev);
   }
 }

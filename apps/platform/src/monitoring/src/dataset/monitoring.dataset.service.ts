@@ -12,6 +12,7 @@ import { MonitoringAsyncApiService } from './monitoring.async.service';
 import {
   DatasetRecordDto,
   DatasetRecordFilterDto,
+  AdvancedDatasetRecordFilterDto,
   LogType,
   MonitoringRecordDto,
 } from './monitoring.dataset.dto';
@@ -163,5 +164,31 @@ export class MonitoringDatasetService {
         if (m.data) delete m.data;
         return m as MonitoringRecordDto;
       });
+  }
+
+  async advancedSearch(filter: AdvancedDatasetRecordFilterDto) {
+    const q: FilterQuery<MonitoringRecordDto> = {};
+    if (filter.appId) {
+      q.appId = filter.appId;
+    }
+    if (filter.sessionId) {
+      q.sessionId = filter.sessionId;
+    }
+    if (filter.type) {
+      q.type = filter.type;
+    }
+    if (filter.label) {
+      q.label = filter.label;
+    }
+    q.ts = {};
+    if (filter.sinceTs) {
+      q.ts['$gte'] = filter.sinceTs;
+    }
+    if (filter.untilTs) {
+      q.ts['$lte'] = filter.untilTs;
+    }
+
+    const records = await this.datasetRecord.find(q).exec();
+    return records.map((r) => toDTO<MonitoringRecordDto>(r));
   }
 }

@@ -20,6 +20,7 @@ import {
 import { AntrophicChatProvider } from './providers/antrophic/antrophic.chat.provider';
 import { LLMChatProvider } from './providers/chat.provider';
 import { LLMEmbeddingProvider } from './providers/embeddings.provider';
+import { GeminiChatProvider } from './providers/gemini/gemini.chat.provider';
 import { GroqChatProvider } from './providers/groq/groq.provider';
 import { MistralChatProvider } from './providers/mistral/mistral.chat.provider';
 import { MistralEmbeddingProvider } from './providers/mistral/mistral.embeddings.provider';
@@ -42,18 +43,24 @@ import { readResponse } from './stream/util';
 import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
 import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
 import { parseJSON } from './util';
+import { GeminiEmbeddingProvider } from './providers/gemini/gemini.embeddings.provider';
+import { HuggingfaceChatProvider } from './providers/huggingface/huggingface.chat.provider';
+import { LLMCacheService, SaveToCacheTransformer } from './cache.service';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
   ollama: 'mistral:latest',
   groq: 'mixtral-8x7b-32768',
   mistral: 'open-mixtral-8x22b',
+  gemini: 'gemini-1.5-flash',
+  huggingface: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'text-embedding-3-small',
   ollama: 'nomic-embed-text:latest',
   mistral: 'mistral-embed',
+  gemini: 'text-embedding-004',
 };
 
 @Injectable()
@@ -75,6 +82,7 @@ export class LLMProviderService implements OnModuleInit {
     private readonly emitter: EventEmitter2,
 
     private readonly monitor: MonitorService,
+    private readonly cache: LLMCacheService,
   ) {
     this.printPrompt = this.config.get('LLM_PRINT_PROMPT') === '1';
     this.printResponse = this.config.get('LLM_PRINT_RESPONSE') === '1';
@@ -94,8 +102,8 @@ export class LLMProviderService implements OnModuleInit {
     if (!service) return data;
     const parts = service.split('/');
     if (parts.length) {
-      data.provider = parts[0];
-      if (parts[1]) data.model = parts[1];
+      data.provider = parts.shift();
+      if (parts.length) data.model = parts.join('/');
     }
     return data;
   }
@@ -126,9 +134,11 @@ export class LLMProviderService implements OnModuleInit {
   }
 
   getAllowedModels(provider: LLMProvider): string[] | undefined {
-    const configKey: string = `${provider.toUpperCase()}_CHAT_MODELS`;    
+    const configKey: string = `${provider.toUpperCase()}_CHAT_MODELS`;
     const list = this.config.get(configKey);
-    this.logger.verbose(`Retrieved configured models for ${configKey}: ${list}`);
+    this.logger.verbose(
+      `Retrieved configured models for ${configKey}: ${list}`,
+    );
     if (!list) return undefined;
     return list.split(',').map((m) => m.trim());
   }
@@ -188,6 +198,10 @@ export class LLMProviderService implements OnModuleInit {
 
     const availableModels = this.getAllowedModels(config.provider);
 
+    this.logger.debug(
+      `Using ${config.provider}/${config.model || model || 'unknown'}`,
+    );
+
     switch (config.provider) {
       case 'ollama':
         provider = new OllamaChatProvider({
@@ -206,7 +220,27 @@ export class LLMProviderService implements OnModuleInit {
           availableModels,
         });
         break;
-
+      case 'gemini':
+        provider = new GeminiChatProvider({
+          provider: config.provider,
+          // baseURL: config.baseURL || this.config.get('GEMINI_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('GEMINI_API_KEY'),
+          availableModels,
+        });
+        break;
+      case 'huggingface':
+        provider = new HuggingfaceChatProvider({
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('HUGGINGFACE_BASEURL'),
+          model,
+          apiKey:
+            config.apiKey ||
+            this.config.get('HUGGINGFACE_API_KEY') ||
+            this.config.get('HF_TOKEN'),
+          availableModels,
+        });
+        break;
       case 'mistral':
         provider = new MistralChatProvider({
           provider: config.provider,
@@ -244,7 +278,7 @@ export class LLMProviderService implements OnModuleInit {
       const providerModels = await provider.getModels();
       throw new Error(
         `Model ${model} is not available from provider ${config.provider}. ` +
-        `Available models are: ${providerModels}`,
+          `Available models are: ${providerModels}`,
       );
     }
 
@@ -321,6 +355,20 @@ export class LLMProviderService implements OnModuleInit {
           baseURL: config.baseURL || this.config.get('OPENAI_BASEURL'),
           model,
           apiKey: config.apiKey || this.config.get('OPENAI_API_KEY'),
+          binaryQuantization,
+        });
+        break;
+      case 'gemini':
+        model =
+          config.model ||
+          this.config.get('GEMINI_EMBEDDINGS_MODEL') ||
+          embeddingsModelsDefaults.gemini;
+
+        provider = new GeminiEmbeddingProvider({
+          provider: config.provider,
+          // baseURL: config.baseURL || this.config.get('GEMINI_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('GEMINI_API_KEY'),
           binaryQuantization,
         });
         break;
@@ -501,6 +549,19 @@ export class LLMProviderService implements OnModuleInit {
 
     this.logPrompt(messages, llmCallId);
 
+    const cached = await this.cache.get(args.messages);
+    if (cached) {
+      this.logger.debug(`Using cached response`);
+      this.logger.verbose(
+        `Cached message:\n${JSON.stringify(args.messages)}\nresponse:\n${cached}`,
+      );
+      if (args.stream) {
+        return { stream: Readable.from(cached.toString()) } as LLMCallResult;
+      } else {
+        return cached as T;
+      }
+    }
+
     try {
       const { stream, abort } = await provider.call(messages, {
         stream: args.stream,
@@ -531,6 +592,9 @@ export class LLMProviderService implements OnModuleInit {
         // add sentence transformer
         if (args.tag !== 'tools') {
           returnStream = returnStream.pipe(new SentenceTransformer());
+          returnStream = returnStream.pipe(
+            new SaveToCacheTransformer(this.cache, args.messages),
+          );
         }
 
         perf(`${provider.getName()}/${config.model}`);
@@ -549,10 +613,16 @@ export class LLMProviderService implements OnModuleInit {
           return this.emptyResponse(args);
         }
 
+        //cache response
+        await this.cache.save(args.messages, result);
+
         return result as T;
       }
 
       perf(`${provider.getName()}/${config.model}`);
+
+      //cache response
+      await this.cache.save(args.messages, response);
 
       return response;
     } catch (e) {

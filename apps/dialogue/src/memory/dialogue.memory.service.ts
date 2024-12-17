@@ -17,6 +17,20 @@ export class DialogueMemoryService implements OnModuleInit {
     //
   }
 
+  async getConversation(
+    sessionId: string | { sessionId: string },
+    limit?: number,
+  ) {
+    const history = await this.getMessages(
+      typeof sessionId === 'string' ? sessionId : sessionId.sessionId,
+      limit,
+    );
+    return history
+      .filter((h) => h.type === 'message')
+      .map((h) => ` - ${h.role}: ${h.content}`)
+      .join('\n');
+  }
+
   async getMessages(sessionId: string, limit?: number) {
     const record = await this.memory.findOne({ sessionId });
 

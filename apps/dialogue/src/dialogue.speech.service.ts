@@ -22,14 +22,27 @@ import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { TTSProviderService } from 'libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
 import { DialogueChatService } from './dialogue.chat.service';
+import {
+  checkIfUserTalkingToAvatarPrompt,
+  CheckIfUserTalkingToAvatarPromptParam,
+} from './dialogue.speech.prompt';
+import { DialogueMemoryService } from './memory/dialogue.memory.service';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
+
+type OutgoingQueueMessage = { message: DialogueMessageDto; data: Buffer };
 
 @Injectable()
 export class DialogueSpeechService {
   private readonly logger = new Logger(DialogueSpeechService.name);
 
   private sttMessagesCache: Record<string, Date> = {};
+
+  outgoingMessageSemaphore: Set<string> = new Set<string>();
+  outgoingMessageQueue: Record<
+    string,
+    Record<string, Promise<OutgoingQueueMessage>>
+  > = {};
 
   constructor(
     private readonly emotion: DialogueEmotionService,
@@ -46,6 +59,8 @@ export class DialogueSpeechService {
 
     private readonly llmProvider: LLMProviderService,
     private readonly chatProvider: DialogueChatService,
+
+    private readonly memory: DialogueMemoryService,
 
     private readonly speechbrainProvider: SpeechBrainService,
 
@@ -226,15 +241,14 @@ export class DialogueSpeechService {
 
       this.logger.verbose(`User main emotion: ${emotion}`);
 
-      const ttsEvent: DialogueMessageDto = {
+      const sttEvent: DialogueMessageDto = {
         ...dialogueMessagePayload,
         actor: 'user',
         emotion,
         text,
       };
 
-      this.emitter.emit('dialogue.chat.message', ttsEvent);
-      this.asyncApi.dialogueMessages(ttsEvent);
+      this.emitter.emit('dialogue.chat.message', sttEvent);
     } catch (err) {
       const { dialogueMessagePayload, language } = err as {
         dialogueMessagePayload: DialogueMessageDto;
@@ -251,7 +265,6 @@ export class DialogueSpeechService {
     // user message
     if (ev.actor === 'user') {
       try {
-        this.emitter.emit('dialogue.chat.message.user', ev);
         await this.handleUserMessage(ev);
       } catch (e) {
         this.logger.error(`Failed to handle user message: ${e.stack}`);
@@ -292,15 +305,10 @@ export class DialogueSpeechService {
     this.asyncApi.dialogueMessages(agentResponseEvent);
   }
 
-  async sendAgentSpeech(agentResponseEvent: DialogueMessageDto) {
+  protected async processAgentSpeech(
+    agentResponseEvent: DialogueMessageDto,
+  ): Promise<Buffer | undefined> {
     let buffer: Buffer;
-
-    if (agentResponseEvent.text) {
-      agentResponseEvent.text
-        .split('\n')
-        .forEach((t) => this.logger.verbose(`TTS | ${t}`));
-    }
-
     try {
       buffer = await this.ttsProvider.generateTTS(agentResponseEvent);
     } catch (e) {
@@ -312,24 +320,124 @@ export class DialogueSpeechService {
       return;
     }
 
-    try {
-      agentResponseEvent.ts = agentResponseEvent.ts
-        ? new Date(agentResponseEvent.ts)
-        : new Date();
-      agentResponseEvent.chunkId =
-        agentResponseEvent.chunkId || getChunkId(agentResponseEvent.ts);
-      agentResponseEvent.messageId =
-        agentResponseEvent.messageId || getMessageId(agentResponseEvent.ts);
+    return buffer;
+  }
 
-      await this.asyncApi.agentSpeech(agentResponseEvent, buffer);
+  async sendAgentSpeech(message: DialogueMessageDto) {
+    message.ts = message.ts ? new Date(message.ts) : new Date();
+
+    message.chunkId = message.chunkId || getChunkId(message.ts);
+    message.messageId = message.messageId || getMessageId(message.ts);
+
+    if (message.text) {
+      message.text
+        .split('\n')
+        .forEach((t) => this.logger.verbose(`TTS | ${t}`));
+    }
+
+    const promise = this.processAgentSpeech(message)
+      .then((data) => Promise.resolve({ data, message }))
+      .catch(() => Promise.resolve({ data: null, message }));
+
+    // console.warn(`+ chunkId=${message.chunkId} message=${message.text}`);
+
+    this.addToOutgoingQueue(message.sessionId, message.chunkId, promise);
+  }
+
+  async addToOutgoingQueue(
+    sessionId: string,
+    chunkId: string,
+    loader: Promise<OutgoingQueueMessage>,
+  ) {
+    // add to queue
+    this.outgoingMessageQueue[sessionId] =
+      this.outgoingMessageQueue[sessionId] || {};
+    this.outgoingMessageQueue[sessionId][chunkId] = loader;
+
+    this.processOutgoingQueue(sessionId);
+  }
+
+  async processOutgoingQueue(sessionId: string) {
+    if (this.outgoingMessageSemaphore.has(sessionId)) return;
+
+    const chunks = this.outgoingMessageQueue[sessionId];
+    if (!chunks) return;
+
+    const keys = Object.keys(chunks);
+    if (!keys.length) return;
+
+    const chunkId = keys[0];
+
+    this.outgoingMessageSemaphore.add(sessionId);
+
+    try {
+      const { data, message } = await chunks[chunkId];
+
+      try {
+        if (data && data.length) {
+          // console.warn(
+          //   `sending chunkId=${message.chunkId} message=${message.text}`,
+          // );
+          await this.asyncApi.agentSpeech(message, data);
+        }
+      } catch (e) {
+        this.logger.error(
+          `Failed to send agent speech sessionId=${message.sessionId}: ${e.stack}`,
+        );
+      }
     } catch (e) {
-      this.logger.error(`Failed to send agent speech: ${e.stack}`);
+      this.logger.error(`Failed to process agent speech: ${e.stack}`);
+    } finally {
+      delete this.outgoingMessageQueue[sessionId][chunkId];
+
+      this.outgoingMessageSemaphore.delete(sessionId);
+      this.processOutgoingQueue(sessionId);
     }
   }
 
+  async isUserTalkingToAvatar(params: CheckIfUserTalkingToAvatarPromptParam) {
+    const res = await this.llmProvider.chat<{
+      skip: boolean;
+      probability: number;
+      reason: string;
+    }>({
+      stream: false,
+      json: true,
+      user: checkIfUserTalkingToAvatarPrompt(params),
+    });
+
+    this.logger.debug(
+      `User message ${params.user} reason=${res?.reason} probability=${res?.probability} skip=${res?.skip}`,
+    );
+    return res ? res.skip : false;
+  }
+
   async handleUserMessage(message: DialogueMessageDto) {
+    // evaluate message in context, skip if not matching
+
+    const avatar = await this.session.getAvatar(message);
+    const settings = await this.session.getSettings(message);
+
+    const historyList = await this.memory.getConversation(message.sessionId);
+
+    const skip = await this.isUserTalkingToAvatar({
+      appPrompt: settings.prompt?.text,
+      avatar,
+      user: message.text,
+      history: historyList,
+    });
+
+    if (skip) return;
+
+    // load emotion
     const emotion = this.emotion.getUserEmotion(message.sessionId);
     if (emotion) message.emotion = emotion;
+
+    // emit user message
+    this.emitter.emit('dialogue.chat.message.user', message);
+    await this.asyncApi.dialogueMessages(message);
+
+    // generate answer
     await this.chatProvider.inference(message);
   }
 

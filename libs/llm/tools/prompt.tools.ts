@@ -10,6 +10,7 @@ export const toolsPrompt = PromptTemplate.create<{
   `
 Your task is to match one of the TOOLS with the user messages.
 
+You are the ASSISTANT.
 <% if (data.user) { %>
 USER indicates the last user message
 <% } %>

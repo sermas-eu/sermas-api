@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import * as FormData from 'form-data';
@@ -10,10 +10,16 @@ import {
 } from './speechbrain.dto';
 
 @Injectable()
-export class SpeechBrainService {
+export class SpeechBrainService implements OnModuleInit {
   private readonly logger = new Logger(SpeechBrainService.name);
 
+  private available: boolean | undefined;
+
   constructor(private readonly config: ConfigService) {}
+
+  async onModuleInit() {
+    await this.isAvailable();
+  }
 
   mapEmotion(em: string): Emotion {
     switch (em) {
@@ -40,9 +46,33 @@ export class SpeechBrainService {
     return form;
   }
 
+  private async isAvailable(): Promise<boolean> {
+    if (this.available !== undefined) return this.available;
+
+    try {
+      const url = this.config.get('SPEECHBRAIN_URL');
+      await axios.get(url, {
+        timeout: 500,
+      });
+      this.available = true;
+    } catch (e: any) {
+      if (e.message.indexOf('timeout') === -1) {
+        this.logger.debug(`healtcheck error: ${e.stack}`);
+      }
+      this.available = false;
+    }
+    this.logger.log(`Speechbrain ${this.available ? ' ' : 'NOT '}available`);
+    return this.available;
+  }
+
   private async post<T>(path: string, data: FormData): Promise<T> {
-    const url = this.config.get('SPEECHBRAIN_URL') + path; // TODO: Urlbuild?
-    const res = await axios.postForm(url, data);
+    const avail = await this.isAvailable();
+    if (!avail) return null;
+
+    const url = this.config.get('SPEECHBRAIN_URL') + path;
+    const res = await axios.postForm(url, data, {
+      timeout: 2000,
+    });
     this.logger.log(`Speechbrain result: '${JSON.stringify(res.data)}'`);
     return res.data as T;
   }
@@ -51,6 +81,9 @@ export class SpeechBrainService {
     try {
       const form = this.buildFormData(audio);
       const result = await this.post<SpeechBrainClassification>('/', form);
+
+      if (result === null) return null;
+
       result.emotion.value = this.mapEmotion(result.emotion.value as string);
       return result;
     } catch (err) {
@@ -63,6 +96,7 @@ export class SpeechBrainService {
     try {
       const form = this.buildFormData(audio);
       const result = await this.post<SpeechBrainSeparation>('/separate', form);
+      if (result === null) return null;
       return result;
     } catch (err) {
       this.logger.error(`Speech separation error: ${err.message}`);
@@ -77,6 +111,7 @@ export class SpeechBrainService {
         '/count_speakers',
         form,
       );
+      if (result === null) return null;
       return result;
     } catch (err) {
       this.logger.error(`Speech speaker count error: ${err.message}`);

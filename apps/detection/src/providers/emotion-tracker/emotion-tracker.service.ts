@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Interval } from '@nestjs/schedule';
 import { DetectionAsyncApiService } from '../../detection.async.service';
@@ -29,10 +30,15 @@ export class EmotionTrackerService {
 
   private records: Record<string, EmotionRecord> = {};
 
+  private readonly enabled: boolean;
+
   constructor(
     private readonly emitter: EventEmitter2,
     private readonly asyncApi: DetectionAsyncApiService,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    this.enabled = this.config.get('ENABLE_EMOTION_RECOGNITION') === '1';
+  }
 
   getEmotion(sessionId: string): EmotionRecord | null {
     return this.records[sessionId] || null;
@@ -44,6 +50,8 @@ export class EmotionTrackerService {
 
   @Interval(10000)
   clear() {
+    if (!this.enabled) return;
+
     Object.keys(this.cache).forEach((sessionId) => {
       this.cache[sessionId] = this.cache[sessionId] || [];
       if (this.cache[sessionId].length > 10) {
@@ -60,6 +68,8 @@ export class EmotionTrackerService {
   }
 
   update(ev: UserCharacterizationEventDto) {
+    if (!this.enabled) return;
+
     if (!ev.sessionId) return;
     // skip self-processed events
     if (ev.source === UserCharacterizationEventSource.emotion_tracker) return;
@@ -114,6 +124,8 @@ export class EmotionTrackerService {
   }
 
   process() {
+    if (!this.enabled) return;
+
     Object.keys(this.cache).forEach((sessionId) => {
       const emotions: Record<string, number> = {};
 
