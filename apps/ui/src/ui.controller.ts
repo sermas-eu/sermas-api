@@ -19,6 +19,7 @@ import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
 import { AuthenticatedUser } from 'nest-keycloak-connect';
 import { UIAsyncApiService } from './ui.async.service';
 import {
+  BackgroundUIAudioDto,
   ButtonsUIContentDto,
   ClearScreenDto,
   ClearUIContentDto,
@@ -60,6 +61,7 @@ import { UIService } from './ui.service';
   HtmlUIContentDto,
   EmailUIContentDto,
   EmailContentDto,
+  BackgroundUIAudioDto,
   //
   UiInteractionButtonDto,
 )
