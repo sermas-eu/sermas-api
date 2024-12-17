@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import * as FormData from 'form-data';
 import { ISpeechToText, SpeechToTextResponse } from '../stt.dto';
+import { languageIsoDictionary } from 'libs/language/lang-codes';
+import { mapLanguageCode } from 'libs/language/language';
 
 @Injectable()
 export class MmsSpeechToText implements ISpeechToText {
@@ -24,6 +26,8 @@ export class MmsSpeechToText implements ISpeechToText {
     let asrLanguage = language || '';
     if (asrLanguage && asrLanguage.indexOf('-') > -1)
       asrLanguage = asrLanguage.toString().split('-')[0];
+
+    asrLanguage = languageIsoDictionary[mapLanguageCode(asrLanguage)];
 
     const form = new FormData();
     form.append('audio_file', raw, {
