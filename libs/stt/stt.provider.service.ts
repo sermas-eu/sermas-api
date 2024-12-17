@@ -94,10 +94,12 @@ export class STTProviderService {
           const res2 = await this.whisperstt.text(buffer, language);
           perf('whisper');
           text = res2.text;
+          break;
         case 'mms':
           const res3 = await this.mmsstt.text(buffer, language);
           perf('mms');
           text = res3.text;
+          break;
         case 'openai':
         default:
           const res4 = await this.openaistt.text(buffer, language);
