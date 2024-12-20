@@ -155,6 +155,7 @@ export class DialogueWelcomeService {
             },
             options: {
               ttsEnabled: false,
+              clearScreen: true,
             },
             content: {
               label: '',
