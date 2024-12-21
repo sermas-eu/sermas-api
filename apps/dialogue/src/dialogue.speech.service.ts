@@ -113,6 +113,7 @@ export class DialogueSpeechService {
     }
 
     try {
+      this.logger.debug(`Translating ${fromLanguage} -> ${toLanguage}`);
       let translation: string;
       const provider = this.configService.get('TRANSLATION_SERVICE');
       switch (provider) {

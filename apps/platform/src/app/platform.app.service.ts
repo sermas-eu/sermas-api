@@ -12,6 +12,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { RegistrationRequestDto } from 'apps/auth/src/auth.dto';
 import { KeycloakUserRecord } from 'apps/keycloak/src/keycloak.admin.dto';
 import { createHash } from 'crypto';
+import { DefaultLanguage } from 'libs/language/lang-codes';
+import { DefaultLLMs } from 'libs/llm/constants';
 import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
 import { getConfigPath } from 'libs/sermas/sermas.utils';
 import { isNodeEnv, loadFile, toDTO, uuidv4 } from 'libs/util';
@@ -344,6 +346,45 @@ export class PlatformAppService implements OnModuleInit {
     return app.repository[type][name];
   }
 
+  ensureSettings(app: PlatformAppDocument) {
+    const appDto = app.toJSON();
+    const settings = { ...appDto.settings } as AppSettingsDto;
+
+    if (!settings.language) {
+      settings.language = DefaultLanguage;
+    }
+
+    if (
+      !settings.avatar &&
+      appDto.repository?.avatars &&
+      appDto.repository?.avatars.length
+    ) {
+      settings.avatar = appDto.repository.avatars[0].id;
+    }
+
+    if (
+      !settings.background &&
+      appDto.repository?.backgrounds &&
+      appDto.repository?.backgrounds.length
+    ) {
+      settings.background = appDto.repository.backgrounds[0].id;
+    }
+
+    if (!settings.prompt || !settings.prompt?.text) {
+      settings.prompt = {
+        text: 'You are an helpful digital avatar',
+      };
+    }
+
+    if (!settings.llm) {
+      settings.llm = DefaultLLMs;
+    }
+
+    app.settings = settings;
+
+    return app;
+  }
+
   async updateApp(req: {
     data: Partial<PlatformAppDto>;
     skipClients?: boolean;
@@ -354,13 +395,16 @@ export class PlatformAppService implements OnModuleInit {
 
     if (!data.appId) throw new BadRequestException();
 
-    const app = await this.loadApp(data.appId);
+    let app = await this.loadApp(data.appId);
     if (!app) throw new NotFoundException();
 
     if (data.name) app.name = data.name;
     if (data.description) app.description = data.description;
     if (data.repository) app.repository = data.repository;
+
     if (data.settings) app.settings = data.settings;
+    app = this.ensureSettings(app);
+
     if (data.tools) app.tools = data.tools;
     if (data.tasks) app.tasks = data.tasks;
     if (data.public !== undefined) app.public = data.public;

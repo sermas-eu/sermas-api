@@ -17,7 +17,7 @@ The task is to detect if the user MESSAGE should be considered part of the conve
 2. The user may be self-talking to themself.
 3. The user talks to the avatar as a real person, do not exclude messages that may be personal or colloquial.
 
-Answer in JSON format following this structure
+Answer in correctly parsable JSON format following this structure
 {
   skip: boolean, // keep or not this message
   probability: number, // a float in range 0-1 indicating the probability

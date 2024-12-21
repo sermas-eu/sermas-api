@@ -15,6 +15,10 @@ export const parseJSON = <T = any>(response: string): T | null => {
       response = response.substring(0, response.length - 3); // remove closing md tag ```
     }
 
+    if (response.substring(response.length - 1) === '`') {
+      response = response.substring(0, response.length - 1);
+    }
+
     return JSON.parse(response) as T;
   } catch (e: any) {
     logger.error(`Failed to parse JSON: ${e.message}`);
