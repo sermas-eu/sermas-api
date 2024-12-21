@@ -404,6 +404,7 @@ export class DialogueSpeechService {
       stream: false,
       json: true,
       user: checkIfUserTalkingToAvatarPrompt(params),
+      tag: 'intent',
     });
 
     this.logger.debug(
