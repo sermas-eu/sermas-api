@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
+import { SessionService } from 'apps/session/src/session.service';
 import { UIContentDto } from 'apps/ui/src/ui.content.dto';
 import { UIInteractionEventDto } from 'apps/ui/src/ui.dto';
 import {
@@ -8,7 +9,8 @@ import {
   UiInteractionQuizDto,
 } from 'apps/ui/src/ui.interaction.dto';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
+import { DefaultLanguage } from 'libs/language/lang-codes';
+import { Payload, Subscribe, Topic } from 'libs/mqtt-handler/mqtt.decorator';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId } from 'libs/sermas/sermas.utils';
@@ -22,10 +24,64 @@ export class DialogueSpeechEventService {
   private readonly logger = new Logger(DialogueSpeechEventService.name);
   constructor(
     @Inject(MqttService) private readonly mqttService: MqttService,
+    private session: SessionService,
     private speech: DialogueSpeechService,
     private welcome: DialogueWelcomeService,
     private async: DialogueAsyncApiService,
   ) {}
+
+  @Subscribe({
+    topic: SermasTopics.dialogue.userSpeech,
+    transform: (raw) => raw,
+  })
+  // Add content to chat after user interact with UI
+  async collectAudio(@Topic() topic: string, @Payload() buffer: Buffer) {
+    try {
+      const parts = topic.split('/');
+      const chunkId = parts.pop();
+      const sessionId = parts.pop();
+
+      if (!sessionId) return;
+
+      const session = await this.session.read(sessionId, false);
+      if (!session) {
+        this.logger.debug(`sessionId=${sessionId} not found`);
+        return;
+      }
+
+      const settings = session.settings || {};
+
+      const ev: DialogueSpeechToTextDto = {
+        appId: session.appId,
+        sessionId,
+
+        buffer,
+        mimetype: 'audio/wav',
+        sampleRate: undefined,
+
+        clientId: null,
+        userId: null,
+
+        actor: 'user',
+        text: '',
+
+        llm: settings.llm || undefined,
+        avatar: settings.avatar || undefined,
+        language: settings.language || DefaultLanguage,
+
+        ts: new Date(),
+        chunkId: chunkId,
+        ttsEnabled: settings.ttsEnabled === false ? false : true,
+      };
+
+      this.logger.debug(`Got user speech sessionId=${sessionId}`);
+      await this.speech.speechToText(ev);
+    } catch (e) {
+      this.logger.error(
+        `Failed to process user audio for topic=${topic}: ${e.stack}`,
+      );
+    }
+  }
 
   @Subscribe({
     topic: SermasTopics.ui.interaction,

@@ -4,6 +4,7 @@ import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
+import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { mapMqttTopic } from 'libs/util';
 import { AsyncApi } from 'nestjs-asyncapi';
 
@@ -44,6 +45,17 @@ export class DialogueAsyncApiService {
     description: 'Publish a stop speaking command for the agent',
   })
   async agentStopSpeech(payload: SermasSessionDto) {
+    this.broker.publish(SermasTopics.dialogue.agentStopSpeech, payload);
+  }
+
+  @AsyncApiOperationName({
+    channel: SermasTopics.dialogue.userSpeech,
+    message: {
+      payload: DialogueSpeechToTextDto,
+    },
+    description: 'Publish a stop speaking command for the agent',
+  })
+  async userSpeech(payload: DialogueSpeechToTextDto) {
     this.broker.publish(SermasTopics.dialogue.agentStopSpeech, payload);
   }
 }
