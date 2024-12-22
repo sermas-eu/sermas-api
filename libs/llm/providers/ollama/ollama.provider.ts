@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import {
   LLMCallResult,
@@ -21,7 +21,10 @@ type OllamaModel = {
   family: string;
 };
 
-export class OllamaChatProvider extends LLMChatProvider {
+export class OllamaChatProvider
+  extends LLMChatProvider
+  implements OnModuleInit
+{
   private logger = new Logger(OllamaChatProvider.name);
   private readonly ollama: Ollama;
 
@@ -34,6 +37,7 @@ export class OllamaChatProvider extends LLMChatProvider {
 
   private reachable: boolean | undefined;
   private heartbeat: NodeJS.Timeout;
+  // private available: boolean | undefined;
 
   constructor(protected config: LLMProviderConfig) {
     super(config);
@@ -42,6 +46,10 @@ export class OllamaChatProvider extends LLMChatProvider {
 
   getName(): string {
     return 'ollama';
+  }
+
+  async onModuleInit() {
+    // this.available = await this.isOllamaReachable();
   }
 
   private async listModels(cached = true): Promise<OllamaModel[]> {
@@ -92,16 +100,16 @@ export class OllamaChatProvider extends LLMChatProvider {
   }
 
   async available(): Promise<boolean> {
-    // check periodically
-    if (!this.heartbeat) {
-      this.heartbeat = setInterval(async () => {
-        try {
-          this.reachable = await this.isOllamaReachable();
-        } catch {
-          this.reachable = false;
-        }
-      }, 5000);
-    }
+    // // check periodically
+    // if (!this.heartbeat) {
+    //   this.heartbeat = setInterval(async () => {
+    //     try {
+    //       this.reachable = await this.isOllamaReachable();
+    //     } catch {
+    //       this.reachable = false;
+    //     }
+    //   }, 5000);
+    // }
 
     // Check the first time
     if (this.reachable === undefined) {
@@ -118,6 +126,9 @@ export class OllamaChatProvider extends LLMChatProvider {
   }
 
   public async getModels() {
+    const avail = await this.available();
+    if (!avail) return [];
+
     if (this.models === undefined) {
       try {
         const list = await this.listModels();
