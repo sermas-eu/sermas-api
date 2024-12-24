@@ -30,12 +30,24 @@ export class GeminiEmbeddingProvider extends LLMEmbeddingProvider {
   async generate(input: string[]): Promise<number[][]> {
     input = input instanceof Array ? input : [input];
     try {
-      const res = await this.gemini.batchEmbedContents({
-        requests: input.map((text) => ({
-          content: { role: 'user', parts: [{ text }] },
-        })),
-      });
-      const embeddings = res.embeddings.map((r) => r.values);
+      const embeddings: number[][] = [];
+
+      let pos = 0;
+      const step = 100;
+      while (pos < input.length) {
+        const parts = input.slice(pos, pos + step);
+        this.logger.debug(
+          `Processing ${parts.length} embeddings pos=${pos} input=${input.length}`,
+        );
+        const res = await this.gemini.batchEmbedContents({
+          requests: parts.map((text) => ({
+            content: { role: 'user', parts: [{ text }] },
+          })),
+        });
+        embeddings.push(...res.embeddings.map((r) => r.values));
+        pos += step;
+      }
+
       return this.binaryQuantization(embeddings);
     } catch (e: any) {
       this.logger.error(`Failed to generate embeddings: ${e.message}`);
