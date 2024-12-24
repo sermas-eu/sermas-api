@@ -225,15 +225,12 @@ export class DialogueSpeechService {
         await this.sttProvider.convertToText(payload);
 
       if (!text) {
-        this.logger.warn(`STT failed: cannot detect text from audio clip.`);
-        // await this.replyToUser(
-        //   'Sorry, could you retry?',
-        //   dialogueMessagePayload,
-        // );
+        this.logger.log(`STT: cannot detect text from audio clip.`);
+        await this.continueAgentSpeech(payload.appId, payload.sessionId);
         return;
       }
 
-      this.logger.verbose(`STT result: [${payload.language}] ${text}`);
+      this.logger.verbose(`STT: [${payload.language}] ${text}`);
       // this.dataset.saveRecord('stt', text, buffer, clientId, 'wav');
 
       const emotion = this.emotion.getUserEmotion(
@@ -429,7 +426,16 @@ export class DialogueSpeechService {
       history: historyList,
     });
 
-    if (skip) return;
+    if (skip) {
+      await this.continueAgentSpeech(message.appId, message.sessionId);
+      return;
+    }
+
+    // clear speech queue
+    await this.stopAgentSpeech({
+      appId: message.appId,
+      sessionId: message.sessionId,
+    });
 
     // load emotion
     const emotion = this.emotion.getUserEmotion(message.sessionId);
@@ -443,7 +449,18 @@ export class DialogueSpeechService {
     await this.chatProvider.inference(message);
   }
 
+  async continueAgentSpeech(appId: string, sessionId: string) {
+    this.logger.debug(`Send avatar speech CONTINUE sessionId=${sessionId}`);
+    this.emitter.emit('dialogue.chat.continue', { appId, sessionId });
+    this.asyncApi.agentContinueSpeech({
+      appId,
+      sessionId,
+      ts: new Date(),
+    });
+  }
+
   async stopAgentSpeech(ev: SermasSessionDto) {
+    this.logger.debug(`Send avatar speech STOP sessionId=${ev.sessionId}`);
     this.emitter.emit('dialogue.chat.stop', ev);
     this.asyncApi.agentStopSpeech(ev);
   }
