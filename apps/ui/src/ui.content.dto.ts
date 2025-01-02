@@ -118,6 +118,8 @@ export class UIContentDto<T = any> extends SermasSessionDto {
 export class VideoContentDto implements Record<string, any> {
   @ApiProperty()
   sources: string[];
+  @ApiProperty()
+  type: string;
   @ApiPropertyOptional()
   description?: string;
   @ApiPropertyOptional()
