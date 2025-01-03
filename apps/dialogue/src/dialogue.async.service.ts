@@ -49,6 +49,28 @@ export class DialogueAsyncApiService {
   }
 
   @AsyncApiOperationName({
+    channel: SermasTopics.dialogue.agentPauseSpeech,
+    message: {
+      payload: SermasSessionDto,
+    },
+    description: 'Publish a pause speaking command for the agent',
+  })
+  async agentPauseSpeech(payload: SermasSessionDto) {
+    this.broker.publish(SermasTopics.dialogue.agentPauseSpeech, payload);
+  }
+
+  @AsyncApiOperationName({
+    channel: SermasTopics.dialogue.agentContinueSpeech,
+    message: {
+      payload: SermasSessionDto,
+    },
+    description: 'Publish a continue speaking command for the agent',
+  })
+  async agentContinueSpeech(payload: SermasSessionDto) {
+    this.broker.publish(SermasTopics.dialogue.agentContinueSpeech, payload);
+  }
+
+  @AsyncApiOperationName({
     channel: SermasTopics.dialogue.userSpeech,
     message: {
       payload: DialogueSpeechToTextDto,
