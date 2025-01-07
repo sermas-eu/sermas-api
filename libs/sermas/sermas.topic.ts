@@ -36,6 +36,8 @@ export const SermasTopics = {
     userSpeech: 'app/:appId/dialogue/user-speech/:sessionId/:chunkId',
     agentSpeech: 'app/:appId/dialogue/speech/:sessionId/:chunkId',
     agentStopSpeech: 'app/:appId/dialogue/stop/:sessionId',
+    agentPauseSpeech: 'app/:appId/dialogue/pause/:sessionId',
+    agentContinueSpeech: 'app/:appId/dialogue/continue/:sessionId',
     dialogDocument: 'app/:appId/dialogue/document',
     toolTriggered: 'app/:appId/dialogue/tool/:name',
     toolChanged: 'app/:appId/dialogue/tool/changed/:repositoryId',
