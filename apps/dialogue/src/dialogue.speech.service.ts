@@ -470,7 +470,7 @@ export class DialogueSpeechService {
 
     const text = uiContentToText(payload, {
       format: 'tts',
-      withOptions: false,
+      withOptions: true,
     });
     if (!text) return;
 
