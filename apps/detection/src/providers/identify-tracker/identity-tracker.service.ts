@@ -14,7 +14,7 @@ export class IdentityTrackerService {
   constructor(private readonly speechbrain: SpeechBrainService) {
     this.minEmbeddingsNumber = +process.env['MIN_EMBEDDINGS_NUMBER'] || 3;
     this.similarityThreshold =
-      +process.env['SPEECH_SIMILARITY_THRESHOLD'] || 0.5;
+      +process.env['SPEECH_SIMILARITY_THRESHOLD'] || 0.25;
     // this.test();
   }
 
@@ -63,6 +63,9 @@ export class IdentityTrackerService {
   }
 
   async process(sessionId: string) {
+    if (this.embeddings[sessionId].dominant != '') {
+      return;
+    }
     if (this.embeddings[sessionId].list.length < this.minEmbeddingsNumber) {
       return;
     }
@@ -71,6 +74,14 @@ export class IdentityTrackerService {
       this.embeddings[sessionId].list,
     );
     if (!res.similarity_matrix) return;
+    // clear diagonal (self comparison)
+    for (let i = 0; i < res.similarity_matrix.length; i++) {
+      for (let j = 0; j < res.similarity_matrix.length; j++) {
+        if (i == j) {
+          res.similarity_matrix[i][j] = 0;
+        }
+      }
+    }
     // search most matching embedding
     const sum = res.similarity_matrix.map((s) =>
       s.reduce((acc, r) => (r >= this.similarityThreshold ? r + acc : acc), 0),
@@ -84,11 +95,12 @@ export class IdentityTrackerService {
       }
     }
     if (index > -1) {
-      this.logger.debug('Saving speaker embedding');
+      this.logger.debug(`Saving speaker embedding`);
       // save embedding and use it to verify the speaker
       this.embeddings[sessionId].dominant =
         this.embeddings[sessionId].list[index];
     } else {
+      this.logger.debug(`Not matching embeddings`);
       // remove first embedding and process again when a new one arrives
       this.embeddings[sessionId].list.shift();
     }
