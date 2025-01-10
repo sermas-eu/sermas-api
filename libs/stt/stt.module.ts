@@ -6,6 +6,7 @@ import { OpenAISpeechToText } from './providers/stt.openai.service';
 import { WhisperSpeechToText } from './providers/stt.whisper.service';
 import { STTProviderService } from './stt.provider.service';
 import { MmsSpeechToText } from './providers/stt.mms.service';
+import { OraiSpeechToText } from './providers/stt.orai.service';
 
 @Global()
 @Module({
@@ -15,6 +16,7 @@ import { MmsSpeechToText } from './providers/stt.mms.service';
     OpenAISpeechToText,
     WhisperSpeechToText,
     MmsSpeechToText,
+    OraiSpeechToText,
     AzureSpeechToText,
     STTProviderService,
   ],

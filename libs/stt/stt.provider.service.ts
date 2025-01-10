@@ -6,6 +6,7 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { GoogleSpeechToText } from './providers/stt.google.service';
 import { OpenAISpeechToText } from './providers/stt.openai.service';
 import { WhisperSpeechToText } from './providers/stt.whisper.service';
+import { OraiSpeechToText } from './providers/stt.orai.service';
 import { DialogueSpeechToTextDto } from './stt.dto';
 import { AzureSpeechToText } from './providers/stt.azure.service';
 import { MmsSpeechToText } from './providers/stt.mms.service';
@@ -26,6 +27,7 @@ export class STTProviderService {
     private readonly whisperstt: WhisperSpeechToText,
     private readonly azurestt: AzureSpeechToText,
     private readonly mmsstt: MmsSpeechToText,
+    private readonly oraistt: OraiSpeechToText,
 
     private readonly configService: ConfigService,
 
@@ -75,38 +77,38 @@ export class STTProviderService {
       ts: ts || new Date(),
       language: language || DefaultLanguage,
     };
-
+    let response;
     try {
       switch (provider) {
         case 'google':
           // // convert to wav
           // buffer = await convertRawToWav(buffer);
-          const res1 = await this.googlestt.text(buffer, language);
+          response = await this.googlestt.text(buffer, language);
           perf('google');
-          text = res1.text;
           break;
         case 'azure':
-          const resAzure = await this.azurestt.text(buffer, language);
+          response = await this.azurestt.text(buffer, language);
           perf('azure');
-          text = resAzure.text;
           break;
         case 'whisper':
-          const res2 = await this.whisperstt.text(buffer, language);
+          response = await this.whisperstt.text(buffer, language);
           perf('whisper');
-          text = res2.text;
           break;
         case 'mms':
-          const res3 = await this.mmsstt.text(buffer, language);
+          response = await this.mmsstt.text(buffer, language);
           perf('mms');
-          text = res3.text;
+          break;
+        case 'orai':
+          response = await this.oraistt.text(buffer, language);
+          perf('orai');
           break;
         case 'openai':
         default:
-          const res4 = await this.openaistt.text(buffer, language);
+          response = await this.openaistt.text(buffer, language);
           perf('openai');
-          text = res4.text;
           break;
       }
+      text = response.text;
     } catch (e) {
       this.logger.error(`STT failed: ${e.stack}`);
 
