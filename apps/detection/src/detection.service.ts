@@ -6,6 +6,7 @@ import { Emotion, EmotionInferenceValue } from 'libs/sermas/sermas.dto';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { DetectionAsyncApiService } from './detection.async.service';
 import {
+  AudioEmbeddingsDto,
   InteractionType,
   ObjectDetectionDto,
   ObjectDetectionRequest,
@@ -25,6 +26,7 @@ import { ChatGPTObjectDetectionService } from './providers/object-detection/obje
 import { ChatGPTSentimentAnalysisService } from './providers/sentiment-analysis/sentiment-analysis.chatgpt.service';
 import { SpeechBrainService } from './providers/speechbrain/speechbrain.service';
 import { WakeWordService } from './providers/wake-word/wake-word.service';
+import { IdentityTrackerService } from './providers/identify-tracker/identity-tracker.service';
 
 @Injectable()
 export class DetectionService {
@@ -37,6 +39,7 @@ export class DetectionService {
     private readonly wakeWord: WakeWordService,
     private readonly sentimentAnalysis: ChatGPTSentimentAnalysisService,
     private readonly emotionTracking: EmotionTrackerService,
+    private readonly identityTracking: IdentityTrackerService,
     private readonly emitter: EventEmitter2,
     private readonly asyncApi: DetectionAsyncApiService,
     private readonly objectDetection: ChatGPTObjectDetectionService,
@@ -226,6 +229,17 @@ export class DetectionService {
     const sc = await this.speechbrain.classify(buffer);
     perf();
     if (sc === null) return;
+
+    if (sc.embeddings) {
+      const audioEmbeddingsDto: AudioEmbeddingsDto = {
+        appId,
+        clientId,
+        ts: new Date(),
+        embeddings: sc.embeddings,
+        sessionId,
+      };
+      this.identityTracking.update(audioEmbeddingsDto);
+    }
 
     const detection: UserCharacterizationDto = {
       emotion: sc.emotion,

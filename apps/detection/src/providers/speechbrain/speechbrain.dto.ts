@@ -20,3 +20,11 @@ export class SpeechBrainSeparation {
   emotion?: EmotionInferenceValue;
   speakerCount: NumberInferenceValue;
 }
+
+export class SpeechBrainSpeakerVerification {
+  similarity: number;
+}
+
+export class SpeechBrainSimilarityMatrix {
+  similarity_matrix: number[][];
+}

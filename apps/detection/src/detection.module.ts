@@ -13,6 +13,7 @@ import { WakeWordService } from './providers/wake-word/wake-word.service';
 import { DetectionController } from './detection.controller';
 import { EmotionTrackerService } from './providers/emotion-tracker/emotion-tracker.service';
 import { ChatGPTObjectDetectionService } from './providers/object-detection/object-detection.chatgpt.service';
+import { IdentityTrackerService } from './providers/identify-tracker/identity-tracker.service';
 
 @Module({
   imports: [AuthModule, EventEmitterModule.forRoot()],
@@ -28,6 +29,7 @@ import { ChatGPTObjectDetectionService } from './providers/object-detection/obje
     DetectionService,
     DetectionAsyncApiService,
     EmotionTrackerService,
+    IdentityTrackerService,
     ChatGPTObjectDetectionService,
   ],
   exports: [DetectionService, DetectionStreamingService],

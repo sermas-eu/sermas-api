@@ -5,8 +5,10 @@ import * as FormData from 'form-data';
 import { Emotion } from 'libs/sermas/sermas.dto';
 import {
   SpeechBrainClassification,
+  SpeechBrainSpeakerVerification,
   SpeechBrainSeparation,
   SpeechBrainSpeakerCount,
+  SpeechBrainSimilarityMatrix,
 } from './speechbrain.dto';
 
 @Injectable()
@@ -80,6 +82,7 @@ export class SpeechBrainService implements OnModuleInit {
   async classify(audio: Buffer): Promise<SpeechBrainClassification | null> {
     try {
       const form = this.buildFormData(audio);
+
       const result = await this.post<SpeechBrainClassification>('/', form);
 
       if (result === null) return null;
@@ -115,6 +118,49 @@ export class SpeechBrainService implements OnModuleInit {
       return result;
     } catch (err) {
       this.logger.error(`Speech speaker count error: ${err.message}`);
+    }
+    return null;
+  }
+
+  async verify(
+    audio: Buffer,
+    embeddings: string,
+  ): Promise<SpeechBrainSpeakerVerification | null> {
+    try {
+      const form = this.buildFormData(audio);
+      form.append('embeddings', embeddings);
+
+      const result = await this.post<SpeechBrainSpeakerVerification>(
+        '/verify_speaker',
+        form,
+      );
+
+      if (result === null) return null;
+
+      return result;
+    } catch (err) {
+      this.logger.error(`Speaker verify error: ${err.message}`);
+    }
+    return null;
+  }
+
+  async similarityMatrix(
+    data: string[],
+  ): Promise<SpeechBrainSimilarityMatrix | null> {
+    try {
+      const form = new FormData();
+      form.append('embeddings', JSON.stringify(data));
+
+      const result = await this.post<SpeechBrainSimilarityMatrix>(
+        '/similarity_matrix',
+        form,
+      );
+
+      if (result === null) return null;
+
+      return result;
+    } catch (err) {
+      this.logger.error(`Similarity matrix error: ${err.message}`);
     }
     return null;
   }
