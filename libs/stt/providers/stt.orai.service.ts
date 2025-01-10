@@ -33,7 +33,7 @@ export class OraiSpeechToText implements ISpeechToText {
     const res = await axios.postForm(url, form);
 
     return {
-      text: res.data.text,
+      text: res.data.transcription,
     };
   }
 }
