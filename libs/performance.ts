@@ -10,14 +10,17 @@ export class Perf {
       const msElapsed = performance.now() - t0;
       const value = Math.floor(msElapsed * 1000) / 1000;
       const aboveThreshold = value >= threshold;
-      const reallyAboveThreshold = value >= threshold * 1.5;
+      const criticalThreshold = threshold * 10;
+      const reallyAboveThreshold = value >= criticalThreshold;
 
       if (print || aboveThreshold) {
         const msg = `${label2 || label} time elapsed ${value}ms`;
         if (reallyAboveThreshold) {
-          logger.error(msg);
+          logger.error(
+            `${msg} (above critical threshold ${criticalThreshold}ms)`,
+          );
         } else if (aboveThreshold) {
-          logger.warn(msg);
+          logger.warn(`${msg} (above threshold ${threshold}ms)`);
         } else {
           logger.verbose(msg);
         }
