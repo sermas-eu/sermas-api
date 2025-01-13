@@ -40,7 +40,6 @@ export class IdentityTrackerService {
   }
 
   getSpeakerEmbedding(sessionId: string) {
-    console.log(this.embeddings[sessionId]);
     if (typeof this.embeddings[sessionId] === 'undefined') {
       return '';
     }

@@ -82,7 +82,7 @@ export class SpeechBrainService implements OnModuleInit {
     const res = await axios.postForm(url, data, {
       timeout,
     });
-    this.logger.log(`Speechbrain result: '${JSON.stringify(res.data)}'`);
+    this.logger.debug(`Speechbrain result: '${JSON.stringify(res.data)}'`);
     return res.data as T;
   }
 

@@ -205,10 +205,10 @@ export class DialogueSpeechService {
       perf();
     }
 
-    let skip = await this.isSameSpeaker(ev.sessionId, ev.buffer);
-    if (skip) return;
+    const sameSpeaker = await this.isSameSpeaker(ev.sessionId, ev.buffer);
+    if (!sameSpeaker) return;
 
-    skip = await this.hasMultipleSpeakers(ev);
+    const skip = await this.hasMultipleSpeakers(ev);
     if (skip) return;
 
     this.emitter.emit('dialogue.speech.audio', ev);
@@ -223,6 +223,12 @@ export class DialogueSpeechService {
   }
 
   async isSameSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
+    if (process.env['SPEAKER_VERIFICATION'] == '0') {
+      this.logger.warn(
+        `Speaker verification disabled. To enable remove SPEAKER_VERIFICATION env`,
+      );
+      return true;
+    }
     const speakerEmbedding = this.identiyTracker.getSpeakerEmbedding(sessionId);
     if (speakerEmbedding != '') {
       const sameSpeaker = await this.speechbrainProvider.verifySpeaker(
@@ -230,10 +236,11 @@ export class DialogueSpeechService {
         speakerEmbedding,
       );
       if (sameSpeaker != null) {
-        this.logger.debug(`${sameSpeaker ? 'Same' : 'Different'} speaker`);
-        if (!sameSpeaker) return;
+        this.logger.log(`${sameSpeaker ? 'Same' : 'Different'} speaker`);
+        if (!sameSpeaker) return false;
       }
     }
+    return true;
   }
 
   async chat(ev: DialogueMessageDto): Promise<void> {
