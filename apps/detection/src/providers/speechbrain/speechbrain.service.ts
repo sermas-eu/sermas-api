@@ -9,6 +9,7 @@ import {
   SpeechBrainSeparation,
   SpeechBrainSpeakerCount,
   SpeechBrainSimilarityMatrix,
+  SpeechBrainEmbeddings,
 } from './speechbrain.dto';
 
 @Injectable()
@@ -16,14 +17,13 @@ export class SpeechBrainService implements OnModuleInit {
   private readonly logger = new Logger(SpeechBrainService.name);
 
   private available: boolean | undefined;
-  private similarityThreshold: number;
+  private verifyCallTimeout: number;
 
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit() {
     await this.isAvailable();
-    this.similarityThreshold =
-      +process.env['SPEECH_SIMILARITY_THRESHOLD'] || 0.25;
+    this.verifyCallTimeout = +process.env['SPEECH_VERIFY_TIMEOUT_MSEC'] || 1000;
   }
 
   mapEmotion(em: string): Emotion {
@@ -129,22 +129,23 @@ export class SpeechBrainService implements OnModuleInit {
     return null;
   }
 
-  async verifySpeaker(
+  async verifySpeakers(
     audio: Buffer,
-    embeddings: string,
-  ): Promise<boolean | null> {
+    embeddings: string[],
+  ): Promise<SpeechBrainSpeakerVerification | null> {
     try {
       const form = this.buildFormData(audio);
-      form.append('embeddings', embeddings);
+      form.append('embeddings', JSON.stringify(embeddings));
 
       const result = await this.post<SpeechBrainSpeakerVerification>(
-        '/verify_speaker',
+        '/verify_speakers',
         form,
+        this.verifyCallTimeout,
       );
 
-      if (result === null || !result.similarity) return null;
+      if (result === null) return null;
 
-      return result.similarity >= this.similarityThreshold;
+      return result;
     } catch (err) {
       this.logger.error(`Speaker verify error: ${err.message}`);
     }
@@ -168,6 +169,24 @@ export class SpeechBrainService implements OnModuleInit {
       return result;
     } catch (err) {
       this.logger.error(`Similarity matrix error: ${err.message}`);
+    }
+    return null;
+  }
+
+  async createEmbeddings(audio: Buffer): Promise<SpeechBrainEmbeddings | null> {
+    try {
+      const form = this.buildFormData(audio);
+
+      const result = await this.post<SpeechBrainEmbeddings>(
+        '/create_embeddings',
+        form,
+      );
+
+      if (result === null) return null;
+
+      return result;
+    } catch (err) {
+      this.logger.error(`Speech create embeddings error: ${err.message}`);
     }
     return null;
   }

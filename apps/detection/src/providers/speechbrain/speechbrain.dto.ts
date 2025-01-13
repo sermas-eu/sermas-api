@@ -7,7 +7,6 @@ import {
 export class SpeechBrainClassification {
   language: StringInferenceValue;
   emotion: EmotionInferenceValue;
-  embeddings: StringInferenceValue;
   speakerId?: StringInferenceValue;
 }
 
@@ -22,9 +21,14 @@ export class SpeechBrainSeparation {
 }
 
 export class SpeechBrainSpeakerVerification {
-  similarity: number;
+  similarities: [number | null];
+  embeddings: StringInferenceValue;
 }
 
 export class SpeechBrainSimilarityMatrix {
   similarity_matrix: number[][];
+}
+
+export class SpeechBrainEmbeddings {
+  embeddings: StringInferenceValue;
 }

@@ -18,7 +18,6 @@ import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { DialogueAsyncApiService } from './dialogue.async.service';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import { DialogueWelcomeService } from './dialogue.speech.welcome.service';
-import { UserCharacterizationEventDto } from 'apps/detection/src/detection.dto';
 
 @Injectable()
 export class DialogueSpeechEventService {
@@ -137,10 +136,5 @@ export class DialogueSpeechEventService {
   @OnEvent('ui.content')
   readUiContent(ev: UIContentDto) {
     this.speech.readUiContent(ev);
-  }
-
-  @OnEvent('detection.user.characterization')
-  async trackIdentity(ev: UserCharacterizationEventDto) {
-    this.speech.trackIdentity(ev);
   }
 }

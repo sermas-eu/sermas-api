@@ -127,11 +127,6 @@ export class UserCharacterizationDto {
     type: [StringInferenceValue],
   })
   user?: StringInferenceValue[];
-  @ApiPropertyOptional({
-    description: 'The audio chunk embedding',
-    type: StringInferenceValue,
-  })
-  embedding?: StringInferenceValue;
 }
 
 export class UserIdentificationDto {
