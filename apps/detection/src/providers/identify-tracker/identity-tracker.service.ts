@@ -4,6 +4,7 @@ import {
   SpeakerVerificationDto,
 } from './identity-tracker.dto';
 import { SpeechBrainService } from '../speechbrain/speechbrain.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class IdentityTrackerService {
@@ -13,10 +14,14 @@ export class IdentityTrackerService {
   private minEmbeddingsNumber: number;
   private similarityThreshold: number;
 
-  constructor(private readonly speechbrain: SpeechBrainService) {
-    this.minEmbeddingsNumber = +process.env['MIN_EMBEDDINGS_NUMBER'] || 3;
+  constructor(
+    private readonly speechbrain: SpeechBrainService,
+    private readonly configService: ConfigService,
+  ) {
+    this.minEmbeddingsNumber =
+      +this.configService.get('MIN_EMBEDDINGS_NUMBER') || 3;
     this.similarityThreshold =
-      +process.env['SPEECH_SIMILARITY_THRESHOLD'] || 0.25;
+      +this.configService.get['SPEECH_SIMILARITY_THRESHOLD'] || 0.25;
   }
 
   reset() {

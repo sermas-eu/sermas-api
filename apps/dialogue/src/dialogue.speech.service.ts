@@ -28,7 +28,6 @@ import {
 } from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
 import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
-import { UserCharacterizationEventDto } from 'apps/detection/src/detection.dto';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
@@ -216,9 +215,9 @@ export class DialogueSpeechService {
   }
 
   async isExpectedSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
-    if (process.env['SPEAKER_VERIFICATION'] == '0') {
+    if (this.configService.get('SPEAKER_VERIFICATION') == '0') {
       this.logger.warn(
-        `Speaker verification disabled. To enable remove SPEAKER_VERIFICATION env`,
+        `Speaker verification disabled. To enable set SPEAKER_VERIFICATION env to 1`,
       );
       return true;
     }

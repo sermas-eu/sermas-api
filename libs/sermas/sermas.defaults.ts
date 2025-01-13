@@ -227,6 +227,13 @@ export const SermasDefaultConfig = {
 
   // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
   ENABLE_EMOTION_RECOGNITION: '0',
+
+  // SPEAKER_VERIFICATION enables speaker verifiaction by comparing audio embeddings
+  SPEAKER_VERIFICATION: '1',
+  // MIN_EMBEDDINGS_NUMBER set the minimum number of audio samples to use for creating speaker embedding
+  MIN_EMBEDDINGS_NUMBER: '3',
+  // SPEECH_SIMILARITY_THRESHOLD value used for comparing embedding, same speaker if above threshold
+  SPEECH_SIMILARITY_THRESHOLD: '0.25',
 };
 
 export type SermasApiConfig = typeof SermasDefaultConfig;
