@@ -127,16 +127,11 @@ export class UserCharacterizationDto {
     type: [StringInferenceValue],
   })
   user?: StringInferenceValue[];
-}
-
-export class AudioEmbeddingsDto extends SermasBaseDto {
-  @ApiProperty({
-    description: 'An embeddings of the speaker audio',
+  @ApiPropertyOptional({
+    description: 'The audio chunk embedding',
     type: StringInferenceValue,
   })
-  embeddings: StringInferenceValue;
-  @ApiProperty()
-  sessionId: string;
+  embedding?: StringInferenceValue;
 }
 
 export class UserIdentificationDto {

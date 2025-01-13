@@ -4,10 +4,7 @@ import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
-import {
-  UserCharacterizationEventDto,
-  UserIdentificationEventDto,
-} from './detection.dto';
+import { UserCharacterizationEventDto } from './detection.dto';
 import { DetectionService } from './detection.service';
 import { VideoFrameEvent } from './detection.streamer.dto';
 import { DeepFaceDetectionEvent } from './providers/deepface/deepface.dto';

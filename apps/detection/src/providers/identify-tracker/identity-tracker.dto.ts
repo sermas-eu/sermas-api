@@ -1,4 +1,4 @@
 export class SessionEmbeddingsDto {
-  dominant: string;
+  speakerEmbedding: string;
   list: string[];
 }

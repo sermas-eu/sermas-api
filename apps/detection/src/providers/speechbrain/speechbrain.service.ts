@@ -16,11 +16,14 @@ export class SpeechBrainService implements OnModuleInit {
   private readonly logger = new Logger(SpeechBrainService.name);
 
   private available: boolean | undefined;
+  private similarityThreshold: number;
 
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit() {
     await this.isAvailable();
+    this.similarityThreshold =
+      +process.env['SPEECH_SIMILARITY_THRESHOLD'] || 0.25;
   }
 
   mapEmotion(em: string): Emotion {
@@ -67,13 +70,17 @@ export class SpeechBrainService implements OnModuleInit {
     return this.available;
   }
 
-  private async post<T>(path: string, data: FormData): Promise<T> {
+  private async post<T>(
+    path: string,
+    data: FormData,
+    timeout = 2000,
+  ): Promise<T> {
     const avail = await this.isAvailable();
     if (!avail) return null;
 
     const url = this.config.get('SPEECHBRAIN_URL') + path;
     const res = await axios.postForm(url, data, {
-      timeout: 2000,
+      timeout,
     });
     this.logger.log(`Speechbrain result: '${JSON.stringify(res.data)}'`);
     return res.data as T;
@@ -122,10 +129,10 @@ export class SpeechBrainService implements OnModuleInit {
     return null;
   }
 
-  async verify(
+  async verifySpeaker(
     audio: Buffer,
     embeddings: string,
-  ): Promise<SpeechBrainSpeakerVerification | null> {
+  ): Promise<boolean | null> {
     try {
       const form = this.buildFormData(audio);
       form.append('embeddings', embeddings);
@@ -135,9 +142,9 @@ export class SpeechBrainService implements OnModuleInit {
         form,
       );
 
-      if (result === null) return null;
+      if (result === null || !result.similarity) return null;
 
-      return result;
+      return result.similarity >= this.similarityThreshold;
     } catch (err) {
       this.logger.error(`Speaker verify error: ${err.message}`);
     }

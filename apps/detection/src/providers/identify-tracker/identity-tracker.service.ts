@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AudioEmbeddingsDto } from '../../detection.dto';
 import { SessionEmbeddingsDto } from './identity-tracker.dto';
 import { SpeechBrainService } from '../speechbrain/speechbrain.service';
 
@@ -41,34 +40,56 @@ export class IdentityTrackerService {
   }
 
   getSpeakerEmbedding(sessionId: string) {
-    if (!this.embeddings[sessionId]) return '';
-    return this.embeddings[sessionId].dominant;
+    console.log(this.embeddings[sessionId]);
+    if (typeof this.embeddings[sessionId] === 'undefined') {
+      return '';
+    }
+    return this.embeddings[sessionId].speakerEmbedding;
   }
 
-  async update(payload: AudioEmbeddingsDto) {
-    this.addEmbedding(payload.sessionId, payload.embeddings.toString());
-    this.process(payload.sessionId);
+  async update(sessionId: string, embedding: string) {
+    this.addEmbedding(sessionId, embedding.toString());
+    this.process(sessionId);
   }
 
   addEmbedding(sessionId: string, embedding: string) {
-    if (!this.embeddings[sessionId]) {
+    if (typeof this.embeddings[sessionId] === 'undefined') {
       // add new
       this.embeddings[sessionId] = {
-        dominant: '',
-        list: [embedding],
+        speakerEmbedding: '',
+        list: [],
       } as SessionEmbeddingsDto;
+    } else if (this.embeddings[sessionId].speakerEmbedding != '') {
       return;
     }
     this.embeddings[sessionId].list.push(embedding);
   }
 
   async process(sessionId: string) {
-    if (this.embeddings[sessionId].dominant != '') {
+    if (this.embeddings[sessionId].speakerEmbedding != '') {
       return;
     }
     if (this.embeddings[sessionId].list.length < this.minEmbeddingsNumber) {
       return;
     }
+    let index = 0;
+    if (this.minEmbeddingsNumber > 1) {
+      index = await this.findDominantEmbedding(sessionId);
+    }
+    if (index > -1) {
+      this.logger.debug(`Saving speaker embedding for sessionId=${sessionId}`);
+      // save embedding and use it to verify the speaker
+      this.embeddings[sessionId].speakerEmbedding =
+        this.embeddings[sessionId].list[index];
+    } else {
+      this.logger.debug(`Not matching embeddings for sessionId=${sessionId}`);
+      // remove first embedding and process again when a new one arrives
+      this.embeddings[sessionId].list.shift();
+    }
+  }
+
+  async findDominantEmbedding(sessionId: string): Promise<number> {
+    let index = -1;
     // compare embeddings
     const res = await this.speechbrain.similarityMatrix(
       this.embeddings[sessionId].list,
@@ -86,7 +107,6 @@ export class IdentityTrackerService {
     const sum = res.similarity_matrix.map((s) =>
       s.reduce((acc, r) => (r >= this.similarityThreshold ? r + acc : acc), 0),
     );
-    let index = -1;
     let bigger = 0;
     for (let i = 0; i < sum.length; i++) {
       if (sum[i] > bigger) {
@@ -94,15 +114,6 @@ export class IdentityTrackerService {
         index = i;
       }
     }
-    if (index > -1) {
-      this.logger.debug(`Saving speaker embedding`);
-      // save embedding and use it to verify the speaker
-      this.embeddings[sessionId].dominant =
-        this.embeddings[sessionId].list[index];
-    } else {
-      this.logger.debug(`Not matching embeddings`);
-      // remove first embedding and process again when a new one arrives
-      this.embeddings[sessionId].list.shift();
-    }
+    return index;
   }
 }

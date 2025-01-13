@@ -27,6 +27,8 @@ import {
   CheckIfUserTalkingToAvatarPromptParam,
 } from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
+import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
+import { UserCharacterizationEventDto } from 'apps/detection/src/detection.dto';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -63,6 +65,8 @@ export class DialogueSpeechService {
     private readonly memory: DialogueMemoryService,
 
     private readonly speechbrainProvider: SpeechBrainService,
+
+    private readonly identiyTracker: IdentityTrackerService,
 
     private readonly monitor: MonitorService,
   ) {}
@@ -201,10 +205,35 @@ export class DialogueSpeechService {
       perf();
     }
 
-    const skip = await this.hasMultipleSpeakers(ev);
+    let skip = await this.isSameSpeaker(ev.sessionId, ev.buffer);
+    if (skip) return;
+
+    skip = await this.hasMultipleSpeakers(ev);
     if (skip) return;
 
     this.emitter.emit('dialogue.speech.audio', ev);
+  }
+
+  async trackIdentity(ev: UserCharacterizationEventDto) {
+    if (!ev.detections.length || !ev.detections[0].embedding) return;
+    const emb = ev.detections[0].embedding.toString();
+    if (emb != '') {
+      this.identiyTracker.update(ev.sessionId, emb);
+    }
+  }
+
+  async isSameSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
+    const speakerEmbedding = this.identiyTracker.getSpeakerEmbedding(sessionId);
+    if (speakerEmbedding != '') {
+      const sameSpeaker = await this.speechbrainProvider.verifySpeaker(
+        audio,
+        speakerEmbedding,
+      );
+      if (sameSpeaker != null) {
+        this.logger.debug(`${sameSpeaker ? 'Same' : 'Different'} speaker`);
+        if (!sameSpeaker) return;
+      }
+    }
   }
 
   async chat(ev: DialogueMessageDto): Promise<void> {
