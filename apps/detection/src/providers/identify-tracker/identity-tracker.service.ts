@@ -111,28 +111,23 @@ export class IdentityTrackerService {
   }
 
   async findDominantEmbedding(sessionId: string): Promise<number> {
-    let index = -1;
     // compare embeddings
     const res = await this.speechbrain.similarityMatrix(
       this.embeddings[sessionId].list,
     );
     if (!res || !res.similarity_matrix) return;
-    // clear diagonal (self comparison)
+
+    // Find the central embedding (the one with the highest similarity to most of the others)
+    let index = -1;
+    let biggest = 1.0; // Each row sums up to at least 1.0
     for (let i = 0; i < res.similarity_matrix.length; i++) {
-      for (let j = 0; j < res.similarity_matrix.length; j++) {
-        if (i === j) {
-          res.similarity_matrix[i][j] = 0;
-        }
-      }
-    }
-    // search most matching embedding
-    const sum = res.similarity_matrix.map((s) =>
-      s.reduce((acc, r) => (r >= this.similarityThreshold ? r + acc : acc), 0),
-    );
-    let bigger = 0;
-    for (let i = 0; i < sum.length; i++) {
-      if (sum[i] > bigger) {
-        bigger = sum[i];
+      // Note: no need to exclude the 1.0 on the diagonal (it is added to both sides)
+      const rowSum = res.similarity_matrix[i].reduce(
+        (acc, r) => (r >= this.similarityThreshold ? r + acc : acc),
+        0,
+      );
+      if (rowSum > biggest) {
+        biggest = rowSum;
         index = i;
       }
     }
