@@ -51,7 +51,7 @@ export class IdentityTrackerService {
   }
 
   async agentSpeech(sessionId: string, audio: Buffer): Promise<void> {
-    if (this.getAgentEmbedding(sessionId) != '') return;
+    if (this.getAgentEmbedding(sessionId) !== '') return;
     const sc = await this.speechbrain.createEmbeddings(audio);
     if (!sc) return;
     this.addAgentEmbedding(sessionId, sc.embeddings.toString());
@@ -73,7 +73,7 @@ export class IdentityTrackerService {
   addSpeakerEmbedding(sessionId: string, embedding: string) {
     if (typeof this.embeddings[sessionId] === 'undefined') {
       this.initEmbeddings(sessionId);
-    } else if (this.embeddings[sessionId].speakerEmbedding != '') {
+    } else if (this.embeddings[sessionId].speakerEmbedding !== '') {
       return;
     }
     this.embeddings[sessionId].list.push(embedding);
@@ -88,7 +88,7 @@ export class IdentityTrackerService {
   }
 
   async process(sessionId: string) {
-    if (this.embeddings[sessionId].speakerEmbedding != '') {
+    if (this.embeddings[sessionId].speakerEmbedding !== '') {
       return;
     }
     if (this.embeddings[sessionId].list.length < this.minEmbeddingsNumber) {
@@ -120,7 +120,7 @@ export class IdentityTrackerService {
     // clear diagonal (self comparison)
     for (let i = 0; i < res.similarity_matrix.length; i++) {
       for (let j = 0; j < res.similarity_matrix.length; j++) {
-        if (i == j) {
+        if (i === j) {
           res.similarity_matrix[i][j] = 0;
         }
       }
@@ -144,7 +144,7 @@ export class IdentityTrackerService {
     embeddings: string[],
   ): Promise<SpeakerVerificationDto | null> {
     const sc = await this.speechbrain.verifySpeakers(audio, embeddings);
-    if (sc != null) {
+    if (sc !== null) {
       return {
         results: sc.similarities.map((s) => s >= this.similarityThreshold),
         embeddings: sc.embeddings.toString(),
