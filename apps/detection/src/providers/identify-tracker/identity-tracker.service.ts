@@ -59,7 +59,7 @@ export class IdentityTrackerService {
 
   async update(sessionId: string, embedding: string) {
     this.addSpeakerEmbedding(sessionId, embedding.toString());
-    this.process(sessionId);
+    this.computeSpeakerIdentity(sessionId);
   }
 
   initEmbeddings(sessionId: string) {
@@ -87,7 +87,7 @@ export class IdentityTrackerService {
     this.embeddings[sessionId].agentEmbedding = embedding;
   }
 
-  async process(sessionId: string) {
+  async computeSpeakerIdentity(sessionId: string) {
     if (this.embeddings[sessionId].speakerEmbedding !== '') {
       return;
     }

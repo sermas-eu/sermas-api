@@ -41,7 +41,7 @@ describe('IdentityTrackerService', () => {
       identityTrackerService.addSpeakerEmbedding('test', a);
       identityTrackerService.addSpeakerEmbedding('test', b);
       identityTrackerService.addSpeakerEmbedding('test', c);
-      identityTrackerService.process('test');
+      identityTrackerService.computeSpeakerIdentity('test');
 
       const emb = identityTrackerService.getSpeakerEmbedding('test');
 
