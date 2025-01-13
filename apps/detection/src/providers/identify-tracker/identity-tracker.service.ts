@@ -42,6 +42,14 @@ export class IdentityTrackerService {
     this.embeddings = {};
   }
 
+  clearSessionEmbeddings(sessionId: string) {
+    this.logger.debug(`Clear embedding for sessionId=${sessionId}`);
+    if (typeof this.embeddings[sessionId] === 'undefined') {
+      return;
+    }
+    delete this.embeddings[sessionId];
+  }
+
   getSpeakerEmbedding(sessionId: string) {
     if (typeof this.embeddings[sessionId] === 'undefined') {
       return '';

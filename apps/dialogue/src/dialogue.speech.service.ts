@@ -29,6 +29,7 @@ import {
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
 import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
 import { UserCharacterizationEventDto } from 'apps/detection/src/detection.dto';
+import { SessionChangedDto } from 'apps/session/src/session.dto';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -236,6 +237,15 @@ export class DialogueSpeechService {
     if (embeddings[1] == '') return true; // no result expected
     this.logger.debug(`${res.results[1] ? 'Same' : 'Different'} speaker`);
     return res.results[1];
+  }
+
+  async handleSessionChanged(ev: SessionChangedDto) {
+    if (ev.operation !== 'updated') return;
+    if (!ev.record?.sessionId) return;
+    // only if closed
+    if (!ev.record?.closedAt) return;
+
+    this.identiyTracker.clearSessionEmbeddings(ev.record.sessionId);
   }
 
   async chat(ev: DialogueMessageDto): Promise<void> {
