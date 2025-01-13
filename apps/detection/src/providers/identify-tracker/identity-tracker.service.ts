@@ -115,7 +115,7 @@ export class IdentityTrackerService {
     const res = await this.speechbrain.similarityMatrix(
       this.embeddings[sessionId].list,
     );
-    if (!res || !res.similarity_matrix) return;
+    if (!res || !res.similarity_matrix) return -1;
 
     // Find the central embedding (the one with the highest similarity to most of the others)
     let index = -1;
