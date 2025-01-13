@@ -21,7 +21,7 @@ export class IdentityTrackerService {
     this.minEmbeddingsNumber =
       +this.configService.get('MIN_EMBEDDINGS_NUMBER') || 3;
     this.similarityThreshold =
-      +this.configService.get['SPEECH_SIMILARITY_THRESHOLD'] || 0.25;
+      +this.configService.get('SPEECH_SIMILARITY_THRESHOLD') || 0.25;
   }
 
   reset() {
