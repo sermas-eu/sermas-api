@@ -20,6 +20,7 @@ import { DialogueIntentModule } from './intent/dialogue.intent.module';
 import { DialogueMemoryModule } from './memory/dialogue.memory.module';
 import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
 import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
+import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/spe
     DialogueChatService,
     DialogueWelcomeService,
     SpeechBrainService,
+    IdentityTrackerService,
   ],
   exports: [DialogueSpeechService],
 })

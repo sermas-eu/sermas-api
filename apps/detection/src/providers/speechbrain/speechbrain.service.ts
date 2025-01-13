@@ -5,8 +5,11 @@ import * as FormData from 'form-data';
 import { Emotion } from 'libs/sermas/sermas.dto';
 import {
   SpeechBrainClassification,
+  SpeechBrainSpeakerVerification,
   SpeechBrainSeparation,
   SpeechBrainSpeakerCount,
+  SpeechBrainSimilarityMatrix,
+  SpeechBrainEmbeddings,
 } from './speechbrain.dto';
 
 @Injectable()
@@ -14,11 +17,13 @@ export class SpeechBrainService implements OnModuleInit {
   private readonly logger = new Logger(SpeechBrainService.name);
 
   private available: boolean | undefined;
+  private verifyCallTimeout: number;
 
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit() {
     await this.isAvailable();
+    this.verifyCallTimeout = +process.env['SPEECH_VERIFY_TIMEOUT_MSEC'] || 1000;
   }
 
   mapEmotion(em: string): Emotion {
@@ -65,21 +70,26 @@ export class SpeechBrainService implements OnModuleInit {
     return this.available;
   }
 
-  private async post<T>(path: string, data: FormData): Promise<T> {
+  private async post<T>(
+    path: string,
+    data: FormData,
+    timeout = 2000,
+  ): Promise<T> {
     const avail = await this.isAvailable();
     if (!avail) return null;
 
     const url = this.config.get('SPEECHBRAIN_URL') + path;
     const res = await axios.postForm(url, data, {
-      timeout: 2000,
+      timeout,
     });
-    this.logger.log(`Speechbrain result: '${JSON.stringify(res.data)}'`);
+    this.logger.debug(`Speechbrain result: '${JSON.stringify(res.data)}'`);
     return res.data as T;
   }
 
   async classify(audio: Buffer): Promise<SpeechBrainClassification | null> {
     try {
       const form = this.buildFormData(audio);
+
       const result = await this.post<SpeechBrainClassification>('/', form);
 
       if (result === null) return null;
@@ -115,6 +125,68 @@ export class SpeechBrainService implements OnModuleInit {
       return result;
     } catch (err) {
       this.logger.error(`Speech speaker count error: ${err.message}`);
+    }
+    return null;
+  }
+
+  async verifySpeakers(
+    audio: Buffer,
+    embeddings: string[],
+  ): Promise<SpeechBrainSpeakerVerification | null> {
+    try {
+      const form = this.buildFormData(audio);
+      form.append('embeddings', JSON.stringify(embeddings));
+
+      const result = await this.post<SpeechBrainSpeakerVerification>(
+        '/verify_speakers',
+        form,
+        this.verifyCallTimeout,
+      );
+
+      if (result === null) return null;
+
+      return result;
+    } catch (err) {
+      this.logger.error(`Speaker verify error: ${err.message}`);
+    }
+    return null;
+  }
+
+  async similarityMatrix(
+    data: string[],
+  ): Promise<SpeechBrainSimilarityMatrix | null> {
+    try {
+      const form = new FormData();
+      form.append('embeddings', JSON.stringify(data));
+
+      const result = await this.post<SpeechBrainSimilarityMatrix>(
+        '/similarity_matrix',
+        form,
+      );
+
+      if (result === null) return null;
+
+      return result;
+    } catch (err) {
+      this.logger.error(`Similarity matrix error: ${err.message}`);
+    }
+    return null;
+  }
+
+  async createEmbeddings(audio: Buffer): Promise<SpeechBrainEmbeddings | null> {
+    try {
+      const form = this.buildFormData(audio);
+
+      const result = await this.post<SpeechBrainEmbeddings>(
+        '/create_embeddings',
+        form,
+      );
+
+      if (result === null) return null;
+
+      return result;
+    } catch (err) {
+      this.logger.error(`Speech create embeddings error: ${err.message}`);
     }
     return null;
   }

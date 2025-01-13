@@ -121,6 +121,7 @@ export class DialogueSpeechEventService {
   @OnEvent('session.changed')
   async handleWelcomeText(ev: SessionChangedDto) {
     this.welcome.handleWelcomeText(ev);
+    this.speech.handleSessionChanged(ev);
   }
 
   @OnEvent('dialogue.speech.audio')

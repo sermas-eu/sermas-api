@@ -129,6 +129,14 @@ export class UserCharacterizationDto {
   user?: StringInferenceValue[];
 }
 
+export class UserIdentificationDto {
+  @ApiPropertyOptional({
+    description: 'An embeddings of the speaker audio',
+    type: StringInferenceValue,
+  })
+  speakerId?: StringInferenceValue;
+}
+
 export enum UserCharacterizationEventSource {
   deepface = 'deepface',
   sentiment_analysis = 'sentiment_analysis',
@@ -141,6 +149,15 @@ export class UserCharacterizationEventDto extends SermasBaseDto {
   source: string;
   @ApiProperty({ type: [UserCharacterizationDto] })
   detections: UserCharacterizationDto[];
+  @ApiPropertyOptional()
+  sessionId?: string;
+}
+
+export class UserIdentificationEventDto extends SermasBaseDto {
+  @ApiProperty()
+  source: string;
+  @ApiProperty({ type: [UserIdentificationDto] })
+  detections: UserIdentificationDto[];
   @ApiPropertyOptional()
   sessionId?: string;
 }

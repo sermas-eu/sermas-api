@@ -27,6 +27,8 @@ import {
   CheckIfUserTalkingToAvatarPromptParam,
 } from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
+import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
+import { SessionChangedDto } from 'apps/session/src/session.dto';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -63,6 +65,8 @@ export class DialogueSpeechService {
     private readonly memory: DialogueMemoryService,
 
     private readonly speechbrainProvider: SpeechBrainService,
+
+    private readonly identiyTracker: IdentityTrackerService,
 
     private readonly monitor: MonitorService,
   ) {}
@@ -201,10 +205,46 @@ export class DialogueSpeechService {
       perf();
     }
 
+    const expected = await this.isExpectedSpeaker(ev.sessionId, ev.buffer);
+    if (!expected) return;
+
     const skip = await this.hasMultipleSpeakers(ev);
     if (skip) return;
 
     this.emitter.emit('dialogue.speech.audio', ev);
+  }
+
+  async isExpectedSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
+    if (this.configService.get('SPEAKER_VERIFICATION') == '0') {
+      this.logger.warn(
+        `Speaker verification disabled. To enable set SPEAKER_VERIFICATION env to 1`,
+      );
+      return true;
+    }
+    const embeddings = [
+      this.identiyTracker.getAgentEmbedding(sessionId),
+      this.identiyTracker.getSpeakerEmbedding(sessionId),
+    ];
+    const res = await this.identiyTracker.verifySpeaker(audio, embeddings);
+    if (!res) return true;
+    // collect user audio embeddings
+    this.identiyTracker.update(sessionId, res.embeddings);
+    if (res.results[0] == true) {
+      this.logger.debug('Agent self-speaking, skip');
+      return false;
+    }
+    if (embeddings[1] == '') return true; // no result expected
+    this.logger.debug(`${res.results[1] ? 'Same' : 'Different'} speaker`);
+    return res.results[1];
+  }
+
+  async handleSessionChanged(ev: SessionChangedDto) {
+    if (ev.operation !== 'updated') return;
+    if (!ev.record?.sessionId) return;
+    // only if closed
+    if (!ev.record?.closedAt) return;
+
+    this.identiyTracker.clearSessionEmbeddings(ev.record.sessionId);
   }
 
   async chat(ev: DialogueMessageDto): Promise<void> {
@@ -317,6 +357,9 @@ export class DialogueSpeechService {
     if (!buffer.length) {
       return;
     }
+
+    // store agent audio embeddings
+    await this.identiyTracker.agentSpeech(agentResponseEvent.sessionId, buffer);
 
     return buffer;
   }
