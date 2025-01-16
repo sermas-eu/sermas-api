@@ -12,7 +12,7 @@ import { AsyncApi } from 'nestjs-asyncapi';
 @Injectable()
 export class DialogueAsyncApiService {
   private readonly logger = new Logger(DialogueAsyncApiService.name);
-  constructor(private readonly broker: MqttService) {}
+  constructor(private readonly broker: MqttService) { }
 
   @AsyncApiOperationName({
     channel: SermasTopics.dialogue.messages,
