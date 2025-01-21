@@ -62,7 +62,7 @@ export class SpeechBrainService implements OnModuleInit {
       this.available = true;
     } catch (e: any) {
       if (e.message.indexOf('timeout') === -1) {
-        this.logger.debug(`healtcheck error: ${e.stack}`);
+        this.logger.debug(`healtcheck error: ${e.message}`);
       }
       this.available = false;
     }

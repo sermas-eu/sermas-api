@@ -1,6 +1,7 @@
 import GroupRepresentation from '@keycloak/keycloak-admin-client/lib/defs/groupRepresentation';
 import {
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
   OnModuleDestroy,
@@ -10,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { PlatformContextDto } from 'apps/platform/src/auth/platform.auth.dto';
 import { PlatformTopicsService } from 'apps/platform/src/topics/platform.topics.service';
 
-import { KEYCLOACK_TEST_REALM } from 'libs/test';
+import { KEYCLOACK_TEST_REALM, sleep } from 'libs/test';
 import { isNodeEnv, jwtDecode, readJSON } from 'libs/util';
 
 import {
@@ -48,9 +49,13 @@ import {
   KeycloakJwtTokenDto,
   SystemClientCreateDto,
 } from './keycloak.dto';
+import { InternalServerError } from 'openai';
 
 export const ROLE_APP_OWNER = 'app-owner';
 export const ROLE_ADMIN = 'platform-admin';
+
+const KC_HEALTHCHECK_RETRIES = 30;
+const KC_HEALTHCHECK_TIMEOUT = 10 * 1000;
 
 const rolePolicyNamePrefix = 'has-role-';
 const appGroupPolicyName = 'has-app-group';
@@ -82,11 +87,28 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    // await this.importSystemClientsFromFile('config/system-clients.json');
+    await this.waitForHealtchecks();
   }
 
   async onModuleDestroy() {
     if (this.tokenExpires) clearTimeout(this.tokenExpires);
+  }
+
+  async waitForHealtchecks() {
+    let retries = 0;
+
+    while (retries < KC_HEALTHCHECK_RETRIES) {
+      const ready = await this.kc.healthcheck();
+      if (ready) return;
+      retries++;
+      this.logger.log(
+        `Waiting for Keycloak to be ready, it may take a while. Be patient. (${retries}/${KC_HEALTHCHECK_RETRIES})`,
+      );
+      await sleep(KC_HEALTHCHECK_TIMEOUT);
+    }
+
+    this.logger.error(`Failed to reach Keycloak. Exiting..`);
+    process.exit(0);
   }
 
   public setRealm(realm: string) {
@@ -187,22 +209,29 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
     if (this.token) return this.token;
 
     this.logger.verbose(`refreshing keycloack admin token`);
-    const token = await this.kc.getToken({
-      username: this.config.get('ADMIN_SERVICE_ACCOUNT_USERNAME'),
-      password: this.config.get('ADMIN_SERVICE_ACCOUNT_PASSWORD'),
-    });
+    try {
+      const token = await this.kc.getToken({
+        username: this.config.get('ADMIN_SERVICE_ACCOUNT_USERNAME'),
+        password: this.config.get('ADMIN_SERVICE_ACCOUNT_PASSWORD'),
+      });
 
-    this.token = token.access_token;
+      this.token = token.access_token;
 
-    if (this.tokenExpires) clearTimeout(this.tokenExpires);
-    this.tokenExpires = setTimeout(
-      () => {
-        this.logger.verbose(`Keycloack admin token expired`);
-        this.token = null;
-      },
-      (token.expires_in - Math.round(token.expires_in * 0.3)) * 1000,
-    );
-    this.logger.verbose(`token expires in ${token.expires_in / 60}min`);
+      if (this.tokenExpires) clearTimeout(this.tokenExpires);
+      this.tokenExpires = setTimeout(
+        () => {
+          this.logger.verbose(`Keycloack admin token expired`);
+          this.token = null;
+        },
+        (token.expires_in - Math.round(token.expires_in * 0.3)) * 1000,
+      );
+      this.logger.verbose(`token expires in ${token.expires_in / 60}min`);
+    } catch (e) {
+      this.logger.debug(`Failed to get keycloak token: ${e.message}`);
+      this.logger.verbose(e.stack);
+      this.token = null;
+      throw new InternalServerErrorException(e);
+    }
   }
 
   async getClientByName(

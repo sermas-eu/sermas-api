@@ -135,11 +135,9 @@ export class KeycloakAdminService implements OnModuleInit {
 
     if (isAxiosError(e)) {
       const err = e as AxiosError;
-      errMsg += `request failed status=${err.status} code=${
-        err.code
-      } response=${
-        err.response?.data ? JSON.stringify(err.response?.data) : ''
-      }`;
+      errMsg += `request failed status=${err.status} code=${err.code
+        } response=${err.response?.data ? JSON.stringify(err.response?.data) : ''
+        }`;
     } else {
       errMsg += e.stack;
     }
@@ -319,8 +317,7 @@ export class KeycloakAdminService implements OnModuleInit {
   ): Promise<KeycloakClientResponseDto[]> {
     try {
       const res = await this.client.get(
-        `${this.keycloakUrl}/admin/realms/${data.realm}/clients?clientId=${
-          data.clientId || ''
+        `${this.keycloakUrl}/admin/realms/${data.realm}/clients?clientId=${data.clientId || ''
         }&search=${data.exactMatch ? 'false' : 'true'}`,
         {
           headers: {
@@ -357,6 +354,17 @@ export class KeycloakAdminService implements OnModuleInit {
     return token.access_token;
   }
 
+  async healthcheck(path?: 'ready' | 'started' | 'live') {
+    try {
+      await this.client.get(
+        `${this.keycloakUrl}/health${path ? '/' + path : ''}`,
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   async getToken(
     req: KeycloakLoginDto,
     publicUrl = false,
@@ -375,15 +383,15 @@ export class KeycloakAdminService implements OnModuleInit {
     const data: any =
       grantType === 'password'
         ? {
-            username,
-            password,
-            grant_type: grantType,
-          }
+          username,
+          password,
+          grant_type: grantType,
+        }
         : {
-            client_id: username,
-            client_secret: password,
-            grant_type: grantType,
-          };
+          client_id: username,
+          client_secret: password,
+          grant_type: grantType,
+        };
 
     if (req.audience) data.audience = req.audience;
 
@@ -393,8 +401,7 @@ export class KeycloakAdminService implements OnModuleInit {
 
     try {
       const res = await this.client.post(
-        `${
-          publicUrl ? this.keycloakPublicUrl : this.keycloakUrl
+        `${publicUrl ? this.keycloakPublicUrl : this.keycloakUrl
         }/realms/${realm}/protocol/openid-connect/token`,
         data,
         {
@@ -433,8 +440,7 @@ export class KeycloakAdminService implements OnModuleInit {
 
     try {
       const res = await this.client.post(
-        `${
-          publicUrl ? this.keycloakPublicUrl : this.keycloakUrl
+        `${publicUrl ? this.keycloakPublicUrl : this.keycloakUrl
         }/realms/${realm}/protocol/openid-connect/token`,
         data,
         {
@@ -806,8 +812,7 @@ export class KeycloakAdminService implements OnModuleInit {
     const permissions = await this.listClientPermissions({ ...data });
 
     this.logger.verbose(
-      `Creating client permissions for ${
-        data.clientId
+      `Creating client permissions for ${data.clientId
       } policies=${policies} resources=${resources.map(
         (r) => `${r.name}[${(r.scopes || []).join(',')}]`,
       )}`,
@@ -2017,8 +2022,7 @@ export class KeycloakAdminService implements OnModuleInit {
 
     try {
       const res = await this.client.get(
-        `${this.keycloakUrl}/admin/realms?briefRepresentation=${
-          briefRepresentation === true ? 'true' : 'false'
+        `${this.keycloakUrl}/admin/realms?briefRepresentation=${briefRepresentation === true ? 'true' : 'false'
         }`,
         {
           headers: {
