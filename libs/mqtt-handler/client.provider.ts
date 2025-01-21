@@ -11,6 +11,7 @@ import {
 } from './mqtt.constants';
 import { MqttModuleOptions } from './mqtt.interface';
 
+const MAX_CONN_RETRIES = 5;
 const REFRESH_BEFORE = 60 * 1000;
 
 interface TokenResponse {
@@ -65,6 +66,8 @@ export function createClientProvider(): Provider {
       let tokenResponse: TokenResponse;
 
       let reloadingToken = false;
+      let retries = 0;
+
       const reloadToken = async () => {
         if (reloadingToken) return;
         if (
@@ -136,6 +139,7 @@ export function createClientProvider(): Provider {
 
       client.on('connect', () => {
         logger.log('MQTT connected');
+        retries = 0;
       });
 
       client.on('disconnect', () => {
@@ -144,7 +148,16 @@ export function createClientProvider(): Provider {
 
       client.on('error', (error) => {
         logger.error(`MQTT Error: ${error.message}`);
-        setTimeout(reloadToken, 2000);
+
+        retries++;
+        if (retries < MAX_CONN_RETRIES) {
+          setTimeout(reloadToken, 2000);
+        } else {
+          logger.error(
+            `MQTT connection failed after ${MAX_CONN_RETRIES}: Check mqtt and keycloak services are running. Exiting..`,
+          );
+          process.exit(0);
+        }
       });
 
       client.on('reconnect', () => {
