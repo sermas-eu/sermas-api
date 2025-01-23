@@ -249,6 +249,10 @@ export class AppSettingsDto implements Record<string, any> {
     description: 'Kiosk colors theme',
   })
   theme?: Record<string, string>;
+  @ApiPropertyOptional({
+    description: 'Repository',
+  })
+  githubRepository?: string;
 }
 
 export class AppClientDto {
