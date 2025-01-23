@@ -2,7 +2,7 @@ import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import { Emotion } from 'libs/sermas/sermas.dto';
 
-export const avatarChatPrompt = PromptTemplate.create<{
+type AvatarChatPromptParams = {
   appPrompt: string;
   language: string;
   emotion?: Emotion;
@@ -14,7 +14,9 @@ export const avatarChatPrompt = PromptTemplate.create<{
   knowledge?: string;
   user?: string;
   json?: boolean;
-}>(
+};
+
+export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
   'chat',
   `
 GENERAL RULES:
@@ -67,10 +69,6 @@ Your gender is <%= data.avatar.gender %>.
 Consider the detected user emotion is <%= data.emotion %>, adapt the conversation but do not make it explicit in answer.
 <% } %>
 
-<% if (data.history) { %>
-HISTORY:
-<%= data.history %>
-<% } %>
 
 <% if (data.field || data.task) { %>
 
@@ -98,10 +96,16 @@ KNOWLEDGE:
 
 <% } %>
 
+<% if (data.history) { %>
+HISTORY:
+<%= data.history %>
+<% } %>
+
 <% if (data.user) { %>
 USER:
 <%= data.user %>
 <% } %>
+
 
 <% if (data.language) { %>
 Translate your answer to <%= data.language %> language.

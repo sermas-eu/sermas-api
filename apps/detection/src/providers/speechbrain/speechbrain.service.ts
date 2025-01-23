@@ -11,6 +11,7 @@ import {
   SpeechBrainSimilarityMatrix,
   SpeechBrainEmbeddings,
 } from './speechbrain.dto';
+import { Interval } from '@nestjs/schedule';
 
 @Injectable()
 export class SpeechBrainService implements OnModuleInit {
@@ -21,9 +22,16 @@ export class SpeechBrainService implements OnModuleInit {
 
   constructor(private readonly config: ConfigService) { }
 
+  @Interval(5 * 1000)
+  async checkAvailability() {
+    await this.isAvailable(true);
+  }
+
   async onModuleInit() {
     await this.isAvailable();
-    this.verifyCallTimeout = +process.env['SPEECH_VERIFY_TIMEOUT_MSEC'] || 1000;
+    this.verifyCallTimeout = +(
+      this.config.get('SPEECH_VERIFY_TIMEOUT_MSEC') || 1000
+    );
   }
 
   mapEmotion(em: string): Emotion {
@@ -51,22 +59,28 @@ export class SpeechBrainService implements OnModuleInit {
     return form;
   }
 
-  private async isAvailable(): Promise<boolean> {
-    if (this.available !== undefined) return this.available;
+  private async isAvailable(force?: boolean): Promise<boolean> {
+    if (force !== true && this.available !== undefined) return this.available;
+
+    const url = this.config.get('SPEECHBRAIN_URL');
 
     try {
-      const url = this.config.get('SPEECHBRAIN_URL');
       await axios.get(url, {
         timeout: 500,
       });
       this.available = true;
     } catch (e: any) {
-      if (e.message.indexOf('timeout') === -1) {
+      if (e.message.indexOf('timeout') === -1 && !force) {
         this.logger.debug(`healtcheck error: ${e.message}`);
       }
       this.available = false;
     }
-    this.logger.log(`Speechbrain ${this.available ? ' ' : 'NOT '}available`);
+
+    if (!force) {
+      this.logger[this.available ? 'log' : 'warn'](
+        `Speechbrain ${this.available ? ' ' : 'NOT '}available at ${url}`,
+      );
+    }
     return this.available;
   }
 

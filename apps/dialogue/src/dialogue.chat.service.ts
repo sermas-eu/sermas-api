@@ -233,7 +233,7 @@ export class DialogueChatService {
     });
 
     // get history
-    const historyList = await this.memory.getConversation(sessionId);
+    const summary = await this.memory.getSummary(sessionId);
 
     const req: AvatarChat = {
       ...(llmArgs || {}),
@@ -242,7 +242,8 @@ export class DialogueChatService {
         language: message.language,
         emotion: message.emotion || 'neutral',
         avatar,
-        history: historyList,
+        history: summary,
+        user: message.text,
         knowledge,
         tasks: tasksList,
         // track current task progress
@@ -257,7 +258,7 @@ export class DialogueChatService {
       }),
 
       tools,
-      history: historyList,
+      history: summary,
 
       skipChat,
     };

@@ -52,7 +52,7 @@ const getTemplateName = (
   return `@${template}`;
 };
 
-export class PromptTemplate<T extends object = any> {
+export class PromptTemplate<T = any> {
   private readonly name: string;
   private readonly templateName: string;
 
@@ -136,7 +136,7 @@ export class PromptTemplate<T extends object = any> {
 
     const output = engine.render(
       template,
-      this.getArgs(),
+      this.getArgs() as any,
     ) as unknown as PromptTemplateOutput;
 
     (output as any).__proto__.getPromptTemplate = () => this;

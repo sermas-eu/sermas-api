@@ -14,7 +14,7 @@ export class Perf {
       const reallyAboveThreshold = value >= criticalThreshold;
 
       if (print || aboveThreshold) {
-        const msg = `${label2 || label} time elapsed ${value}ms`;
+        const msg = `${label || ''}${label && label2 ? ':' : ''}${label2 || ''} time elapsed ${value}ms`;
         if (reallyAboveThreshold) {
           logger.error(
             `${msg} (above critical threshold ${criticalThreshold}ms)`,
