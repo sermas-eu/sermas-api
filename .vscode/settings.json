@@ -1,1 +1,10 @@
-{}
+{
+    "eslint.workingDirectories": [],
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
+    },
+    "eslint.validate": [
+        "typescript",
+        "typescriptreact"
+    ]
+}

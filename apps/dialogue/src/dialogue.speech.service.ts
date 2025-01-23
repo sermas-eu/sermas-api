@@ -34,6 +34,11 @@ const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
 type OutgoingQueueMessage = { message: DialogueMessageDto; data: Buffer };
 
+type UserMessageCheck = {
+  skip: boolean;
+  ask: string;
+};
+
 @Injectable()
 export class DialogueSpeechService {
   private readonly logger = new Logger(DialogueSpeechService.name);
@@ -437,21 +442,17 @@ export class DialogueSpeechService {
   }
 
   async isUserTalkingToAvatar(params: CheckIfUserTalkingToAvatarPromptParam) {
-    const res = await this.llmProvider.chat<{
-      skip: boolean;
-      probability: number;
-      reason: string;
-    }>({
+    const res = await this.llmProvider.chat<UserMessageCheck>({
       stream: false,
       json: true,
       user: checkIfUserTalkingToAvatarPrompt(params),
-      tag: 'intent',
+      tag: 'tasks',
     });
 
     this.logger.debug(
-      `User message ${params.user} reason=${res?.reason} probability=${res?.probability} skip=${res?.skip}`,
+      `User message ${params.user} ask=${res?.ask} skip=${res?.skip}`,
     );
-    return res ? res.skip : false;
+    return res;
   }
 
   async handleUserMessage(message: DialogueMessageDto) {
@@ -460,16 +461,16 @@ export class DialogueSpeechService {
     const avatar = await this.session.getAvatar(message);
     const settings = await this.session.getSettings(message);
 
-    const historyList = await this.memory.getConversation(message.sessionId);
+    const history = await this.memory.getSummary(message.sessionId);
 
-    const skip = await this.isUserTalkingToAvatar({
+    const messageCheck = await this.isUserTalkingToAvatar({
       appPrompt: settings.prompt?.text,
       avatar,
       user: message.text,
-      history: historyList,
+      history: history,
     });
 
-    if (skip) {
+    if (messageCheck.skip) {
       await this.continueAgentSpeech(message.appId, message.sessionId);
       return;
     }
@@ -479,6 +480,12 @@ export class DialogueSpeechService {
       appId: message.appId,
       sessionId: message.sessionId,
     });
+
+    // in doubt, ask claryfication
+    if (messageCheck.ask) {
+      await this.replyToUser(messageCheck.ask, message);
+      return;
+    }
 
     // load emotion
     const emotion = this.emotion.getUserEmotion(message.sessionId);

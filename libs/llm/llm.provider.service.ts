@@ -529,6 +529,11 @@ export class LLMProviderService implements OnModuleInit {
       };
 
       const promptTemplate = templateOutput.getPromptTemplate();
+
+      this.logger.debug(
+        `Rendering LLM prompt template ${promptTemplate.getTemplateName()} for ${promptTemplate.getName()}`,
+      );
+
       if (
         !PromptTemplate.exists({
           ...params,

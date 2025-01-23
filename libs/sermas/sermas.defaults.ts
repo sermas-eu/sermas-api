@@ -234,6 +234,9 @@ export const SermasDefaultConfig = {
   MIN_EMBEDDINGS_NUMBER: '3',
   // SPEECH_SIMILARITY_THRESHOLD value used for comparing embedding, same speaker if above threshold
   SPEECH_SIMILARITY_THRESHOLD: '0.25',
+
+  // SPEECH_VERIFY_TIMEOUT_MSEC timeout for speaker verification request
+  SPEECH_VERIFY_TIMEOUT_MSEC: 1000,
 };
 
 export type SermasApiConfig = typeof SermasDefaultConfig;
