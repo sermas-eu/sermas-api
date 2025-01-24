@@ -207,12 +207,17 @@ export const SermasDefaultConfig = {
   // HUGGINGFACE_BASEURL Base URL for Hugging Face inference service
   HUGGINGFACE_BASEURL: '',
 
+  // AZURE_OPENAI_BASEURL Azure resoure endpoint URL
   AZURE_OPENAI_BASEURL: '',
+  // AZURE_OPENAI_API_KEY  Azure resource API KEY
   AZURE_OPENAI_API_KEY: '',
-  AZURE_OPENAI_MODEL: 'gpt-4o',
+  // AZURE_OPENAI_MODEL Supported chat models from OpenAI on Azure.
   AZURE_OPENAI_CHAT_MODELS: 'gpt-4o',
+  // AZURE_OPENAI_CHAT_API_VERSION Version of chat model distributed in Azure
   AZURE_OPENAI_CHAT_API_VERSION: '2024-08-01-preview',
+  // AZURE_OPENAI_MODEL Supported embeddings models from OpenAI on Azure.
   AZURE_OPENAI_EMBEDDINGS_MODEL: 'text-embedding-ada-002',
+  // AZURE_OPENAI_CHAT_API_VERSION Version of embeddings model distributed in Azure
   AZURE_OPENAI_EMBEDDINGS_API_VERSION: '2023-05-15',
 
   // DATASET_ENABLED Enable data logging
