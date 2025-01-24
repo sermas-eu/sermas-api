@@ -87,7 +87,9 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    await this.waitForHealtchecks();
+    if (this.config.get('AUTH_KEYCLOAK_SKIP_HEALTHCHECK') !== '1') {
+      await this.waitForHealtchecks();
+    }
   }
 
   async onModuleDestroy() {

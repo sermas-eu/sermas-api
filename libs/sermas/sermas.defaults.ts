@@ -29,6 +29,8 @@ export const SermasDefaultConfig = {
   AUTH_KEYCLOAK_ADMIN_REALM: 'master',
   // AUTH_KEYCLOAK_SYSTEM_CLIENT_ID Additonal system clients, separated by comma
   AUTH_KEYCLOAK_SYSTEM_CLIENT_ID: '',
+  // AUTH_KEYCLOAK_SKIP_HEALTHCHECK Skip /health endpoint checks on startup
+  AUTH_KEYCLOAK_SKIP_HEALTHCHECK: '0',
 
   // MQTT_URL the mqtt service url
   MQTT_URL: 'mqtt',
