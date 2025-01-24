@@ -172,8 +172,7 @@ export const SermasDefaultConfig = {
   // GROQ_MODEL Default Groq model used as fallback
   GROQ_MODEL: 'mixtral-8x7b-32768',
   // GROQ_CHAT_MODELS Supported chat models from Groq. Leave empty to allow all available.
-  GROQ_CHAT_MODELS:
-    'gemma-7b-it,gemma2-9b-it,llama2-70b-4096,llama3-70b-8192,llama3-8b-8192,mixtral-8x7b-32768,llama3-groq-8b-8192-tool-use-preview,llama3-groq-70b-8192-tool-use-preview',
+  GROQ_CHAT_MODELS: '',
 
   // MISTRAL_API_KEY Mistral api key
   MISTRAL_API_KEY: '',

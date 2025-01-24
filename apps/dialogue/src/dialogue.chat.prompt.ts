@@ -1,12 +1,15 @@
-import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
-import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
+import {
+  packPromptObject,
+  PromptTemplate,
+} from 'libs/llm/prompt/prompt.template';
 import { Emotion } from 'libs/sermas/sermas.dto';
+import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
 
 type AvatarChatPromptParams = {
   appPrompt: string;
   language: string;
   emotion?: Emotion;
-  avatar: RepositoryAvatarDto;
+  avatar: string;
   history?: string;
   tasks?: string;
   task?: string;
@@ -14,6 +17,10 @@ type AvatarChatPromptParams = {
   knowledge?: string;
   user?: string;
   json?: boolean;
+};
+
+export const packAvatarObject = (avatar: RepositoryAvatarDto) => {
+  return packPromptObject(avatar, ['name', 'gender', 'prompt']);
 };
 
 export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
@@ -57,21 +64,13 @@ Respond in parsable JSON format.
 APPLICATION:
 <%= data.appPrompt %>
 
-AVATAR:
-<% if (data.avatar?.name) { %>
-Your name is <%= data.avatar?.name %>. 
-<% } %>
-<% if (data.avatar?.gender) { %>
-Your gender is <%= data.avatar.gender %>.
-<% } %>
-<%= data.avatar?.prompt %>
+<% if (data.avatar) { %> AVATAR: <%= data.avatar %> <% } %>
+
 <% if (data.emotion) { %>
 Consider the detected user emotion is <%= data.emotion %>, adapt the conversation but do not make it explicit in answer.
 <% } %>
 
-
 <% if (data.field || data.task) { %>
-
 <% if (data.task) { %>
 CURRENT TASK:
 <%= data.task %>

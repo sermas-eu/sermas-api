@@ -1,11 +1,10 @@
-import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 
 export type CheckIfUserTalkingToAvatarPromptParam = {
   user: string;
   history?: string;
   appPrompt: string;
-  avatar: RepositoryAvatarDto;
+  avatar: string;
 };
 
 export const checkIfUserTalkingToAvatarPrompt =
@@ -27,9 +26,9 @@ MESSAGE is a textual input converted from a microphone. APPLICATION defines the 
 <% if (data.history) { %> HISTORY provides the conversation. <% } %>
 
 APPLICATION: <%= data.appPrompt %>
-AVATAR: <% if (data.avatar?.name) { %> Your name is <%= data.avatar?.name %>. <% } %> 
-<% if (data.avatar?.gender) { %> Your gender is <%= data.avatar.gender %>.<% } %>
-<%= data.avatar?.prompt %>
+<% if (data.avatar) { %>
+AVATAR: <%= data.avatar %>
+<% } %>
 
 <% if (data.history) { %> HISTORY: <%= data.history %> <% } %>
 

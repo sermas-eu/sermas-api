@@ -13,6 +13,7 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
+import { packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import {
   welcomeMessagePrompt,
@@ -89,7 +90,7 @@ export class DialogueWelcomeService {
       system: welcomeMessagePrompt({
         type: 'welcome',
         settings,
-        avatar,
+        avatar: packAvatarObject(avatar),
       }),
       stream: true,
       tag: 'chat',

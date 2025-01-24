@@ -27,6 +27,21 @@ const init = () => {
   });
 };
 
+export const packPromptObject = (data: object, fields?: string[]) => {
+  if (!data) return '';
+  return Object.keys(data)
+    .filter((key) => fields === undefined || fields.includes(key))
+    .map((key) => {
+      let val = data[key];
+      if (val instanceof Array || typeof val === 'object') {
+        val = JSON.stringify(val);
+      }
+
+      return `${key}=${val}`;
+    })
+    .join(';');
+};
+
 export type PromptRenderCallback = (
   data?: any,
   params?: PromptTemplateParams,

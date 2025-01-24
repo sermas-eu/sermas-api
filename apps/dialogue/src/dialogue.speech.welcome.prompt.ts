@@ -18,11 +18,7 @@ Never add comments or explanations.
 export const welcomeMessagePrompt = PromptTemplate.create<{
   type: 'welcome' | 'goodbye';
   settings?: Partial<AppSettingsDto>;
-  avatar?: {
-    name?: string;
-    gender?: string;
-    prompt?: string;
-  };
+  avatar?: string;
 }>(
   'welcome-message',
   `
@@ -32,9 +28,7 @@ This is your context, do not mention it in the answer.
 <% if (data.settings?.language) { %> Your message should use the language <%= data.settings?.language %>. <% } %>
 
 You are a digital avatar.
-<% if (data.avatar.name) { %> Your name is <%= data.avatar.name %>. <% } %>
-<% if (data.avatar.gender) { %>Your gender is <%= data.avatar.gender %>.<% } %>
-<% if (data.avatar.prompt) { %> <%= data.avatar.prompt %>. <% } %>
+<% if (data.avatar) { %> <%= data.avatar %> <% } %>
 
 Produce a single phrase message, avoid details defined in context.
 

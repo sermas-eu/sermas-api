@@ -15,7 +15,7 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { DialogueToolNotMatchingDto } from './dialogue.chat.dto';
-import { avatarChatPrompt } from './dialogue.chat.prompt';
+import { avatarChatPrompt, packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueVectorStoreService } from './document/dialogue.vectorstore.service';
 import { DialogueIntentService } from './intent/dialogue.intent.service';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
@@ -241,7 +241,7 @@ export class DialogueChatService {
         appPrompt,
         language: message.language,
         emotion: message.emotion || 'neutral',
-        avatar,
+        avatar: packAvatarObject(avatar),
         history: summary,
         user: message.text,
         knowledge,
