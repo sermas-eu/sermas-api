@@ -29,6 +29,8 @@ export const SermasDefaultConfig = {
   AUTH_KEYCLOAK_ADMIN_REALM: 'master',
   // AUTH_KEYCLOAK_SYSTEM_CLIENT_ID Additonal system clients, separated by comma
   AUTH_KEYCLOAK_SYSTEM_CLIENT_ID: '',
+  // AUTH_KEYCLOAK_SKIP_HEALTHCHECK Skip /health endpoint checks on startup
+  AUTH_KEYCLOAK_SKIP_HEALTHCHECK: '0',
 
   // MQTT_URL the mqtt service url
   MQTT_URL: 'mqtt',
@@ -205,6 +207,19 @@ export const SermasDefaultConfig = {
   HUGGINGFACE_CHAT_MODELS: '',
   // HUGGINGFACE_BASEURL Base URL for Hugging Face inference service
   HUGGINGFACE_BASEURL: '',
+
+  // AZURE_OPENAI_BASEURL Azure resoure endpoint URL
+  AZURE_OPENAI_BASEURL: '',
+  // AZURE_OPENAI_API_KEY  Azure resource API KEY
+  AZURE_OPENAI_API_KEY: '',
+  // AZURE_OPENAI_MODEL Supported chat models from OpenAI on Azure.
+  AZURE_OPENAI_CHAT_MODELS: 'gpt-4o',
+  // AZURE_OPENAI_CHAT_API_VERSION Version of chat model distributed in Azure
+  AZURE_OPENAI_CHAT_API_VERSION: '2024-08-01-preview',
+  // AZURE_OPENAI_MODEL Supported embeddings models from OpenAI on Azure.
+  AZURE_OPENAI_EMBEDDINGS_MODEL: 'text-embedding-ada-002',
+  // AZURE_OPENAI_CHAT_API_VERSION Version of embeddings model distributed in Azure
+  AZURE_OPENAI_EMBEDDINGS_API_VERSION: '2023-05-15',
 
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',

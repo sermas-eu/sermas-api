@@ -1,6 +1,6 @@
 {
   "name": "@sermas/api",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "private": true,
   "description": "SERMAS Toolkit API",
   "author": "SpindoxLabs",
@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.9",
+    "@azure/openai": "^2.0.0",
     "@crawlee/cheerio": "^3.10.2",
     "@crawlee/puppeteer": "^3.10.2",
     "@crawlee/types": "^3.10.2",
@@ -84,7 +85,7 @@
     "nestjs-minio-client": "^2.2.0",
     "node-uuid": "^1.4.8",
     "ollama": "^0.5.2",
-    "openai": "^4.38.1",
+    "openai": "^4.80.0",
     "openapi-client-axios": "^7.5.4",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",

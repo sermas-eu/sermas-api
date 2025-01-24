@@ -20,6 +20,7 @@ export const LLMProviderList = [
   'groq',
   'antrophic',
   'mistral',
+  'azure_openai',
 ];
 export type LLMProvider = (typeof LLMProviderList)[number];
 
@@ -34,6 +35,7 @@ export interface LLMProviderConfig {
   apiKey?: string;
   prompt?: string;
   tag?: LLMPromptTag;
+  apiVersion?: string;
 }
 
 export interface LLMEmbeddingConfig extends LLMProviderConfig {
