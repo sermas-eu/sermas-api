@@ -46,6 +46,8 @@ import { parseJSON } from './util';
 import { GeminiEmbeddingProvider } from './providers/gemini/gemini.embeddings.provider';
 import { HuggingfaceChatProvider } from './providers/huggingface/huggingface.chat.provider';
 import { LLMCacheService, SaveToCacheTransformer } from './cache.service';
+import { AzureOpenAIChatProvider } from './providers/azure-openai/azure-openai.chat.provider';
+import { AzureOpenAIEmbeddingProvider } from './providers/azure-openai/azure-openai.embeddings.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -54,6 +56,7 @@ export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   mistral: 'open-mixtral-8x22b',
   gemini: 'gemini-1.5-flash',
   huggingface: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
+  azure_openai: 'gpt-4o',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
@@ -61,6 +64,7 @@ export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
   ollama: 'nomic-embed-text:latest',
   mistral: 'mistral-embed',
   gemini: 'text-embedding-004',
+  azure_openai: 'text-embedding-ada-002',
 };
 
 @Injectable()
@@ -220,6 +224,18 @@ export class LLMProviderService implements OnModuleInit {
           availableModels,
         });
         break;
+      case 'azure_openai':
+        provider = new AzureOpenAIChatProvider({
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('AZURE_OPENAI_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('AZURE_OPENAI_API_KEY'),
+          availableModels,
+          apiVersion:
+            config.apiVersion ||
+            this.config.get('AZURE_OPENAI_CHAT_API_VERSION'),
+        });
+        break;
       case 'gemini':
         provider = new GeminiChatProvider({
           provider: config.provider,
@@ -356,6 +372,23 @@ export class LLMProviderService implements OnModuleInit {
           model,
           apiKey: config.apiKey || this.config.get('OPENAI_API_KEY'),
           binaryQuantization,
+        });
+        break;
+      case 'azure_openai':
+        model =
+          config.model ||
+          this.config.get('AZURE_OPENAI_EMBEDDINGS_MODEL') ||
+          embeddingsModelsDefaults.openai;
+
+        provider = new AzureOpenAIEmbeddingProvider({
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('AZURE_OPENAI_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('AZURE_OPENAI_API_KEY'),
+          binaryQuantization,
+          apiVersion:
+            config.apiVersion ||
+            this.config.get('AZURE_OPENAI_EMBEDDINGS_API_VERSION'),
         });
         break;
       case 'gemini':
