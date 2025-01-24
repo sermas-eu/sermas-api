@@ -207,6 +207,14 @@ export const SermasDefaultConfig = {
   // HUGGINGFACE_BASEURL Base URL for Hugging Face inference service
   HUGGINGFACE_BASEURL: '',
 
+  AZURE_OPENAI_BASEURL: '',
+  AZURE_OPENAI_API_KEY: '',
+  AZURE_OPENAI_MODEL: 'gpt-4o',
+  AZURE_OPENAI_CHAT_MODELS: 'gpt-4o',
+  AZURE_OPENAI_CHAT_API_VERSION: '2024-08-01-preview',
+  AZURE_OPENAI_EMBEDDINGS_MODEL: 'text-embedding-ada-002',
+  AZURE_OPENAI_EMBEDDINGS_API_VERSION: '2023-05-15',
+
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',
   // DATASET_BUCKET Data logger bucket name
