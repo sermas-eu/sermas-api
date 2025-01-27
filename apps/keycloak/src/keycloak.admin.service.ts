@@ -112,10 +112,11 @@ export class KeycloakAdminService implements OnModuleInit {
     if (!this.keycloakPublicUrl)
       throw new InternalServerErrorException(`Missing env AUTH_KEYCLOAK_URL`);
 
-    this.keycloakAdminUrl = this.config.get<string>('AUTH_KEYCLOAK_ADMIN_URL');
-
     this.keycloakUrl =
       this.config.get<string>('LOCAL_KEYCLOAK_URL') || this.keycloakPublicUrl;
+
+    this.keycloakAdminUrl =
+      this.config.get<string>('AUTH_KEYCLOAK_ADMIN_URL') || this.keycloakUrl;
 
     this.client = axios.create({
       httpsAgent: new https.Agent({
