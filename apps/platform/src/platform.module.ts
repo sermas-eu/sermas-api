@@ -65,12 +65,14 @@ import { PlatformTopicsModule } from './topics/platform.topics.module';
   providers: [
     {
       provide: KEYCLOAK_LOGGER,
-      useFactory: (opts: KeycloakConnectOptions) => {
+      // useFactory: (opts: KeycloakConnectOptions) => {
+      useFactory: () => {
         const logger = new Logger('KeycloakConnect');
         // logger.localInstance.setLogLevels(['error', 'warn', 'log', 'debug']);
         if (process.env.SHOW_KEYCLOAK_LOGS !== '1') {
           // const verboseLog = logger.verbose;
-          logger.verbose = (...args) => {
+          // logger.verbose = (...args) => {
+          logger.verbose = () => {
             // if (args[0].indexOf('Authenticated User') === -1) return;
             // verboseLog.apply(logger, args);
           };
