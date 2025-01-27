@@ -49,7 +49,6 @@ import {
   KeycloakJwtTokenDto,
   SystemClientCreateDto,
 } from './keycloak.dto';
-import { InternalServerError } from 'openai';
 
 export const ROLE_APP_OWNER = 'app-owner';
 export const ROLE_ADMIN = 'platform-admin';
