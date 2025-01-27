@@ -14,7 +14,7 @@ export const SermasDefaultConfig = {
   // AUTH_KEYCLOAK_URL set the keycloack endpoint URL
   AUTH_KEYCLOAK_URL: 'http://172.17.0.1:8080/keycloak',
   // AUTH_KEYCLOAK_FRONTEND_URL set the keycloack realm frontend URL
-  AUTH_KEYCLOAK_FRONTEND_URL: 'http://localhost:8080/keycloak',
+  AUTH_KEYCLOAK_FRONTEND_URL: '',
   // AUTH_KEYCLOAK_SKIP_HEALTHCHECK Skip /health endpoint checks on startup
   AUTH_KEYCLOAK_SKIP_HEALTHCHECK: '0',
   // AUTH_KEYCLOAK_ADMIN_URL set the keycloack admin URL. Required from keycloak v26.x
