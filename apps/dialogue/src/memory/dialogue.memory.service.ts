@@ -1,6 +1,7 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { createSessionContext } from 'apps/session/src/session.context';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { Model } from 'mongoose';
 import { DialogueMemoryMessageDto } from './dialogue.memory.dto';
@@ -42,6 +43,7 @@ export class DialogueMemoryService implements OnModuleInit {
         stream: false,
         json: false,
         tag: 'chat',
+        sessionContext: createSessionContext({ sessionId }),
       });
 
       summary += '\n' + this.conversationToText(newerMessages);

@@ -865,6 +865,7 @@ export class LLMProviderService implements OnModuleInit {
             user: args.user,
             provider: toolProvider,
             model: toolModel,
+            sessionContext: args.sessionContext,
           })
         : Promise.reject();
 
@@ -877,6 +878,7 @@ export class LLMProviderService implements OnModuleInit {
             stream: true,
             json: false,
             user: args.chat,
+            sessionContext: args.sessionContext,
           }).then((res: LLMCallResult) => {
             if (!res) return Promise.reject();
             if (res.stream === null) return Promise.reject();

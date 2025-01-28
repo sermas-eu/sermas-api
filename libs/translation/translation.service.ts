@@ -3,6 +3,7 @@ import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { ITranslate } from './itranslate';
 import { translationPrompt } from './translation.prompt';
+import { SessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class LLMTranslationService implements ITranslate {
@@ -13,7 +14,7 @@ export class LLMTranslationService implements ITranslate {
     private readonly monitor: MonitorService,
   ) {}
 
-  async detect(text: string) {
+  async detect(text: string, sessionContext?: SessionContext) {
     if (!text) return null;
 
     const perf = this.monitor.performance({
@@ -27,6 +28,7 @@ Answer the user exclusively with the language code, avoid any further reasoning.
         user: text,
         stream: false,
         tag: 'translation',
+        sessionContext,
       });
       perf('openai');
       return language === 'unknown' ? null : language;
@@ -40,6 +42,7 @@ Answer the user exclusively with the language code, avoid any further reasoning.
     text: string,
     fromLanguage: string,
     toLanguage: string,
+    sessionContext?: SessionContext,
   ): Promise<string> {
     fromLanguage = fromLanguage || '';
 
@@ -64,9 +67,10 @@ Answer the user exclusively with the language code, avoid any further reasoning.
         }),
         user: text,
         stream: false,
+        sessionContext,
       });
 
-      perf('openai');
+      perf('llm');
 
       // translation
       //   .split('\n')

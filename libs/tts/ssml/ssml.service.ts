@@ -4,6 +4,7 @@ import { LanguageCode } from 'libs/language/lang-codes';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { Emotion } from 'libs/sermas/sermas.dto';
 import { ssmlPrompt } from './ssml.prompt';
+import { SessionContext } from 'apps/session/src/session.context';
 
 export class SSMLParams {
   text: string;
@@ -21,7 +22,7 @@ export class SSMLService {
     private readonly llmProvider: LLMProviderService,
   ) {}
 
-  async generate(params: SSMLParams) {
+  async generate(params: SSMLParams, sessionContext?: SessionContext) {
     if (!params.text) return params.text;
 
     try {
@@ -31,6 +32,7 @@ export class SSMLService {
         system: ssmlPrompt(params),
         user: params.text,
         tag: 'chat',
+        sessionContext,
       });
 
       if (!res) return params.text;

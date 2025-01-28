@@ -1,5 +1,9 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  createSessionContext,
+  SessionContext,
+} from 'apps/session/src/session.context';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { Emotion, EmotionInferenceValue } from 'libs/sermas/sermas.dto';
@@ -68,8 +72,9 @@ export class DetectionService {
 
   async analiseTextSentiment(
     text: string,
+    sessionContext?: SessionContext,
   ): Promise<EmotionInferenceValue | null> {
-    const res = await this.sentimentAnalysis.analyse(text);
+    const res = await this.sentimentAnalysis.analyse(text, sessionContext);
     return res ? res.emotion : null;
   }
 
@@ -118,7 +123,10 @@ export class DetectionService {
       label: 'sentiment_analysis.text',
     });
 
-    const result = await this.analiseTextSentiment(payload.text);
+    const result = await this.analiseTextSentiment(
+      payload.text,
+      createSessionContext(payload),
+    );
     perf();
 
     if (result === null) return;

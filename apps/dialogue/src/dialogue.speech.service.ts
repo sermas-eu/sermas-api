@@ -30,6 +30,10 @@ import {
   CheckIfUserTalkingToAvatarPromptParam,
 } from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
+import {
+  createSessionContext,
+  SessionContext,
+} from 'apps/session/src/session.context';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -134,6 +138,7 @@ export class DialogueSpeechService {
             payload.text,
             payload.language,
             toLanguage,
+            createSessionContext(payload),
           );
           break;
       }
@@ -442,12 +447,16 @@ export class DialogueSpeechService {
     }
   }
 
-  async isUserTalkingToAvatar(params: CheckIfUserTalkingToAvatarPromptParam) {
+  async isUserTalkingToAvatar(
+    params: CheckIfUserTalkingToAvatarPromptParam,
+    sessionContext?: SessionContext,
+  ) {
     const res = await this.llmProvider.chat<UserMessageCheck>({
       stream: false,
       json: true,
       user: checkIfUserTalkingToAvatarPrompt(params),
       tag: 'tasks',
+      sessionContext,
     });
 
     this.logger.debug(
@@ -464,12 +473,15 @@ export class DialogueSpeechService {
 
     const history = await this.memory.getSummary(message.sessionId);
 
-    const messageCheck = await this.isUserTalkingToAvatar({
-      appPrompt: settings.prompt?.text,
-      avatar: packAvatarObject(avatar),
-      user: message.text,
-      history: history,
-    });
+    const messageCheck = await this.isUserTalkingToAvatar(
+      {
+        appPrompt: settings.prompt?.text,
+        avatar: packAvatarObject(avatar),
+        user: message.text,
+        history: history,
+      },
+      createSessionContext(message),
+    );
 
     if (messageCheck.skip) {
       await this.continueAgentSpeech(message.appId, message.sessionId);

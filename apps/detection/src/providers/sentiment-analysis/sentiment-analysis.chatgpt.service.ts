@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { SessionContext } from 'apps/session/src/session.context';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { Emotion, EmotionTypes } from 'libs/sermas/sermas.dto';
 import { SentimentAnalysisResult } from './sentiment-analysis.dto';
@@ -19,7 +20,10 @@ export class ChatGPTSentimentAnalysisService {
   //   });
   // }
 
-  async analyse(message: string): Promise<SentimentAnalysisResult | null> {
+  async analyse(
+    message: string,
+    sessionContext?: SessionContext,
+  ): Promise<SentimentAnalysisResult | null> {
     const emotionList = EmotionTypes.join(', ');
     const defaultEmotion = EmotionTypes[EmotionTypes.indexOf('neutral')];
     const system = `Please provide a sentiment of this context. 
@@ -34,6 +38,7 @@ Never generate an answer, by default answer with ${defaultEmotion}|1.0`;
         user: message,
         stream: false,
         tag: 'sentiment',
+        sessionContext,
       });
     } catch (e) {
       this.logger.error(`Error calling LLM: ${e.stack}`);

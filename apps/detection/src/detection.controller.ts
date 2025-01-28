@@ -41,6 +41,7 @@ import {
   UserInteractionIntentionDto,
 } from './detection.dto';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
+import { createSessionContext } from 'apps/session/src/session.context';
 
 @ApiBearerAuth()
 @Controller('detection')
@@ -79,7 +80,10 @@ export class DetectionController {
     @Body() payload: SentimentAnalysisRequest,
   ): Promise<SentimentAnalysisResponse> {
     const { appId, clientId } = payload;
-    const emotion = await this.detection.analiseTextSentiment(payload.text);
+    const emotion = await this.detection.analiseTextSentiment(
+      payload.text,
+      createSessionContext(payload),
+    );
     return {
       clientId,
       ts: new Date(),

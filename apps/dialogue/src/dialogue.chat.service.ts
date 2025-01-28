@@ -33,6 +33,7 @@ import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { DialogueToolsRepositoryDto } from './tools/repository/dialogue.tools.repository.dto';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
 import { extractToolValues } from './tools/utils';
+import { createSessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class DialogueChatService {
@@ -261,6 +262,8 @@ export class DialogueChatService {
       history: summary,
 
       skipChat,
+
+      sessionContext: createSessionContext(message),
     };
 
     const res = await this.llmProvider.avatarChat(req);

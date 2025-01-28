@@ -16,6 +16,7 @@ import {
   AgentEvaluatePromptResponseDto,
 } from './session.prompt.dto';
 import { sessionPrompt } from './session.prompt.service.prompt';
+import { createSessionContext } from '../session.context';
 
 @Injectable()
 export class SessionPromptService {
@@ -92,6 +93,7 @@ export class SessionPromptService {
       json,
       provider,
       model,
+      sessionContext: createSessionContext(payload),
     });
 
     perf();

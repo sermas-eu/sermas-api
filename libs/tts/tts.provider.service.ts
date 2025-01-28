@@ -16,6 +16,8 @@ import { AzureTextToSpeech } from './providers/tts.azure.provider';
 import { SSMLService } from './ssml/ssml.service';
 import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto';
 
+import { createSessionContext } from 'apps/session/src/session.context';
+
 @Injectable()
 export class TTSProviderService {
   private readonly logger = new Logger(TTSProviderService.name);
@@ -98,6 +100,8 @@ export class TTSProviderService {
       `Generating TTS using ${ttsProvider}${ttsModel ? '/' + ttsModel : ''}`,
     );
 
+    const sessionContext = createSessionContext(ev);
+
     const params: SpeakParam = {
       text,
       ssml,
@@ -117,12 +121,15 @@ export class TTSProviderService {
           context = `Your application context is: ${session.settings?.prompt?.text?.replace(/\n/g, ' ')}`;
         }
 
-        params.ssml = await this.ssmlService.generate({
-          text,
-          language: params.languageCode,
-          emotion: params.emotion,
-          context,
-        });
+        params.ssml = await this.ssmlService.generate(
+          {
+            text,
+            language: params.languageCode,
+            emotion: params.emotion,
+            context,
+          },
+          sessionContext,
+        );
       }
     }
 

@@ -22,6 +22,7 @@ import {
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
+import { createSessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class DialogueWelcomeService {
@@ -94,6 +95,7 @@ export class DialogueWelcomeService {
       }),
       stream: true,
       tag: 'chat',
+      sessionContext: createSessionContext(ev),
     });
 
     perf();
@@ -139,6 +141,7 @@ export class DialogueWelcomeService {
             language: settings.language,
           }),
           tag: 'translation',
+          sessionContext: createSessionContext(ev),
         })
         .then((buttonsList) => {
           if (!buttonsList || !buttonsList.length) {
