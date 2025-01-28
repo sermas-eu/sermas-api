@@ -584,7 +584,7 @@ export class LLMProviderService implements OnModuleInit {
 
     const config = await provider.getConfig();
     const perf = this.monitor.performance({
-      label: `llm.${args.stream ? 'stream' : 'no-stream'}`,
+      label: `llm`,
     });
 
     const messages = args.messages || [];
