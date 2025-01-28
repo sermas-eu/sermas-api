@@ -483,7 +483,7 @@ export class DialogueSpeechService {
       createSessionContext(message),
     );
 
-    if (messageCheck.skip) {
+    if (messageCheck?.skip) {
       await this.continueAgentSpeech(message.appId, message.sessionId);
       return;
     }
