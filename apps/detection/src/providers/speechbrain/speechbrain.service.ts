@@ -20,7 +20,7 @@ export class SpeechBrainService implements OnModuleInit {
   private available: boolean | undefined;
   private verifyCallTimeout: number;
 
-  constructor(private readonly config: ConfigService) { }
+  constructor(private readonly config: ConfigService) {}
 
   @Interval(5 * 1000)
   async checkAvailability() {
@@ -96,7 +96,7 @@ export class SpeechBrainService implements OnModuleInit {
     const res = await axios.postForm(url, data, {
       timeout,
     });
-    this.logger.verbose(`Speechbrain result: '${JSON.stringify(res.data)}'`);
+    // this.logger.verbose(`Speechbrain result: '${JSON.stringify(res.data)}'`);
     return res.data as T;
   }
 

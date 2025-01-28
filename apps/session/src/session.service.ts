@@ -53,7 +53,7 @@ type SessionContext = { appId: string; sessionId?: string };
 @Injectable()
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
-  private sessionExpirationThreshold = 5 * 60 * 1000; // seconds
+  private sessionExpirationThreshold = 5 * 60 * 1000; // 5 min
 
   private sessionLock: { [sessionId: string]: Promise<void> | undefined } = {};
 

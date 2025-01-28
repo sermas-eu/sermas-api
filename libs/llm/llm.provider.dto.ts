@@ -80,4 +80,5 @@ export type LLMResultEvent = {
   messages: LLMMessage[];
   params?: LLMMessage[];
   response: string;
+  llmCallId: string;
 };

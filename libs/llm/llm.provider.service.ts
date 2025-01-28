@@ -3,8 +3,9 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MonitorService } from 'libs/monitor/monitor.service';
-import { hash, uuidv4 } from 'libs/util';
+import { hash } from 'libs/util';
 import { Readable, Transform } from 'stream';
+import { ulid } from 'ulidx';
 import { LLMCacheService, SaveToCacheTransformer } from './cache.service';
 import {
   AvatarChat,
@@ -14,6 +15,7 @@ import {
   LLMSendArgs,
   LLMToolsArgs,
 } from './llm.provider.dto';
+import { SessionContextHandler } from './llm.session-context.handler';
 import {
   PromptTemplate,
   PromptTemplateOutput,
@@ -38,7 +40,6 @@ import {
   LLMCallResult,
   LLMEmbeddingConfig,
   LLMMessage,
-  LLMPromptTag,
   LLMProvider,
   LLMProviderConfig,
   LLMProviderList,
@@ -82,6 +83,8 @@ export class LLMProviderService implements OnModuleInit {
   private printPrompt = false;
   private printResponse = false;
 
+  private sessionContextHandler?: SessionContextHandler | undefined;
+
   constructor(
     private readonly config: ConfigService,
     private readonly emitter: EventEmitter2,
@@ -97,6 +100,10 @@ export class LLMProviderService implements OnModuleInit {
     this.listModels().catch((e) => {
       this.logger.warn(`Failed to list LLM models: ${e.stack}`);
     });
+  }
+
+  public setSessionContextHandler(handler: SessionContextHandler) {
+    this.sessionContextHandler = handler;
   }
 
   extractProviderName(service: string) {
@@ -124,18 +131,41 @@ export class LLMProviderService implements OnModuleInit {
     return this.config.get<LLMProvider | undefined>('LLM_SERVICE') || 'openai';
   }
 
-  getChatServiceByTag(task: LLMPromptTag): string[] {
-    const defaultService = this.config.get('LLM_SERVICE_' + task.toUpperCase());
+  async getChatServiceByTag(
+    config: LLMSendArgs | LLMProviderConfig,
+  ): Promise<string[]> {
+    const defaultService = this.config.get('LLM_SERVICE_' + config.tag);
 
-    let defaultProvider: string = undefined,
-      defaultModel: string = undefined;
+    let provider: string = undefined,
+      model: string = undefined;
 
-    if (defaultService) {
-      const parts = defaultService.split('/');
-      defaultProvider = parts[0];
-      defaultModel = parts[1];
+    const llmSendArgs = config as LLMSendArgs;
+    if (this.sessionContextHandler && llmSendArgs.sessionContext) {
+      try {
+        const service =
+          await this.sessionContextHandler.getChatServiceByTag(llmSendArgs);
+        if (service) {
+          const parts = service.split('/');
+          if (parts.length === 2) {
+            provider = parts[0];
+            model = parts[1];
+          }
+        }
+      } catch (e) {
+        this.logger.warn(
+          `Failed to get LLM provider service from tag: ${e.message}`,
+        );
+        this.logger.verbose(e.stack);
+      }
     }
-    return [defaultProvider, defaultModel];
+
+    if (defaultService && (!provider || !model)) {
+      const parts = defaultService.split('/');
+      provider = parts[0];
+      model = parts[1];
+    }
+
+    return [provider, model];
   }
 
   getAllowedModels(provider: LLMProvider): string[] | undefined {
@@ -166,12 +196,12 @@ export class LLMProviderService implements OnModuleInit {
     return providerId;
   }
 
-  async getChatProvider(userConfig: LLMProviderConfig) {
+  async getChatProvider(userConfig: LLMSendArgs | LLMProviderConfig) {
     const config: LLMProviderConfig = { ...userConfig };
 
     if (!config.provider) {
       if (config.tag) {
-        const [tagProvider, tagModel] = this.getChatServiceByTag(config.tag);
+        const [tagProvider, tagModel] = await this.getChatServiceByTag(config);
         if (tagProvider) {
           config.provider = tagProvider;
           config.model = tagModel;
@@ -195,7 +225,12 @@ export class LLMProviderService implements OnModuleInit {
     }
 
     const providerId = this.createProviderId('chat', config);
-    if (this.chatProviders[providerId]) return this.chatProviders[providerId];
+    if (this.chatProviders[providerId]) {
+      this.logger.verbose(
+        `Cached provider instance provider=${this.chatProviders[providerId].getName()}`,
+      );
+      return this.chatProviders[providerId];
+    }
 
     let provider: LLMChatProvider;
     const model =
@@ -316,7 +351,8 @@ export class LLMProviderService implements OnModuleInit {
             });
 
             const avail = await instance.available();
-            this.logger.debug(
+
+            this.logger[avail ? 'log' : 'debug'](
               `${instance.getName()} ${avail ? '' : 'not '}available.`,
             );
             if (!avail) return [];
@@ -544,7 +580,7 @@ export class LLMProviderService implements OnModuleInit {
       return this.emptyResponse(args);
     }
 
-    const llmCallId = uuidv4().split('-').shift();
+    const llmCallId = ulid();
 
     const config = await provider.getConfig();
     const perf = this.monitor.performance({
@@ -645,7 +681,8 @@ export class LLMProviderService implements OnModuleInit {
               params: args.messages,
               messages,
               response,
-              tag: config.tag,
+              tag: args.tag,
+              llmCallId,
             });
           }),
         );
@@ -673,6 +710,7 @@ export class LLMProviderService implements OnModuleInit {
         messages,
         response,
         tag: config.tag,
+        llmCallId,
       });
 
       if (args.json) {
@@ -764,7 +802,7 @@ export class LLMProviderService implements OnModuleInit {
     const isJson = !isStream && args.json === undefined ? false : true;
 
     const res = await this.send<T>({
-      tag: 'chat',
+      tag: args.tag || 'chat',
       messages,
       stream: isStream,
       json: isJson,
@@ -865,6 +903,7 @@ export class LLMProviderService implements OnModuleInit {
             user: args.user,
             provider: toolProvider,
             model: toolModel,
+            tag: args.tag,
             sessionContext: args.sessionContext,
           })
         : Promise.reject();
@@ -872,7 +911,7 @@ export class LLMProviderService implements OnModuleInit {
     const chatRequest =
       args.skipChat !== true && args.chat
         ? this.chat({
-            tag: 'chat',
+            tag: args.tag || 'chat',
             provider: chatProvider,
             model: chatModel,
             stream: true,

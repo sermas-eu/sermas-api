@@ -115,7 +115,7 @@ export class MonitoringDatasetEventsService {
 
   @OnEvent('llm.result')
   async onLLMResult(payload: LLMResultEvent) {
-    await this.dataset.save('LLM response', payload, 'chat');
+    await this.dataset.save('LLM response', payload, 'llm');
   }
 
   @Subscribe({

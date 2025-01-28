@@ -10,6 +10,7 @@ import { SessionService } from './session.service';
 import { SessionStorageModule } from './storage/session.storage.module';
 import { SessionSupportAsyncApiService } from './support/session.support.async.service';
 import { SessionSupportController } from './support/session.support.controller';
+import { SessionLLMContextHandlerService } from '../session.llm-context.handler';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { SessionSupportController } from './support/session.support.controller';
     SessionEventsService,
     SessionAsyncApiService,
     SessionSupportAsyncApiService,
+    SessionLLMContextHandlerService,
   ],
   controllers: [SessionController, SessionSupportController],
   exports: [SessionService],
