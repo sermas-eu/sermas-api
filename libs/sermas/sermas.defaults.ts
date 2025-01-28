@@ -217,7 +217,7 @@ export const SermasDefaultConfig = {
   // AZURE_OPENAI_API_KEY  Azure resource API KEY
   AZURE_OPENAI_API_KEY: '',
   // AZURE_OPENAI_CHAT_MODELS Supported chat models from OpenAI on Azure.
-  AZURE_OPENAI_CHAT_MODELS: 'gpt*',
+  AZURE_OPENAI_CHAT_MODELS: '',
   // AZURE_OPENAI_CHAT_API_VERSION Version of chat model distributed in Azure
   AZURE_OPENAI_CHAT_API_VERSION: '2024-08-01-preview',
   // AZURE_OPENAI_MODEL Supported embeddings models from OpenAI on Azure.
