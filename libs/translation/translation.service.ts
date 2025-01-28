@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { ITranslate } from './itranslate';
-import { translationPrompt } from './translation.prompt';
+import { detectionPrompt, translationPrompt } from './translation.prompt';
+import { SessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class LLMTranslationService implements ITranslate {
@@ -13,7 +14,7 @@ export class LLMTranslationService implements ITranslate {
     private readonly monitor: MonitorService,
   ) {}
 
-  async detect(text: string) {
+  async detect(text: string, sessionContext?: SessionContext) {
     if (!text) return null;
 
     const perf = this.monitor.performance({
@@ -22,13 +23,13 @@ export class LLMTranslationService implements ITranslate {
 
     try {
       const language = await this.llmProvider.chat({
-        system: `Your task is to detect precisely the language as a two letter code.
-Answer the user exclusively with the language code, avoid any further reasoning. If you cannot detect the language, return unknown. Never add Notes or Explanations.`,
+        system: detectionPrompt(),
         user: text,
         stream: false,
         tag: 'translation',
+        sessionContext,
       });
-      perf('openai');
+      perf();
       return language === 'unknown' ? null : language;
     } catch (e) {
       this.logger.warn(`language detection failed: ${e.stack}`);
@@ -40,6 +41,7 @@ Answer the user exclusively with the language code, avoid any further reasoning.
     text: string,
     fromLanguage: string,
     toLanguage: string,
+    sessionContext?: SessionContext,
   ): Promise<string> {
     fromLanguage = fromLanguage || '';
 
@@ -54,8 +56,6 @@ Answer the user exclusively with the language code, avoid any further reasoning.
       label: 'translation-translate',
     });
 
-    // text.split('\n').forEach((line) => this.logger.verbose(`| ${line}`));
-
     try {
       const translation = await this.llmProvider.chat({
         system: translationPrompt({
@@ -64,13 +64,10 @@ Answer the user exclusively with the language code, avoid any further reasoning.
         }),
         user: text,
         stream: false,
+        sessionContext,
       });
 
-      perf('openai');
-
-      // translation
-      //   .split('\n')
-      //   .forEach((line) => this.logger.verbose(`| ${line}`));
+      perf();
 
       return translation;
     } catch (e) {

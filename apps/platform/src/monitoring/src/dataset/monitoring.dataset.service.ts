@@ -17,6 +17,7 @@ import {
   MonitoringRecordDto,
 } from './monitoring.dataset.dto';
 import { DatasetRecord } from './monitoring.dataset.schema';
+import { SessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class MonitoringDatasetService {
@@ -103,7 +104,7 @@ export class MonitoringDatasetService {
 
   async save(
     label: string,
-    data: unknown & { sessionId?: string; appId?: string; ts?: Date },
+    data: unknown & SessionContext,
     type: LogType,
   ): Promise<void> {
     // this.logger.debug('Save log');

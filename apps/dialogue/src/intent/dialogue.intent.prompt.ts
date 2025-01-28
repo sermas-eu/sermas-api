@@ -18,11 +18,9 @@ export const intentPrompt = PromptTemplate.create<IntentTypePrompt>(
 <% if (data.settings?.prompt?.text) { %>
     The application scope is: <%= data.settings?.prompt?.text %>
 <% } %>
-
 <% if (data.avatar) { %>
 You are a digital agent: <%= data.avatar?.prompt %>
 <% } %>
-
 <% if (data.currentTask) { %>
 Active task name is <%= data.currentTask %>
 <% } %>
@@ -39,9 +37,8 @@ If the last user message confirms a task proposed by the assistant, set the fiel
 If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
 <% } %>
 
-Return a parsable JSON object with structure { result: { taskId: string, match: boolean, trigger: boolean, cancel: boolean } }
-
-Never add notes or explanations
+Return only parsable JSON object with the following structure. Do not add notes or explanations.
+{ result: { taskId: string, match: boolean, trigger: boolean, cancel: boolean } } 
 
 HISTORY:
 <%= data.history %>

@@ -15,7 +15,7 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { DialogueToolNotMatchingDto } from './dialogue.chat.dto';
-import { avatarChatPrompt } from './dialogue.chat.prompt';
+import { avatarChatPrompt, packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueVectorStoreService } from './document/dialogue.vectorstore.service';
 import { DialogueIntentService } from './intent/dialogue.intent.service';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
@@ -33,6 +33,7 @@ import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { DialogueToolsRepositoryDto } from './tools/repository/dialogue.tools.repository.dto';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
 import { extractToolValues } from './tools/utils';
+import { createSessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class DialogueChatService {
@@ -233,7 +234,7 @@ export class DialogueChatService {
     });
 
     // get history
-    const historyList = await this.memory.getConversation(sessionId);
+    const summary = await this.memory.getSummary(sessionId);
 
     const req: AvatarChat = {
       ...(llmArgs || {}),
@@ -241,8 +242,9 @@ export class DialogueChatService {
         appPrompt,
         language: message.language,
         emotion: message.emotion || 'neutral',
-        avatar,
-        history: historyList,
+        avatar: packAvatarObject(avatar),
+        history: summary,
+        user: message.text,
         knowledge,
         tasks: tasksList,
         // track current task progress
@@ -257,9 +259,11 @@ export class DialogueChatService {
       }),
 
       tools,
-      history: historyList,
+      history: summary,
 
       skipChat,
+
+      sessionContext: createSessionContext(message),
     };
 
     const res = await this.llmProvider.avatarChat(req);

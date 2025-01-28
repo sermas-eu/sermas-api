@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  createSessionContext,
+  SessionContext,
+} from 'apps/session/src/session.context';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { getChunkId } from 'libs/sermas/sermas.utils';
@@ -121,6 +125,7 @@ export class UIService {
             parts,
             fromLanguage,
             toLanguage,
+            createSessionContext(uiContent),
           );
 
           if (buttonContent.label) {
@@ -150,6 +155,7 @@ export class UIService {
             parts,
             fromLanguage,
             toLanguage,
+            createSessionContext(uiContent),
           );
 
           quizContent.question = translations.shift();
@@ -172,6 +178,7 @@ export class UIService {
     sources: string[],
     fromLanguage: string,
     toLanguage: string,
+    sessionContext?: SessionContext,
   ): Promise<string[]> {
     try {
       if (!sources || fromLanguage === toLanguage) return sources;
@@ -180,6 +187,7 @@ export class UIService {
         JSON.stringify(sources),
         fromLanguage,
         toLanguage,
+        sessionContext,
       );
 
       if (raw) {

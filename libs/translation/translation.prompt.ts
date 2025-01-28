@@ -1,5 +1,13 @@
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 
+export const detectionPrompt = PromptTemplate.create(
+  'language-detection',
+  `Your task is to detect precisely the language as a two letter code.
+Answer the user exclusively with the language code, avoid any further reasoning. 
+If you cannot detect the language, return unknown. 
+Do not add Notes or Explanations.`,
+);
+
 export const translationPrompt = PromptTemplate.create<{
   toLanguage: string;
   fromLanguage?: string;
@@ -13,8 +21,6 @@ Original language code is <%= data.fromLanguage %>.
 Please infer the original language of the text.
 <% } %>
 
-Answer the user exclusively with the translated text, avoid any further reasoning. 
-Keep the original text formatting. 
-If you cannot translate, return the exact user text. 
-Never add Notes or Explanations.`,
+Answer only with the translated text, keep the original text formatting. Never add Notes or Explanations.
+If you cannot translate, return the exact original text.`,
 );

@@ -10,6 +10,7 @@ import { DialogueTaskRecordDto } from '../tasks/record/dialogue.tasks.record.dto
 import { DialogueTaskRecordService } from '../tasks/record/dialogue.tasks.record.service';
 import { DialogueTaskDto } from '../tasks/store/dialogue.tasks.store.dto';
 import { intentPrompt } from './dialogue.intent.prompt';
+import { createSessionContext } from 'apps/session/src/session.context';
 
 type TaskQuestionWrapper = {
   taskId: string;
@@ -142,6 +143,7 @@ export class DialogueIntentService {
         currentTask: currentTask?.name,
       }),
       tag: 'intent',
+      sessionContext: createSessionContext(ev),
     });
 
     perf();

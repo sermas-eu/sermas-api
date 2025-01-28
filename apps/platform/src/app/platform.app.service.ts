@@ -1,6 +1,8 @@
+import { Cache, CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -35,6 +37,7 @@ import {
 import { PlatformApp, PlatformAppDocument } from './platform.app.schema';
 
 @Injectable()
+@CacheTTL(10 * 60 * 1000)
 export class PlatformAppService implements OnModuleInit {
   private readonly logger = new Logger(PlatformAppService.name);
 
@@ -44,6 +47,7 @@ export class PlatformAppService implements OnModuleInit {
     private keycloack: PlatformKeycloakService,
     private config: ConfigService,
     private emitter: EventEmitter2,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async onModuleInit() {
@@ -192,6 +196,10 @@ export class PlatformAppService implements OnModuleInit {
     return app || null;
   }
 
+  private cacheKey(appId: string) {
+    return `app:${appId}`;
+  }
+
   async removeApps(query?: PlatformAppExportFilterDto, skipClients = false) {
     const filter: FilterQuery<PlatformApp> = {};
 
@@ -225,11 +233,17 @@ export class PlatformAppService implements OnModuleInit {
       await this.keycloack.removeUserApps(app.ownerId, appId);
     }
 
+    await this.cacheManager.del(this.cacheKey(app.appId));
     await this.platformApp.deleteOne({ appId }).exec();
     await this.publishApp(app, 'deleted');
   }
 
   async readApp(appId: string, failIfNotFound = true): Promise<PlatformAppDto> {
+    const cacheKey = this.cacheKey(appId);
+    const cached = await this.cacheManager.get(cacheKey);
+
+    if (cached) return cached as PlatformAppDto;
+
     const doc = await this.loadApp(appId);
     if (!doc) {
       if (failIfNotFound) throw new NotFoundException();
@@ -237,6 +251,9 @@ export class PlatformAppService implements OnModuleInit {
     }
 
     const app = toDTO(doc);
+
+    // set cache
+    this.cacheManager.set(cacheKey, app);
 
     return app;
   }
@@ -285,6 +302,9 @@ export class PlatformAppService implements OnModuleInit {
 
     const app = new this.platformApp(data);
     await app.save();
+
+    // remove cache
+    await this.cacheManager.del(this.cacheKey(app.appId));
 
     // insert clients and modules
     const updateApp = {
@@ -394,6 +414,8 @@ export class PlatformAppService implements OnModuleInit {
     const skipClients = req.skipClients === undefined ? false : req.skipClients;
 
     if (!data.appId) throw new BadRequestException();
+
+    await this.cacheManager.del(this.cacheKey(data.appId));
 
     let app = await this.loadApp(data.appId);
     if (!app) throw new NotFoundException();

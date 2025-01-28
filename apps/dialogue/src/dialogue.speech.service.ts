@@ -8,7 +8,9 @@ import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { DialogueAsyncApiService } from './dialogue.async.service';
 import { DialogueEmotionService } from './dialogue.emotion.service';
 
+import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
 import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
+import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { UIContentDto } from 'apps/ui/src/ui.content.dto';
 import { uiContentToText } from 'apps/ui/src/util';
@@ -21,18 +23,26 @@ import { STTProviderService } from 'libs/stt/stt.provider.service';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { TTSProviderService } from 'libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
+import { packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueChatService } from './dialogue.chat.service';
 import {
   checkIfUserTalkingToAvatarPrompt,
   CheckIfUserTalkingToAvatarPromptParam,
 } from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
-import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
+import {
+  createSessionContext,
+  SessionContext,
+} from 'apps/session/src/session.context';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
 type OutgoingQueueMessage = { message: DialogueMessageDto; data: Buffer };
+
+type UserMessageCheck = {
+  skip: boolean;
+  ask: string;
+};
 
 @Injectable()
 export class DialogueSpeechService {
@@ -128,6 +138,7 @@ export class DialogueSpeechService {
             payload.text,
             payload.language,
             toLanguage,
+            createSessionContext(payload),
           );
           break;
       }
@@ -436,22 +447,22 @@ export class DialogueSpeechService {
     }
   }
 
-  async isUserTalkingToAvatar(params: CheckIfUserTalkingToAvatarPromptParam) {
-    const res = await this.llmProvider.chat<{
-      skip: boolean;
-      probability: number;
-      reason: string;
-    }>({
+  async isUserTalkingToAvatar(
+    params: CheckIfUserTalkingToAvatarPromptParam,
+    sessionContext?: SessionContext,
+  ) {
+    const res = await this.llmProvider.chat<UserMessageCheck>({
       stream: false,
       json: true,
       user: checkIfUserTalkingToAvatarPrompt(params),
-      tag: 'intent',
+      tag: 'tasks',
+      sessionContext,
     });
 
     this.logger.debug(
-      `User message ${params.user} reason=${res?.reason} probability=${res?.probability} skip=${res?.skip}`,
+      `User message ${params.user} ask=${res?.ask} skip=${res?.skip}`,
     );
-    return res ? res.skip : false;
+    return res;
   }
 
   async handleUserMessage(message: DialogueMessageDto) {
@@ -460,16 +471,19 @@ export class DialogueSpeechService {
     const avatar = await this.session.getAvatar(message);
     const settings = await this.session.getSettings(message);
 
-    const historyList = await this.memory.getConversation(message.sessionId);
+    const history = await this.memory.getSummary(message.sessionId);
 
-    const skip = await this.isUserTalkingToAvatar({
-      appPrompt: settings.prompt?.text,
-      avatar,
-      user: message.text,
-      history: historyList,
-    });
+    const messageCheck = await this.isUserTalkingToAvatar(
+      {
+        appPrompt: settings.prompt?.text,
+        avatar: packAvatarObject(avatar),
+        user: message.text,
+        history: history,
+      },
+      createSessionContext(message),
+    );
 
-    if (skip) {
+    if (messageCheck.skip) {
       await this.continueAgentSpeech(message.appId, message.sessionId);
       return;
     }
@@ -479,6 +493,12 @@ export class DialogueSpeechService {
       appId: message.appId,
       sessionId: message.sessionId,
     });
+
+    // in doubt, ask claryfication
+    if (messageCheck.ask) {
+      await this.replyToUser(messageCheck.ask, message);
+      return;
+    }
 
     // load emotion
     const emotion = this.emotion.getUserEmotion(message.sessionId);

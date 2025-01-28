@@ -14,6 +14,7 @@ export const LogTypeList = [
   'performance',
   'kpi',
   'error',
+  'llm',
 ] as const;
 
 export type LogType = (typeof LogTypeList)[number];

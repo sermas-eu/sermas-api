@@ -43,6 +43,7 @@ import {
   TaskEventTriggerDto,
   TaskFieldDto,
 } from './store/dialogue.tasks.store.dto';
+import { createSessionContext } from 'apps/session/src/session.context';
 
 interface TaskFieldContext {
   task: DialogueTaskDto;
@@ -244,6 +245,7 @@ export class DialogueTasksHandlerFieldsService {
         values: JSON.stringify(context.record.values),
       }),
       tag: 'tools',
+      sessionContext: createSessionContext(context.record),
     });
 
     perf();
@@ -283,6 +285,7 @@ export class DialogueTasksHandlerFieldsService {
           values: JSON.stringify(context.record.values),
         }),
         tag: 'tools',
+        sessionContext: createSessionContext(context.record),
       });
 
       perf();
@@ -366,6 +369,7 @@ Return the 'value' field value`;
         [values.field]: values.value,
       }),
       tag: 'tools',
+      sessionContext: createSessionContext(context.record),
     });
 
     perf();
@@ -408,6 +412,7 @@ Return the 'value' field value`;
       system: prompt,
       user: context.label,
       tag: 'translation',
+      sessionContext: createSessionContext(context.record),
     });
   }
 

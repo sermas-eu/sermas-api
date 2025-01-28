@@ -13,6 +13,7 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
+import { packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import {
   welcomeMessagePrompt,
@@ -21,6 +22,7 @@ import {
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
+import { createSessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class DialogueWelcomeService {
@@ -89,10 +91,11 @@ export class DialogueWelcomeService {
       system: welcomeMessagePrompt({
         type: 'welcome',
         settings,
-        avatar,
+        avatar: packAvatarObject(avatar),
       }),
       stream: true,
       tag: 'chat',
+      sessionContext: createSessionContext(ev),
     });
 
     perf();
@@ -138,6 +141,7 @@ export class DialogueWelcomeService {
             language: settings.language,
           }),
           tag: 'translation',
+          sessionContext: createSessionContext(ev),
         })
         .then((buttonsList) => {
           if (!buttonsList || !buttonsList.length) {

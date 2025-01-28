@@ -1,3 +1,4 @@
+import { SessionContext } from 'apps/session/src/session.context';
 import { PromptTemplateOutput } from './prompt/prompt.template';
 import {
   LLMCallResult,
@@ -13,6 +14,8 @@ export type LLMSendArgs = LLMProviderConfig & {
   stream: boolean;
   json: boolean;
   llmCallId?: string;
+
+  sessionContext?: SessionContext;
 };
 
 export type LLMChatArgs = LLMProviderConfig & {
@@ -28,6 +31,9 @@ export type LLMBaseArgs = {
   model?: string;
   tag?: LLMPromptTag;
   llmCallId?: string;
+
+  // provides sessionId to track request context
+  sessionContext?: SessionContext;
 };
 
 export type LLMChatRequest = {
@@ -60,4 +66,19 @@ export type AvatarChat = {
     toolsArgs?: Partial<LLMChatArgs>;
     provider?: LLMProvider;
     skipChat?: boolean;
+
+    sessionContext?: SessionContext;
   };
+
+export type LLMResultEvent = {
+  sessionId?: string;
+  appId?: string;
+  ts?: Date;
+  provider: LLMProvider;
+  model: string;
+  tag: LLMPromptTag;
+  messages: LLMMessage[];
+  params?: LLMMessage[];
+  response: string;
+  llmCallId: string;
+};

@@ -10,6 +10,7 @@ export const LLMPromptTagList = [
   'translation',
   'intent',
 ] as const;
+
 export type LLMPromptTag = (typeof LLMPromptTagList)[number];
 
 export const LLMProviderList = [

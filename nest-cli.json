@@ -54,15 +54,6 @@
         "tsConfigPath": "apps/auth/tsconfig.app.json"
       }
     },
-    "data-collection": {
-      "type": "application",
-      "root": "apps/data-collection",
-      "entryFile": "main",
-      "sourceRoot": "apps/data-collection/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/data-collection/tsconfig.app.json"
-      }
-    },
     "keycloak-admin": {
       "type": "application",
       "root": "apps/keycloak",

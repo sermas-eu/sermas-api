@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -28,6 +29,7 @@ import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { isDate, isNodeEnv, toDTO } from 'libs/util';
 import { FilterQuery, Model } from 'mongoose';
 
+import { Cache, CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
 import { v4 as uuidv4 } from 'uuid';
 import { AgentChangedDto } from './agent/session.agent.dto';
 import { SessionAgentService } from './agent/session.agent.service';
@@ -48,12 +50,15 @@ type SessionEventHandlerPayload = {
   settings?: Partial<AppSettingsDto>;
 };
 
+const SESSION_EXPIRATION = 5 * 60 * 1000; // 5 min
+
 type SessionContext = { appId: string; sessionId?: string };
 
 @Injectable()
+@CacheTTL(SESSION_EXPIRATION)
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
-  private sessionExpirationThreshold = 5 * 60 * 1000; // seconds
+  private sessionExpirationThreshold = SESSION_EXPIRATION;
 
   private sessionLock: { [sessionId: string]: Promise<void> | undefined } = {};
 
@@ -72,6 +77,7 @@ export class SessionService {
     private readonly platformApp: PlatformAppService,
     private readonly emitter: EventEmitter2,
     private readonly broker: MqttService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   @Interval(10 * 1000)
@@ -272,17 +278,28 @@ export class SessionService {
   }
 
   async read(sessionId: string, failIfNotFound = true) {
-    // this.logger.debug(`Get session sessionId=${sessionId}`);
+    const cacheKey = this.cacheKey(sessionId);
+
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) return cached as SessionDto;
+
     const session = await this.load(sessionId);
     if (!session) {
       if (failIfNotFound) throw new NotFoundException();
       return null;
     }
-    return toDTO<SessionDto>(session);
+    const sessionDto = toDTO<SessionDto>(session);
+
+    this.cacheManager.set(cacheKey, sessionDto);
+
+    return sessionDto;
   }
 
   async delete(sessionId: string): Promise<void> {
     this.logger.debug(`Delete session id=${sessionId}`);
+
+    await this.cacheManager.del(this.cacheKey(sessionId));
+
     const session = await this.read(sessionId);
     await this.sessionModel.deleteOne({ sessionId }).exec();
     await this.publishSessionChange(session, 'deleted');
@@ -347,6 +364,8 @@ export class SessionService {
 
     sessionRecord.modifiedAt = new Date();
 
+    await this.cacheManager.del(this.cacheKey(session.sessionId));
+
     await sessionRecord.save();
     await this.publishSessionChange(sessionRecord, 'updated');
 
@@ -355,6 +374,10 @@ export class SessionService {
     );
 
     return toDTO(sessionRecord);
+  }
+
+  private cacheKey(sessionId: string) {
+    return `session:${sessionId}`;
   }
 
   async getCurrentSession(

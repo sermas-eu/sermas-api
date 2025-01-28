@@ -219,11 +219,14 @@ export class DialogueVectorStoreService implements OnModuleInit {
     return this.collections[name];
   }
 
-  async search(appId: string, qs: string) {
+  async search(appId: string, qs: string, limit = 1) {
     const collection = await this.getCollection(appId);
     if (!collection) return '';
 
-    const response = await collection.query({ nResults: 5, queryTexts: [qs] });
+    const response = await collection.query({
+      nResults: limit,
+      queryTexts: [qs],
+    });
     const knowledge = response.documents?.flat().join('\n') || '';
     return knowledge;
   }

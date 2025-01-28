@@ -14,6 +14,7 @@ import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { MonitoringDatasetService } from './monitoring.dataset.service';
+import { LLMResultEvent } from 'libs/llm/llm.provider.dto';
 
 @Injectable()
 export class MonitoringDatasetEventsService {
@@ -110,6 +111,11 @@ export class MonitoringDatasetEventsService {
   @OnEvent('dialogue.speech.tts')
   async onTTS(payload: DialogueTextToSpeechDto & { buffer: Buffer }) {
     await this.dataset.saveAudio(payload);
+  }
+
+  @OnEvent('llm.result')
+  async onLLMResult(payload: LLMResultEvent) {
+    await this.dataset.save('LLM response', payload, 'llm');
   }
 
   @Subscribe({
