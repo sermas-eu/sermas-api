@@ -60,4 +60,10 @@ export class DialogueMessageDto extends SermasSessionDto {
     description: 'Toggle TTS rendering for this message',
   })
   ttsEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    default: false,
+    description: 'Specify if it is a welcome message',
+  })
+  isWelcome?: boolean;
 }
