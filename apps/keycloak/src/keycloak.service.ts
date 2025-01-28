@@ -49,7 +49,6 @@ import {
   KeycloakJwtTokenDto,
   SystemClientCreateDto,
 } from './keycloak.dto';
-import { InternalServerError } from 'openai';
 
 export const ROLE_APP_OWNER = 'app-owner';
 export const ROLE_ADMIN = 'platform-admin';
@@ -1264,10 +1263,34 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
     // 12h
     const ttl = 60 * 60 * 12;
 
+    const frontendUrl =
+      this.config.get('AUTH_KEYCLOAK_FRONTEND_URL') ||
+      this.kc.getKeycloakPublicUrl();
+
+    this.logger.debug(
+      `Settings realm ${realm} frontend URL to ${frontendUrl}. In case of wrong ISS errors, check your token ISS and update this settings with env AUTH_KEYCLOAK_FRONTEND_URL`,
+    );
+
     await this.kc.updateRealmSettings({
       realm,
       token: this.token,
       config: {
+        attributes: {
+          frontendUrl,
+          'acr.loa.map': '{}',
+          cibaBackchannelTokenDeliveryMode: 'poll',
+          cibaAuthRequestedUserHint: 'login_hint',
+          oauth2DevicePollingInterval: '5',
+          clientOfflineSessionMaxLifespan: '0',
+          clientSessionIdleTimeout: '43200',
+          clientOfflineSessionIdleTimeout: '0',
+          cibaInterval: '5',
+          realmReusableOtpCode: 'false',
+          cibaExpiresIn: '120',
+          oauth2DeviceCodeLifespan: '600',
+          parRequestUriLifespan: '60',
+          clientSessionMaxLifespan: '43200',
+        },
         accessTokenLifespan: ttl,
         ssoSessionIdleTimeout: ttl,
         ssoSessionMaxLifespan: ttl,
