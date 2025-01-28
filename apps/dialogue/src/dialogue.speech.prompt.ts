@@ -16,7 +16,7 @@ The task is to detect if the user MESSAGE should be considered part of the conve
 2. The user may be self-talking to themself.
 3. The user talks to the avatar as a real person, do not exclude messages that may be personal, colloquial or harsh.
 
-Answer in correctly parsable JSON format following this structure
+Answer only with parsable JSON following this structure. Do not add notes or explanations.
 {
   skip: boolean, // ignore or not this message
   ask: string // Must be empty if skip is true. In doubt, ask the user to repeat with a single coincise question.
@@ -26,9 +26,7 @@ MESSAGE is a textual input converted from a microphone. APPLICATION defines the 
 <% if (data.history) { %> HISTORY provides the conversation. <% } %>
 
 APPLICATION: <%= data.appPrompt %>
-<% if (data.avatar) { %>
-AVATAR: <%= data.avatar %>
-<% } %>
+<% if (data.avatar) { %>AVATAR: <%= data.avatar %><% } %>
 
 <% if (data.history) { %> HISTORY: <%= data.history %> <% } %>
 

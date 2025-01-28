@@ -26,7 +26,7 @@ import { DeepFaceDetectionEvent } from './providers/deepface/deepface.dto';
 import { DeepfaceService } from './providers/deepface/deepface.service';
 import { EmotionTrackerService } from './providers/emotion-tracker/emotion-tracker.service';
 import { ChatGPTObjectDetectionService } from './providers/object-detection/object-detection.chatgpt.service';
-import { ChatGPTSentimentAnalysisService } from './providers/sentiment-analysis/sentiment-analysis.chatgpt.service';
+import { ChatGPTSentimentAnalysisService } from './providers/sentiment-analysis/sentiment-analysis.llm.service';
 import { SpeechBrainService } from './providers/speechbrain/speechbrain.service';
 import { WakeWordService } from './providers/wake-word/wake-word.service';
 
