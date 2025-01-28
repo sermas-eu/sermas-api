@@ -112,6 +112,12 @@ export class UIContentDto<T = any> extends SermasSessionDto {
       'Unique sortable ID used to sort chunks from the same messageId',
   })
   chunkId?: string;
+
+  @ApiPropertyOptional({
+    default: false,
+    description: 'Specify if it is a welcome message',
+  })
+  isWelcome?: boolean;
 }
 
 // video
