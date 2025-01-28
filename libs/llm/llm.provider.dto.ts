@@ -61,3 +61,12 @@ export type AvatarChat = {
     provider?: LLMProvider;
     skipChat?: boolean;
   };
+
+export type LLMResultEvent = {
+  provider: LLMProvider;
+  model: string;
+  tag: LLMPromptTag;
+  messages: LLMMessage[];
+  params?: LLMMessage[];
+  response: string;
+};

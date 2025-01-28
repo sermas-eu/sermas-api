@@ -5,10 +5,12 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { hash, uuidv4 } from 'libs/util';
 import { Readable, Transform } from 'stream';
+import { LLMCacheService, SaveToCacheTransformer } from './cache.service';
 import {
   AvatarChat,
   LLMChatRequest,
   LLMParallelResult,
+  LLMResultEvent,
   LLMSendArgs,
   LLMToolsArgs,
 } from './llm.provider.dto';
@@ -18,10 +20,14 @@ import {
   PromptTemplateParams,
 } from './prompt/prompt.template';
 import { AntrophicChatProvider } from './providers/antrophic/antrophic.chat.provider';
+import { AzureOpenAIChatProvider } from './providers/azure-openai/azure-openai.chat.provider';
+import { AzureOpenAIEmbeddingProvider } from './providers/azure-openai/azure-openai.embeddings.provider';
 import { LLMChatProvider } from './providers/chat.provider';
 import { LLMEmbeddingProvider } from './providers/embeddings.provider';
 import { GeminiChatProvider } from './providers/gemini/gemini.chat.provider';
+import { GeminiEmbeddingProvider } from './providers/gemini/gemini.embeddings.provider';
 import { GroqChatProvider } from './providers/groq/groq.provider';
+import { HuggingfaceChatProvider } from './providers/huggingface/huggingface.chat.provider';
 import { MistralChatProvider } from './providers/mistral/mistral.chat.provider';
 import { MistralEmbeddingProvider } from './providers/mistral/mistral.embeddings.provider';
 import { OllamaEmbeddingProvider } from './providers/ollama/ollama.embeddings.provider';
@@ -43,11 +49,6 @@ import { readResponse } from './stream/util';
 import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
 import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
 import { parseJSON } from './util';
-import { GeminiEmbeddingProvider } from './providers/gemini/gemini.embeddings.provider';
-import { HuggingfaceChatProvider } from './providers/huggingface/huggingface.chat.provider';
-import { LLMCacheService, SaveToCacheTransformer } from './cache.service';
-import { AzureOpenAIChatProvider } from './providers/azure-openai/azure-openai.chat.provider';
-import { AzureOpenAIEmbeddingProvider } from './providers/azure-openai/azure-openai.embeddings.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -519,6 +520,10 @@ export class LLMProviderService implements OnModuleInit {
         : ('' as string);
   }
 
+  private emit(context: LLMResultEvent) {
+    this.emitter.emit(`llm.result`, context);
+  }
+
   // send(args: LLMSendArgs & { stream: false; json: false }): Promise<string>;
   // send<T = any>(
   //   args: LLMSendArgs & { stream: false; json: true },
@@ -621,11 +626,29 @@ export class LLMProviderService implements OnModuleInit {
           returnStream = returnStream.pipe(streamAdapter);
         }
 
-        if (this.printResponse) {
-          returnStream = returnStream.pipe(
-            new LogTransformer(this.LLMLogger, llmCallId),
-          );
-        }
+        returnStream = returnStream.pipe(
+          new LogTransformer((response: string) => {
+            // print to screen
+            if (this.printResponse) {
+              this.logger.debug(`${llmCallId || ''} |---`);
+              response
+                .split('\n')
+                .forEach((line) =>
+                  this.logger.debug(`${llmCallId || ''} | ${line}`),
+                );
+              this.logger.debug(`${llmCallId || ''} |---`);
+            }
+            // emit result
+            this.emit({
+              model: config.model,
+              provider: provider.getName(),
+              params: args.messages,
+              messages,
+              response,
+              tag: config.tag,
+            });
+          }),
+        );
 
         // add sentence transformer
         if (args.tag !== 'tools') {
@@ -641,8 +664,16 @@ export class LLMProviderService implements OnModuleInit {
       }
 
       const response = await readResponse(stream);
-
       this.logResponse(response, llmCallId);
+
+      this.emit({
+        model: config.model,
+        provider: provider.getName(),
+        params: args.messages,
+        messages,
+        response,
+        tag: config.tag,
+      });
 
       if (args.json) {
         const result = parseJSON<T>(response);
