@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { LLMSendArgs } from 'libs/llm/llm.provider.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { SessionService } from './src/session.service';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class SessionLLMContextHandlerService implements OnModuleInit {
