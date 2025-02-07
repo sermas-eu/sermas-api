@@ -839,6 +839,7 @@ export class LLMProviderService implements OnModuleInit {
       tag: 'tools',
       stream: false,
       json: true,
+      sessionContext: args.sessionContext,
       messages: [
         {
           role: 'user',
