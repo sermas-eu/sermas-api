@@ -104,8 +104,8 @@ export const SermasDefaultConfig = {
   // TTS_SERVICE Service for Text to Speech
   TTS_SERVICE: 'openai',
 
-  // GOOGLE_TTS_MODEL_TYPE Preferred Google TTS model type (such as Neural, Wavenet or Standard). See https://cloud.google.com/text-to-speech/docs/voices
-  GOOGLE_TTS_MODEL_TYPE: 'Neural',
+  // GOOGLE_TTS_MODEL_TYPE Preferred Google TTS model type (such as Journey, Neural, Wavenet or Standard). See https://cloud.google.com/text-to-speech/docs/voices
+  GOOGLE_TTS_MODEL_TYPE: 'Journey',
 
   // TTS_AZURE_KEY Azure subscription key
   TTS_AZURE_KEY: '',
