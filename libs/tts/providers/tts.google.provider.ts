@@ -91,7 +91,7 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
 
     if (!this.voiceModels) await this.loadVoices();
 
-    const modelType = this.config.get('GOOGLE_TTS_MODEL_TYPE') || 'Neural';
+    const modelType = this.config.get('GOOGLE_TTS_MODEL_TYPE') || 'Journey';
 
     let { text, ssml } = params;
 
@@ -187,7 +187,9 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
           name: ttsModelName,
         },
         // select the type of audio encoding
-        audioConfig: { audioEncoding: 'MP3' },
+        audioConfig: {
+          audioEncoding: 'MP3',
+        },
       };
     try {
       // Performs the text-to-speech request

@@ -65,6 +65,8 @@ export class GoogleSpeechToText implements ISpeechToText {
         // encoding: 1,
         //if uncertain not use it
         // sampleRateHertz: 8129,
+        model: 'latest_short',
+        useEnhanced: true,
         languageCode,
         speechContexts: [
           {
