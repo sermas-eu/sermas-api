@@ -24,7 +24,6 @@ import {
   RepositoryDocument,
 } from './dialogue.document.dto';
 import { DialogueDocument } from './dialogue.document.schema';
-// import axios from 'axios';
 import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
 import { CheerioCrawler, Sitemap } from 'crawlee';
 import { compile } from 'html-to-text';
@@ -232,7 +231,7 @@ export class DialogueDocumentService implements OnModuleInit {
     if (ev.record.rag && ev.record.rag.websites) {
       this.logger.debug(`Importing ${ev.record.rag.websites.length} websites`);
       for (const www of ev.record.rag.websites) {
-        await this.importWebsite(www);
+        await this.importWebsite(ev.record.appId, www);
       }
     }
   }
@@ -243,18 +242,27 @@ export class DialogueDocumentService implements OnModuleInit {
     return result;
   }
 
-  async importWebsite(website: RagWebsiteDto) {
+  async importWebsite(appId: string, website: RagWebsiteDto) {
     this.logger.debug(`Import content from ${website.url}`);
-    //await this.scrap(website);
+    await this.scrap(appId, website);
   }
 
-  async scrap(website: RagWebsiteDto): Promise<void> {
+  async scrap(appId: string, website: RagWebsiteDto): Promise<void> {
     // trigger collection recreate
-    this.emitter.emit('dialogue.document.import', website.appId);
+    this.emitter.emit('dialogue.document.import', appId);
     // use sitemap.xml
-    const { urls } = await Sitemap.load(website.url + '/sitemap.xml');
-    this.logger.log(`Found ${urls.length} URLs`);
-    await this.scrapUrls(website.appId, urls, website.filterPaths, this);
+    const urls = [
+      'sitemap.xml',
+      'sitemap_index.xml',
+      'sitemapindex.xml',
+      'sitemap.php',
+      'sitemap.txt',
+    ].map((u) => website.url + '/' + u);
+    const sitemap = await Sitemap.load(urls);
+    this.logger.log(`Found ${sitemap.urls.length} URLs`);
+    if (sitemap.urls.length) {
+      await this.scrapUrls(appId, sitemap.urls, website.filterPaths, this);
+    }
   }
 
   async scrapUrls(
@@ -273,6 +281,7 @@ export class DialogueDocumentService implements OnModuleInit {
     const compiledConvert = compile(options);
     const crawler = new CheerioCrawler({
       async requestHandler({ request, response, body, $ }) {
+        context.logger.debug(`Importing ${request.url}`);
         const toFilter = filterPaths.some((f) => request.url.indexOf(f) > -1);
         if (toFilter) {
           context.logger.debug(`Skipped ${request.url}`);
