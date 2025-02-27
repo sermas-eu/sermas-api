@@ -231,7 +231,7 @@ export class DialogueDocumentService implements OnModuleInit {
     if (ev.record.rag && ev.record.rag.websites) {
       this.logger.debug(`Importing ${ev.record.rag.websites.length} websites`);
       for (const www of ev.record.rag.websites) {
-        await this.importWebsite(ev.record.appId, www);
+        await this.importWebsite(www);
       }
     }
   }
@@ -242,9 +242,9 @@ export class DialogueDocumentService implements OnModuleInit {
     return result;
   }
 
-  async importWebsite(appId: string, website: RagWebsiteDto) {
+  async importWebsite(website: RagWebsiteDto) {
     this.logger.debug(`Import content from ${website.url}`);
-    await this.scrap(appId, website);
+    await this.scrap(website.appId, website);
   }
 
   async scrap(appId: string, website: RagWebsiteDto): Promise<void> {
