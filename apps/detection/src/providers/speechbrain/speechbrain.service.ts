@@ -18,7 +18,7 @@ export class SpeechBrainService implements OnModuleInit {
   private readonly logger = new Logger(SpeechBrainService.name);
 
   private available: boolean | undefined;
-  private verifyCallTimeout: number;
+  private callTimeout: number;
 
   constructor(private readonly config: ConfigService) {}
 
@@ -29,9 +29,7 @@ export class SpeechBrainService implements OnModuleInit {
 
   async onModuleInit() {
     await this.isAvailable();
-    this.verifyCallTimeout = +(
-      this.config.get('SPEECH_VERIFY_TIMEOUT_MSEC') || 1000
-    );
+    this.callTimeout = +(this.config.get('SPEECHBRAIN_TIMEOUT_MSEC') || 3000);
   }
 
   mapEmotion(em: string): Emotion {
@@ -84,17 +82,13 @@ export class SpeechBrainService implements OnModuleInit {
     return this.available;
   }
 
-  private async post<T>(
-    path: string,
-    data: FormData,
-    timeout = 2000,
-  ): Promise<T> {
+  private async post<T>(path: string, data: FormData): Promise<T> {
     const avail = await this.isAvailable();
     if (!avail) return null;
 
     const url = this.config.get('SPEECHBRAIN_URL') + path;
     const res = await axios.postForm(url, data, {
-      timeout,
+      timeout: this.callTimeout,
     });
     // this.logger.verbose(`Speechbrain result: '${JSON.stringify(res.data)}'`);
     return res.data as T;
@@ -154,7 +148,6 @@ export class SpeechBrainService implements OnModuleInit {
       const result = await this.post<SpeechBrainSpeakerVerification>(
         '/verify_speakers',
         form,
-        this.verifyCallTimeout,
       );
 
       if (result === null) return null;
