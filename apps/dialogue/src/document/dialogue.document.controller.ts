@@ -76,7 +76,7 @@ export class DialogueDocumentController {
   })
   @ApiScopes('document')
   async importWebsite(@Body() website: RagWebsiteDto): Promise<void> {
-    return this.document.importWebsite(website);
+    return this.document.importWebsite(website.appId, website);
   }
 
   @Delete(':appId/all')
