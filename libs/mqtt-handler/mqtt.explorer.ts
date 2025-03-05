@@ -11,6 +11,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { PlatformTopicsService } from 'apps/platform/src/topics/platform.topics.service';
 import { SermasBaseDto } from 'libs/sermas/sermas.dto';
+import { sleep } from 'libs/test';
 import {
   addDTOContext,
   extractTopicAppId,
@@ -102,7 +103,7 @@ export class MqttExplorer implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  subscribe(
+  async subscribe(
     options: MqttSubscribeOptions,
     parameters: MqttSubscriberParameter[],
     handle,
@@ -135,23 +136,38 @@ export class MqttExplorer implements OnModuleInit, OnModuleDestroy {
     const subscriptionTopics = this.preprocess(options);
 
     this.subscriptionTopics = Array.from([
-      ...new Set([...subscriptionTopics, ...subscriptionTopics]),
+      ...new Set([...this.subscriptionTopics, ...subscriptionTopics]),
     ]);
 
-    this.client.subscribe(subscriptionTopics, (err) => {
-      if (!err) {
-        // put it into this.subscribers;
-        this.addSubscriber(options, parameters, handle, provider);
-      } else if (err.message === 'Connection closed') {
-        //May be we are in app startup
-        setTimeout(
-          () => this.addSubscriber(options, parameters, handle, provider),
-          5000,
+    let subscribed = false;
+    let retries = 5;
+    while (!subscribed) {
+      this.logger.verbose(`Subscribing to ${subscriptionTopics}`);
+      subscribed = await new Promise<boolean>((resolve) => {
+        this.client.subscribe(subscriptionTopics, async (err) => {
+          if (err) {
+            this.logger.warn(
+              `subscribe topic=${options.topic} failed with  error=${err.message}, retrying in 2sec`,
+            );
+            this.logger.verbose(err.stack);
+            await sleep(2000);
+            retries--;
+            return resolve(false);
+          }
+          // put it into this.subscribers;
+          this.logger.debug(`Subscribed to ${subscriptionTopics}`);
+          this.addSubscriber(options, parameters, handle, provider);
+          resolve(true);
+        });
+      });
+
+      if (retries <= 0) {
+        this.logger.error(
+          `Failed to subscribe to topic=${subscriptionTopics}. Check mqtt connectivity and restart the api.`,
         );
-      } else {
-        this.logger.error(`subscribe topic [${options.topic} failed]`);
+        process.exit(1);
       }
-    });
+    }
   }
 
   explore() {
