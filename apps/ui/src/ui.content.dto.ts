@@ -346,7 +346,7 @@ export class QuizAnswerDto {
   @ApiPropertyOptional({
     type: ImageContentDto,
   })
-  answerImage: ImageContentDto;
+  answerImage?: ImageContentDto;
 }
 export class QuizContentDto {
   @ApiProperty()
