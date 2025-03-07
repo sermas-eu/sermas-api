@@ -343,6 +343,10 @@ export class QuizAnswerDto {
   reason: string;
   @ApiProperty()
   correct: boolean;
+  @ApiPropertyOptional({
+    type: ImageContentDto,
+  })
+  answerImage: ImageContentDto;
 }
 export class QuizContentDto {
   @ApiProperty()
