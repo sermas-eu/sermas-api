@@ -90,7 +90,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     }
 
     try {
-      await this.client.createCollection({
+      await this.client.getOrCreateCollection({
         name: appIdHash,
         embeddingFunction: this.embeddingFunction,
       });
