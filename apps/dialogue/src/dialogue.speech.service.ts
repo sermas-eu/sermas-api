@@ -10,6 +10,10 @@ import { DialogueEmotionService } from './dialogue.emotion.service';
 
 import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
 import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
+import {
+  createSessionContext,
+  SessionContext,
+} from 'apps/session/src/session.context';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { UIContentDto } from 'apps/ui/src/ui.content.dto';
@@ -30,10 +34,6 @@ import {
   CheckIfUserTalkingToAvatarPromptParam,
 } from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
-import {
-  createSessionContext,
-  SessionContext,
-} from 'apps/session/src/session.context';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -103,7 +103,6 @@ export class DialogueSpeechService {
 
     this.asyncApi.dialogueMessages(ttsEvent);
     this.emitter.emit('dialogue.chat.message', ttsEvent);
-    // perf('convertToText.empty-text');
   }
 
   async translateMessage(
@@ -180,7 +179,7 @@ export class DialogueSpeechService {
       }
 
       await this.replyToUser(
-        'Sorry, could you retry? If the room is too noisy, please use the keyboard',
+        'I cannot understand, could you try to use the keyboard',
         ev,
       );
 
@@ -217,13 +216,17 @@ export class DialogueSpeechService {
       perf();
     }
 
-    const expected = await this.isExpectedSpeaker(ev.sessionId, ev.buffer);
-    if (!expected) return;
-
-    const skip = await this.hasMultipleSpeakers(ev);
-    if (skip) return;
+    const promise = Promise.all([
+      await this.isExpectedSpeaker(ev.sessionId, ev.buffer),
+      await this.hasMultipleSpeakers(ev),
+    ]);
 
     this.emitter.emit('dialogue.speech.audio', ev);
+
+    await this.convertToText(ev, async () => {
+      const [expected, skip] = await promise;
+      return expected && !skip;
+    });
   }
 
   async isExpectedSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
@@ -266,7 +269,10 @@ export class DialogueSpeechService {
     this.emitter.emit('dialogue.chat.message', ev);
   }
 
-  async convertToText(payload: DialogueSpeechToTextDto) {
+  async convertToText(
+    payload: DialogueSpeechToTextDto,
+    validAudioChecks?: () => Promise<boolean>,
+  ): Promise<boolean> {
     try {
       // set default
       if (!payload.language) {
@@ -276,10 +282,16 @@ export class DialogueSpeechService {
       const { text, dialogueMessagePayload } =
         await this.sttProvider.convertToText(payload);
 
+      // parallelize audio checks with speechbrain
+      if (validAudioChecks) {
+        const validAudio = await validAudioChecks();
+        if (!validAudio) return false;
+      }
+
       if (!text) {
         this.logger.log(`STT: cannot detect text from audio clip.`);
         await this.continueAgentSpeech(payload.appId, payload.sessionId);
-        return;
+        return false;
       }
 
       this.logger.verbose(`STT: [${payload.language}] ${text}`);
@@ -299,6 +311,7 @@ export class DialogueSpeechService {
       };
 
       this.emitter.emit('dialogue.chat.message', sttEvent);
+      return true;
     } catch (err) {
       const { dialogueMessagePayload, language } = err as {
         dialogueMessagePayload: DialogueMessageDto;
@@ -309,6 +322,7 @@ export class DialogueSpeechService {
       }
       await this.replyToUser('Sorry, could you retry?', dialogueMessagePayload);
     }
+    return false;
   }
 
   async handleMessage(ev: DialogueMessageDto): Promise<void> {

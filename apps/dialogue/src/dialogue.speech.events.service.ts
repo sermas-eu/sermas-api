@@ -124,10 +124,10 @@ export class DialogueSpeechEventService {
     this.speech.handleSessionChanged(ev);
   }
 
-  @OnEvent('dialogue.speech.audio')
-  async convertToText(payload: DialogueSpeechToTextDto) {
-    this.speech.convertToText(payload);
-  }
+  // @OnEvent('dialogue.speech.audio')
+  // async convertToText(payload: DialogueSpeechToTextDto) {
+  //   //
+  // }
 
   @OnEvent('dialogue.chat.message', { async: true })
   async handleMessage(ev: DialogueMessageDto): Promise<void> {
