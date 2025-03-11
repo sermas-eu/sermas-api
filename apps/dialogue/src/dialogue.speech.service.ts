@@ -41,6 +41,7 @@ type OutgoingQueueMessage = { message: DialogueMessageDto; data: Buffer };
 
 type UserMessageCheck = {
   skip: boolean;
+  needInfo: boolean;
   ask: string;
 };
 
@@ -477,6 +478,7 @@ export class DialogueSpeechService {
       {
         appPrompt: settings.prompt?.text,
         avatar: packAvatarObject(avatar),
+        language: settings.language,
         user: message.text,
         history: history,
       },
@@ -495,7 +497,7 @@ export class DialogueSpeechService {
     });
 
     // in doubt, ask claryfication
-    if (messageCheck?.skip && messageCheck.ask) {
+    if (messageCheck?.needInfo && messageCheck.ask) {
       await this.replyToUser(messageCheck.ask, message);
       return;
     }
