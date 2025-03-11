@@ -6,10 +6,10 @@ import {
 } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as murmurHash from 'murmurhash-native';
 import { Transform } from 'stream';
 import { LLMMessage } from './providers/provider.dto';
 import { AnswerResponse, ToolResponse } from './tools/tool.dto';
+import { md5 } from 'libs/util';
 
 const cacheTTL = +process.env.CACHE_TTL_SEC || 86400;
 
@@ -20,13 +20,11 @@ export class LLMCacheService {
   private readonly logger = new Logger(LLMCacheService.name);
 
   private enabled = true;
-  private hashFunction: murmurHash.MurmurHashFnH;
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly config: ConfigService,
   ) {
-    this.hashFunction = murmurHash.murmurHash128x86;
     if (process.env.CLEAR_CACHE_ON_START) {
       this.logger.log('Clearing REDIS cache');
       this.cacheManager.reset();
@@ -36,7 +34,7 @@ export class LLMCacheService {
   }
 
   hashMessage(messages: LLMMessage[]) {
-    return this.hashFunction(JSON.stringify(messages));
+    return md5(JSON.stringify(messages));
   }
 
   async save(messages: LLMMessage[], data: any) {
