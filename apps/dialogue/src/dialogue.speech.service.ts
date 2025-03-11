@@ -455,7 +455,7 @@ export class DialogueSpeechService {
       stream: false,
       json: true,
       user: checkIfUserTalkingToAvatarPrompt(params),
-      tag: 'tasks',
+      tag: 'chat',
       sessionContext,
     });
 
@@ -495,7 +495,7 @@ export class DialogueSpeechService {
     });
 
     // in doubt, ask claryfication
-    if (messageCheck.ask) {
+    if (messageCheck?.skip && messageCheck.ask) {
       await this.replyToUser(messageCheck.ask, message);
       return;
     }
