@@ -21,6 +21,7 @@ import { DialogueMemoryModule } from './memory/dialogue.memory.module';
 import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
 import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
 import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
+import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tr
     DialogueWelcomeService,
     SpeechBrainService,
     IdentityTrackerService,
+    DialogueRequestMonitorService,
   ],
   exports: [DialogueSpeechService],
 })

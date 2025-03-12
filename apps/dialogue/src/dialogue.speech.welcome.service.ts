@@ -23,6 +23,7 @@ import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
 import { createSessionContext } from 'apps/session/src/session.context';
+import { uuidv4 } from 'libs/util';
 
 @Injectable()
 export class DialogueWelcomeService {
@@ -110,6 +111,7 @@ export class DialogueWelcomeService {
     const onChatData = async (text: string) => {
       const msg: DialogueMessageDto = {
         actor: 'agent',
+        requestId: uuidv4(),
         appId: ev.appId,
         language: settings.language,
         sessionId: ev.record.sessionId,

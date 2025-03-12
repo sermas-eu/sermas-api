@@ -111,7 +111,7 @@ export class DialogueIntentService {
       .filter((m) => m.role === 'user' || m.role === 'assistant')
       .map((m) => `${m.role}: ${m.content.replace('\n', ' ')}`);
 
-    if (history.length < 2) return;
+    if (history.length < 2) return null;
 
     const settings = await this.session.getSettings(ev);
     const avatar = await this.session.getAvatar(ev);

@@ -15,19 +15,24 @@ import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId } from 'libs/sermas/sermas.utils';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
+import { uuidv4 } from 'libs/util';
 import { DialogueAsyncApiService } from './dialogue.async.service';
+import { DialogueSessionRequestEvent } from './dialogue.request-monitor.dto';
+import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import { DialogueWelcomeService } from './dialogue.speech.welcome.service';
 
 @Injectable()
 export class DialogueSpeechEventService {
   private readonly logger = new Logger(DialogueSpeechEventService.name);
+
   constructor(
     @Inject(MqttService) private readonly mqttService: MqttService,
     private session: SessionService,
     private speech: DialogueSpeechService,
     private welcome: DialogueWelcomeService,
     private async: DialogueAsyncApiService,
+    private readonly requestMonitor: DialogueRequestMonitorService,
   ) {}
 
   @Subscribe({
@@ -54,6 +59,7 @@ export class DialogueSpeechEventService {
       const ev: DialogueSpeechToTextDto = {
         appId: session.appId,
         sessionId,
+        requestId: uuidv4(),
 
         buffer,
         mimetype: 'audio/wav',
@@ -116,6 +122,11 @@ export class DialogueSpeechEventService {
     }
 
     await this.async.dialogueMessages(message);
+  }
+
+  @OnEvent('session.request')
+  async onSessionRequest(ev: DialogueSessionRequestEvent) {
+    this.requestMonitor.updateRequestStatus(ev);
   }
 
   @OnEvent('session.changed')
