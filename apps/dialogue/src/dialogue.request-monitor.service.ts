@@ -112,30 +112,12 @@ export class DialogueRequestMonitorService {
 
     // update status
     req.status = ev.status;
-
-    if (ev.status === 'processing') {
-      const took = req.perf(req.status, true);
-      const tookRounded = Math.round((took / 1000) * 10) / 10;
-      this.logger.debug(
-        `Processing took=${tookRounded}s requestId=${req.requestId} sessionId=${req.sessionId}`,
-      );
-      return;
-    }
-
-    if (ev.status === 'cancelled') {
-      this.logger.debug(
-        `Cancelled request requestId=${req.requestId} sessionId=${req.sessionId}`,
-      );
-      return;
-    }
-
-    if (ev.status === 'ended') {
-      const took = req.perf(req.status, true);
-      const tookRounded = Math.round((took / 1000) * 10) / 10;
-
-      this.logger[tookRounded > 4 ? 'warn' : 'debug'](
-        `Completed request took=${tookRounded}s requestId=${ev.requestId} sessionId=${req.sessionId}`,
-      );
-    }
+   
+    const took = req.perf(req.status, true);
+    const tookRounded = Math.round((took / 1000) * 10) / 10;
+    const logLevel = tookRounded > 4 ? 'warn' : 'debug';
+    this.logger[logLevel](
+      `${req.status} request took=${tookRounded}s requestId=${ev.requestId} sessionId=${req.sessionId}`,
+    );
   }
 }
