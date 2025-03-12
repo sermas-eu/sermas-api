@@ -17,6 +17,7 @@ import { getChunkId } from 'libs/sermas/sermas.utils';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { uuidv4 } from 'libs/util';
 import { DialogueAsyncApiService } from './dialogue.async.service';
+import { DialogueChatProgressEvent } from './dialogue.chat.dto';
 import { DialogueSessionRequestEvent } from './dialogue.request-monitor.dto';
 import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 import { DialogueSpeechService } from './dialogue.speech.service';
@@ -140,9 +141,14 @@ export class DialogueSpeechEventService {
   //   //
   // }
 
-  @OnEvent('dialogue.chat.message', { async: true })
+  @OnEvent('dialogue.chat.message')
   async handleMessage(ev: DialogueMessageDto): Promise<void> {
     this.speech.handleMessage(ev);
+  }
+
+  @OnEvent('dialogue.chat.progress')
+  async onChatProgress(ev: DialogueChatProgressEvent): Promise<void> {
+    this.speech.onChatProgress(ev);
   }
 
   @OnEvent('ui.content')

@@ -161,7 +161,7 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
       ttsModelName = defaultModelName;
     }
 
-    this.logger.debug(
+    this.logger.verbose(
       `TTS model for languageCode=${languageCode} gender=${gender} ${ttsModelName}`,
     );
 

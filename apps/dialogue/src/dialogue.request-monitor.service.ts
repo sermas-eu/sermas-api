@@ -110,7 +110,10 @@ export class DialogueRequestMonitorService {
       return;
     }
 
-    if (req.status === 'processing') {
+    // update status
+    req.status = ev.status;
+
+    if (ev.status === 'processing') {
       const took = req.perf(req.status, true);
       const tookRounded = Math.round((took / 1000) * 10) / 10;
       this.logger.debug(
@@ -119,14 +122,14 @@ export class DialogueRequestMonitorService {
       return;
     }
 
-    if (req.status === 'cancelled') {
+    if (ev.status === 'cancelled') {
       this.logger.debug(
         `Cancelled request requestId=${req.requestId} sessionId=${req.sessionId}`,
       );
       return;
     }
 
-    if (req.status === 'ended') {
+    if (ev.status === 'ended') {
       const took = req.perf(req.status, true);
       const tookRounded = Math.round((took / 1000) * 10) / 10;
 

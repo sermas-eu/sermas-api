@@ -6,6 +6,7 @@ import {
   AppToolsDTO,
 } from 'apps/platform/src/app/platform.app.dto';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
+import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionService } from 'apps/session/src/session.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { AvatarChat } from 'libs/llm/llm.provider.dto';
@@ -14,7 +15,10 @@ import { SelectedTool } from 'libs/llm/tools/tool.dto';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
-import { DialogueToolNotMatchingDto } from './dialogue.chat.dto';
+import {
+  DialogueChatProgressEvent,
+  DialogueToolNotMatchingDto,
+} from './dialogue.chat.dto';
 import { avatarChatPrompt, packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueVectorStoreService } from './document/dialogue.vectorstore.service';
 import { DialogueIntentService } from './intent/dialogue.intent.service';
@@ -33,7 +37,6 @@ import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { DialogueToolsRepositoryDto } from './tools/repository/dialogue.tools.repository.dto';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
 import { extractToolValues } from './tools/utils';
-import { createSessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class DialogueChatService {
@@ -349,17 +352,43 @@ export class DialogueChatService {
             }
           });
 
-          this.sendMessage(message, messageId, toSend);
+          const chunkId = getChunkId();
+          this.sendMessage(message, messageId, chunkId, toSend);
+
+          this.emitChatProgress({
+            completed: false,
+            messageId,
+            chunkId,
+            sessionId,
+            appId,
+            requestId: message.requestId,
+          });
         }
       })
       .on('end', async () => {
         if (skipChatResponse) return;
 
+        let chunkId: string | undefined = undefined;
         if (chunkBuffer.length > 1) {
-          this.sendMessage(message, messageId, chunkBuffer);
+          chunkId = getChunkId();
+          this.sendMessage(message, messageId, chunkId, chunkBuffer);
         }
+
+        this.emitChatProgress({
+          completed: true,
+          messageId,
+          chunkId,
+          sessionId,
+          appId,
+          requestId: message.requestId,
+        });
+
         this.logger.verbose(`chat response stream completed`);
       });
+  }
+
+  emitChatProgress(ev: DialogueChatProgressEvent) {
+    this.emitter.emit('dialogue.chat.progress', ev);
   }
 
   async handleTools(args: {
@@ -537,7 +566,12 @@ export class DialogueChatService {
     return sentence;
   }
 
-  sendMessage(message: DialogueMessageDto, messageId: string, text: string) {
+  sendMessage(
+    message: DialogueMessageDto,
+    messageId: string,
+    chunkId: string,
+    text: string,
+  ) {
     // ensure links are sent as text
     text = this.convertMarkdownLinksToHtml(text);
 
@@ -552,7 +586,7 @@ export class DialogueChatService {
       language: message.language,
       ts: new Date(),
       clientId: message.clientId,
-      chunkId: getChunkId(),
+      chunkId,
       messageId,
       appId: message.appId,
       emotion: message.emotion,

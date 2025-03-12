@@ -8,6 +8,12 @@ export type CheckIfUserTalkingToAvatarPromptParam = {
   avatar: string;
 };
 
+export type UserMessageCheck = {
+  skip: boolean;
+  repeat: boolean;
+  question: string;
+};
+
 export const checkIfUserTalkingToAvatarPrompt =
   PromptTemplate.create<CheckIfUserTalkingToAvatarPromptParam>(
     'evaluate-user-message',
