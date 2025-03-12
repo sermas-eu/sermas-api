@@ -10,6 +10,10 @@ import { DialogueEmotionService } from './dialogue.emotion.service';
 
 import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
 import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
+import {
+  createSessionContext,
+  SessionContext,
+} from 'apps/session/src/session.context';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { UIContentDto } from 'apps/ui/src/ui.content.dto';
@@ -22,28 +26,28 @@ import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { STTProviderService } from 'libs/stt/stt.provider.service';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { TTSProviderService } from 'libs/tts/tts.provider.service';
+import { uuidv4 } from 'libs/util';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
+import { DialogueChatProgressEvent } from './dialogue.chat.dto';
 import { packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueChatService } from './dialogue.chat.service';
 import {
+  DialogueSessionRequestEvent,
+  DialogueSessionRequestStatus,
+} from './dialogue.request-monitor.dto';
+import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
+import {
+  OutgoingChunkQueue,
+  OutgoingQueueMessage,
+} from './dialogue.speech.dto';
+import {
   checkIfUserTalkingToAvatarPrompt,
   CheckIfUserTalkingToAvatarPromptParam,
+  UserMessageCheck,
 } from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
-import {
-  createSessionContext,
-  SessionContext,
-} from 'apps/session/src/session.context';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
-
-type OutgoingQueueMessage = { message: DialogueMessageDto; data: Buffer };
-
-type UserMessageCheck = {
-  skip: boolean;
-  needInfo: boolean;
-  ask: string;
-};
 
 @Injectable()
 export class DialogueSpeechService {
@@ -52,10 +56,7 @@ export class DialogueSpeechService {
   private sttMessagesCache: Record<string, Date> = {};
 
   outgoingMessageSemaphore: Set<string> = new Set<string>();
-  outgoingMessageQueue: Record<
-    string,
-    Record<string, Promise<OutgoingQueueMessage>>
-  > = {};
+  outgoingMessageQueue: Record<string, OutgoingChunkQueue> = {};
 
   constructor(
     private readonly emotion: DialogueEmotionService,
@@ -80,12 +81,17 @@ export class DialogueSpeechService {
     private readonly identiyTracker: IdentityTrackerService,
 
     private readonly monitor: MonitorService,
+    private readonly requestMonitor: DialogueRequestMonitorService,
   ) {}
 
   private async replyToUser(
     messageInEnglish: string,
     dialogueMessagePayload: DialogueMessageDto,
   ) {
+    if (!this.isRequestActive(dialogueMessagePayload)) {
+      return;
+    }
+
     const agentMessage = await this.translateMessage(
       {
         ...dialogueMessagePayload,
@@ -103,7 +109,6 @@ export class DialogueSpeechService {
 
     this.asyncApi.dialogueMessages(ttsEvent);
     this.emitter.emit('dialogue.chat.message', ttsEvent);
-    // perf('convertToText.empty-text');
   }
 
   async translateMessage(
@@ -158,7 +163,7 @@ export class DialogueSpeechService {
     const counter = await this.speechbrainProvider.countSpeakers(ev.buffer);
     if (
       counter &&
-      counter.speakerCount.value != 1 &&
+      counter.speakerCount.value > 2 &&
       counter.speakerCount.probability > 0.5
     ) {
       this.logger.warn(
@@ -180,7 +185,7 @@ export class DialogueSpeechService {
       }
 
       await this.replyToUser(
-        'Sorry, could you retry? If the room is too noisy, please use the keyboard',
+        'I cannot understand, could you try to use the keyboard',
         ev,
       );
 
@@ -189,9 +194,23 @@ export class DialogueSpeechService {
     return false;
   }
 
-  async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
-    const isWav = ev.mimetype === 'audio/wav';
+  private trackRequest(
+    status: DialogueSessionRequestStatus,
+    ev: Omit<DialogueSessionRequestEvent, 'status'>,
+  ) {
+    // track overall request processing time
+    this.emitter.emit('session.request', {
+      ...ev,
+      requestId: ev.requestId || uuidv4(),
+      status,
+    });
+  }
 
+  async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
+    // track request
+    this.trackRequest('started', ev);
+
+    const isWav = ev.mimetype === 'audio/wav';
     const perf = this.monitor.performance({
       ...ev,
       label: isWav ? 'stt-convert-wavfile' : 'stt-convert-sox',
@@ -217,13 +236,19 @@ export class DialogueSpeechService {
       perf();
     }
 
-    const expected = await this.isExpectedSpeaker(ev.sessionId, ev.buffer);
-    if (!expected) return;
-
-    const skip = await this.hasMultipleSpeakers(ev);
-    if (skip) return;
+    const promise = Promise.all([
+      await this.isExpectedSpeaker(ev.sessionId, ev.buffer),
+      await this.hasMultipleSpeakers(ev),
+    ]);
 
     this.emitter.emit('dialogue.speech.audio', ev);
+
+    const ok = await this.convertToText(ev, () => promise);
+
+    if (ok) {
+      // cancel active requests, excepts for the current one
+      this.requestMonitor.cancelRequests(ev.sessionId, ev.requestId);
+    }
   }
 
   async isExpectedSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
@@ -260,13 +285,33 @@ export class DialogueSpeechService {
   }
 
   async chat(ev: DialogueMessageDto): Promise<void> {
+    // track request
+    this.trackRequest('started', ev);
+
     this.logger.verbose(
       `Received chat message actor=${ev.actor} sessionId=${ev.sessionId} appId=${ev.appId}`,
     );
     this.emitter.emit('dialogue.chat.message', ev);
   }
 
-  async convertToText(payload: DialogueSpeechToTextDto) {
+  private isRequestActive(payload: { sessionId?: string; requestId?: string }) {
+    // drop request if not active
+    const isActive = this.requestMonitor.isRequestActive(
+      payload.sessionId,
+      payload.requestId,
+    );
+    if (!isActive) {
+      this.logger.debug(
+        `Dropping requestId=${payload.requestId} sessionId=${payload.sessionId}`,
+      );
+    }
+    return isActive;
+  }
+
+  async convertToText(
+    payload: DialogueSpeechToTextDto,
+    validAudioChecks?: () => Promise<boolean[]>,
+  ): Promise<boolean> {
     try {
       // set default
       if (!payload.language) {
@@ -276,10 +321,23 @@ export class DialogueSpeechService {
       const { text, dialogueMessagePayload } =
         await this.sttProvider.convertToText(payload);
 
-      if (!text) {
-        this.logger.log(`STT: cannot detect text from audio clip.`);
+      // parallelize audio checks with speechbrain
+
+      let validSpeaker = false;
+      if (validAudioChecks) {
+        const [isExpectedSpeaker, skipAudio] = await validAudioChecks();
+        validSpeaker = isExpectedSpeaker;
+        if (skipAudio) return false;
+      }
+
+      if (!validSpeaker || !text) {
+        this.logger.debug(`STT: cannot detect text from audio clip.`);
         await this.continueAgentSpeech(payload.appId, payload.sessionId);
-        return;
+        return false;
+      }
+
+      if (!this.isRequestActive(payload)) {
+        return false;
       }
 
       this.logger.verbose(`STT: [${payload.language}] ${text}`);
@@ -299,6 +357,7 @@ export class DialogueSpeechService {
       };
 
       this.emitter.emit('dialogue.chat.message', sttEvent);
+      return true;
     } catch (err) {
       const { dialogueMessagePayload, language } = err as {
         dialogueMessagePayload: DialogueMessageDto;
@@ -309,9 +368,24 @@ export class DialogueSpeechService {
       }
       await this.replyToUser('Sorry, could you retry?', dialogueMessagePayload);
     }
+    return false;
+  }
+
+  async onChatProgress(ev: DialogueChatProgressEvent) {
+    if (ev.requestId) return;
+
+    this.logger.debug(
+      `Chat generation progress completed=${ev.completed} requestId=${ev.requestId} sessionId=${ev.sessionId}`,
+    );
+
+    this.trackRequest('processing', ev);
   }
 
   async handleMessage(ev: DialogueMessageDto): Promise<void> {
+    if (!this.isRequestActive(ev)) {
+      return;
+    }
+
     // user message
     if (ev.actor === 'user') {
       try {
@@ -377,6 +451,10 @@ export class DialogueSpeechService {
   }
 
   async sendAgentSpeech(message: DialogueMessageDto) {
+    if (!this.isRequestActive(message)) {
+      return;
+    }
+
     message.ts = message.ts ? new Date(message.ts) : new Date();
 
     message.chunkId = message.chunkId || getChunkId(message.ts);
@@ -392,45 +470,61 @@ export class DialogueSpeechService {
       .then((data) => Promise.resolve({ data, message }))
       .catch(() => Promise.resolve({ data: null, message }));
 
-    // console.warn(`+ chunkId=${message.chunkId} message=${message.text}`);
+    // track request processing completion
+    this.trackRequest('processing', message);
 
-    this.addToOutgoingQueue(message.sessionId, message.chunkId, promise);
+    this.addToOutgoingQueue(message, promise);
   }
 
   async addToOutgoingQueue(
-    sessionId: string,
-    chunkId: string,
+    dialogueMessage: DialogueMessageDto,
     loader: Promise<OutgoingQueueMessage>,
   ) {
     // add to queue
-    this.outgoingMessageQueue[sessionId] =
-      this.outgoingMessageQueue[sessionId] || {};
-    this.outgoingMessageQueue[sessionId][chunkId] = loader;
+    if (!this.outgoingMessageQueue[dialogueMessage.requestId]) {
+      this.outgoingMessageQueue[dialogueMessage.requestId] = {
+        chunks: {},
+        sent: 0,
+        total: 0,
+        streaming: false,
+      };
+    }
 
-    this.processOutgoingQueue(sessionId);
+    this.outgoingMessageQueue[dialogueMessage.requestId].total++;
+    this.outgoingMessageQueue[dialogueMessage.requestId].chunks[
+      dialogueMessage.chunkId
+    ] = {
+      dialogueMessage,
+      loader,
+    };
+
+    await this.processOutgoingQueue(dialogueMessage.requestId);
   }
 
-  async processOutgoingQueue(sessionId: string) {
-    if (this.outgoingMessageSemaphore.has(sessionId)) return;
+  async processOutgoingQueue(requestId: string) {
+    if (this.outgoingMessageSemaphore.has(requestId)) return;
 
-    const chunks = this.outgoingMessageQueue[sessionId];
-    if (!chunks) return;
+    const outgoingChunksQueue = this.outgoingMessageQueue[requestId];
+    if (!outgoingChunksQueue) return;
 
-    const keys = Object.keys(chunks);
-    if (!keys.length) return;
+    const chunkKeys = Object.keys(outgoingChunksQueue.chunks);
+    if (!chunkKeys.length) return;
 
-    const chunkId = keys[0];
+    const chunkId = chunkKeys[0];
 
-    this.outgoingMessageSemaphore.add(sessionId);
+    const { loader, dialogueMessage } = outgoingChunksQueue.chunks[chunkId];
+    if (!this.isRequestActive(dialogueMessage)) return;
+
+    this.outgoingMessageSemaphore.add(requestId);
+
+    const { data, message } = await loader;
 
     try {
-      const { data, message } = await chunks[chunkId];
-
       try {
         if (data && data.length) {
-          // console.warn(
-          //   `sending chunkId=${message.chunkId} message=${message.text}`,
-          // );
+          this.logger.debug(
+            `sending TTS chunk chunkId=${message.chunkId} message=${message.text}`,
+          );
           await this.asyncApi.agentSpeech(message, data);
         }
       } catch (e) {
@@ -441,10 +535,18 @@ export class DialogueSpeechService {
     } catch (e) {
       this.logger.error(`Failed to process agent speech: ${e.stack}`);
     } finally {
-      delete this.outgoingMessageQueue[sessionId][chunkId];
+      outgoingChunksQueue.sent++;
+      delete this.outgoingMessageQueue[requestId].chunks[chunkId];
 
-      this.outgoingMessageSemaphore.delete(sessionId);
-      this.processOutgoingQueue(sessionId);
+      if (outgoingChunksQueue.sent === outgoingChunksQueue.total) {
+        this.logger.debug(`TTS queue sent for requestId=${requestId}`);
+        delete this.outgoingMessageQueue[requestId];
+
+        this.trackRequest('ended', dialogueMessage);
+      }
+
+      this.outgoingMessageSemaphore.delete(requestId);
+      this.processOutgoingQueue(requestId);
     }
   }
 
@@ -461,7 +563,7 @@ export class DialogueSpeechService {
     });
 
     this.logger.debug(
-      `User message ${params.user} ask=${res?.ask} skip=${res?.skip}`,
+      `User message ${params.user} skip=${res?.skip} repeat=${res?.repeat} question=${res?.question}`,
     );
     return res;
   }
@@ -497,8 +599,8 @@ export class DialogueSpeechService {
     });
 
     // in doubt, ask claryfication
-    if (messageCheck?.needInfo && messageCheck.ask) {
-      await this.replyToUser(messageCheck.ask, message);
+    if (messageCheck?.repeat && messageCheck.question) {
+      await this.replyToUser(messageCheck.question, message);
       return;
     }
 
@@ -555,6 +657,7 @@ export class DialogueSpeechService {
       appId: payload.appId,
       clientId: payload.clientId,
       sessionId: payload.sessionId,
+      requestId: payload.requestId,
       gender,
       llm: settings.llm,
       ts: payload.ts || new Date(),

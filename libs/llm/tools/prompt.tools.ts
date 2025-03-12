@@ -27,9 +27,7 @@ Follow strictly all of the following rules:
 - the matching tool must be one of those in TOOLS
 
 If there is no match, return an empty object
-Confirm in one short sentence the selected tool but never ask or engage the user with additional questions. 
-Do not mention the name of tools. 
-Never add Notes or Explanations.
+Do not mention the name of tools. Never add Notes or Explanations.
 
 Output in parsable JSON, following exactly this structure:
 {
@@ -38,22 +36,15 @@ Output in parsable JSON, following exactly this structure:
       // optional, set only if in TOOL signature
       "a matching TOOL argument name": "the value extracted from USER message" 
     } 
-  },
-  answer: "your contextual answer"
+  }
 }
 
+TOOLS: <%= data.tools %>
 
-TOOLS:
-<%= data.tools %>
-
-<% if (data.user) { %>
-USER:
-<%= data.user %>
-<% } %>
+<% if (data.user) { %>USER: <%= data.user %> <% } %>
 
 <% if (data.history) { %>
-HISTORY:
-<%= data.history %>
+HISTORY: <%= data.history %>
 <% } %>`,
 );
 

@@ -24,13 +24,14 @@ import { DialogueSpeechService } from 'apps/dialogue/src/dialogue.speech.service
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
 import { ApiUpload } from 'libs/decorator/openapi.upload.decorator';
+import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
+import { DefaultLanguage } from 'libs/language/lang-codes';
 import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { getChunkId } from 'libs/sermas/sermas.utils';
-import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
+import { uuidv4 } from 'libs/util';
+import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
 
 @ApiBearerAuth()
 @Controller('dialogue/speech')
@@ -89,6 +90,8 @@ export class DialogueSpeechController {
     const ev: DialogueSpeechToTextDto = {
       ...data,
 
+      requestId: uuidv4(),
+
       appId,
       sessionId,
 
@@ -130,6 +133,8 @@ export class DialogueSpeechController {
 
     const dialogueMessagePayload: DialogueMessageDto = {
       ...data,
+
+      requestId: uuidv4(),
 
       appId,
       sessionId,
