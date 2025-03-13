@@ -38,13 +38,12 @@ export const intentPrompt = PromptTemplate.create<IntentPrompt>(
 
 # FILTER
 
-Considering those factors:
-- User message is converted from a microphone
-- There may be noise caused by other people talking in the room
-- Users may reflecting or talking to themselves.
+Identify a USER MESSAGE relevant to CONVERSATION and DOMAIN. Consider those factors to decide:
+- Keep messages which contains typos, possibly caused by microphone audio conversion
+- Skip unrelated input which seems coming by other people in the room
+- Skip message which seems be a reflection or self-talking from the user
 
-Skip the message if it is incomplete or have no meaning. 
-If message should be skipped, do not continue with following steps.
+If message is skipped, do not continue to next steps.
 
 # INTENTS
 

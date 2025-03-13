@@ -158,6 +158,11 @@ export class DialogueIntentService {
     };
     this.emitter.emit('dialogue.chat.validation', validationEvent);
 
+    if (res?.skip) {
+      this.logger.debug(`Skipping user request message=${ev.text}`);
+      return res;
+    }
+
     if (res?.result) {
       if (!currentTask) {
         const matches = tasks.filter((t) => t.taskId === res.result.taskId);

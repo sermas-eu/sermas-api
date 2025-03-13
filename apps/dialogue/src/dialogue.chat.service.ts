@@ -91,6 +91,10 @@ export class DialogueChatService {
 
     const intent = await this.intent.match(message);
     if (intent) {
+      if (intent.skip) {
+        return;
+      }
+
       this.logger.debug(
         `Found task '${intent.task?.name}' taskId=${intent.result?.taskId} ongoing=${intent.record ? true : false} match=${intent.result?.match} trigger=${intent.result?.trigger} cancel=${intent.result?.cancel}`,
       );

@@ -4,6 +4,7 @@ import {
   PromptTemplate,
 } from 'libs/llm/prompt/prompt.template';
 import { Emotion } from 'libs/sermas/sermas.dto';
+import { BaseSystemPrompt } from './dialogue.system.prompt';
 
 type AvatarChatPromptParams = {
   appPrompt: string;
@@ -24,7 +25,13 @@ export const packAvatarObject = (avatar: RepositoryAvatarDto) => {
 };
 
 export const avatarSystemChatPrompt =
-  PromptTemplate.create<AvatarChatPromptParams>('chat-system', ``);
+  PromptTemplate.create<AvatarChatPromptParams>(
+    'chat-system',
+    `You are an AVATAR discussing with USER on topics described in APPLICATION. 
+The conversation must be fast and coincise, reply with short answers.
+
+${BaseSystemPrompt}`,
+  );
 
 export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
   'chat',

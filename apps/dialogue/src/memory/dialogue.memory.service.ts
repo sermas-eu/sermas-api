@@ -42,7 +42,7 @@ export class DialogueMemoryService implements OnModuleInit {
         user: `Summarize the following interaction between user and agent in a few sentences. Be precise but coincise, do not add context.\n\n${history}`,
         stream: false,
         json: false,
-        tag: 'chat',
+        tag: 'summarize',
         sessionContext: createSessionContext({ sessionId }),
       });
 
