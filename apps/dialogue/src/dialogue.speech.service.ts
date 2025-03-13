@@ -10,10 +10,7 @@ import { DialogueEmotionService } from './dialogue.emotion.service';
 
 import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
 import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
-import {
-  createSessionContext,
-  SessionContext,
-} from 'apps/session/src/session.context';
+import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { UIContentDto } from 'apps/ui/src/ui.content.dto';
@@ -28,8 +25,10 @@ import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { TTSProviderService } from 'libs/tts/tts.provider.service';
 import { uuidv4 } from 'libs/util';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
-import { DialogueChatProgressEvent } from './dialogue.chat.dto';
-import { packAvatarObject } from './dialogue.chat.prompt';
+import {
+  DialogueChatProgressEvent,
+  DialogueChatValidationEvent,
+} from './dialogue.chat.dto';
 import { DialogueChatService } from './dialogue.chat.service';
 import {
   DialogueSessionRequestEvent,
@@ -40,11 +39,6 @@ import {
   OutgoingChunkQueue,
   OutgoingQueueMessage,
 } from './dialogue.speech.dto';
-import {
-  checkIfUserTalkingToAvatarPrompt,
-  CheckIfUserTalkingToAvatarPromptParam,
-  UserMessageCheck,
-} from './dialogue.speech.prompt';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
@@ -308,6 +302,19 @@ export class DialogueSpeechService {
     return isActive;
   }
 
+  async onUserMessageValidation(payload: DialogueChatValidationEvent) {
+    if (payload.skip) {
+      await this.continueAgentSpeech(payload.appId, payload.sessionId);
+      return;
+    }
+
+    await this.stopAgentSpeech(payload);
+
+    // emit user message
+    this.emitter.emit('dialogue.chat.message.user', payload.message);
+    await this.asyncApi.dialogueMessages(payload.message);
+  }
+
   async convertToText(
     payload: DialogueSpeechToTextDto,
     validAudioChecks?: () => Promise<boolean[]>,
@@ -550,67 +557,63 @@ export class DialogueSpeechService {
     }
   }
 
-  async isUserTalkingToAvatar(
-    params: CheckIfUserTalkingToAvatarPromptParam,
-    sessionContext?: SessionContext,
-  ) {
-    const res = await this.llmProvider.chat<UserMessageCheck>({
-      stream: false,
-      json: true,
-      user: checkIfUserTalkingToAvatarPrompt(params),
-      tag: 'chat',
-      sessionContext,
-    });
+  // async isUserTalkingToAvatar(
+  //   params: CheckIfUserTalkingToAvatarPromptParam,
+  //   sessionContext?: SessionContext,
+  // ) {
+  //   const res = await this.llmProvider.chat<UserMessageCheck>({
+  //     stream: false,
+  //     json: true,
+  //     user: checkIfUserTalkingToAvatarPrompt(params),
+  //     tag: 'chat',
+  //     sessionContext,
+  //   });
 
-    this.logger.debug(
-      `User message ${params.user} skip=${res?.skip} repeat=${res?.repeat} question=${res?.question}`,
-    );
-    return res;
-  }
+  //   this.logger.debug(
+  //     `User message ${params.user} skip=${res?.skip} repeat=${res?.repeat} question=${res?.question}`,
+  //   );
+  //   return res;
+  // }
 
   async handleUserMessage(message: DialogueMessageDto) {
-    // evaluate message in context, skip if not matching
+    // // evaluate message in context, skip if not matching
 
-    const avatar = await this.session.getAvatar(message);
-    const settings = await this.session.getSettings(message);
+    // const avatar = await this.session.getAvatar(message);
+    // const settings = await this.session.getSettings(message);
 
-    const history = await this.memory.getSummary(message.sessionId);
+    // const history = await this.memory.getSummary(message.sessionId);
 
-    const messageCheck = await this.isUserTalkingToAvatar(
-      {
-        appPrompt: settings.prompt?.text,
-        avatar: packAvatarObject(avatar),
-        language: settings.language,
-        user: message.text,
-        history: history,
-      },
-      createSessionContext(message),
-    );
+    // const messageCheck = await this.isUserTalkingToAvatar(
+    //   {
+    //     appPrompt: settings.prompt?.text,
+    //     avatar: packAvatarObject(avatar),
+    //     language: settings.language,
+    //     user: message.text,
+    //     history: history,
+    //   },
+    //   createSessionContext(message),
+    // );
 
-    if (messageCheck?.skip) {
-      await this.continueAgentSpeech(message.appId, message.sessionId);
-      return;
-    }
+    // if (messageCheck?.skip) {
+    //   await this.continueAgentSpeech(message.appId, message.sessionId);
+    //   return;
+    // }
 
-    // clear speech queue
-    await this.stopAgentSpeech({
-      appId: message.appId,
-      sessionId: message.sessionId,
-    });
+    // // clear speech queue
+    // await this.stopAgentSpeech({
+    //   appId: message.appId,
+    //   sessionId: message.sessionId,
+    // });
 
-    // in doubt, ask claryfication
-    if (messageCheck?.repeat && messageCheck.question) {
-      await this.replyToUser(messageCheck.question, message);
-      return;
-    }
+    // // in doubt, ask claryfication
+    // if (messageCheck?.repeat && messageCheck.question) {
+    //   await this.replyToUser(messageCheck.question, message);
+    //   return;
+    // }
 
     // load emotion
     const emotion = this.emotion.getUserEmotion(message.sessionId);
     if (emotion) message.emotion = emotion;
-
-    // emit user message
-    this.emitter.emit('dialogue.chat.message.user', message);
-    await this.asyncApi.dialogueMessages(message);
 
     // generate answer
     await this.chatProvider.inference(message);

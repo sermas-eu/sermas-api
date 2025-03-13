@@ -12,7 +12,10 @@ import {
   UIContentDto,
 } from 'apps/ui/src/ui.content.dto';
 import { UIInteractionDTO, UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import { ToolParamType, ToolSchemaTypeList } from 'libs/llm/tools/tool.dto';
+import {
+  ToolParamType,
+  ToolSchemaTypeList,
+} from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { hash, uuidv4 } from 'libs/util';

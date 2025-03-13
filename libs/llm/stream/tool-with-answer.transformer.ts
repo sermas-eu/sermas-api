@@ -5,7 +5,7 @@ import {
   LLMTool,
   SelectedTool,
   ToolResponse,
-} from '../tools/tool.dto';
+} from '../../../apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 
 export class ToolWithAnswerTransformer extends Transform {
   private logger = new Logger();

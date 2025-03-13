@@ -8,12 +8,9 @@ import { Readable, Transform } from 'stream';
 import { ulid } from 'ulidx';
 import { LLMCacheService, SaveToCacheTransformer } from './cache.service';
 import {
-  AvatarChat,
   LLMChatRequest,
-  LLMParallelResult,
   LLMResultEvent,
   LLMSendArgs,
-  LLMToolsArgs,
 } from './llm.provider.dto';
 import { SessionContextHandler } from './llm.session-context.handler';
 import {
@@ -47,9 +44,7 @@ import {
 import { LogTransformer } from './stream/log.transformer';
 import { SentenceTransformer } from './stream/sentence.transformer';
 import { readResponse } from './stream/util';
-import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
-import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
-import { parseJSON } from './util';
+import { extractProviderName, parseJSON } from './util';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -107,17 +102,7 @@ export class LLMProviderService implements OnModuleInit {
   }
 
   extractProviderName(service: string) {
-    const data: { provider: string; model: string } = {
-      provider: undefined,
-      model: undefined,
-    };
-    if (!service) return data;
-    const parts = service.split('/');
-    if (parts.length) {
-      data.provider = parts.shift();
-      if (parts.length) data.model = parts.join('/');
-    }
-    return data;
+    return extractProviderName(service);
   }
 
   getDefaultChatProviderModel(provider: LLMProvider) {
@@ -816,140 +801,5 @@ export class LLMProviderService implements OnModuleInit {
 
     perf();
     return res as LLMCallResult;
-  }
-
-  async tools(args: LLMToolsArgs): Promise<LLMToolsResponse> {
-    const perf = this.monitor.performance({ label: 'tools' });
-    const tools = args.tools || [];
-
-    if (!tools.length || !args.history?.length) {
-      this.logger.debug(`Skip call, empty tools list or history`);
-      perf();
-      return {
-        tools: [],
-      };
-    }
-
-    type ToolsResponse = {
-      matches: Record<string, Record<string, any>>;
-      answer?: string;
-    };
-
-    const req = await this.send<ToolsResponse>({
-      tag: 'tools',
-      stream: false,
-      json: true,
-      sessionContext: args.sessionContext,
-      messages: [
-        {
-          role: 'user',
-          content: toolsPrompt({
-            tools: convertToolsToPrompt(tools),
-            history: args.history,
-            user: args.user,
-          }),
-        },
-      ],
-    });
-
-    const res = req as ToolsResponse;
-    perf();
-
-    const selectedTools: SelectedTool[] = [];
-    for (const name in res.matches) {
-      const filtered = tools.filter((t) => t.name === name);
-      if (!filtered.length) {
-        this.logger.warn(
-          `Cannot found LLM inferred tool name=${name} tools=${tools.map((t) => t.name).join(', ')}`,
-        );
-        continue;
-      }
-      const schema = filtered.at(0);
-      const tool: SelectedTool = {
-        name,
-        values: res.matches[name],
-        schema: schema,
-      };
-
-      selectedTools.push(tool);
-    }
-
-    return {
-      tools: selectedTools,
-      answer: res.answer,
-    };
-  }
-
-  // parallelize calls to tools and chat.
-  // if tools are found, return the tools stream
-  // otherwise return the plain chat response
-  // NOTE it creates 2x the call to the provider(s)
-  async avatarChat(args: AvatarChat): Promise<LLMParallelResult> {
-    const perf = {
-      tools: this.monitor.performance({ label: 'tools' }),
-      chat: this.monitor.performance({ label: 'chat' }),
-    };
-
-    const chatProvider = args.chatArgs?.provider || args.provider;
-    const chatModel = args.chatArgs?.model || args.model;
-
-    const toolProvider = args.toolsArgs?.provider || args.provider;
-    const toolModel = args.toolsArgs?.model || args.model;
-
-    const toolsRequest =
-      args.tools && args.tools.length && args.history
-        ? this.tools({
-            tools: args.tools,
-            history: args.history,
-            user: args.user,
-            provider: toolProvider,
-            model: toolModel,
-            tag: args.tag,
-            sessionContext: args.sessionContext,
-          })
-        : Promise.reject();
-
-    const chatRequest =
-      args.skipChat !== true && args.chat
-        ? this.chat({
-            tag: args.tag || 'chat',
-            provider: chatProvider,
-            model: chatModel,
-            stream: true,
-            json: false,
-            user: args.chat,
-            sessionContext: args.sessionContext,
-          }).then((res: LLMCallResult) => {
-            if (!res) return Promise.reject();
-            if (res.stream === null) return Promise.reject();
-            return Promise.resolve(res);
-          })
-        : Promise.reject();
-
-    const results = await Promise.allSettled([toolsRequest, chatRequest]);
-
-    const [toolsPromise, chatPromise] = results;
-
-    const chatResult =
-      chatPromise.status === 'fulfilled' ? chatPromise.value : undefined;
-    const selectedTools =
-      toolsPromise.status === 'fulfilled' ? toolsPromise.value : undefined;
-
-    if (selectedTools && selectedTools.tools?.length) {
-      chatResult?.abort && chatResult?.abort();
-      perf.tools('tools', true);
-      return {
-        stream: Readable.from([selectedTools.answer || '']),
-        tools: selectedTools.tools,
-        abort: () => {},
-      };
-    }
-
-    if (chatResult) {
-      perf.chat('chat', true);
-      return { stream: chatResult.stream, abort: chatResult.abort };
-    }
-
-    return { tools: undefined, stream: undefined };
   }
 }

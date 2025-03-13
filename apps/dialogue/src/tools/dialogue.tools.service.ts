@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { SelectedTool } from 'libs/llm/tools/tool.dto';
+import { SelectedTool } from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
 import { deepcopy, uuidv4 } from 'libs/util';
 import { DialogueToolNotMatchingDto } from '../dialogue.chat.dto';

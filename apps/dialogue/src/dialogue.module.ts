@@ -2,10 +2,14 @@ import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from 'apps/auth/src/auth.module';
+import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
+import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
+import { DialogueChatAvatarService } from './avatar/dialogue.chat.avatar.service';
 import { DialogueAsyncApiService } from './dialogue.async.service';
 import { DialogueChatService } from './dialogue.chat.service';
 import { DialogueEmotionService } from './dialogue.emotion.service';
+import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 import { DialogueSpeechController } from './dialogue.speech.controller';
 import { DialogueSpeechEventService } from './dialogue.speech.events.service';
 import { DialogueSpeechService } from './dialogue.speech.service';
@@ -19,9 +23,6 @@ import {
 import { DialogueIntentModule } from './intent/dialogue.intent.module';
 import { DialogueMemoryModule } from './memory/dialogue.memory.module';
 import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
-import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
-import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
-import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { DialogueRequestMonitorService } from './dialogue.request-monitor.servic
     SpeechBrainService,
     IdentityTrackerService,
     DialogueRequestMonitorService,
+    DialogueChatAvatarService,
   ],
   exports: [DialogueSpeechService],
 })

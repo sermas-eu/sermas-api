@@ -3,7 +3,7 @@ import {
   AnswerResponse,
   ToolResponse,
   ToolWithAnswerResponse,
-} from '../tools/tool.dto';
+} from '../../../apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 
 export const MIN_SENTENCE_LENGTH = 10;
 

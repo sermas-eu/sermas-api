@@ -57,9 +57,9 @@ export class DialogueRequestMonitorService {
   }
 
   cancelRequests(sessionId: string, activeRequestId?: string) {
-    this.logger.debug(
-      `Cancelling requests for sessionId=${sessionId} activeRequestId=${activeRequestId || ''}`,
-    );
+    // this.logger.debug(
+    //   `Cancelling requests for sessionId=${sessionId} activeRequestId=${activeRequestId || ''}`,
+    // );
     for (const requestId in this.requestMonitor[sessionId]) {
       if (activeRequestId && activeRequestId === requestId) {
         continue;
@@ -89,7 +89,7 @@ export class DialogueRequestMonitorService {
       const perf = this.monitor.performance({
         ...ev,
         label: `request-monitor:${ev.requestId}`,
-        threshold: ev.threshold || 3500,
+        threshold: ev.threshold || 6000,
       });
 
       this.requestMonitor[ev.sessionId][ev.requestId] = {
@@ -112,12 +112,12 @@ export class DialogueRequestMonitorService {
 
     // update status
     req.status = ev.status;
-   
-    const took = req.perf(req.status, true);
+
+    const took = req.perf(req.status, false);
     const tookRounded = Math.round((took / 1000) * 10) / 10;
     const logLevel = tookRounded > 4 ? 'warn' : 'debug';
     this.logger[logLevel](
-      `${req.status} request took=${tookRounded}s requestId=${ev.requestId} sessionId=${req.sessionId}`,
+      `request status=${req.status} took=${tookRounded}s requestId=${ev.requestId} sessionId=${req.sessionId}`,
     );
   }
 }

@@ -1,4 +1,4 @@
-import { SelectedTool } from 'libs/llm/tools/tool.dto';
+import { SelectedTool } from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 
 export interface ToolTriggerEventDto
   extends SelectedTool<{

@@ -1,16 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DialogueMemoryService } from 'apps/dialogue/src/memory/dialogue.memory.service';
 import { DialogueTasksService } from 'apps/dialogue/src/tasks/dialogue.tasks.service';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
+import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionService } from 'apps/session/src/session.service';
+import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
+import { DialogueChatValidationEvent } from '../dialogue.chat.dto';
+import { packAvatarObject } from '../dialogue.chat.prompt';
 import { DialogueMemoryMessageDto } from '../memory/dialogue.memory.dto';
 import { DialogueTaskRecordDto } from '../tasks/record/dialogue.tasks.record.dto';
-import { DialogueTaskRecordService } from '../tasks/record/dialogue.tasks.record.service';
 import { DialogueTaskDto } from '../tasks/store/dialogue.tasks.store.dto';
-import { intentPrompt } from './dialogue.intent.prompt';
-import { createSessionContext } from 'apps/session/src/session.context';
+import { intentPrompt, intentSystemPrompt } from './dialogue.intent.prompt';
 
 type TaskQuestionWrapper = {
   taskId: string;
@@ -20,6 +22,7 @@ type TaskQuestionWrapper = {
 };
 
 type TaskIntentMatch = {
+  skip: boolean;
   result: TaskQuestionWrapper;
   task: DialogueTaskDto;
   record?: DialogueTaskRecordDto;
@@ -37,13 +40,12 @@ export class DialogueIntentService {
   private readonly logger = new Logger(DialogueIntentService.name);
 
   constructor(
-    private readonly platformApp: PlatformAppService,
     private readonly session: SessionService,
     private readonly llm: LLMProviderService,
 
+    private readonly emitter: EventEmitter2,
     private readonly memory: DialogueMemoryService,
     private readonly tasks: DialogueTasksService,
-    private readonly taskRecords: DialogueTaskRecordService,
 
     private readonly monitor: MonitorService,
   ) {}
@@ -73,11 +75,7 @@ export class DialogueIntentService {
     return intents;
   }
 
-  async match(ev: {
-    sessionId: string;
-    appId: string;
-    language?: string;
-  }): Promise<TaskIntentMatch | null> {
+  async match(ev: DialogueMessageDto): Promise<TaskIntentMatch | null> {
     const currentRecord = await this.tasks.getCurrentRecord(ev.sessionId);
     let currentTask: DialogueTaskDto;
 
@@ -107,11 +105,11 @@ export class DialogueIntentService {
       }
     }
 
-    const history = messages
-      .filter((m) => m.role === 'user' || m.role === 'assistant')
-      .map((m) => `${m.role}: ${m.content.replace('\n', ' ')}`);
-
-    if (history.length < 2) return null;
+    const userMessages = allMessages.filter((m) => m.role === 'user');
+    const userMessage = userMessages.length
+      ? userMessages[userMessages.length - 1].content
+      : '';
+    const summary = await this.memory.getSummary(ev.sessionId);
 
     const settings = await this.session.getSettings(ev);
     const avatar = await this.session.getAvatar(ev);
@@ -135,11 +133,15 @@ export class DialogueIntentService {
       ...this.llm.extractProviderName(llm?.intent),
       stream: false,
       json: true,
-      user: intentPrompt({
-        settings,
-        avatar,
-        history: history.join('\n'),
+      system: intentSystemPrompt({
+        app: settings.prompt.text,
+        avatar: packAvatarObject(avatar),
+        language: settings.language,
+        summary,
         intents: JSON.stringify(intents),
+        message: userMessage,
+      }),
+      user: intentPrompt({
         currentTask: currentTask?.name,
       }),
       tag: 'intent',
@@ -147,6 +149,14 @@ export class DialogueIntentService {
     });
 
     perf();
+
+    const validationEvent: DialogueChatValidationEvent = {
+      appId: ev.appId,
+      sessionId: ev.sessionId,
+      message: ev,
+      skip: res?.skip,
+    };
+    this.emitter.emit('dialogue.chat.validation', validationEvent);
 
     if (res?.result) {
       if (!currentTask) {

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { SelectedTool } from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 import {
   AppSettingsDto,
   AppToolsDTO,
@@ -9,17 +10,18 @@ import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionService } from 'apps/session/src/session.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { AvatarChat } from 'libs/llm/llm.provider.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { SelectedTool } from 'libs/llm/tools/tool.dto';
+import { LLMBaseArgs } from 'libs/llm/llm.provider.dto';
+import { extractProviderName } from 'libs/llm/util';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
+import { AvatarChatRequest } from './avatar/dialogue.chat.avatar.dto';
+import { DialogueChatAvatarService } from './avatar/dialogue.chat.avatar.service';
 import {
   DialogueChatProgressEvent,
   DialogueToolNotMatchingDto,
 } from './dialogue.chat.dto';
-import { avatarChatPrompt, packAvatarObject } from './dialogue.chat.prompt';
+import { packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueVectorStoreService } from './document/dialogue.vectorstore.service';
 import { DialogueIntentService } from './intent/dialogue.intent.service';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
@@ -48,7 +50,7 @@ export class DialogueChatService {
     private readonly platformAppService: PlatformAppService,
     private readonly session: SessionService,
 
-    private readonly llmProvider: LLMProviderService,
+    private readonly avatarChat: DialogueChatAvatarService,
     private readonly memory: DialogueMemoryService,
     private readonly vectorStore: DialogueVectorStoreService,
     private readonly tools: DialogueToolsService,
@@ -61,7 +63,7 @@ export class DialogueChatService {
 
   async inference(
     message: DialogueMessageDto,
-    llmArgs?: AvatarChat,
+    llmArgs?: { chatArgs: LLMBaseArgs; toolsArgs: LLMBaseArgs },
     silent = false,
   ) {
     const { appId, sessionId } = message;
@@ -77,17 +79,10 @@ export class DialogueChatService {
     if (!llmArgs) {
       const llm = await this.session.getLLM(sessionId);
       llmArgs = {
-        chatArgs: llm?.chat
-          ? this.llmProvider.extractProviderName(llm?.chat)
-          : undefined,
-        toolsArgs: llm?.tools
-          ? this.llmProvider.extractProviderName(llm?.tools)
-          : undefined,
+        chatArgs: llm?.chat ? extractProviderName(llm?.chat) : undefined,
+        toolsArgs: llm?.tools ? extractProviderName(llm?.tools) : undefined,
       };
     }
-
-    // search rag context
-    const knowledge = await this.vectorStore.search(appId, message.text);
 
     // load tasks
     // const tasks = await this.tasks.list(appId);
@@ -138,7 +133,7 @@ export class DialogueChatService {
       }
     }
 
-    let tasksList = '[]';
+    let tasksList: string = undefined;
     if (tasks && tasks.length) {
       tasksList = JSON.stringify(
         (tasks || []).map((t) => ({
@@ -185,7 +180,7 @@ export class DialogueChatService {
       repositories = sessionRepositories;
     }
 
-    const skipChat = false;
+    // const skipChat = false;
     if (currentTask && currentField) {
       this.logger.debug(`Current task field is ${currentField.name}`);
       // skipChat = currentField.required === true && !matchOrRemoveTask;
@@ -236,18 +231,26 @@ export class DialogueChatService {
       label: 'chat.user',
     });
 
+    // search rag context
+    const knowledge = await this.vectorStore.search(appId, message.text);
+
     // get history
     const summary = await this.memory.getSummary(sessionId);
 
-    const req: AvatarChat = {
+    const req: AvatarChatRequest = {
       ...(llmArgs || {}),
-      chat: avatarChatPrompt({
-        appPrompt,
+      sessionContext: createSessionContext(message),
+
+      system: {
+        app: appPrompt,
         language: message.language,
-        emotion: message.emotion || 'neutral',
         avatar: packAvatarObject(avatar),
         history: summary,
-        user: message.text,
+        message: message.text,
+        emotion: message.emotion || 'neutral',
+      },
+
+      chat: {
         knowledge,
         tasks: tasksList,
         // track current task progress
@@ -259,18 +262,12 @@ export class DialogueChatService {
           currentField && currentField.hint
             ? `${currentField.label || currentField.name}: ${currentField.hint}`
             : undefined,
-      }),
+      },
 
       tools,
-      history: summary,
-
-      skipChat,
-
-      sessionContext: createSessionContext(message),
     };
 
-    const res = await this.llmProvider.avatarChat(req);
-    perf();
+    const res = await this.avatarChat.send(req);
 
     const { skipResponse } = await this.handleTools({
       appId,
@@ -290,6 +287,7 @@ export class DialogueChatService {
     });
 
     if (!res || !res.stream) {
+      perf();
       this.logger.warn(
         `LLM response is empty appId=${appId} sessionId=${sessionId}`,
       );
@@ -309,6 +307,8 @@ export class DialogueChatService {
 
     res.stream
       .on('data', (chunk) => {
+        perf();
+
         let text = chunk;
         if (res.tools) {
           text = chunk.data;

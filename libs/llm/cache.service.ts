@@ -8,7 +8,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Transform } from 'stream';
 import { LLMMessage } from './providers/provider.dto';
-import { AnswerResponse, ToolResponse } from './tools/tool.dto';
+import {
+  AnswerResponse,
+  ToolResponse,
+} from '../../apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 import { md5 } from 'libs/util';
 
 const cacheTTL = +process.env.CACHE_TTL_SEC || 86400;

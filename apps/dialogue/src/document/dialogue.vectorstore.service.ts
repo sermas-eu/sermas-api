@@ -28,7 +28,6 @@ export class DialogueVectorStoreService implements OnModuleInit {
   constructor(
     private readonly config: ConfigService,
     private readonly llmProvider: LLMProviderService,
-
     private readonly monitor: MonitorService,
   ) {
     this.chromaUrl = this.config.get('CHROMA_URL');
@@ -223,10 +222,19 @@ export class DialogueVectorStoreService implements OnModuleInit {
     const collection = await this.getCollection(appId);
     if (!collection) return '';
 
+    const perf = this.monitor.performance({
+      appId,
+      label: 'embeddings.search',
+      threshold: 500,
+    });
+
     const response = await collection.query({
       nResults: limit,
       queryTexts: [qs],
     });
+
+    perf();
+
     const knowledge = response.documents?.flat().join('\n') || '';
     return knowledge;
   }
