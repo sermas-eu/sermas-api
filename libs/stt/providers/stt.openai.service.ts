@@ -13,11 +13,9 @@ export class OpenAISpeechToText implements ISpeechToText {
     content: Buffer,
     language: string,
   ): Promise<SpeechToTextResponse> {
-    const file = new Blob([content], {
-      type: 'application/octet-stream',
-    }) as any;
-    file.name = 'audio.wav';
-    file.lastModified = Date.now();
+    const file = new File([content], 'audio.wav', {
+      lastModified: Date.now(),
+    });
 
     const openai = this.llm.getOpenAIClient();
 
