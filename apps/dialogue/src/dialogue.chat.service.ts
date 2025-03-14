@@ -96,12 +96,12 @@ export class DialogueChatService {
       }
 
       this.logger.debug(
-        `Found task '${intent.task?.name}' taskId=${intent.result?.taskId} ongoing=${intent.record ? true : false} match=${intent.result?.match} trigger=${intent.result?.trigger} cancel=${intent.result?.cancel}`,
+        `Found task '${intent.task?.name}' taskId=${intent.intent?.taskId} ongoing=${intent.record ? true : false} match=${intent.intent?.match} trigger=${intent.intent?.trigger} cancel=${intent.intent?.cancel}`,
       );
 
       tasks = [intent.task];
 
-      if (intent.result?.cancel && intent.record) {
+      if (intent.intent?.cancel && intent.record) {
         this.logger.log(
           `Cancelling ongoing task taskId=${intent.task?.taskId}`,
         );
@@ -114,10 +114,10 @@ export class DialogueChatService {
       }
 
       if (
-        intent.result?.match &&
-        intent.result?.trigger &&
+        intent.intent?.match &&
+        intent.intent?.trigger &&
         !intent.record &&
-        !intent.result.cancel
+        !intent.intent.cancel
       ) {
         const task = intent.task;
         this.logger.log(`Trigger task ${intent.task.name}`);

@@ -23,7 +23,7 @@ type TaskQuestionWrapper = {
 
 type TaskIntentMatch = {
   skip: boolean;
-  result: TaskQuestionWrapper;
+  intent: TaskQuestionWrapper;
   task: DialogueTaskDto;
   record?: DialogueTaskRecordDto;
 };
@@ -163,9 +163,9 @@ export class DialogueIntentService {
       return res;
     }
 
-    if (res?.result) {
+    if (res?.intent) {
       if (!currentTask) {
-        const matches = tasks.filter((t) => t.taskId === res.result.taskId);
+        const matches = tasks.filter((t) => t.taskId === res.intent.taskId);
         if (!matches.length) return;
         res.task = matches[0];
       } else {
