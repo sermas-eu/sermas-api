@@ -21,6 +21,7 @@ type AvatarSystemChat = {
     history: string;
     message: string;
     emotion?: string;
+    tools?: string;
   };
 };
 
@@ -55,6 +56,6 @@ export type AvatarChatRequest = AvatarSystemChat &
     toolsArgs?: Partial<LLMChatArgs>;
   };
 
-export type LLMParallelResult = LLMCallResult & {
+export type LLMCombinedResult = LLMCallResult & {
   tools?: SelectedTool[];
 };

@@ -6,13 +6,9 @@ import {
 } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { md5 } from 'libs/util';
 import { Transform } from 'stream';
 import { LLMMessage } from './providers/provider.dto';
-import {
-  AnswerResponse,
-  ToolResponse,
-} from '../../apps/dialogue/src/avatar/dialogue.chat.tools.dto';
-import { md5 } from 'libs/util';
 
 const cacheTTL = +process.env.CACHE_TTL_SEC || 86400;
 
@@ -29,7 +25,7 @@ export class LLMCacheService {
     private readonly config: ConfigService,
   ) {
     if (process.env.CLEAR_CACHE_ON_START) {
-      this.logger.log('Clearing REDIS cache');
+      this.logger.log('Clearing REDIS LLM responses cache');
       this.cacheManager.reset();
     }
     this.enabled = config.get('LLM_CACHE_ENABLED') !== '0';
@@ -74,21 +70,12 @@ export class SaveToCacheTransformer extends Transform {
   }
 
   _transform(
-    chunk: Buffer | string | AnswerResponse | ToolResponse,
+    chunk: Buffer | string,
     encoding: string,
     callback: CallableFunction,
   ) {
-    chunk = chunk || '';
-
-    const isBuffer = (chunk as Buffer).byteLength !== undefined;
-    if (isBuffer) {
-      chunk = chunk.toString();
-    }
-
-    if (typeof chunk === 'string') {
-      this.buffer += chunk.toString();
-    }
-
+    chunk = (chunk || '').toString();
+    this.buffer += chunk.toString();
     this.push(chunk);
     callback();
   }
@@ -99,9 +86,8 @@ export class SaveToCacheTransformer extends Transform {
 
   _flush(callback: CallableFunction) {
     if (this.buffer.trim().length > 0) {
-      this.logger.log(`saving ${this.buffer.toString()}`);
+      this.logger.verbose(`caching response=${this.buffer.toString()}`);
       this.addToCache();
-      // this.push(this.buffer);
       this.buffer = '';
     }
     callback();

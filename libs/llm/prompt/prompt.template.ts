@@ -79,8 +79,9 @@ export class PromptTemplate<T = any> {
     defaults?: T,
     params?: Partial<PromptTemplateParams>,
   ): PromptRenderCallback {
+    // remove spaces at start of line, used for indentation
+    prompt = prompt.replace(/^\s*/gm, '').trim();
     const template = new PromptTemplate<T>(name, prompt, defaults, params);
-
     return (
       data?: T,
       params?: Partial<PromptTemplateParams>,

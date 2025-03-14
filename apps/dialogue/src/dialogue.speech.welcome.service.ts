@@ -4,6 +4,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { DialogueEmotionService } from './dialogue.emotion.service';
 
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
+import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
@@ -13,7 +14,9 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { packAvatarObject } from './dialogue.chat.prompt';
+import { uuidv4 } from 'libs/util';
+import { SentenceTransformer } from './avatar/transformer/sentence.transformer';
+import { packAvatarObject } from './avatar/utils';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import {
   welcomeMessagePrompt,
@@ -22,8 +25,6 @@ import {
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { uuidv4 } from 'libs/util';
 
 @Injectable()
 export class DialogueWelcomeService {
@@ -97,6 +98,7 @@ export class DialogueWelcomeService {
       stream: true,
       tag: 'chat',
       sessionContext: createSessionContext(ev),
+      transformers: [new SentenceTransformer()],
     });
 
     perf();
@@ -108,14 +110,14 @@ export class DialogueWelcomeService {
 
     const messageId = getMessageId();
 
-    const onChatData = async (text: string) => {
+    const onChatData = async (chunk: Buffer | string) => {
       const msg: DialogueMessageDto = {
         actor: 'agent',
         requestId: uuidv4(),
         appId: ev.appId,
         language: settings.language,
         sessionId: ev.record.sessionId,
-        text,
+        text: chunk.toString(),
         gender: avatar.gender,
         emotion,
         ts: new Date(),

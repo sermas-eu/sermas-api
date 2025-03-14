@@ -42,7 +42,7 @@ import {
   LLMProviderList,
 } from './providers/provider.dto';
 import { LogTransformer } from './stream/log.transformer';
-import { SentenceTransformer } from './stream/sentence.transformer';
+import { TextTransformer } from './stream/text-transformer.stream';
 import { readResponse } from './stream/util';
 import { extractProviderName, parseJSON } from './util';
 
@@ -672,12 +672,16 @@ export class LLMProviderService implements OnModuleInit {
           }),
         );
 
-        // add sentence transformer
-        if (args.tag !== 'tools') {
-          returnStream = returnStream.pipe(new SentenceTransformer());
-          returnStream = returnStream.pipe(
-            new SaveToCacheTransformer(this.cache, args.messages),
-          );
+        returnStream = returnStream.pipe(
+          new SaveToCacheTransformer(this.cache, args.messages),
+        );
+
+        if (args.transformers) {
+          for (const transformer of args.transformers) {
+            returnStream = returnStream.pipe(transformer);
+          }
+        } else {
+          returnStream = returnStream.pipe(new TextTransformer());
         }
 
         perf(`${provider.getName()}/${config.model}`);

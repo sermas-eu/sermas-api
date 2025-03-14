@@ -1,4 +1,5 @@
 import { SessionContext } from 'apps/session/src/session.context';
+import { Transform } from 'stream';
 import { PromptTemplateOutput } from './prompt/prompt.template';
 import {
   LLMMessage,
@@ -14,6 +15,7 @@ export type LLMSendArgs = LLMProviderConfig & {
   llmCallId?: string;
 
   sessionContext?: SessionContext;
+  transformers?: Transform[];
 };
 
 export type LLMChatArgs = LLMProviderConfig & {
@@ -41,6 +43,8 @@ export type LLMChatRequest = {
   messages?: LLMMessage[];
   system?: PromptTemplateOutput | string;
   user?: PromptTemplateOutput | string;
+
+  transformers?: Transform[];
 } & LLMBaseArgs;
 
 export type LLMResultEvent = {

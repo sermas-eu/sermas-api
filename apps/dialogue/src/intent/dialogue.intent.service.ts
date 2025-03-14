@@ -11,7 +11,7 @@ import {
   DialogueChatValidationEvent,
   DialogueToolNotMatchingDto,
 } from '../dialogue.chat.dto';
-import { packAvatarObject } from '../dialogue.chat.prompt';
+import { packAvatarObject } from '../avatar/utils';
 import {
   DialogueTaskDto,
   TaskFieldDto,

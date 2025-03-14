@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionService } from 'apps/session/src/session.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
@@ -12,16 +11,15 @@ import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { AvatarChatRequest } from './avatar/dialogue.chat.avatar.dto';
 import { DialogueChatAvatarService } from './avatar/dialogue.chat.avatar.service';
+import { packAvatarObject } from './avatar/utils';
 import { DialogueChatProgressEvent } from './dialogue.chat.dto';
-import { packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueVectorStoreService } from './document/dialogue.vectorstore.service';
 import { DialogueIntentService } from './intent/dialogue.intent.service';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
-import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueTaskDto } from './tasks/store/dialogue.tasks.store.dto';
 
+import { convertToolsToPrompt } from './avatar/utils';
 import { convertTaskToPrompt } from './tasks/util';
-import { DialogueToolsService } from './tools/dialogue.tools.service';
 
 @Injectable()
 export class DialogueChatService {
@@ -30,24 +28,17 @@ export class DialogueChatService {
   constructor(
     private readonly config: ConfigService,
     private readonly emitter: EventEmitter2,
-    private readonly platformAppService: PlatformAppService,
     private readonly session: SessionService,
-
     private readonly avatarChat: DialogueChatAvatarService,
     private readonly memory: DialogueMemoryService,
     private readonly vectorStore: DialogueVectorStoreService,
-    private readonly tools: DialogueToolsService,
-    private readonly tasks: DialogueTasksService,
-
     private readonly intent: DialogueIntentService,
-
     private readonly monitor: MonitorService,
   ) {}
 
   async inference(
     message: DialogueMessageDto,
     llmArgs?: { chatArgs: LLMBaseArgs; toolsArgs: LLMBaseArgs },
-    silent = false,
   ) {
     const { appId, sessionId } = message;
 
@@ -79,77 +70,6 @@ export class DialogueChatService {
       currentTask = intent.task.currentTask;
     }
 
-    // let currentField: TaskFieldDto;
-    // let matchOrRemoveTask = false;
-
-    // // load tools repositories
-    // const sessionRepositories = await this.tools.loadFromSession(message);
-    // let repositories: DialogueToolsRepositoryDto[] = [];
-
-    // if (currentTask) {
-    //   currentField = await this.tasks.getCurrentField(
-    //     currentTask.taskId,
-    //     message.sessionId,
-    //   );
-
-    //   repositories = sessionRepositories.filter((r) => {
-    //     if (!r.tools) return false;
-    //     return r.tools.filter(
-    //       (t) =>
-    //         (t.schema || []).filter(
-    //           (s) => s.parameter === 'taskId' && s.value === currentTask.taskId,
-    //         ).length > 0,
-    //     );
-    //   });
-
-    //   matchOrRemoveTask = currentTask.options?.matchOrRemove === true;
-
-    //   this.logger.debug(`Enabled tools for task name=${currentTask.name}`);
-    // } else {
-    //   this.logger.debug(`Using session tools`);
-    //   repositories = sessionRepositories;
-    // }
-
-    // // // const skipChat = false;
-    // // if (currentTask && currentField) {
-    // //   this.logger.debug(`Current task field is ${currentField.name}`);
-    // //   // skipChat = currentField.required === true && !matchOrRemoveTask;
-    // //   // TODO enable fallback answer if no options matches
-    // // }
-
-    // // restore tools but filter out cancelled tools for a task, since removal is async and could have not been completed yet
-    // if (taskCancelled) {
-    //   repositories = sessionRepositories.filter(
-    //     (r) =>
-    //       r.tools.filter(
-    //         (t) =>
-    //           (t.schema || []).filter(
-    //             (s) => s.parameter === 'taskId' && s.value === taskCancelled,
-    //           ).length,
-    //       ).length === 0,
-    //   );
-    // }
-
-    // const isToolExclusive =
-    //   repositories.filter((r) => r.options?.exclusive).length > 0;
-
-    // const tools = repositories
-    //   .sort((a, b) =>
-    //     a.options?.exclusive ? -1 : b.options?.exclusive ? -1 : 1,
-    //   )
-    //   .map((r) => (r.tools?.length ? r.tools : []))
-    //   .flat();
-
-    // this.logger.debug(
-    //   `Active tools: [${tools.map((t) => `${t.name}: ${t.description}`)}]`,
-    // );
-
-    // let hasCatchAll: AppToolsDTO;
-    // const matchCatchAll = tools.filter((t) => t.name === TOOL_CATCH_ALL);
-    // if (matchCatchAll.length) {
-    //   hasCatchAll = matchCatchAll[0];
-    // }
-
     const avatar = await this.session.getAvatar(message, message.avatar);
 
     const perf = this.monitor.performance({
@@ -173,6 +93,7 @@ export class DialogueChatService {
         history: summary,
         message: message.text,
         emotion: message.emotion || 'neutral',
+        tools: convertToolsToPrompt(intent.tools?.tools),
       },
 
       chat: {
@@ -188,8 +109,6 @@ export class DialogueChatService {
             ? `${intent.task?.currentField.label || intent.task?.currentField.name}: ${intent.task?.currentField.hint}`
             : undefined,
       },
-
-      // tools,
     };
 
     const res = await this.avatarChat.send(req);
@@ -231,27 +150,14 @@ export class DialogueChatService {
     }
 
     res.stream
-      .on('data', (chunk) => {
+      .on('data', (chunk: Buffer | string) => {
         perf();
 
-        let text = chunk;
-        if (res.tools) {
-          text = chunk.data;
-        }
+        const text = chunk.toString();
 
-        if (silent) {
-          if (res.tools) {
-            // tools matched
-            if (chunk.type && chunk.type === 'answer') {
-              this.logger.debug(`RESPONSE | ${chunk.data} `);
-            }
-            return;
-          }
-          (chunk || '')
-            .split('\n')
-            .map((text) => this.logger.debug(`RESPONSE | ${text}`));
-          return;
-        }
+        (text || '')
+          .split('\n')
+          .map((text) => this.logger.debug(`RESPONSE | ${text}`));
 
         if (skipChatResponse) {
           return;
@@ -266,6 +172,7 @@ export class DialogueChatService {
           sentenceSplitDelimiters,
           minSplittingSentenceLen,
         );
+
         if (toSend != chunkBuffer) {
           chunkBuffer = chunkBuffer.substring(toSend.length);
 

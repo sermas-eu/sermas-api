@@ -576,41 +576,6 @@ export class DialogueSpeechService {
   // }
 
   async handleUserMessage(message: DialogueMessageDto) {
-    // // evaluate message in context, skip if not matching
-
-    // const avatar = await this.session.getAvatar(message);
-    // const settings = await this.session.getSettings(message);
-
-    // const history = await this.memory.getSummary(message.sessionId);
-
-    // const messageCheck = await this.isUserTalkingToAvatar(
-    //   {
-    //     appPrompt: settings.prompt?.text,
-    //     avatar: packAvatarObject(avatar),
-    //     language: settings.language,
-    //     user: message.text,
-    //     history: history,
-    //   },
-    //   createSessionContext(message),
-    // );
-
-    // if (messageCheck?.skip) {
-    //   await this.continueAgentSpeech(message.appId, message.sessionId);
-    //   return;
-    // }
-
-    // // clear speech queue
-    // await this.stopAgentSpeech({
-    //   appId: message.appId,
-    //   sessionId: message.sessionId,
-    // });
-
-    // // in doubt, ask claryfication
-    // if (messageCheck?.repeat && messageCheck.question) {
-    //   await this.replyToUser(messageCheck.question, message);
-    //   return;
-    // }
-
     // load emotion
     const emotion = this.emotion.getUserEmotion(message.sessionId);
     if (emotion) message.emotion = emotion;

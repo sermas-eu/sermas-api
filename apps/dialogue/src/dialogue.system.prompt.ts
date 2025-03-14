@@ -7,6 +7,7 @@ export type BaseSystemPromptParams = {
   message?: string;
   emotion?: string;
   tools?: string;
+  tasks?: string;
 };
 
 export const BaseSystemPrompt = `
@@ -21,6 +22,8 @@ export const BaseSystemPrompt = `
 <% if (data.intents) { %>## INTENTS: <%= data.intents %> <% } %>
 
 <% if (data.tools) { %>## TOOLS: <%= data.tools %> <% } %>
+
+<% if (data.tasks) { %>## TASKS: <%= data.tasks %> <% } %>
 
 <% if (data.emotion) { %>## USER EMOTION: <%= data.emotion %> <% } %>
 

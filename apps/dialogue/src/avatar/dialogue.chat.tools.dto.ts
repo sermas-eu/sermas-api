@@ -37,19 +37,12 @@ export interface SelectedTool<T = { [param: string]: any }> {
   values?: T;
 }
 
-export interface ToolResponse {
-  type: 'tools';
-  data: SelectedTool[];
-}
-
-export interface AnswerResponse {
-  type: 'answer';
-  data: string;
-}
-
-export type ToolWithAnswerResponse = AnswerResponse | ToolResponse;
-
 export type LLMToolsResponse = {
   tools: SelectedTool[];
+  answer?: string;
+};
+
+export type ToolsResponse = {
+  matches: Record<string, Record<string, any>>;
   answer?: string;
 };
