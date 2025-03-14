@@ -55,7 +55,7 @@ Use KNOWLEDGE only if relevant to the user message or ignore it.
 <% } %>
 
 <% if (data.tasks) { %>
-TASKS should be proposed to the user, be precise in the task offering description.
+TASKS may be proposed to the user depending on context, be precise in the task offering description.
 <% } %>
 
 <% } %>

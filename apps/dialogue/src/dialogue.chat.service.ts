@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SelectedTool } from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
-import {
-  AppSettingsDto,
-  AppToolsDTO,
-} from 'apps/platform/src/app/platform.app.dto';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionService } from 'apps/session/src/session.service';
@@ -17,28 +12,16 @@ import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { AvatarChatRequest } from './avatar/dialogue.chat.avatar.dto';
 import { DialogueChatAvatarService } from './avatar/dialogue.chat.avatar.service';
-import {
-  DialogueChatProgressEvent,
-  DialogueToolNotMatchingDto,
-} from './dialogue.chat.dto';
+import { DialogueChatProgressEvent } from './dialogue.chat.dto';
 import { packAvatarObject } from './dialogue.chat.prompt';
 import { DialogueVectorStoreService } from './document/dialogue.vectorstore.service';
 import { DialogueIntentService } from './intent/dialogue.intent.service';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
-import { DialogueTasksHandlerService } from './tasks/dialogue.tasks.handler.service';
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
-import {
-  DialogueTaskDto,
-  TaskFieldDto,
-} from './tasks/store/dialogue.tasks.store.dto';
-import {
-  TOOL_CATCH_ALL,
-  TOOL_CATCH_ALL_VALUE as TOOL_CATCH_ALL_PARAMETER,
-} from './tools/dialogue.tools.dto';
+import { DialogueTaskDto } from './tasks/store/dialogue.tasks.store.dto';
+
+import { convertTaskToPrompt } from './tasks/util';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
-import { DialogueToolsRepositoryDto } from './tools/repository/dialogue.tools.repository.dto';
-import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
-import { extractToolValues } from './tools/utils';
 
 @Injectable()
 export class DialogueChatService {
@@ -55,7 +38,7 @@ export class DialogueChatService {
     private readonly vectorStore: DialogueVectorStoreService,
     private readonly tools: DialogueToolsService,
     private readonly tasks: DialogueTasksService,
-    private readonly tasksHandler: DialogueTasksHandlerService,
+
     private readonly intent: DialogueIntentService,
 
     private readonly monitor: MonitorService,
@@ -68,12 +51,6 @@ export class DialogueChatService {
   ) {
     const { appId, sessionId } = message;
 
-    const app = await this.platformAppService.readApp(appId);
-    if (!app) {
-      this.logger.warn(`appId=${appId} not found`);
-      return;
-    }
-
     const settings = await this.session.getSettings(message);
 
     if (!llmArgs) {
@@ -84,149 +61,94 @@ export class DialogueChatService {
       };
     }
 
-    // load tasks
-    // const tasks = await this.tasks.list(appId);
     let tasks: DialogueTaskDto[] = [];
-    let taskCancelled: string;
+    let currentTask: DialogueTaskDto;
 
     const intent = await this.intent.match(message);
-    if (intent) {
-      if (intent.skip) {
-        return;
-      }
 
-      this.logger.debug(
-        `Found task '${intent.task?.name}' taskId=${intent.intent?.taskId} ongoing=${intent.record ? true : false} match=${intent.intent?.match} trigger=${intent.intent?.trigger} cancel=${intent.intent?.cancel}`,
-      );
+    // skip invalid input
+    if (intent.skipResponse) {
+      return;
+    }
+    // handle task intents
+    if (intent.task) {
+      // skip chat response
+      if (intent.task.skipResponse) return;
 
-      tasks = [intent.task];
-
-      if (intent.intent?.cancel && intent.record) {
-        this.logger.log(
-          `Cancelling ongoing task taskId=${intent.task?.taskId}`,
-        );
-        await this.tasksHandler.cancelTask({
-          sessionId: message.sessionId,
-          taskId: intent.task.taskId,
-        });
-        tasks = [];
-        taskCancelled = intent.task.taskId;
-      }
-
-      if (
-        intent.intent?.match &&
-        intent.intent?.trigger &&
-        !intent.record &&
-        !intent.intent.cancel
-      ) {
-        const task = intent.task;
-        this.logger.log(`Trigger task ${intent.task.name}`);
-        const ev: ToolTriggerEventDto = {
-          appId: task.appId,
-          name: task.name,
-          repositoryId: task.taskId,
-          sessionId: message.sessionId,
-          schema: null,
-          source: 'agent',
-          values: {
-            taskId: task.taskId,
-          },
-        };
-        await this.tasks.trigger(ev);
-        return;
-      }
+      tasks = intent.task.availableTasks;
+      currentTask = intent.task.currentTask;
     }
 
-    let tasksList: string = undefined;
-    if (tasks && tasks.length) {
-      tasksList = JSON.stringify(
-        (tasks || []).map((t) => ({
-          name: t.name,
-          description: t.description,
-        })),
-      );
-    }
+    // let currentField: TaskFieldDto;
+    // let matchOrRemoveTask = false;
 
-    let currentTask = await this.tasks.getCurrentTask(message.sessionId);
+    // // load tools repositories
+    // const sessionRepositories = await this.tools.loadFromSession(message);
+    // let repositories: DialogueToolsRepositoryDto[] = [];
 
-    if (currentTask && currentTask.taskId === taskCancelled) {
-      currentTask = null;
-    }
+    // if (currentTask) {
+    //   currentField = await this.tasks.getCurrentField(
+    //     currentTask.taskId,
+    //     message.sessionId,
+    //   );
 
-    let currentField: TaskFieldDto;
+    //   repositories = sessionRepositories.filter((r) => {
+    //     if (!r.tools) return false;
+    //     return r.tools.filter(
+    //       (t) =>
+    //         (t.schema || []).filter(
+    //           (s) => s.parameter === 'taskId' && s.value === currentTask.taskId,
+    //         ).length > 0,
+    //     );
+    //   });
 
-    let matchOrRemoveTask = false;
+    //   matchOrRemoveTask = currentTask.options?.matchOrRemove === true;
 
-    // load tools repositories
-    const sessionRepositories = await this.tools.loadFromSession(message);
-    let repositories: DialogueToolsRepositoryDto[] = [];
+    //   this.logger.debug(`Enabled tools for task name=${currentTask.name}`);
+    // } else {
+    //   this.logger.debug(`Using session tools`);
+    //   repositories = sessionRepositories;
+    // }
 
-    if (currentTask) {
-      currentField = await this.tasks.getCurrentField(
-        currentTask.taskId,
-        message.sessionId,
-      );
+    // // // const skipChat = false;
+    // // if (currentTask && currentField) {
+    // //   this.logger.debug(`Current task field is ${currentField.name}`);
+    // //   // skipChat = currentField.required === true && !matchOrRemoveTask;
+    // //   // TODO enable fallback answer if no options matches
+    // // }
 
-      repositories = sessionRepositories.filter((r) => {
-        if (!r.tools) return false;
-        return r.tools.filter(
-          (t) =>
-            (t.schema || []).filter(
-              (s) => s.parameter === 'taskId' && s.value === currentTask.taskId,
-            ).length > 0,
-        );
-      });
+    // // restore tools but filter out cancelled tools for a task, since removal is async and could have not been completed yet
+    // if (taskCancelled) {
+    //   repositories = sessionRepositories.filter(
+    //     (r) =>
+    //       r.tools.filter(
+    //         (t) =>
+    //           (t.schema || []).filter(
+    //             (s) => s.parameter === 'taskId' && s.value === taskCancelled,
+    //           ).length,
+    //       ).length === 0,
+    //   );
+    // }
 
-      matchOrRemoveTask = currentTask.options?.matchOrRemove === true;
+    // const isToolExclusive =
+    //   repositories.filter((r) => r.options?.exclusive).length > 0;
 
-      this.logger.debug(`Enabled tools for task name=${currentTask.name}`);
-    } else {
-      repositories = sessionRepositories;
-    }
+    // const tools = repositories
+    //   .sort((a, b) =>
+    //     a.options?.exclusive ? -1 : b.options?.exclusive ? -1 : 1,
+    //   )
+    //   .map((r) => (r.tools?.length ? r.tools : []))
+    //   .flat();
 
-    // const skipChat = false;
-    if (currentTask && currentField) {
-      this.logger.debug(`Current task field is ${currentField.name}`);
-      // skipChat = currentField.required === true && !matchOrRemoveTask;
-      // TODO enable fallback answer if no options matches
-    }
+    // this.logger.debug(
+    //   `Active tools: [${tools.map((t) => `${t.name}: ${t.description}`)}]`,
+    // );
 
-    // restore tools but filter out cancelled tools for a task, since removal is async and could have not been completed yet
-    if (taskCancelled) {
-      repositories = sessionRepositories.filter(
-        (r) =>
-          r.tools.filter(
-            (t) =>
-              (t.schema || []).filter(
-                (s) => s.parameter === 'taskId' && s.value === taskCancelled,
-              ).length,
-          ).length === 0,
-      );
-    }
-
-    const isToolExclusive =
-      repositories.filter((r) => r.options?.exclusive).length > 0;
-
-    const tools = repositories
-      .sort((a, b) =>
-        a.options?.exclusive ? -1 : b.options?.exclusive ? -1 : 1,
-      )
-      .map((r) => (r.tools?.length ? r.tools : []))
-      .flat();
-
-    this.logger.debug(
-      `Active tools: [${tools.map((t) => `${t.name}: ${t.description}`)}]`,
-    );
-
-    let hasCatchAll: AppToolsDTO;
-    const matchCatchAll = tools.filter((t) => t.name === TOOL_CATCH_ALL);
-    if (matchCatchAll.length) {
-      hasCatchAll = matchCatchAll[0];
-    }
-
-    // load app and avatar params
-    const appPrompt =
-      settings?.prompt?.text || app.settings?.prompt?.text || '';
+    // let hasCatchAll: AppToolsDTO;
+    // const matchCatchAll = tools.filter((t) => t.name === TOOL_CATCH_ALL);
+    // if (matchCatchAll.length) {
+    //   hasCatchAll = matchCatchAll[0];
+    // }
 
     const avatar = await this.session.getAvatar(message, message.avatar);
 
@@ -237,7 +159,6 @@ export class DialogueChatService {
 
     // search rag context
     const knowledge = await this.vectorStore.search(appId, message.text);
-
     // get history
     const summary = await this.memory.getSummary(sessionId);
 
@@ -246,8 +167,8 @@ export class DialogueChatService {
       sessionContext: createSessionContext(message),
 
       system: {
-        app: appPrompt,
-        language: message.language,
+        app: settings?.prompt?.text,
+        language: message.language || settings?.language,
         avatar: packAvatarObject(avatar),
         history: summary,
         message: message.text,
@@ -256,38 +177,38 @@ export class DialogueChatService {
 
       chat: {
         knowledge,
-        tasks: tasksList,
+        tasks: convertTaskToPrompt(tasks),
         // track current task progress
         task:
           currentTask && (currentTask.hint || currentTask.description)
             ? `${currentTask.name}: ${currentTask.hint || currentTask.description}`
             : undefined,
         field:
-          currentField && currentField.hint
-            ? `${currentField.label || currentField.name}: ${currentField.hint}`
+          intent.task?.currentField && intent.task?.currentField?.hint
+            ? `${intent.task?.currentField.label || intent.task?.currentField.name}: ${intent.task?.currentField.hint}`
             : undefined,
       },
 
-      tools,
+      // tools,
     };
 
     const res = await this.avatarChat.send(req);
 
-    const { skipResponse } = await this.handleTools({
+    const { skipResponse } = await this.intent.handleTools({
       appId,
       sessionId,
+      text: message.text,
+      settings,
 
       selectedTools: res.tools,
-      tools: tools,
-      repositories,
+      tools: intent.tools?.tools,
+      repositories: intent.tools?.repositories,
 
-      currentField,
+      currentField: intent.task?.currentField,
       currentTask,
-      isToolExclusive,
-      matchOrRemoveTask,
-      text: message.text,
-      hasCatchAll,
-      settings,
+      isToolExclusive: intent.tools?.isToolExclusive,
+      matchOrRemoveTask: intent.tools?.matchOrRemoveTask,
+      hasCatchAll: intent.tools?.hasCatchAll,
     });
 
     if (!res || !res.stream) {
@@ -393,157 +314,6 @@ export class DialogueChatService {
 
   emitChatProgress(ev: DialogueChatProgressEvent) {
     this.emitter.emit('dialogue.chat.progress', ev);
-  }
-
-  async handleTools(args: {
-    appId: string;
-    sessionId: string;
-
-    selectedTools: SelectedTool<{
-      [param: string]: any;
-    }>[];
-
-    tools: AppToolsDTO[];
-    repositories: DialogueToolsRepositoryDto[];
-
-    text: string;
-
-    currentTask: DialogueTaskDto;
-    currentField: TaskFieldDto;
-
-    hasCatchAll?: AppToolsDTO;
-    isToolExclusive: boolean;
-    matchOrRemoveTask: boolean;
-
-    settings?: Partial<AppSettingsDto>;
-  }) {
-    const { appId, sessionId } = args;
-
-    let skipResponse = args.isToolExclusive;
-
-    if (args.selectedTools) {
-      skipResponse = args.isToolExclusive || args.settings?.skipToolResponse;
-
-      // tools matched
-      // this.logger.debug(`Matching tools ${args.selectedTools.map((t) => t.name)}`);
-
-      for (const tool of args.selectedTools) {
-        const matchingRepository = this.tools.getRepositoryByTool(
-          args.repositories,
-          tool,
-        );
-        if (!matchingRepository) {
-          this.logger.warn(`tool '${tool.name}' not found`);
-          continue;
-        }
-
-        const matchingTools = (matchingRepository.tools || []).filter(
-          (t) => t.name === tool.name,
-        );
-        const matchingTool = matchingTools.length ? matchingTools[0] : null;
-
-        if (!matchingTool) {
-          this.logger.warn(`tool '${tool.name}()' not found`);
-          continue;
-        }
-
-        const toolschema = matchingTool;
-        // skip response from LLM
-        if (toolschema.skipResponse === true) {
-          skipResponse = true;
-        }
-
-        this.logger.debug(`Trigger tool ${tool.name} sessionId=${sessionId}`);
-        this.triggerTool({
-          tool,
-          repository: matchingRepository,
-          appId,
-          sessionId,
-        });
-      }
-    } else {
-      if (args.tools.length) {
-        if (args.hasCatchAll) {
-          const tool: SelectedTool = {
-            name: args.hasCatchAll.name,
-            schema: args.hasCatchAll,
-            values: {},
-          };
-          const matchingRepository = this.tools.getRepositoryByTool(
-            args.repositories,
-            tool,
-          );
-          if (matchingRepository) {
-            this.logger.log(
-              `No tools matched, triggering catch all tool '${TOOL_CATCH_ALL}'`,
-            );
-
-            if (tool.schema?.schema?.length) {
-              tool.schema.schema = tool.schema?.schema.map((s) => {
-                if (s.parameter === TOOL_CATCH_ALL_PARAMETER) {
-                  s.value = args.text;
-                }
-                return s;
-              });
-            }
-
-            this.triggerTool({
-              tool,
-              repository: matchingRepository,
-              appId,
-              sessionId,
-            });
-          }
-        } else {
-          const notFoundEvent: DialogueToolNotMatchingDto = {
-            appId,
-            sessionId,
-            tools: args.tools,
-            repositories: args.repositories,
-            currentField: args.currentField,
-            currentTask: args.currentTask,
-          };
-          this.emitter.emit('dialogue.tools.not_matching', notFoundEvent);
-          this.monitor.error({
-            label: `No tools matching`,
-            appId,
-            sessionId,
-          });
-          this.logger.debug(
-            `No tools matching, tools=${args.tools.length} [${args.tools.map((t) => t.name + ':' + t.description).join('; ')}]`,
-          );
-
-          if (args.matchOrRemoveTask) {
-            await this.tasks.remove(args.currentTask.taskId);
-            this.logger.warn(
-              `User answer does not match task ${args.currentTask.name} tool, removing task.`,
-            );
-          }
-        }
-      }
-    }
-
-    return {
-      skipResponse,
-    };
-  }
-
-  triggerTool(payload: {
-    tool: SelectedTool;
-    repository: DialogueToolsRepositoryDto;
-    appId: string;
-    sessionId: string;
-  }) {
-    // trigger tool
-    const ev: ToolTriggerEventDto = {
-      ...payload.tool,
-      values: extractToolValues(payload.tool.schema, payload.tool.values),
-      appId: payload.appId,
-      sessionId: payload.sessionId,
-      repositoryId: payload.repository.repositoryId,
-      source: 'message',
-    };
-    this.emitter.emit('dialogue.tool.trigger', ev);
   }
 
   convertMarkdownLinksToHtml(text: string) {

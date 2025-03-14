@@ -8,6 +8,8 @@ import {
 
 const CACHE_TTL = 3 * 60 * 1000; // 3 min
 
+const MAX_REQUEST_THRESHOLD_SECONDS = 6; // seconds
+
 @Injectable()
 export class DialogueRequestMonitorService {
   private readonly logger = new Logger(DialogueRequestMonitorService.name);
@@ -28,7 +30,7 @@ export class DialogueRequestMonitorService {
       for (const requestId in this.requestMonitor[sessionId]) {
         const req = this.requestMonitor[sessionId][requestId];
         if (!req.ts || new Date(req.ts).getTime() + CACHE_TTL < Date.now()) {
-          this.logger.debug(
+          this.logger.verbose(
             `Removed staled requestId=${req.requestId} sessionId=${req.sessionId}`,
           );
           delete this.requestMonitor[sessionId][requestId];
@@ -98,13 +100,13 @@ export class DialogueRequestMonitorService {
         perf,
       };
 
-      this.logger.debug(`Started requestId=${ev.requestId}`);
+      this.logger.verbose(`Started requestId=${ev.requestId}`);
       return;
     }
 
     const req = this.requestMonitor[ev.sessionId][ev.requestId];
     if (!req) {
-      this.logger.debug(
+      this.logger.warn(
         `requestId=${ev.requestId} not tracked sessionId=${ev.sessionId}`,
       );
       return;
@@ -115,7 +117,8 @@ export class DialogueRequestMonitorService {
 
     const took = req.perf(req.status, false);
     const tookRounded = Math.round((took / 1000) * 10) / 10;
-    const logLevel = tookRounded > 4 ? 'warn' : 'debug';
+    const logLevel =
+      tookRounded > MAX_REQUEST_THRESHOLD_SECONDS ? 'debug' : 'verbose';
     this.logger[logLevel](
       `request status=${req.status} took=${tookRounded}s requestId=${ev.requestId} sessionId=${req.sessionId}`,
     );
