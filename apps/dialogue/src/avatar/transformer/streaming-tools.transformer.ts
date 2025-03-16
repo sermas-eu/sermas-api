@@ -37,7 +37,12 @@ export class StreamingToolsTransformer extends Transform {
         const rawJson = this.buffer.slice(TOOLS_OPEN_TAG.length, closeTagPos);
         this.rawToolsCallback(rawJson);
 
-        this.buffer = this.buffer.slice(closeTagPos + TOOLS_CLOSE_TAG.length);
+        this.buffer = this.buffer.slice(
+          closeTagPos + TOOLS_CLOSE_TAG.length, //+1 is carriage return
+        );
+        if (this.buffer.startsWith('\n')) {
+          this.buffer = this.buffer.slice(1);
+        }
       } else {
         // wait for buffer length, then check for tag
         if (

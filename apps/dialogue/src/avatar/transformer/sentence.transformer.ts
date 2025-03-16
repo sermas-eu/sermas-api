@@ -46,7 +46,7 @@ export class SentenceTransformer extends Transform {
   }
 
   sendBuffer(buffer: string) {
-    this.push(buffer);
+    this.push(buffer.replace(/^\n+/gm, '').replace(/\n+$/gm, ''));
   }
 
   _flush(callback: CallableFunction) {

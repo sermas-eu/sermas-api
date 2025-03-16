@@ -24,7 +24,7 @@ export class LLMCacheService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly config: ConfigService,
   ) {
-    if (process.env.CLEAR_CACHE_ON_START) {
+    if (config.get('CLEAR_CACHE_ON_START') === '1') {
       this.logger.log('Clearing REDIS LLM responses cache');
       this.cacheManager.reset();
     }
@@ -39,13 +39,13 @@ export class LLMCacheService {
   async save(messages: LLMMessage[], data: any) {
     if (!this.enabled) return;
     const hash = this.hashMessage(messages);
-    await this.cacheManager.set(`${hash}`, data);
+    await this.cacheManager.set(hash, data);
   }
 
   async get(messages: LLMMessage[]) {
     if (!this.enabled) return null;
     const hash = this.hashMessage(messages);
-    return await this.cacheManager.get(`${hash}`);
+    return await this.cacheManager.get(hash);
   }
 }
 
@@ -75,7 +75,7 @@ export class SaveToCacheTransformer extends Transform {
     callback: CallableFunction,
   ) {
     chunk = (chunk || '').toString();
-    this.buffer += chunk.toString();
+    this.buffer += chunk;
     this.push(chunk);
     callback();
   }

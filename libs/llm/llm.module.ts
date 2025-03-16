@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { LLMProviderService } from './llm.provider.service';
 import { LLMService } from './llm.service';
-import { LLMCacheService } from './cache.service';
+import { LLMCacheService } from './llm.cache.service';
 
 @Global()
 @Module({

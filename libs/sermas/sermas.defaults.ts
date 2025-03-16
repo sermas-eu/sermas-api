@@ -240,6 +240,8 @@ export const SermasDefaultConfig = {
   // AZURE_REGION Azure region (used as fallback to more specific ones)
   AZURE_REGION: '',
 
+  // CLEAR_CACHE_ON_START Clear LLM cache at startup
+  CLEAR_CACHE_ON_START: '1',
   // LLM_CACHE_ENABLED Enable or disable LLM caching features
   LLM_CACHE_ENABLED: '1',
 

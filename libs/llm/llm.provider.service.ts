@@ -6,7 +6,7 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { hash } from 'libs/util';
 import { Readable, Transform } from 'stream';
 import { ulid } from 'ulidx';
-import { LLMCacheService, SaveToCacheTransformer } from './cache.service';
+import { LLMCacheService, SaveToCacheTransformer } from './llm.cache.service';
 import {
   LLMChatRequest,
   LLMResultEvent,
@@ -545,6 +545,17 @@ export class LLMProviderService implements OnModuleInit {
     this.emitter.emit(`llm.result`, context);
   }
 
+  private applyTransformers(args: LLMSendArgs, returnStream: Readable) {
+    if (args.transformers) {
+      for (const transformer of args.transformers) {
+        returnStream = returnStream.pipe(transformer);
+      }
+    } else {
+      returnStream = returnStream.pipe(new TextTransformer());
+    }
+    return returnStream;
+  }
+
   // send(args: LLMSendArgs & { stream: false; json: false }): Promise<string>;
   // send<T = any>(
   //   args: LLMSendArgs & { stream: false; json: true },
@@ -616,11 +627,15 @@ export class LLMProviderService implements OnModuleInit {
     const cached = await this.cache.get(args.messages);
     if (cached) {
       this.logger.debug(`Using cached response`);
-      this.logger.verbose(
-        `Cached message:\n${JSON.stringify(args.messages)}\nresponse:\n${cached}`,
-      );
+      // this.logger.debug(
+      //   `Cached message:\n${JSON.stringify(args.messages)}\nresponse:\n${cached}`,
+      // );
       if (args.stream) {
-        return { stream: Readable.from(cached.toString()) } as LLMCallResult;
+        const returnStream = this.applyTransformers(
+          args,
+          Readable.from(cached.toString()),
+        );
+        return { stream: returnStream } as LLMCallResult;
       } else {
         return cached as T;
       }
@@ -676,13 +691,7 @@ export class LLMProviderService implements OnModuleInit {
           new SaveToCacheTransformer(this.cache, args.messages),
         );
 
-        if (args.transformers) {
-          for (const transformer of args.transformers) {
-            returnStream = returnStream.pipe(transformer);
-          }
-        } else {
-          returnStream = returnStream.pipe(new TextTransformer());
-        }
+        returnStream = this.applyTransformers(args, returnStream);
 
         perf(`${provider.getName()}/${config.model}`);
 

@@ -15,7 +15,8 @@ const init = () => {
     /** Name of the data object. Default `it` */
     varName: 'data',
     /** Configure automatic whitespace trimming. Default `[false, 'nl']` */
-    autoTrim: [false, 'nl'],
+    // autoTrim: [false, 'nl'],
+    autoTrim: [false, false],
     // parse: {
     //   /** Which prefix to use for evaluation. Default `""`, does not support `"-"` or `"_"` */
     //   exec: '',
@@ -80,7 +81,7 @@ export class PromptTemplate<T = any> {
     params?: Partial<PromptTemplateParams>,
   ): PromptRenderCallback {
     // remove spaces at start of line, used for indentation
-    prompt = prompt.replace(/^\s*/gm, '').trim();
+    prompt = prompt.replace(/^\s*/gm, '');
     const template = new PromptTemplate<T>(name, prompt, defaults, params);
     return (
       data?: T,
@@ -150,11 +151,12 @@ export class PromptTemplate<T = any> {
     this.setArgs(data);
     const template = this.createTemplateName(this.name, params);
 
-    const output = engine.render(
-      template,
-      this.getArgs() as any,
-    ) as unknown as PromptTemplateOutput;
+    const rawOutput = engine
+      .render(template, this.getArgs() as any)
+      .replace(/\n+/gm, '\n')
+      .trim();
 
+    const output = rawOutput as unknown as PromptTemplateOutput;
     (output as any).__proto__.getPromptTemplate = () => this;
 
     return output;

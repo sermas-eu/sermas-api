@@ -18,7 +18,6 @@ import { DialogueIntentService } from './intent/dialogue.intent.service';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
 import { DialogueTaskDto } from './tasks/store/dialogue.tasks.store.dto';
 
-import { convertToolsToPrompt } from './avatar/utils';
 import { convertTaskToPrompt } from './tasks/util';
 
 @Injectable()
@@ -93,7 +92,7 @@ export class DialogueChatService {
         history: summary,
         message: message.text,
         emotion: message.emotion || 'neutral',
-        tools: convertToolsToPrompt(intent.tools?.tools),
+        tools: intent.tools?.tools,
       },
 
       chat: {
@@ -140,7 +139,7 @@ export class DialogueChatService {
 
     const messageId = getMessageId();
 
-    let chunkBuffer = '';
+    const chunkBuffer = '';
 
     const skipChatResponse =
       settings?.chatModeEnabled === false || skipResponse;
@@ -163,29 +162,31 @@ export class DialogueChatService {
           return;
         }
 
-        chunkBuffer += text;
+        // chunkBuffer += text;
 
-        const minSplittingSentenceLen = 30;
-        const sentenceSplitDelimiters = ['[ ', '. ', '.\n', ': ', ':\n'];
-        let toSend = this.splitSentenceOnDelimiter(
-          chunkBuffer,
-          sentenceSplitDelimiters,
-          minSplittingSentenceLen,
-        );
+        // const minSplittingSentenceLen = 30;
+        // const sentenceSplitDelimiters = ['[ ', '. ', '.\n', ': ', ':\n'];
+        // let toSend = this.splitSentenceOnDelimiter(
+        //   chunkBuffer,
+        //   sentenceSplitDelimiters,
+        //   minSplittingSentenceLen,
+        // );
 
-        if (toSend != chunkBuffer) {
-          chunkBuffer = chunkBuffer.substring(toSend.length);
+        // if (toSend != chunkBuffer) {
+        if (text) {
+          // chunkBuffer = chunkBuffer.substring(toSend.length);
 
-          // sometimes, somehow it starts the answer like this
-          const trimPrefixes = ['ASSISTANT:', 'USER:', 'UTENTE:'];
-          trimPrefixes.forEach((trimPrefix) => {
-            if (toSend.startsWith(trimPrefix)) {
-              toSend = toSend.substring(trimPrefix.length);
-            }
-          });
+          // // sometimes, somehow it starts the answer like this
+          // const trimPrefixes = ['ASSISTANT:', 'USER:', 'UTENTE:'];
+          // trimPrefixes.forEach((trimPrefix) => {
+          //   if (toSend.startsWith(trimPrefix)) {
+          //     toSend = toSend.substring(trimPrefix.length);
+          //   }
+          // });
 
           const chunkId = getChunkId();
-          this.sendMessage(message, messageId, chunkId, toSend);
+          // this.sendMessage(message, messageId, chunkId, toSend);
+          this.sendMessage(message, messageId, chunkId, text);
 
           this.emitChatProgress({
             completed: false,

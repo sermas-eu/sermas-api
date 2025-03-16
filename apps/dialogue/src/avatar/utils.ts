@@ -9,32 +9,27 @@ export const packAvatarObject = (avatar: RepositoryAvatarDto) => {
 export const convertToolsToPrompt = (list?: LLMTool[]): string | undefined => {
   if (!list || !list.length) return undefined;
 
-  type PromptToolArg = { [key: string]: string };
-
   type PromptTool = {
     name: string;
     description: string;
-    arguments: PromptToolArg;
+    params: Record<string, string>;
   };
 
   const tools: PromptTool[] = [];
   for (const toolDef of list) {
-    let params: PromptToolArg = {};
+    let params = {};
     if (toolDef.schema) {
       params = toolDef.schema.reduce((res, schema) => {
         if (schema.ignore !== true) {
-          res = {
-            ...res,
-            [schema.parameter]: schema.type,
-          };
+          res[schema.parameter] = schema.type;
         }
         return res;
-      }, {});
+      }, params);
     }
     tools.push({
       name: toolDef.name,
       description: toolDef.description,
-      arguments: params,
+      params,
     });
   }
 

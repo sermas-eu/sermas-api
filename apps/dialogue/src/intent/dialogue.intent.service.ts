@@ -112,7 +112,7 @@ export class DialogueIntentService {
     const activeTask = await this.getActiveTaskRecord(message.sessionId);
 
     const userMessage = message.text;
-    const summary = await this.memory.getSummary(message.sessionId);
+    const history = await this.memory.getSummary(message.sessionId);
     const settings = await this.session.getSettings(message);
     const avatar = await this.session.getAvatar(message);
 
@@ -133,7 +133,7 @@ export class DialogueIntentService {
         app: settings.prompt.text,
         avatar: packAvatarObject(avatar),
         language: settings.language,
-        summary,
+        history: history,
         intents: JSON.stringify(intents),
         message: userMessage,
       }),
@@ -197,7 +197,7 @@ export class DialogueIntentService {
   }): Promise<TaskIntentResult> {
     const { activeTask, taskIntent, message, tasks } = data;
 
-    let availableTasks: DialogueTaskDto[] = tasks;
+    let availableTasks: DialogueTaskDto[] = [];
     let cancelledTaskId: string | undefined = undefined;
 
     // currently running task

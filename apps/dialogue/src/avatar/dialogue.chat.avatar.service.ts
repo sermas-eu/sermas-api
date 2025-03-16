@@ -13,6 +13,8 @@ import {
 } from './dialogue.chat.prompt';
 import { SelectedTool } from './dialogue.chat.tools.dto';
 import { StreamingToolsTransformer } from './transformer/streaming-tools.transformer';
+import { convertToolsToPrompt } from './utils';
+import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
 
 @Injectable()
 export class DialogueChatAvatarService {
@@ -24,7 +26,7 @@ export class DialogueChatAvatarService {
   ) {}
 
   async send(args: AvatarChatRequest): Promise<LLMCombinedResult> {
-    const perf = this.monitor.performance({ label: 'llm.chat' });
+    const perf = this.monitor.performance({ label: 'avatar.chat' });
 
     const chatProvider = args.chatArgs?.provider || args.provider;
     const chatModel = args.chatArgs?.model || args.model;
@@ -39,16 +41,18 @@ export class DialogueChatAvatarService {
         model: chatModel,
         sessionContext: args.sessionContext,
 
-        system: avatarSystemChatPrompt(args.system),
+        system: avatarSystemChatPrompt({
+          ...args.system,
+          tools: convertToolsToPrompt(args.system.tools),
+        }),
         user: avatarChatPrompt(args.chat),
 
         transformers: [
           new StreamingToolsTransformer((rawJson: string) => {
-            const matches = parseJSON<{
-              [param: string]: any;
-            }>(rawJson);
-            const tools = parseJSON(args.system.tools);
-            resolve({ ...result, tools: this.parseTools(matches, tools) });
+            resolve({
+              ...result,
+              tools: this.parseMatchingTools(rawJson, args.system.tools),
+            });
           }),
           new SentenceTransformer(),
         ],
@@ -59,8 +63,19 @@ export class DialogueChatAvatarService {
     return await promise;
   }
 
-  parseTools(res, tools) {
+  parseMatchingTools(rawJson: string, tools: AppToolsDTO[]) {
+    const res = parseJSON<{
+      matches: {
+        [param: string]: any;
+      };
+    }>(rawJson);
+
     const selectedTools: SelectedTool[] = [];
+
+    if (!res || !res.matches) {
+      return selectedTools;
+    }
+
     for (const name in res.matches) {
       const filtered = tools.filter((t) => t.name === name);
       if (!filtered.length) {

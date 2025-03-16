@@ -21,7 +21,7 @@ type AvatarSystemChat = {
     history: string;
     message: string;
     emotion?: string;
-    tools?: string;
+    tools?: AppToolsDTO[];
   };
 };
 

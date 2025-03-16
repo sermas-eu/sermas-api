@@ -16,8 +16,10 @@ export const avatarSystemChatPrompt =
     'chat-system',
     `You are an AVATAR discussing with USER on topics described in APPLICATION.
 The conversation must be fast and coincise, reply with short answers.
+
 ${BaseSystemPrompt}
 
+## Response format
 Always start your answer starting with a <tools> tag containing the identified tools. Append then the chat response. Never add Notes or Explanations.
 
 <tools>
@@ -30,8 +32,7 @@ Always start your answer starting with a <tools> tag containing the identified t
     } 
   }
 }
-</tools>
-full text chat response...`,
+</tools>`,
   );
 
 export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
@@ -67,7 +68,7 @@ If there is no match ot no TOOLS are available, return an empty object. Skip the
 <% } else { %>
 
   <% if (data.knowledge) { %>
-    Use KNOWLEDGE only if relevant to the user message or ignore it.
+    Use KNOWLEDGE when relevant to the user message.
   <% } %>
 
   <% if (data.tasks) { %>
