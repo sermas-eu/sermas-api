@@ -24,6 +24,7 @@ export const intentSystemPrompt = PromptTemplate.create<IntentSystemPrompt>(
   'intent-match-system',
   `${BaseSystemPrompt}
 
+## ANSWER FORMAT
 Answer with a parsable JSON object collecting all steps and formatted as following. Do not add notes or explanations.
 {
   skip: boolean,
@@ -38,18 +39,19 @@ export const intentPrompt = PromptTemplate.create<IntentPrompt>(
 
 # FILTER
 
-Identify a USER MESSAGE relevant to CONVERSATION and DOMAIN. Consider those factors to decide:
+Identify a USER MESSAGE relevant to CONVERSATION and APPLICATION. Consider those factors to decide:
 - Keep messages which contains typos, possibly caused by microphone audio conversion
-- Skip unrelated input which seems coming by other people in the room
-- Skip message which seems be a reflection or self-talking from the user
-- Keep messages which may be related to intents
+- Skip input unrelated to the conversation or APPLICATION
+- Skip message from the user when reflecting or self-talking
+- Keep messages related to intents
+- In doubt, keep the message if well formed
 
 If message is skipped, do not continue to next steps.
 
 # INTENTS
 
 <% if (data.currentTask) { %>
-Active task name is <%= data.currentTask %>
+  Active task name is <%= data.currentTask %>
 <% } %>
 
 Analyze the conversation and match one intent.
@@ -59,8 +61,9 @@ Set the field 'match' to 'true' in those cases:
 - if the assistant proposed that task in the last two interactions
 - if the user had not yet confirmed the task in the last interaction
 
-If the user message request matches the intent or confirms an intent previously proposed by the assistant, set the field 'trigger' to 'true'
+If the user message request matches directly the intent or confirms an intent previously proposed by the assistant, set the field 'trigger' to 'true'
+
 <% if (data.currentTask) { %>
-If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
+  If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
 <% } %>`,
 );

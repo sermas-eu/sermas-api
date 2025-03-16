@@ -5,7 +5,7 @@ import {
 } from '../dialogue.system.prompt';
 
 type AvatarChatPromptParams = {
-  tasks?: string;
+  suggestedTasks?: string;
   task?: string;
   field?: string;
   knowledge?: string;
@@ -15,7 +15,7 @@ export const avatarSystemChatPrompt =
   PromptTemplate.create<BaseSystemPromptParams>(
     'chat-system',
     `
-You provide answer to an AVATAR discussing with USER in the following context. 
+You provide answer to an AVATAR discussing with USER in the APPLICATION context. 
 The avatar conversation is converted to speech and must be fast and coincise, avoid repetitons.
 
 ${BaseSystemPrompt}
@@ -28,10 +28,8 @@ Never add Notes or Explanations.
 <tools>
 <!-- Output in parsable JSON, following exactly this structure.  -->
 {
-  // name of the matching tool
-  "TOOL name": { 
-    // optional, list tool arguments
-    "TOOL argument name": "the value extracted from USER message" 
+  "name of the matching tool": { 
+    "optional, matching argument name": "the value extracted from USER message" 
   } 
 }
 </tools>`,
@@ -77,7 +75,7 @@ Never mention tools in the chat response.
     Use KNOWLEDGE when relevant to the user message.
   <% } %>
 
-  <% if (data.tasks) { %>
+  <% if (data.suggestedTasks) { %>
     Propose one of TASKS depending on context, be precise in the task offering description.
   <% } %>
 
@@ -96,9 +94,9 @@ Never mention tools in the chat response.
 
 <% } else { %>
 
-  <% if (data.tasks) { %>
+  <% if (data.suggestedTasks) { %>
     ## TASKS:
-    <%= data.tasks %>
+    <%= data.suggestedTasks %>
   <% } %>
 
   <% if (data.knowledge) { %>

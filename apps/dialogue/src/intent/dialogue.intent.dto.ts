@@ -3,6 +3,7 @@ import { DialogueTaskRecordDto } from '../tasks/record/dialogue.tasks.record.dto
 import {
   DialogueTaskDto,
   TaskFieldDto,
+  TaskIntentDto,
 } from '../tasks/store/dialogue.tasks.store.dto';
 import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto';
 
@@ -27,21 +28,23 @@ export type TaskIntentMatchResult = {
   tools?: IntentActiveTools;
 };
 
-export type PrompIntent = {
+export type TaskIntentsList = {
   taskId?: string;
-  taskDescription: string;
   description: string;
-  name: string;
+  intents: TaskIntentDto[];
 };
 
-export type TaskIntents = { tasks: DialogueTaskDto[]; intents: PrompIntent[] };
+export type TaskIntents = {
+  tasks: DialogueTaskDto[];
+  intents: TaskIntentsList[];
+};
 
 export type TaskIntentResult = {
   cancelledTaskId?: string;
   selectedTask?: DialogueTaskDto;
   currentTask?: DialogueTaskDto;
   currentField?: TaskFieldDto;
-  availableTasks: DialogueTaskDto[];
+  suggestedTasks: DialogueTaskDto[];
   skipResponse?: boolean;
 };
 

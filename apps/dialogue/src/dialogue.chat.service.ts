@@ -51,7 +51,7 @@ export class DialogueChatService {
       };
     }
 
-    let tasks: DialogueTaskDto[] = [];
+    let suggestedTasks: DialogueTaskDto[] = [];
     let currentTask: DialogueTaskDto;
 
     const intent = await this.intent.match(message);
@@ -65,8 +65,12 @@ export class DialogueChatService {
       // skip chat response
       if (intent.task.skipResponse) return;
 
-      tasks = intent.task.availableTasks;
       currentTask = intent.task.currentTask;
+
+      // do not suggest task if a task is ongoing
+      if (!currentTask) {
+        suggestedTasks = intent.task.suggestedTasks;
+      }
     }
 
     const avatar = await this.session.getAvatar(message, message.avatar);
@@ -97,7 +101,7 @@ export class DialogueChatService {
 
       chat: {
         knowledge,
-        tasks: convertTaskToPrompt(tasks),
+        suggestedTasks: convertTaskToPrompt(suggestedTasks),
         // track current task progress
         task:
           currentTask && (currentTask.hint || currentTask.description)

@@ -7,11 +7,11 @@ import { SessionService } from 'apps/session/src/session.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
+import { packAvatarObject } from '../avatar/utils';
 import {
   DialogueChatValidationEvent,
   DialogueToolNotMatchingDto,
 } from '../dialogue.chat.dto';
-import { packAvatarObject } from '../avatar/utils';
 import {
   DialogueTaskDto,
   TaskFieldDto,
@@ -36,11 +36,10 @@ import { extractToolValues } from '../tools/utils';
 import {
   ActiveTaskRecord,
   IntentActiveTools,
-  PrompIntent,
   TaskIntentMatch,
   TaskIntentMatchResult,
   TaskIntentResult,
-  TaskIntents,
+  TaskIntentsList,
   TaskIntentWrapper,
 } from './dialogue.intent.dto';
 
@@ -61,36 +60,6 @@ export class DialogueIntentService {
     private readonly monitor: MonitorService,
   ) {}
 
-  async getTaskIntents(appId: string): Promise<TaskIntents> {
-    const tasks = await this.tasks.search({
-      appId,
-    });
-    if (!tasks)
-      return {
-        tasks: [],
-        intents: [],
-      };
-
-    const intents: PrompIntent[] = tasks
-      .filter((t) => t.intents && t.intents.length)
-      .map((t) => {
-        return t.intents.map(
-          (i): PrompIntent => ({
-            taskId: t.taskId,
-            taskDescription: t.description,
-            description: i.description,
-            name: i.name,
-          }),
-        );
-      })
-      .flat();
-
-    return {
-      tasks,
-      intents,
-    };
-  }
-
   async getActiveTaskRecord(sessionId: string): Promise<ActiveTaskRecord> {
     const currentRecord = await this.tasks.getCurrentRecord(sessionId);
 
@@ -106,6 +75,20 @@ export class DialogueIntentService {
     return { record: undefined, task: undefined };
   }
 
+  async getTaskIntentList(appId: string) {
+    const tasks = await this.tasks.search({ appId });
+
+    const intents: TaskIntentsList[] = tasks.map(
+      (t): TaskIntentsList => ({
+        taskId: t.taskId,
+        description: t.description,
+        intents: t.intents.filter((i) => i.name && i.description),
+      }),
+    );
+
+    return { tasks, intents };
+  }
+
   async match(
     message: DialogueMessageDto,
   ): Promise<TaskIntentMatchResult | null> {
@@ -116,7 +99,7 @@ export class DialogueIntentService {
     const settings = await this.session.getSettings(message);
     const avatar = await this.session.getAvatar(message);
 
-    const { intents, tasks } = await this.getTaskIntents(message.appId);
+    const { tasks, intents } = await this.getTaskIntentList(message.appId);
 
     const perf = this.monitor.performance({
       ...message,
@@ -197,7 +180,7 @@ export class DialogueIntentService {
   }): Promise<TaskIntentResult> {
     const { activeTask, taskIntent, message, tasks } = data;
 
-    let availableTasks: DialogueTaskDto[] = [];
+    let suggestedTasks: DialogueTaskDto[] = [];
     let cancelledTaskId: string | undefined = undefined;
 
     // currently running task
@@ -230,7 +213,7 @@ export class DialogueIntentService {
         taskId: activeTask.task?.taskId,
       });
 
-      availableTasks = tasks;
+      suggestedTasks = tasks;
       cancelledTaskId = activeTask.task?.taskId;
       selectedTask = undefined;
       currentTask = undefined;
@@ -238,7 +221,7 @@ export class DialogueIntentService {
 
     // provide the matching task based on conversation
     if (matchingTask && taskIntent?.match && !taskIntent?.trigger) {
-      availableTasks = matchingTask ? [matchingTask] : [];
+      suggestedTasks = matchingTask ? [matchingTask] : [];
     }
 
     // a task matches and user confirmed for it.
@@ -279,7 +262,7 @@ export class DialogueIntentService {
         await this.tasks.trigger(ev);
 
         currentTask = selectedTask;
-        availableTasks = [];
+        suggestedTasks = [];
         skipResponse = true;
       }
     }
@@ -295,7 +278,7 @@ export class DialogueIntentService {
     return {
       cancelledTaskId,
       selectedTask,
-      availableTasks,
+      suggestedTasks,
       skipResponse,
       currentTask,
       currentField,

@@ -83,7 +83,7 @@ export class DialogueChatAvatarService {
       const schema = filtered.at(0);
       const tool: SelectedTool = {
         name,
-        values: res.matches[name],
+        values: res[name],
         schema: schema,
       };
 

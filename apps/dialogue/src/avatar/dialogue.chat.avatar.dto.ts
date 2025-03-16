@@ -33,7 +33,7 @@ type AvatarTextChat = {
   chat?: {
     emotion?: string;
     knowledge: string;
-    tasks: string;
+    suggestedTasks: string;
     task?: string;
     field?: string;
   };
