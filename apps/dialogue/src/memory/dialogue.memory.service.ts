@@ -39,7 +39,7 @@ export class DialogueMemoryService implements OnModuleInit {
 
     try {
       let summary = await this.llmProvider.chat({
-        user: `Summarize the following interaction between user and agent in a few sentences. Be precise but coincise, do not add context.\n\n${history}`,
+        user: `Summarize the following interaction between user and assistant in a few sentences. Be precise but coincise, do not add context.\n\n${history}`,
         stream: false,
         json: false,
         tag: 'chat',
@@ -75,7 +75,7 @@ export class DialogueMemoryService implements OnModuleInit {
     if (!history || !history.length) return;
     return history
       .filter((h) => h.type === 'message')
-      .map((h) => ` - ${h.role}: ${h.content}`)
+      .map((h) => `- ${h.role}: ${h.content}`)
       .join('\n');
   }
 

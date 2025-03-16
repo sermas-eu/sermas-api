@@ -20,7 +20,7 @@ The conversation must be fast and coincise, reply with short answers.
 ${BaseSystemPrompt}
 
 ## Response format
-Always start your answer starting with a <tools> tag containing the identified tools. Append then the chat response. Never add Notes or Explanations.
+Always start your answer starting with a <tools> tag containing the identified tools. Append then the chat response as plain text, do not use emoticons. Never add Notes or Explanations.
 
 <tools>
 <!-- Output in parsable JSON, following exactly this structure.  -->
@@ -37,9 +37,9 @@ Always start your answer starting with a <tools> tag containing the identified t
 
 export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
   'chat',
-  `Execute sequentially the following tasks (delimited by #).
+  `Execute sequentially the following tasks delimited by markup titles.
 
-# tools
+# TOOLS
 Match a tool from TOOLS list with the USER MESSAGE.
 
 Follow strictly all of the following rules:
@@ -48,9 +48,12 @@ Follow strictly all of the following rules:
 - never match a tool if the user is providing a question or asking for clarifications.
 - the matching tool must be one of those in TOOLS
 
-If there is no match ot no TOOLS are available, return an empty object. Skip the next section if tools are found.
+If there is no match ot no TOOLS are available, return an empty object. Skip the next section if tools are found. 
+Never mention tools in the chat response.
 
-# chat
+# CHAT RESPONSE
+
+Answer to user message. Do not make up an answer if you have no information, instead ask the user for details.
 
 <% if (data.field || data.task) { %>
 
@@ -72,7 +75,7 @@ If there is no match ot no TOOLS are available, return an empty object. Skip the
   <% } %>
 
   <% if (data.tasks) { %>
-    TASKS may be proposed to the user depending on context, be precise in the task offering description.
+    Propose one of TASKS depending on context, be precise in the task offering description.
   <% } %>
 
 <% } %>

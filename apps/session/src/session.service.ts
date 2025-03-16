@@ -510,7 +510,7 @@ export class SessionService {
   async onInteractionIntention(
     payload: UserInteractionIntentionDto,
   ): Promise<void> {
-    this.logger.debug(`Interaction event: ${JSON.stringify(payload)}`);
+    this.logger.verbose(`Interaction event: ${JSON.stringify(payload)}`);
   }
 
   async onDialogueMessage(ev: DialogueMessageDto) {

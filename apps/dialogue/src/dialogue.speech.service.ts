@@ -347,14 +347,17 @@ export class DialogueSpeechService {
         return false;
       }
 
-      this.logger.verbose(`STT: [${payload.language}] ${text}`);
       // this.dataset.saveRecord('stt', text, buffer, clientId, 'wav');
+
+      text
+        .split('\n')
+        .forEach((part) =>
+          this.logger.debug(`USER ${payload.requestId} | ${part}`),
+        );
 
       const emotion = this.emotion.getUserEmotion(
         dialogueMessagePayload.sessionId,
       );
-
-      this.logger.verbose(`User main emotion: ${emotion}`);
 
       const sttEvent: DialogueMessageDto = {
         ...dialogueMessagePayload,

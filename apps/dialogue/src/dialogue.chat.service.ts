@@ -156,7 +156,9 @@ export class DialogueChatService {
 
         (text || '')
           .split('\n')
-          .map((text) => this.logger.debug(`RESPONSE | ${text}`));
+          .map((text) =>
+            this.logger.debug(`RESPONSE ${message.requestId} | ${text}`),
+          );
 
         if (skipChatResponse) {
           return;
@@ -231,22 +233,22 @@ export class DialogueChatService {
     });
   }
 
-  splitSentenceOnDelimiter(
-    sentence: string,
-    delimiters: string[],
-    minSplittingSentenceLen: number,
-  ) {
-    // find first delimiter match
-    for (const d of delimiters) {
-      const index = sentence.indexOf(d, minSplittingSentenceLen);
-      if (index > -1) {
-        sentence = sentence.substring(0, index + 1);
-        break;
-      }
-    }
+  // splitSentenceOnDelimiter(
+  //   sentence: string,
+  //   delimiters: string[],
+  //   minSplittingSentenceLen: number,
+  // ) {
+  //   // find first delimiter match
+  //   for (const d of delimiters) {
+  //     const index = sentence.indexOf(d, minSplittingSentenceLen);
+  //     if (index > -1) {
+  //       sentence = sentence.substring(0, index + 1);
+  //       break;
+  //     }
+  //   }
 
-    return sentence;
-  }
+  //   return sentence;
+  // }
 
   sendMessage(
     message: DialogueMessageDto,
@@ -256,10 +258,6 @@ export class DialogueChatService {
   ) {
     // ensure links are sent as text
     text = this.convertMarkdownLinksToHtml(text);
-
-    if (this.config.get('LLM_PRINT_RESPONSE') === '1') {
-      text.split('\n').forEach((line) => `LLM | ${line}`);
-    }
 
     const responseMessage: DialogueTextToSpeechDto = {
       ...message,

@@ -192,10 +192,13 @@ export const fileExists = (file: string): Promise<boolean> => {
 };
 
 export const hash = (s: string) => {
-  return s.split('').reduce(function (a, b) {
-    a = (a << 5) - a + b.charCodeAt(0);
-    return a & a;
-  }, 0);
+  return s
+    .split('')
+    .reduce(function (a, b) {
+      a = (a << 5) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0)
+    .toString();
 };
 
 export const md5 = (s: string) =>
