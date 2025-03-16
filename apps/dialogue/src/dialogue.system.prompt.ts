@@ -12,7 +12,7 @@ export type BaseSystemPromptParams = {
 
 export const BaseSystemPrompt = `
 <% if (data.app) { %>
-  ## DOMAIN
+  ## APPLICATION
   <%= data.app %>
 <% } %>
 <% if (data.avatar) { %>

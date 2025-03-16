@@ -337,7 +337,7 @@ export class LLMProviderService implements OnModuleInit {
 
             const avail = await instance.available();
 
-            this.logger[avail ? 'log' : 'debug'](
+            this.logger[avail ? 'debug' : 'verbose'](
               `${instance.getName()} ${avail ? '' : 'not '}available.`,
             );
             if (!avail) return [];

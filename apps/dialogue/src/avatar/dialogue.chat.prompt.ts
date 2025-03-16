@@ -14,23 +14,25 @@ type AvatarChatPromptParams = {
 export const avatarSystemChatPrompt =
   PromptTemplate.create<BaseSystemPromptParams>(
     'chat-system',
-    `You are an AVATAR discussing with USER on topics described in APPLICATION.
-The conversation must be fast and coincise, reply with short answers.
+    `
+You provide answer to an AVATAR discussing with USER in the following context. 
+The avatar conversation is converted to speech and must be fast and coincise, avoid repetitons.
 
 ${BaseSystemPrompt}
 
 ## Response format
-Always start your answer starting with a <tools> tag containing the identified tools. Append then the chat response as plain text, do not use emoticons. Never add Notes or Explanations.
+Always start your answer starting with a <tools> tag containing the identified tools. Append then the chat response as plain text, do not use emoticons. 
+Never add Notes or Explanations.
 
+### Example:
 <tools>
 <!-- Output in parsable JSON, following exactly this structure.  -->
 {
-  "matches": { 
-    "matching TOOL name": { 
-      // optional, set only if in TOOL signature
-      "a matching TOOL argument name": "the value extracted from USER message" 
-    } 
-  }
+  // name of the matching tool
+  "TOOL name": { 
+    // optional, list tool arguments
+    "TOOL argument name": "the value extracted from USER message" 
+  } 
 }
 </tools>`,
   );
@@ -40,7 +42,7 @@ export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
   `Execute sequentially the following tasks delimited by markup titles.
 
 # TOOLS
-Match a tool from TOOLS list with the USER MESSAGE.
+Match a tool from TOOLS based on the USER MESSAGE.
 
 Follow strictly all of the following rules:
 - find an item based on the 'description' field of each TOOLS.
@@ -48,12 +50,13 @@ Follow strictly all of the following rules:
 - never match a tool if the user is providing a question or asking for clarifications.
 - the matching tool must be one of those in TOOLS
 
-If there is no match ot no TOOLS are available, return an empty object. Skip the next section if tools are found. 
+Always return an object even if there is no match or no TOOLS are available. Skip the next section if tools are found. 
 Never mention tools in the chat response.
 
 # CHAT RESPONSE
 
-Answer to user message. Do not make up an answer if you have no information, instead ask the user for details.
+Your answer to USER MESSAGE, based on the overall context information. Ask for clarification if you have no elements to answer precisely.
+Never mention tools in the chat response.
 
 <% if (data.field || data.task) { %>
 

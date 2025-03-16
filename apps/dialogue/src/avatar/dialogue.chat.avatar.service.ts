@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SentenceTransformer } from 'apps/dialogue/src/avatar/transformer/sentence.transformer';
+import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { parseJSON } from 'libs/llm/util';
 import { MonitorService } from 'libs/monitor/monitor.service';
@@ -14,7 +15,6 @@ import {
 import { SelectedTool } from './dialogue.chat.tools.dto';
 import { StreamingToolsTransformer } from './transformer/streaming-tools.transformer';
 import { convertToolsToPrompt } from './utils';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
 
 @Injectable()
 export class DialogueChatAvatarService {
@@ -64,23 +64,19 @@ export class DialogueChatAvatarService {
   }
 
   parseMatchingTools(rawJson: string, tools: AppToolsDTO[]) {
-    const res = parseJSON<{
-      matches: {
-        [param: string]: any;
-      };
-    }>(rawJson);
+    const res = parseJSON<Record<string, any>>(rawJson);
 
     const selectedTools: SelectedTool[] = [];
 
-    if (!res || !res.matches) {
+    if (!res || !Object.keys(res).length) {
       return selectedTools;
     }
 
-    for (const name in res.matches) {
+    for (const name in res) {
       const filtered = tools.filter((t) => t.name === name);
       if (!filtered.length) {
         this.logger.warn(
-          `Cannot find LLM inferred tool name=${name} tools=${tools.map((t) => t.name).join(', ')}`,
+          `Cannot find LLM inferred tool name=${name} avail tools=${tools.map((t) => t.name).join(', ')}`,
         );
         continue;
       }

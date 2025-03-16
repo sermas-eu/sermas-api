@@ -549,7 +549,7 @@ export class DialogueSpeechService {
       delete this.outgoingMessageQueue[requestId].chunks[chunkId];
 
       if (outgoingChunksQueue.sent === outgoingChunksQueue.total) {
-        this.logger.debug(`TTS queue sent for requestId=${requestId}`);
+        this.logger.verbose(`TTS queue sent for requestId=${requestId}`);
         delete this.outgoingMessageQueue[requestId];
 
         this.trackRequest('ended', dialogueMessage);

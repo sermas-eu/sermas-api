@@ -209,7 +209,10 @@ export class DialogueIntentService {
     let skipResponse = false;
 
     if (taskIntent.taskId) {
-      const matches = tasks.filter((t) => t.taskId === taskIntent.taskId);
+      // match by taskId or name, LLM takes it sometimes
+      const matches = tasks.filter(
+        (t) => t.taskId === taskIntent.taskId || t.name === taskIntent.taskId,
+      );
       matchingTask = matches.length ? matches[0] : undefined;
     }
 
