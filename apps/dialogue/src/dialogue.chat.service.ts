@@ -77,7 +77,7 @@ export class DialogueChatService {
 
     const perf = this.monitor.performance({
       ...message,
-      label: 'chat.user',
+      label: 'avatar',
     });
 
     // search rag context
@@ -134,7 +134,7 @@ export class DialogueChatService {
     });
 
     if (!res || !res.stream) {
-      perf();
+      perf('no-results');
       this.logger.warn(
         `LLM response is empty appId=${appId} sessionId=${sessionId}`,
       );
@@ -154,7 +154,7 @@ export class DialogueChatService {
 
     res.stream
       .on('data', (chunk: Buffer | string) => {
-        perf();
+        perf('stream');
 
         const text = chunk.toString();
 
@@ -223,6 +223,7 @@ export class DialogueChatService {
         });
 
         this.logger.verbose(`chat response stream completed`);
+        perf('end');
       });
   }
 

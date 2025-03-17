@@ -26,8 +26,6 @@ export class DialogueChatAvatarService {
   ) {}
 
   async send(args: AvatarChatRequest): Promise<LLMCombinedResult> {
-    const perf = this.monitor.performance({ label: 'avatar.chat' });
-
     const chatProvider = args.chatArgs?.provider || args.provider;
     const chatModel = args.chatArgs?.model || args.model;
 
@@ -59,7 +57,6 @@ export class DialogueChatAvatarService {
       });
     });
 
-    perf();
     return await promise;
   }
 

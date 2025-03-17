@@ -517,7 +517,7 @@ export class LLMProviderService implements OnModuleInit {
     const provider = await this.getEmbeddingsProvider(args);
 
     const perf = this.monitor.performance({
-      label: 'embeddings',
+      label: 'llm.embeddings',
     });
     const embeddings = await provider.generate(text);
 
@@ -576,11 +576,11 @@ export class LLMProviderService implements OnModuleInit {
       return this.emptyResponse(args);
     }
 
-    const llmCallId = ulid();
+    const llmCallId = ulid().slice(-5);
 
     const config = await provider.getConfig();
     const perf = this.monitor.performance({
-      label: `llm`,
+      label: `llm.send:${args.tag ? `${args.tag}:` : ''}:${llmCallId}`,
     });
 
     const messages = args.messages || [];
@@ -756,7 +756,9 @@ export class LLMProviderService implements OnModuleInit {
   async chat<T = any>(
     args: LLMChatRequest,
   ): Promise<LLMCallResult | T | string | null> {
-    const perf = this.monitor.performance({ label: 'chat' });
+    const perf = this.monitor.performance({
+      label: `llm.chat${args.tag ? `:${args.tag}` : ''}`,
+    });
     const messages: LLMMessage[] = args.messages || [];
 
     // add system message

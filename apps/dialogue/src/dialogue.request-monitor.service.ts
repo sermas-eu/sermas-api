@@ -90,7 +90,7 @@ export class DialogueRequestMonitorService {
 
       const perf = this.monitor.performance({
         ...ev,
-        label: `request-monitor:${ev.requestId}`,
+        label: `request:${ev.requestId}`,
         threshold: ev.threshold || 8000,
       });
 
