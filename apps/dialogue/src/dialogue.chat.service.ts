@@ -78,6 +78,7 @@ export class DialogueChatService {
     const perf = this.monitor.performance({
       ...message,
       label: 'avatar',
+      threshold: 3000,
     });
 
     // search rag context

@@ -121,7 +121,7 @@ export class DialogueIntentService {
         message: userMessage,
       }),
       user: intentPrompt({
-        currentTask: activeTask.task?.name,
+        activeTask: activeTask.task?.name,
       }),
       tag: 'intent',
       sessionContext: createSessionContext(message),

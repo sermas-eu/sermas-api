@@ -7,7 +7,7 @@ import {
 export type IntentSystemPrompt = BaseSystemPromptParams;
 
 export type IntentPrompt = {
-  currentTask?: string;
+  activeTask?: string;
 };
 
 export type IntentResponse = {
@@ -50,8 +50,8 @@ If message is skipped, do not continue to next steps.
 
 # INTENTS
 
-<% if (data.currentTask) { %>
-  Active task name is <%= data.currentTask %>
+<% if (data.activeTask) { %>
+  Active task name is <%= data.activeTask %>
 <% } %>
 
 Analyze the conversation and match one intent.
@@ -63,7 +63,7 @@ Set the field 'match' to 'true' in those cases:
 
 If the user message request matches directly the intent or confirms an intent previously proposed by the assistant, set the field 'trigger' to 'true'
 
-<% if (data.currentTask) { %>
+<% if (data.activeTask) { %>
   If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
 <% } %>`,
 );

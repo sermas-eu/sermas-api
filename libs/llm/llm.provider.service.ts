@@ -758,6 +758,7 @@ export class LLMProviderService implements OnModuleInit {
   ): Promise<LLMCallResult | T | string | null> {
     const perf = this.monitor.performance({
       label: `llm.chat${args.tag ? `:${args.tag}` : ''}`,
+      threshold: 1800,
     });
     const messages: LLMMessage[] = args.messages || [];
 
