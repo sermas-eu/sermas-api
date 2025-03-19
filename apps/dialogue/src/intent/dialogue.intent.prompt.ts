@@ -67,8 +67,9 @@ Set the field 'match' to 'true' in those cases:
 - if the user is not asking for clarification or general information
 
 Set the field 'trigger' to 'true' in those cases:
-- if the user message intention matches precisely the intent which matched
-- if the user confirms an intent that has been proposed by the assistant in the last message from CONVERSATION
+- user is not asking for clarifications or information
+- user intention matches precisely the task description
+- user confirms a task that has been proposed by the assistant in the last message from CONVERSATION
 
 <% if (data.activeTask) { %>
   If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true

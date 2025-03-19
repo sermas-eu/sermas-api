@@ -142,6 +142,10 @@ export class DialogueIntentService {
       skipResponse: response?.filter?.skip === true,
     };
 
+    if (response?.filter?.explain) {
+      this.logger.debug(`Intent filter reason: ${response?.filter?.explain}`);
+    }
+
     if (response?.filter?.skip) {
       this.logger.debug(`Skipping user request message=${message.text}`);
       return result;
