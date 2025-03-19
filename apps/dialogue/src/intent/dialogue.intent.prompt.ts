@@ -55,7 +55,8 @@ If message is skipped, do not continue to next steps.
 # INTENTS
 
 <% if (data.activeTask) { %>
-  Active task name is <%= data.activeTask %>
+  ## ACTIVE TASK
+  <%= data.activeTask %>
 <% } %>
 
 Analyze the conversation and match one 'intent' from TASKS based on the user message intention. 
@@ -70,6 +71,7 @@ Set the field 'trigger' to 'true' in those cases:
 - user is not asking for clarifications or information
 - user intention matches precisely the task description
 - user confirms a task that has been proposed by the assistant in the last message from CONVERSATION
+- ACTIVE TASK is not available
 
 <% if (data.activeTask) { %>
   If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true

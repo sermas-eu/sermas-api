@@ -319,7 +319,7 @@ export class DialogueIntentService {
 
     let skipResponse = args.isToolExclusive;
 
-    if (args.selectedTools) {
+    if (args.selectedTools && args.selectedTools.length) {
       skipResponse = args.isToolExclusive || args.settings?.skipToolResponse;
 
       // tools matched
