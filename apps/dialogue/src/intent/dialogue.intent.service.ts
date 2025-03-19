@@ -134,21 +134,25 @@ export class DialogueIntentService {
       appId: message.appId,
       sessionId: message.sessionId,
       message: message,
-      skip: response?.skip,
+      skip: response?.filter?.skip,
     };
     this.emitter.emit('dialogue.chat.validation', validationEvent);
 
     const result: TaskIntentMatchResult = {
-      skipResponse: response?.skip === true,
+      skipResponse: response?.filter?.skip === true,
     };
 
-    if (response?.skip) {
+    if (response?.filter?.skip) {
       this.logger.debug(`Skipping user request message=${message.text}`);
       return result;
     }
 
     // handle intent case
     if (response?.intent) {
+      if (response.intent.explain) {
+        this.logger.debug(`Intent explanation: ${response.intent.explain}`);
+      }
+
       result.task = await this.handleTaskIntent({
         message,
         taskIntent: response.intent,

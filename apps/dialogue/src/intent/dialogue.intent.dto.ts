@@ -12,10 +12,16 @@ export type TaskIntentWrapper = {
   trigger: boolean;
   match: boolean;
   cancel: boolean;
+  explain: string;
+};
+
+export type TaskFilterWrapper = {
+  skip: boolean;
+  explain: string;
 };
 
 export type TaskIntentMatch = {
-  skip: boolean;
+  filter: TaskFilterWrapper;
   intent: TaskIntentWrapper;
   task: DialogueTaskDto;
   record?: DialogueTaskRecordDto;
