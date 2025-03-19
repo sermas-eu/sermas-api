@@ -25,6 +25,8 @@ export const SermasDefaultConfig = {
   AUTH_KEYCLOAK_CLIENT_ID: 'platform',
   // AUTH_KEYCLOAK_SECRET set the keycloack client password used for administrative purposes
   AUTH_KEYCLOAK_SECRET: 'platform',
+  // SHOW_KEYCLOAK_LOGS show verbose logging related to keycloak authentication for API endpoints
+  SHOW_KEYCLOAK_LOGS: '0',
   // ADMIN_SERVICE_ACCOUNT_USERNAME set the keycloack admin user
   ADMIN_SERVICE_ACCOUNT_USERNAME: 'admin',
   // ADMIN_SERVICE_ACCOUNT_PASSWORD set the keycloack admin password
