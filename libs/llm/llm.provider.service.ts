@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { hash } from 'libs/util';
-import { Readable, Transform } from 'stream';
+import { Readable } from 'stream';
 import { ulid } from 'ulidx';
 import { LLMCacheService, SaveToCacheTransformer } from './llm.cache.service';
 import {
@@ -545,7 +545,17 @@ export class LLMProviderService implements OnModuleInit {
     this.emitter.emit(`llm.result`, context);
   }
 
-  private applyTransformers(args: LLMSendArgs, returnStream: Readable) {
+  private applyTransformers(
+    args: LLMSendArgs,
+    returnStream: Readable,
+    onStreamResponse: (response: string) => void,
+  ) {
+    returnStream = returnStream.pipe(new LogTransformer(onStreamResponse));
+
+    returnStream = returnStream.pipe(
+      new SaveToCacheTransformer(this.cache, args.messages),
+    );
+
     if (args.transformers) {
       for (const transformer of args.transformers) {
         returnStream = returnStream.pipe(transformer);
@@ -624,6 +634,27 @@ export class LLMProviderService implements OnModuleInit {
 
     this.logPrompt(messages, llmCallId);
 
+    const onStreamResponse = (response: string) => {
+      // print to screen
+      if (this.printResponse) {
+        this.logger.debug(`${llmCallId || ''} |---`);
+        response
+          .split('\n')
+          .forEach((line) => this.logger.debug(`${llmCallId || ''} | ${line}`));
+        this.logger.debug(`${llmCallId || ''} |---`);
+      }
+      // emit result
+      this.emit({
+        model: config.model,
+        provider: provider.getName(),
+        params: args.messages,
+        messages,
+        response,
+        tag: args.tag,
+        llmCallId,
+      });
+    };
+
     const cached = await this.cache.get(args.messages);
     if (cached) {
       this.logger.debug(`Using cached response`);
@@ -634,9 +665,11 @@ export class LLMProviderService implements OnModuleInit {
         const returnStream = this.applyTransformers(
           args,
           Readable.from(cached.toString()),
+          onStreamResponse,
         );
         return { stream: returnStream } as LLMCallResult;
       } else {
+        this.logResponse(cached.toString(), llmCallId);
         return cached as T;
       }
     }
@@ -650,48 +683,24 @@ export class LLMProviderService implements OnModuleInit {
         let returnStream = stream;
 
         // custom stream handler, eg. sermas-llama3, sermas-llama2
-        let streamAdapter: Transform;
-        if (
-          config.model &&
-          provider.getAdapter(config.model)?.getStreamAdapter
-        ) {
-          this.logger.debug(
-            `Using custom stream adapter model=${config.model}`,
-          );
-          streamAdapter = provider.getAdapter(config.model)?.getStreamAdapter();
-          returnStream = returnStream.pipe(streamAdapter);
-        }
+        // if (
+        //   config.model &&
+        //   provider.getAdapter(config.model)?.getStreamAdapter
+        // ) {
+        //   this.logger.debug(
+        //     `Using custom stream adapter model=${config.model}`,
+        //   );
+        //   const streamAdapter = provider
+        //     .getAdapter(config.model)
+        //     ?.getStreamAdapter();
+        //   returnStream = returnStream.pipe(streamAdapter);
+        // }
 
-        returnStream = returnStream.pipe(
-          new LogTransformer((response: string) => {
-            // print to screen
-            if (this.printResponse) {
-              this.logger.debug(`${llmCallId || ''} |---`);
-              response
-                .split('\n')
-                .forEach((line) =>
-                  this.logger.debug(`${llmCallId || ''} | ${line}`),
-                );
-              this.logger.debug(`${llmCallId || ''} |---`);
-            }
-            // emit result
-            this.emit({
-              model: config.model,
-              provider: provider.getName(),
-              params: args.messages,
-              messages,
-              response,
-              tag: args.tag,
-              llmCallId,
-            });
-          }),
+        returnStream = this.applyTransformers(
+          args,
+          returnStream,
+          onStreamResponse,
         );
-
-        returnStream = returnStream.pipe(
-          new SaveToCacheTransformer(this.cache, args.messages),
-        );
-
-        returnStream = this.applyTransformers(args, returnStream);
 
         perf(`${provider.getName()}/${config.model}`);
 

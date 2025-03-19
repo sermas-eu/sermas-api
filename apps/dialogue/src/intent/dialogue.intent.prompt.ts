@@ -44,7 +44,7 @@ Identify a USER MESSAGE relevant to CONVERSATION and APPLICATION. Consider those
 - Skip input unrelated to the conversation or APPLICATION
 - Skip message from the user when reflecting or self-talking
 - Keep messages related to intents
-- In doubt, keep the message if well formed
+- Keep any other message
 
 If message is skipped, do not continue to next steps.
 
@@ -57,9 +57,8 @@ If message is skipped, do not continue to next steps.
 Analyze the conversation and match one intent.
 
 Set the field 'match' to 'true' in those cases:
-- if there is a direct match
-- if the assistant proposed that task in the last two interactions
-- if the user had not yet confirmed the task in the last interaction
+- if there is an explicit match with an intent
+- if the assistant asked explicitly for one intent and the user is confirming it
 
 If the user message request matches directly the intent or confirms an intent previously proposed by the assistant, set the field 'trigger' to 'true'
 

@@ -161,7 +161,7 @@ export class DialogueIntentService {
       this.logger.debug(`Intent not found for sessionId=${message.sessionId}`);
     }
 
-    result.tools = await this.retrieveCurrentTools(result.task, message);
+    result.tools = await this.retrieveCurrentTools(message, result.task);
 
     return result;
   }
@@ -437,9 +437,15 @@ export class DialogueIntentService {
   }
 
   async retrieveCurrentTools(
-    taskIntent: TaskIntentResult,
     message: DialogueMessageDto,
+    taskIntent?: TaskIntentResult,
   ): Promise<IntentActiveTools> {
+    taskIntent = taskIntent || {
+      currentTask: undefined,
+      cancelledTaskId: undefined,
+      suggestedTasks: [],
+    };
+
     const { currentTask, cancelledTaskId } = taskIntent;
 
     let matchOrRemoveTask = false;
