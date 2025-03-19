@@ -669,7 +669,7 @@ export class LLMProviderService implements OnModuleInit {
         );
         return { stream: returnStream } as LLMCallResult;
       } else {
-        this.logResponse(cached.toString(), llmCallId);
+        this.logResponse(JSON.stringify(cached), llmCallId);
         return cached as T;
       }
     }

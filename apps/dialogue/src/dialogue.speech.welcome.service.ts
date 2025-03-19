@@ -14,7 +14,6 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { uuidv4 } from 'libs/util';
 import { packAvatarObject } from './avatar/utils';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import {
@@ -118,7 +117,6 @@ export class DialogueWelcomeService {
     if (response.message) {
       const msg: DialogueMessageDto = {
         actor: 'agent',
-        requestId: uuidv4(),
         appId: ev.appId,
         language: settings.language,
         sessionId: ev.record.sessionId,

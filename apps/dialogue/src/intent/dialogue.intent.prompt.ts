@@ -58,7 +58,8 @@ Analyze the conversation and match one intent.
 
 Set the field 'match' to 'true' in those cases:
 - if there is an explicit match with an intent
-- if the assistant asked explicitly for one intent and the user is confirming it
+- if the assistant asked explicitly for one intent and the user is confirming or declining
+- if the user is not asking for clarification or general information
 
 If the user message request matches directly the intent or confirms an intent previously proposed by the assistant, set the field 'trigger' to 'true'
 

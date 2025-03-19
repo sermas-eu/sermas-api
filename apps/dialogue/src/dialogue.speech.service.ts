@@ -82,7 +82,7 @@ export class DialogueSpeechService {
     messageInEnglish: string,
     dialogueMessagePayload: DialogueMessageDto,
   ) {
-    if (!this.isRequestActive(dialogueMessagePayload)) {
+    if (!this.isRequestOngoing(dialogueMessagePayload)) {
       return;
     }
 
@@ -288,18 +288,36 @@ export class DialogueSpeechService {
     this.emitter.emit('dialogue.chat.message', ev);
   }
 
-  private isRequestActive(payload: { sessionId?: string; requestId?: string }) {
+  private isRequestOngoing(payload: {
+    sessionId?: string;
+    requestId?: string;
+  }) {
+    // with no requestId indication, keep going. E.g. welcome screen
+    if (!payload.requestId) return true;
+
     // drop request if not active
     const isActive = this.requestMonitor.isRequestActive(
       payload.sessionId,
       payload.requestId,
     );
-    if (!isActive) {
+
+    const isCancelled = this.requestMonitor.isRequestCancelled(
+      payload.sessionId,
+      payload.requestId,
+    );
+
+    const isOngoing = isActive || !isCancelled;
+
+    if (!isOngoing) {
       this.logger.debug(
-        `Dropping requestId=${payload.requestId} sessionId=${payload.sessionId}`,
+        `Dropping request status=${this.requestMonitor.getRequestStatus(
+          payload.sessionId,
+          payload.requestId,
+        )} requestId=${payload.requestId} sessionId=${payload.sessionId}`,
       );
     }
-    return isActive;
+
+    return isOngoing;
   }
 
   async onUserMessageValidation(payload: DialogueChatValidationEvent) {
@@ -343,7 +361,7 @@ export class DialogueSpeechService {
         return false;
       }
 
-      if (!this.isRequestActive(payload)) {
+      if (!this.isRequestOngoing(payload)) {
         return false;
       }
 
@@ -383,16 +401,14 @@ export class DialogueSpeechService {
 
   async onChatProgress(ev: DialogueChatProgressEvent) {
     if (ev.requestId) return;
-
     this.logger.debug(
       `Chat generation progress completed=${ev.completed} requestId=${ev.requestId} sessionId=${ev.sessionId}`,
     );
-
-    this.trackRequest('processing', ev);
+    this.trackRequest(ev.completed ? 'ended' : 'processing', ev);
   }
 
   async handleMessage(ev: DialogueMessageDto): Promise<void> {
-    if (!this.isRequestActive(ev)) {
+    if (!this.isRequestOngoing(ev)) {
       return;
     }
 
@@ -461,7 +477,7 @@ export class DialogueSpeechService {
   }
 
   async sendAgentSpeech(message: DialogueMessageDto) {
-    if (!this.isRequestActive(message)) {
+    if (!this.isRequestOngoing(message)) {
       return;
     }
 
@@ -523,7 +539,7 @@ export class DialogueSpeechService {
     const chunkId = chunkKeys[0];
 
     const { loader, dialogueMessage } = outgoingChunksQueue.chunks[chunkId];
-    if (!this.isRequestActive(dialogueMessage)) return;
+    if (!this.isRequestOngoing(dialogueMessage)) return;
 
     this.outgoingMessageSemaphore.add(requestId);
 

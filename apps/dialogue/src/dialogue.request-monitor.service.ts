@@ -3,6 +3,7 @@ import { SessionService } from 'apps/session/src/session.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import {
   DialogueSessionRequestEvent,
+  DialogueSessionRequestStatus,
   DialogueSessionRequestTracker,
 } from './dialogue.request-monitor.dto';
 
@@ -39,13 +40,23 @@ export class DialogueRequestMonitorService {
     }
   }
 
+  getRequestStatus(
+    sessionId: string,
+    requestId: string,
+  ): DialogueSessionRequestStatus | undefined {
+    if (!this.requestMonitor[sessionId]) return undefined;
+    if (!this.requestMonitor[sessionId][requestId]) return undefined;
+    return this.requestMonitor[sessionId][requestId].status;
+  }
+
   isRequestActive(sessionId: string, requestId: string) {
-    if (!this.requestMonitor[sessionId]) return false;
-    if (!this.requestMonitor[sessionId][requestId]) return false;
-    return (
-      this.requestMonitor[sessionId][requestId].status === 'started' ||
-      this.requestMonitor[sessionId][requestId].status === 'processing'
-    );
+    const status = this.getRequestStatus(sessionId, requestId);
+    return status === 'started' || status === 'processing';
+  }
+
+  isRequestCancelled(sessionId: string, requestId: string) {
+    const status = this.getRequestStatus(sessionId, requestId);
+    return status === 'cancelled';
   }
 
   getActiveRequests(sessionId: string) {
