@@ -13,10 +13,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
 import { UIAsyncApiService } from './ui.async.service';
 import {
   BackgroundUIAudioDto,
@@ -87,8 +85,6 @@ export class UIController {
     @Param('appId') appId: string,
     @Param('moduleId') moduleId: string,
     @Body() interaction: UIInteractionDTO,
-    @AuthenticatedUser()
-    user?: AuthJwtUser,
   ) {
     this.uiService.interaction({
       appId,
@@ -111,10 +107,7 @@ export class UIController {
   @ApiOperationName({
     summary: 'Show content',
   })
-  showContent(
-    @Body() content: UIContentDto,
-    @AuthenticatedUser() user?: AuthJwtUser,
-  ) {
+  showContent(@Body() content: UIContentDto) {
     if (!content.appId) throw new BadRequestException();
     return this.uiService.showContent(content);
   }
@@ -128,10 +121,7 @@ export class UIController {
     summary: 'Generate a QR code',
   })
   @ApiScopes('content')
-  generateQrCode(
-    @Body() data: QrCodePayloadDto,
-    @AuthenticatedUser() user: AuthJwtUser,
-  ): Promise<QrCodeDto> {
+  generateQrCode(@Body() data: QrCodePayloadDto): Promise<QrCodeDto> {
     return this.uiService.generateQRCode(data);
   }
 }

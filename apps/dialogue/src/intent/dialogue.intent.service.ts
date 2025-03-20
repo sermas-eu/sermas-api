@@ -117,7 +117,8 @@ export class DialogueIntentService {
         avatar: packAvatarObject(avatar),
         language: settings.language,
         history: history,
-        intents: JSON.stringify(intents),
+        // empty tasks to ease the tools selection
+        intents: activeTask.task ? [] : JSON.stringify(intents),
         message: userMessage,
       }),
       user: intentPrompt({

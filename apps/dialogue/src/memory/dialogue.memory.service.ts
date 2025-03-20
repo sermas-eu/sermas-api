@@ -1,11 +1,10 @@
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { Model } from 'mongoose';
 import { DialogueMemoryMessageDto } from './dialogue.memory.dto';
 import { DialogueMemory } from './dialogue.memory.schema';
+import { DialogueMemorySummaryService } from './dialogue.memory.summary.service';
+import { conversationToText } from './util';
 
 @Injectable()
 export class DialogueMemoryService implements OnModuleInit {
@@ -14,50 +13,11 @@ export class DialogueMemoryService implements OnModuleInit {
   constructor(
     @InjectModel(DialogueMemory.name)
     private readonly memory: Model<DialogueMemory>,
-    private readonly llmProvider: LLMProviderService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly summary: DialogueMemorySummaryService,
   ) {}
 
   onModuleInit() {
     //
-  }
-
-  async getSummary(sessionId: string, force = false) {
-    if (!force) {
-      const cached = await this.cacheManager.get(`summary-${sessionId}`);
-      if (cached) return cached as string;
-    }
-
-    const messages = await this.getMessages(sessionId);
-    if (!messages.length) return '';
-
-    // use history
-    if (messages.length <= 3) return this.conversationToText(messages);
-
-    const newerMessages = messages.splice(-3);
-    const history = this.conversationToText(messages);
-
-    try {
-      let summary = await this.llmProvider.chat({
-        user: `Summarize the following interaction between user and assistant in a few sentences. Be precise but coincise, do not add context.\n\n${history}`,
-        stream: false,
-        json: false,
-        tag: 'chat',
-        sessionContext: createSessionContext({ sessionId }),
-      });
-
-      summary += '\n' + this.conversationToText(newerMessages);
-
-      await this.cacheManager.set(
-        `summary-${sessionId}`,
-        summary,
-        5 * 60 * 1000,
-      );
-      return summary;
-    } catch (e) {
-      this.logger.error(`Error calling LLM: ${e.stack}`);
-    }
-    return '';
   }
 
   async getConversation(
@@ -68,15 +28,7 @@ export class DialogueMemoryService implements OnModuleInit {
       typeof sessionId === 'string' ? sessionId : sessionId.sessionId,
       limit,
     );
-    return this.conversationToText(history);
-  }
-
-  private conversationToText(history: DialogueMemoryMessageDto[]) {
-    if (!history || !history.length) return;
-    return history
-      .filter((h) => h.type === 'message')
-      .map((h) => `- ${h.role}: ${h.content}`)
-      .join('\n');
+    return conversationToText(history);
   }
 
   async getMessages(sessionId: string, limit?: number) {
@@ -136,12 +88,11 @@ export class DialogueMemoryService implements OnModuleInit {
     await session.save();
 
     // regenerate cache
-    if (
-      session.messages[session.messages.length - 1] &&
-      session.messages[session.messages.length - 1].role === 'assistant'
-    ) {
-      await this.getSummary(sessionId, true);
-    }
+    await this.summary.generateSummary(sessionId);
+  }
+
+  getSummary(sessionId: string) {
+    return this.summary.getSummary(sessionId);
   }
 
   async clear(sessionId: string) {

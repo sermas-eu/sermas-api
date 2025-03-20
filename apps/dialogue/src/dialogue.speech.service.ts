@@ -23,7 +23,6 @@ import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { STTProviderService } from 'libs/stt/stt.provider.service';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { TTSProviderService } from 'libs/tts/tts.provider.service';
-import { uuidv4 } from 'libs/util';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
 import {
   DialogueChatProgressEvent,
@@ -192,10 +191,12 @@ export class DialogueSpeechService {
     status: DialogueSessionRequestStatus,
     ev: Omit<DialogueSessionRequestEvent, 'status'>,
   ) {
+    if (!ev.requestId) return;
+
     // track overall request processing time
     this.emitter.emit('session.request', {
       ...ev,
-      requestId: ev.requestId || uuidv4(),
+      requestId: ev.requestId,
       status,
     });
   }
@@ -292,7 +293,7 @@ export class DialogueSpeechService {
     sessionId?: string;
     requestId?: string;
   }) {
-    // with no requestId indication, keep going. E.g. welcome screen
+    // skip with no requestId indication, e.g. api generated messages
     if (!payload.requestId) return true;
 
     // drop request if not active
@@ -305,6 +306,11 @@ export class DialogueSpeechService {
       payload.sessionId,
       payload.requestId,
     );
+
+    // ignore untracked requests, like api generated messages
+    if (isActive === undefined && isCancelled === undefined) {
+      return true;
+    }
 
     const isOngoing = isActive || !isCancelled;
 
@@ -506,6 +512,11 @@ export class DialogueSpeechService {
     dialogueMessage: DialogueMessageDto,
     loader: Promise<OutgoingQueueMessage>,
   ) {
+    if (!dialogueMessage.requestId) {
+      this.logger.debug(`Missing requestId, skipping TTS`);
+      return;
+    }
+
     // add to queue
     if (!this.outgoingMessageQueue[dialogueMessage.requestId]) {
       this.outgoingMessageQueue[dialogueMessage.requestId] = {
@@ -642,14 +653,15 @@ export class DialogueSpeechService {
       text,
       actor: 'agent',
       appId: payload.appId,
-      clientId: payload.clientId,
-      sessionId: payload.sessionId,
-      requestId: payload.requestId,
       gender,
       llm: settings.llm,
       ts: payload.ts || new Date(),
-      chunkId: payload.chunkId || getChunkId(payload.ts),
       language,
+
+      clientId: payload.clientId,
+      sessionId: payload.sessionId,
+      requestId: payload.requestId,
+      chunkId: payload.chunkId || getChunkId(payload.ts),
     };
 
     await this.sendAgentSpeech(dialogueMessagePayload);

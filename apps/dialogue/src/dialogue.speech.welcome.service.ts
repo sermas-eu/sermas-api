@@ -14,6 +14,7 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
+import { ulid } from 'ulidx';
 import { packAvatarObject } from './avatar/utils';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import {
@@ -124,8 +125,11 @@ export class DialogueWelcomeService {
         gender: avatar.gender,
         emotion,
         ts: new Date(),
+
         messageId,
         chunkId: getChunkId(),
+
+        requestId: ulid(),
       };
 
       await this.speech.chat(msg);
@@ -157,8 +161,11 @@ export class DialogueWelcomeService {
             value: t.value,
           })),
         },
+
         contentType: 'buttons',
         chunkId: getChunkId(),
+
+        requestId: ulid(),
       };
 
       await this.broker.publish(SermasTopics.ui.content, buttons);

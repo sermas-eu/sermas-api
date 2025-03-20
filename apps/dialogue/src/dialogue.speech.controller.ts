@@ -30,8 +30,8 @@ import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { getChunkId } from 'libs/sermas/sermas.utils';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
-import { uuidv4 } from 'libs/util';
 import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
+import { ulid } from 'ulidx';
 
 @ApiBearerAuth()
 @Controller('dialogue/speech')
@@ -90,7 +90,7 @@ export class DialogueSpeechController {
     const ev: DialogueSpeechToTextDto = {
       ...data,
 
-      requestId: uuidv4(),
+      requestId: ulid(),
 
       appId,
       sessionId,
@@ -134,7 +134,7 @@ export class DialogueSpeechController {
     const dialogueMessagePayload: DialogueMessageDto = {
       ...data,
 
-      requestId: uuidv4(),
+      requestId: ulid(),
 
       appId,
       sessionId,

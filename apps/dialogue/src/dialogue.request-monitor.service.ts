@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SessionService } from 'apps/session/src/session.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
+import { DialogueAsyncApiService } from './dialogue.async.service';
 import {
   DialogueSessionRequestEvent,
   DialogueSessionRequestStatus,
@@ -22,7 +22,7 @@ export class DialogueRequestMonitorService {
   > = {};
 
   constructor(
-    private readonly session: SessionService,
+    private readonly asyncApi: DialogueAsyncApiService,
     private readonly monitor: MonitorService,
   ) {}
 
@@ -51,22 +51,14 @@ export class DialogueRequestMonitorService {
 
   isRequestActive(sessionId: string, requestId: string) {
     const status = this.getRequestStatus(sessionId, requestId);
+    if (status === undefined) return undefined;
     return status === 'started' || status === 'processing';
   }
 
   isRequestCancelled(sessionId: string, requestId: string) {
     const status = this.getRequestStatus(sessionId, requestId);
+    if (status === undefined) return undefined;
     return status === 'cancelled';
-  }
-
-  getActiveRequests(sessionId: string) {
-    if (!this.requestMonitor[sessionId]) return false;
-    const activeRequests: Record<string, DialogueSessionRequestEvent> = {};
-    for (const requestId in this.requestMonitor[sessionId]) {
-      if (!this.isRequestActive(sessionId, requestId)) continue;
-      activeRequests[requestId] = this.requestMonitor[sessionId][requestId];
-    }
-    return activeRequests;
   }
 
   cancelRequests(sessionId: string, activeRequestId?: string) {
@@ -105,11 +97,18 @@ export class DialogueRequestMonitorService {
         threshold: ev.threshold || 8000,
       });
 
-      this.requestMonitor[ev.sessionId][ev.requestId] = {
-        ...ev,
+      const req: DialogueSessionRequestTracker = {
+        appId: ev.appId,
+        requestId: ev.requestId,
+        sessionId: ev.sessionId,
+        status: ev.status,
         ts: ev.ts || new Date(),
         perf,
       };
+
+      this.requestMonitor[ev.sessionId][ev.requestId] = req;
+
+      this.publishEvent(req.sessionId, req.requestId);
 
       this.logger.verbose(`Started requestId=${ev.requestId}`);
       return;
@@ -117,7 +116,7 @@ export class DialogueRequestMonitorService {
 
     const req = this.requestMonitor[ev.sessionId][ev.requestId];
     if (!req) {
-      this.logger.warn(
+      this.logger.debug(
         `requestId=${ev.requestId} not tracked sessionId=${ev.sessionId}`,
       );
       return;
@@ -128,10 +127,27 @@ export class DialogueRequestMonitorService {
 
     const took = req.perf(req.status, false);
     const tookRounded = Math.round((took / 1000) * 10) / 10;
+
     const logLevel =
       tookRounded > MAX_REQUEST_THRESHOLD_SECONDS ? 'debug' : 'verbose';
+
     this.logger[logLevel](
       `request status=${req.status} took=${tookRounded}s requestId=${ev.requestId} sessionId=${req.sessionId}`,
     );
+
+    this.publishEvent(req.sessionId, req.requestId);
+  }
+
+  async publishEvent(sessionId: string, requestId: string) {
+    if (!this.requestMonitor[sessionId]) return;
+    const req = this.requestMonitor[sessionId][requestId];
+    if (!req) return;
+    await this.asyncApi.request({
+      appId: req.appId,
+      status: req.status,
+      requestId: req.requestId,
+      sessionId: req.sessionId,
+      ts: new Date(),
+    });
   }
 }

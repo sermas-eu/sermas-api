@@ -15,7 +15,7 @@ import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId } from 'libs/sermas/sermas.utils';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { uuidv4 } from 'libs/util';
+import { ulid } from 'ulidx';
 import { DialogueAsyncApiService } from './dialogue.async.service';
 import {
   DialogueChatProgressEvent,
@@ -63,7 +63,8 @@ export class DialogueSpeechEventService {
       const ev: DialogueSpeechToTextDto = {
         appId: session.appId,
         sessionId,
-        requestId: uuidv4(),
+
+        requestId: ulid(),
 
         buffer,
         mimetype: 'audio/wav',

@@ -39,7 +39,7 @@ export const intentPrompt = PromptTemplate.create<IntentPrompt>(
 
 # FILTER
 
-Identify a USER MESSAGE relevant to CONVERSATION and APPLICATION. 
+Identify a USER MESSAGE relevant to CONVERSATION or APPLICATION. 
 Populate the filed 'filter' in response.
 
 Consider those factors to decide:
