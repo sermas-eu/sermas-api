@@ -119,7 +119,7 @@ export const SermasDefaultConfig = {
   // ELEVENIO_MODELS Elevenio models
   ELEVENIO_MODELS: 'eleven_multilingual_v2',
 
-  // LLM_SERVICE default LLM service to use (supported: openai, groq, ollama)
+  // LLM_SERVICE default LLM service to use (supported: openai, groq, ollama, azure_openai, vertexai)
   LLM_SERVICE: 'openai',
 
   // LLM_SERVICE_CHAT LLM service to use for textual chat in format provider/model. If not provided will use LLM_SERVICE
@@ -224,6 +224,14 @@ export const SermasDefaultConfig = {
   AZURE_OPENAI_EMBEDDINGS_MODEL: 'text-embedding-ada-002',
   // AZURE_OPENAI_CHAT_API_VERSION Version of embeddings model distributed in Azure
   AZURE_OPENAI_EMBEDDINGS_API_VERSION: '2023-05-15',
+
+  // VERTEXAI_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
+  VERTEXAI_API_KEY: '',
+  // VERTEXAI_CHAT_MODELS Supported chat models from Hugging Face. Leave empty to allow any.
+  VERTEXAI_CHAT_MODELS: 'mistral-small-2503',
+  // VERTEXAI_BASEURL Base URL for Hugging Face inference service
+  VERTEXAI_BASEURL:
+    'https://europe-west4-aiplatform.googleapis.com/v1/projects/sermas-ga-nr-101070351/locations/europe-west4/publishers/mistralai/models/mistral-small-2503:rawPredict',
 
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',

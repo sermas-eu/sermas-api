@@ -50,6 +50,7 @@ import { readResponse } from './stream/util';
 import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
 import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
 import { parseJSON } from './util';
+import { VertexAIChatProvider } from './providers/vertexai/vertexai.chat.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -213,7 +214,6 @@ export class LLMProviderService implements OnModuleInit {
 
       if (!config.provider) {
         config.provider = this.getDefaultChatProvider();
-        config.model = this.getDefaultChatProviderModel(config.provider);
         this.logger.verbose(
           `No LLM provider selected, using defaults for ${config.provider}`,
         );
@@ -319,6 +319,15 @@ export class LLMProviderService implements OnModuleInit {
           baseURL: config.baseURL || this.config.get('ANTROPHIC_BASEURL'),
           model,
           apiKey: config.apiKey || this.config.get('ANTROPHIC_API_KEY'),
+          availableModels,
+        });
+        break;
+      case 'vertexai':
+        provider = new VertexAIChatProvider({
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('VERTEXAI_BASEURL'),
+          model,
+          apiKey: config.apiKey || this.config.get('VERTEXAI_API_KEY'),
           availableModels,
         });
         break;
