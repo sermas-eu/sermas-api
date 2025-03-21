@@ -6,6 +6,14 @@ export const packAvatarObject = (avatar: RepositoryAvatarDto) => {
   return packPromptObject(avatar, ['name', 'gender', 'prompt']);
 };
 
+export const convertToolsToPlainList = (
+  list?: LLMTool[],
+): string | undefined => {
+  if (!list || !list.length) return undefined;
+
+  return list.map((tool) => `${tool.name}: ${tool.description}`).join('\n');
+};
+
 export const convertToolsToPrompt = (list?: LLMTool[]): string | undefined => {
   if (!list || !list.length) return undefined;
 

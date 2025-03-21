@@ -7,7 +7,7 @@ import { SessionService } from 'apps/session/src/session.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
-import { packAvatarObject } from '../avatar/utils';
+import { convertToolsToPlainList, packAvatarObject } from '../avatar/utils';
 import {
   DialogueChatValidationEvent,
   DialogueToolNotMatchingDto,
@@ -106,6 +106,9 @@ export class DialogueIntentService {
       label: 'intents',
     });
 
+    const sessionRepositories = await this.tools.loadFromSession(message);
+    const tools = sessionRepositories.map((r) => r.tools).flat();
+
     const llm = await this.session.getLLM(message.sessionId);
 
     const response = await this.llm.chat<TaskIntentMatch>({
@@ -120,6 +123,7 @@ export class DialogueIntentService {
         // empty tasks to ease the tools selection
         intents: activeTask.task ? [] : JSON.stringify(intents),
         message: userMessage,
+        tools: convertToolsToPlainList(tools),
       }),
       user: intentPrompt({
         activeTask: activeTask.task?.name,

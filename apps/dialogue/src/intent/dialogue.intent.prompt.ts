@@ -46,7 +46,7 @@ Consider those factors to decide:
 - Keep messages which contains typos, possibly caused by microphone audio conversion
 - Skip input unrelated to the conversation or APPLICATION
 - Skip message from the user when reflecting or self-talking
-- Keep messages related to intents
+- Keep messages related to TASKS and TOOLS
 - Keep any other message
 
 Set the field 'skip' and the field 'explain' describing your decision.

@@ -31,16 +31,16 @@ export const BaseSystemPrompt = `
   ## INTENTS
   <%= data.intents %>
 <% } %>
-<% if (data.tools)   { %>
-  ## TOOLS: 
+<% if (data.tools) { %>
+  ## TOOLS
   <%= data.tools %>
 <% } %>
 <% if (data.tasks)   { %>
-  ## TASKS:
+  ## TASKS
   <%= data.tasks %>
 <% } %>
 <% if (data.emotion) { %>
-  ## USER EMOTION:
+  ## USER EMOTION
   <%= data.emotion %>
 <% } %>
 <% if (data.message) { %>
