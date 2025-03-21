@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { packAvatarObject } from 'apps/dialogue/src/avatar/utils';
 import { DialogueVectorStoreService } from 'apps/dialogue/src/document/dialogue.vectorstore.service';
-import { DialogueMemoryMessageDto } from 'apps/dialogue/src/memory/dialogue.memory.dto';
 import { DialogueMemoryService } from 'apps/dialogue/src/memory/dialogue.memory.service';
 import {
   AppSettingsDto,
@@ -10,13 +10,16 @@ import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { DefaultLanguage } from 'libs/language/lang-codes';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
+import { createSessionContext } from '../session.context';
 import { SessionService } from '../session.service';
 import {
   AgentEvaluatePromptDto,
   AgentEvaluatePromptResponseDto,
 } from './session.prompt.dto';
-import { sessionPrompt } from './session.prompt.service.prompt';
-import { createSessionContext } from '../session.context';
+import {
+  AgentEvaluatePromptParams,
+  sessionPrompt,
+} from './session.prompt.service.prompt';
 
 @Injectable()
 export class SessionPromptService {
@@ -44,9 +47,9 @@ export class SessionPromptService {
     }
 
     const useHistory = payload.options?.history;
-    let history: DialogueMemoryMessageDto[] = [];
+    let history: string;
     if (useHistory) {
-      history = await this.memory.getMessages(sessionId);
+      history = await this.memory.getSummary(sessionId);
     }
 
     let settings: Partial<AppSettingsDto>;
@@ -65,6 +68,15 @@ export class SessionPromptService {
     const language =
       payload.options?.language || settings?.language || DefaultLanguage;
 
+    const params: AgentEvaluatePromptParams = {
+      json,
+      avatar: packAvatarObject(avatar),
+      app: settings?.prompt?.text,
+      history,
+      language,
+      knowledge,
+    };
+
     const perf = this.monitor.performance({
       ...payload,
       label: 'session.prompt',
@@ -75,15 +87,7 @@ export class SessionPromptService {
       messages: [
         {
           role: 'system',
-          content: sessionPrompt({
-            avatar: avatar,
-            language,
-            history: history
-              .map((m) => ` - ${m.role}: ${m.content}`)
-              .join('\n'),
-            knowledge,
-            json,
-          }),
+          content: sessionPrompt(params),
         },
         {
           role: 'user',

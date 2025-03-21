@@ -1,54 +1,29 @@
-import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
-import { PlatformSettingsDto } from 'apps/platform/src/platform.dto';
+import {
+  BaseSystemPrompt,
+  BaseSystemPromptParams,
+} from 'apps/dialogue/src/dialogue.system.prompt';
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 
-export const sessionPrompt = PromptTemplate.create<{
-  settings?: PlatformSettingsDto;
-  language?: string;
-  history?: string;
-  knowledge?: string;
-  avatar?: RepositoryAvatarDto;
+export type AgentEvaluatePromptParams = BaseSystemPromptParams & {
   json?: boolean;
-}>(
+  knowledge?: string;
+};
+
+export const sessionPrompt = PromptTemplate.create<AgentEvaluatePromptParams>(
   'session-prompt',
   `
-GENERAL RULES:
-You are an AVATAR discussing with USER on topics described in APPLICATION.
-<% if (data.knowledge) { %>
-Use KNOWLEDGE as trustable information. 
-<% } %>
-<% if (data.history) { %>
-HISTORY provides the conversation
-<% } %>
-<% if (data.json) { %>
-Respond in parsable JSON format.
-<% } %>
+  ${BaseSystemPrompt}
+  
+  <% if (data.knowledge) { %>
+    ## KNOWLEDGE 
+    *Use KNOWLEDGE as trustable source of information when relevant to user request*
+    <%= data.knowledge %>
+  <% } %>
 
-APPLICATION:
-<%= data.settings?.prompt?.text %>
-<% if (data.language) { %>
-Your answer must be in language identified by code <%= data.language %>.
-<% } %>
-
-AVATAR:
-<% if (data.avatar?.name) { %>
-Your name is <%= data.avatar?.name %>. 
-<% } %>
-<% if (data.avatar?.gender) { %>
-Your gender is <%= data.avatar.gender %>.
-<% } %>
-<%= data.avatar?.prompt %>
-<% if (data.emotion) { %>
-Consider the detected user emotion is <%= data.emotion %>, adapt the conversation but do not make it explicit in answer.
-<% } %>
-
-<% if (data.knowledge) { %>
-KNOWLEDGE:
-<%= data.knowledge %>
-<% } %>
-
-<% if (data.history) { %>
-HISTORY:
-<%= data.history %>
-<% } %>`,
+  ## Response format
+  Provide your answer to user. Do not add notes or explanations.
+  <% if (data.json) { %>
+    Answer in parsable JSON format.
+  <% } %>
+`,
 );

@@ -54,6 +54,8 @@ export class DialogueChatService {
     let suggestedTasks: DialogueTaskDto[] = [];
     let currentTask: DialogueTaskDto;
 
+    const knowledgePromise = this.vectorStore.search(appId, message.text);
+
     const intent = await this.intent.match(message);
 
     // skip invalid input
@@ -78,11 +80,12 @@ export class DialogueChatService {
     const perf = this.monitor.performance({
       ...message,
       label: 'avatar',
-      threshold: 3000,
+      threshold: 2000,
     });
 
     // search rag context
-    const knowledge = await this.vectorStore.search(appId, message.text);
+    const knowledge = await knowledgePromise;
+
     // get history
     const summary = await this.memory.getSummary(sessionId);
 

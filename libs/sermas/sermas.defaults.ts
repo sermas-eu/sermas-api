@@ -150,8 +150,7 @@ export const SermasDefaultConfig = {
   // OPENAI_EMBEDDINGS_MODEL OpenAi Embedding model
   OPENAI_EMBEDDINGS_MODEL: 'text-embedding-3-small',
   // OPENAI_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
-  OPENAI_CHAT_MODELS:
-    'gpt-4o,gpt-4o-mini,gpt-4,gpt-4-turbo,gpt-3.5-turbo,gpt-3.5-turbo-16k,o1-preview,o1-mini',
+  OPENAI_CHAT_MODELS: '',
 
   // OPENAI_MODEL Default OpenAI model used as fallback
   OPENAI_MODEL: 'gpt-4o',
@@ -171,14 +170,14 @@ export const SermasDefaultConfig = {
   // OLLAMA_MODEL Default Ollama model used as fallback
   OLLAMA_MODEL: 'sermas-llama3',
   // OLLAMA_CHAT_MODELS Supported chat models from Ollama. Leave empty to allow all available.
-  OLLAMA_CHAT_MODELS: 'sermas-llama3:*,mistral:*',
+  OLLAMA_CHAT_MODELS: '',
   // OLLAMA_EMBEDDINGS_MODEL Default embedding model
   OLLAMA_EMBEDDINGS_MODEL: 'nomic-embed-text',
 
   // GROQ_API_KEY Groq api key
   GROQ_API_KEY: '',
   // GROQ_MODEL Default Groq model used as fallback
-  GROQ_MODEL: 'mixtral-8x7b-32768',
+  GROQ_MODEL: 'llama3-70b-8192',
   // GROQ_CHAT_MODELS Supported chat models from Groq. Leave empty to allow all available.
   GROQ_CHAT_MODELS: '',
 
@@ -187,8 +186,7 @@ export const SermasDefaultConfig = {
   // MISTRAL_EMBEDDINGS_MODEL Mistral Embedding model
   MISTRAL_EMBEDDINGS_MODEL: 'mistral-embed',
   // MISTRAL_CHAT_MODELS Supported chat models from Mistral. Leave empty to allow all available.
-  MISTRAL_CHAT_MODELS:
-    'open-mistral-nemo,open-mistral-7b,open-mixtral-8x7b,open-mixtral-8x22b,mistral-large-latest',
+  MISTRAL_CHAT_MODELS: '',
   // MISTRAL_MODEL Default Mistral model used as fallback
   MISTRAL_MODEL: 'open-mistral-nemo',
 
@@ -197,8 +195,7 @@ export const SermasDefaultConfig = {
   // ANTROPHIC_MODEL Default Antrophic model used as fallback
   ANTROPHIC_MODEL: 'claude-3-haiku-20240307',
   // ANTROPHIC_MODELS Supported chat models from Antrophic. Leave empty to allow all available.
-  ANTROPHIC_CHAT_MODELS:
-    'claude-3-opus-20240229,claude-3-sonnet-20240229,claude-3-haiku-20240307',
+  ANTROPHIC_CHAT_MODELS: '',
 
   // GEMINI_API_KEY Provide a Google Gemini api key for chat and embedding services
   GEMINI_API_KEY: '',
@@ -219,7 +216,7 @@ export const SermasDefaultConfig = {
   // AZURE_OPENAI_API_KEY  Azure resource API KEY
   AZURE_OPENAI_API_KEY: '',
   // AZURE_OPENAI_MODEL Supported chat models from OpenAI on Azure.
-  AZURE_OPENAI_CHAT_MODELS: 'gpt-4o,gpt-4o-mini',
+  AZURE_OPENAI_CHAT_MODELS: '',
   // AZURE_OPENAI_CHAT_API_VERSION Version of chat model distributed in Azure
   AZURE_OPENAI_CHAT_API_VERSION: '2024-08-01-preview',
   // AZURE_OPENAI_MODEL Supported embeddings models from OpenAI on Azure.
