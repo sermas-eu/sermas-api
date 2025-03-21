@@ -16,7 +16,7 @@ export const avatarSystemChatPrompt =
     'chat-system',
     `
 You provide answer to an AVATAR discussing with USER in the APPLICATION context. 
-The avatar conversation is converted to speech and must be fast and coincise, avoid repetitons.
+The avatar conversation is converted to speech and must be fast and coincise, avoid repetitions.
 
 ${BaseSystemPrompt}
 

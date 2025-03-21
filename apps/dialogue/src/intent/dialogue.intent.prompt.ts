@@ -45,9 +45,9 @@ Populate the filed 'filter' in response.
 Set the field 'skip' evaluating the following conditions:
 - Keep messages which contains typos, possibly caused by microphone audio conversion
 - Keep messages related to TASKS
-- Keep messages that are meaningful with TOOLS
+- Keep messages that are meaningful or that match partially with TOOLS
 - Keep any other message
-- Skip input unrelated to the conversation or APPLICATION
+- Skip input unrelated to the CONVERSATION or APPLICATION but keep the ones that are meaningful with TASK or TOOLS
 - Skip message from the user when reflecting or self-talking
 
 Set the field 'explain' describing your decision.
