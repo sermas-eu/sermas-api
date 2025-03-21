@@ -1,48 +1,103 @@
-import { ChatCompletion, ChatCompletionChunk, ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
-import { OpenAIChatProvider } from '../openai/openai.chat.provider';
-import { LLMCallResult, LLMChatOptions, LLMMessage } from '../provider.dto';
-import { APIPromise } from 'openai/core';
-import * as Core from 'openai/core';
-import { Stream } from 'openai/streaming';
+import {
+  LLMCallResult,
+  LLMChatOptions,
+  LLMMessage,
+  LLMProviderConfig,
+} from '../provider.dto';
+import { LLMChatProvider } from '../chat.provider';
+import {
+  HarmBlockThreshold,
+  HarmCategory,
+  VertexAI,
+} from '@google-cloud/vertexai';
+import { ChatMessageStream } from 'libs/llm/stream/chat-message.stream';
 
-export class VertexAIChatProvider extends OpenAIChatProvider {
+export class VertexAIChatProvider extends LLMChatProvider {
+  private vertexai: VertexAI;
+
+  constructor(protected config: LLMProviderConfig) {
+    super(config);
+  }
+
+  private getApiClient(): VertexAI {
+    if (!this.vertexai) {
+      // TODO: Refactor
+      const project = 'sermas-ga-nr-101070351';
+      const location = 'europe-west4';
+      this.vertexai = new VertexAI({
+        project: project,
+        location: location,
+      });
+    }
+    return this.vertexai;
+  }
+
   getName(): string {
     return 'vertexai';
   }
 
-  private patchedChatCompletionsCreate(
-    body: ChatCompletionCreateParamsBase,
-    options?: Core.RequestOptions,
-  ): APIPromise<Stream<ChatCompletionChunk> | ChatCompletion>{
-    return this.getApiClient().chat.completions._client.post('/chat/completions', { body, ...options, stream: body.stream ?? false }) as
-    | APIPromise<ChatCompletion>
-    | APIPromise<Stream<ChatCompletionChunk>>;
-}
-  
-
-  protected getApiClient() {
-    const client = super.getApiClient();
-    client.chat.completions.create = this.patchedChatCompletionsCreate;
-    return client;
+  available(): Promise<boolean> {
+    // TODO...
+    return new Promise<boolean>(() => true);
   }
 
-  .chat.completions.create
+  public async getModels() {
+    // TODO: There seems to be no way to list available model using the SDK...
+    return this.config.availableModels || [];
+  }
 
   async call(
-    chatMessages: LLMMessage[],
+    messages: LLMMessage[],
     options?: LLMChatOptions,
   ): Promise<LLMCallResult> {
-    options = options || {};
-    options.stream = false;
-    return await super.call(chatMessages, options);
-  }
+    const isStream = options?.stream === true || false;
+    // TODO: Fix
+    const generativeModel = this.getApiClient().getGenerativeModel({
+      model: this.config.model,
+      // The following parameters are optional
+      // They can also be passed to individual content generation requests
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+      ],
+      generationConfig: { maxOutputTokens: 512 },
+    });
 
-  // TODO: Not sure this will work...
-  // public async getModels() {
-  //   if (this.models === undefined) {
-  //     const models = await this.getApiClient().models.list();
-  //     this.models = models.data.map((model) => model.id);
-  //   }
-  //   return this.models;
-  // }
+    const stream = new ChatMessageStream();
+    const request = {
+      contents: messages.map((m) => {
+        return { role: m.role, parts: [{ text: m.content }] };
+      }),
+    };
+
+    if (!isStream) {
+      const result = await generativeModel.generateContent(request);
+      const response = result.response;
+      const content = response.candidates?.at(0)?.content.parts.at(0).text; // TODO: Check type
+      stream.add(content);
+      stream.close();
+      return {
+        stream,
+      };
+    }
+
+    let aborted = false;
+    (async () => {
+      const streamingResult =
+        await generativeModel.generateContentStream(request);
+      for await (const item of streamingResult.stream) {
+        if (aborted) break;
+        const chunk = item.candidates?.at(0)?.content.parts.at(0).text; // TODO: Check type
+        stream.add(chunk);
+      }
+      stream.close();
+    })();
+
+    return {
+      stream,
+      abort: () => (aborted = true),
+    };
+  }
 }
