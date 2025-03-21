@@ -11,7 +11,7 @@ export const convertToolsToPlainList = (
 ): string | undefined => {
   if (!list || !list.length) return undefined;
 
-  return list.map((tool) => `${tool.name}: ${tool.description}`).join('\n');
+  return JSON.stringify(list.map((tool) => tool.description));
 };
 
 export const convertToolsToPrompt = (list?: LLMTool[]): string | undefined => {

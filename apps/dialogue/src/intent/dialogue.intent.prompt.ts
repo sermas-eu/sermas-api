@@ -39,17 +39,18 @@ export const intentPrompt = PromptTemplate.create<IntentPrompt>(
 
 # FILTER
 
-Identify a USER MESSAGE relevant to CONVERSATION or APPLICATION. 
+Identify a USER MESSAGE relevant to CONVERSATION, APPLICATION, TASKS or TOOLS. 
 Populate the filed 'filter' in response.
 
-Consider those factors to decide:
+Set the field 'skip' evaluating the following conditions:
 - Keep messages which contains typos, possibly caused by microphone audio conversion
+- Keep messages related to TASKS
+- Keep messages that match within TOOLS
+- Keep any other message
 - Skip input unrelated to the conversation or APPLICATION
 - Skip message from the user when reflecting or self-talking
-- Keep messages related to TASKS and TOOLS
-- Keep any other message
 
-Set the field 'skip' and the field 'explain' describing your decision.
+Set the field 'explain' describing your decision.
 If message is skipped, do not continue to next steps. 
 
 # INTENTS

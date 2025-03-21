@@ -154,6 +154,8 @@ export class DialogueChatService {
 
     if (skipChatResponse) {
       this.logger.debug(`Skipping chat response.`);
+      if (res.abort) res.abort();
+      return;
     }
 
     res.stream

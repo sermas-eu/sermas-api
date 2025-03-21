@@ -42,7 +42,7 @@ export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
 # TOOLS
 Match a tool from TOOLS based on the USER MESSAGE, strictly following all these rules:
 - find an item based on the 'description' field of each TOOLS.
-- there must be a precise match of the tool description with the request from the user.
+- the USER MESSAGE should have a meaningful match with the tool description.
 - never match a tool if the user is providing a question or asking for clarifications.
 - the matching tool must be one of those in TOOLS
 
@@ -50,7 +50,6 @@ Return an empty object if there is no match or no TOOLS are available. Skip the 
 Never mention tools in the chat response.
 
 # CHAT RESPONSE
-
 Your answer to USER MESSAGE, based on the overall context information. Ask for clarification if you have no elements to answer precisely.
 Never mention tools in the chat response.
 

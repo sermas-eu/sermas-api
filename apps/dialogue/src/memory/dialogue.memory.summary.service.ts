@@ -68,7 +68,7 @@ export class DialogueMemorySummaryService {
     try {
       let summary = await this.llmProvider.chat({
         user: `
-        Summarize the following interaction between user and assistant (agent) in a few sentences and in the same language. 
+        Summarize the following interaction between user and assistant (agent) in a few sentences, use english language. 
         Be precise but coincise. Do not add notes or explanation.
         
         ${history}`,
