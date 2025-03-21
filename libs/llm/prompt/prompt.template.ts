@@ -29,7 +29,7 @@ const init = () => {
 };
 
 export const packPromptObject = (data: object, fields?: string[]) => {
-  if (!data) return '';
+  if (!data || !Object.keys(data)) return '';
   return Object.keys(data)
     .filter((key) => fields === undefined || fields.includes(key))
     .map((key) => {

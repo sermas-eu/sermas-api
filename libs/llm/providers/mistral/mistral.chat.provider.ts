@@ -32,7 +32,6 @@ export class MistralChatProvider extends LLMChatProvider {
 
   async available(): Promise<boolean> {
     if (!this.config.apiKey) return false;
-
     return true;
   }
 

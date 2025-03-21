@@ -308,7 +308,15 @@ export class LLMProviderService implements OnModuleInit {
         });
         break;
     }
-    if (!provider) throw new Error(`LLM provider ${config.provider} not found`);
+    if (!provider) {
+      // throw new Error(`LLM provider ${config.provider} not found`);
+      return null;
+    }
+
+    const available = await provider.available();
+    if (!available) {
+      return null;
+    }
 
     const valid = await provider.checkModel(model);
     if (!valid) {
@@ -335,11 +343,17 @@ export class LLMProviderService implements OnModuleInit {
               provider,
             });
 
+            if (!instance) {
+              this.logger.verbose(`${provider} is not configured`);
+              return [];
+            }
+
             const avail = await instance.available();
 
             this.logger[avail ? 'debug' : 'verbose'](
               `${instance.getName()} ${avail ? '' : 'not '}available.`,
             );
+
             if (!avail) return [];
 
             const models = await instance.getModels();
@@ -577,6 +591,9 @@ export class LLMProviderService implements OnModuleInit {
     let provider: LLMChatProvider;
     try {
       provider = await this.getChatProvider(args);
+      if (!provider)
+        throw new Error(`Provider ${args.provider} not configured.`);
+
       // set provider/model configuration if not set
     } catch (e: any) {
       this.logger.error(
