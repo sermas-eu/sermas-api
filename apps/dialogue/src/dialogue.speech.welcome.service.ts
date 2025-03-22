@@ -113,8 +113,6 @@ export class DialogueWelcomeService {
       sessionContext: createSessionContext(ev),
     });
 
-    const messageId = getMessageId();
-
     if (response.message) {
       const msg: DialogueMessageDto = {
         actor: 'agent',
@@ -126,7 +124,7 @@ export class DialogueWelcomeService {
         emotion,
         ts: new Date(),
 
-        messageId,
+        messageId: getMessageId(),
         chunkId: getChunkId(),
 
         requestId: ulid(),
