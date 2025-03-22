@@ -7,7 +7,6 @@ import {
   RepositoryAvatarDto,
 } from 'apps/platform/src/app/platform.app.dto';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { DefaultLanguage } from 'libs/language/lang-codes';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { createSessionContext } from '../session.context';
@@ -65,8 +64,7 @@ export class SessionPromptService {
       settings = await this.session.getSettings(payload);
     }
 
-    const language =
-      payload.options?.language || settings?.language || DefaultLanguage;
+    const language = payload.options?.language || settings?.language;
 
     const params: AgentEvaluatePromptParams = {
       json,

@@ -28,8 +28,8 @@ Never add Notes or Explanations.
 <tools>
 <!-- Output in parsable JSON, following exactly this structure.  -->
 {
-  "name of the matching tool": { 
-    "optional, matching argument name": "the value extracted from USER message" 
+  "'name' field of the matching tool": { 
+    "optional, matching argument 'name'": "the value extracted from USER message" 
   } 
 }
 </tools>`,

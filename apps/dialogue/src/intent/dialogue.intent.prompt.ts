@@ -39,16 +39,14 @@ export const intentPrompt = PromptTemplate.create<IntentPrompt>(
 
 # FILTER
 
-Identify a USER MESSAGE relevant to CONVERSATION, APPLICATION, TASKS or TOOLS. 
+Identify if a USER MESSAGE is relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS information.
 Populate the filed 'filter' in response.
 
-Set the field 'skip' evaluating the following conditions:
-- Keep messages which contains typos, possibly caused by microphone audio conversion
-- Keep messages related to TASKS
-- Keep messages that are meaningful or that match partially with TOOLS
-- Keep any other message
-- Skip input unrelated to the CONVERSATION or APPLICATION but keep the ones that are meaningful with TASK or TOOLS
-- Skip message from the user when reflecting or self-talking
+Decide to set field 'skip' after considering all the following statements:
+- Skip if reflecting, self-talking or background noise
+- Keep if related to the CONVERSATION or APPLICATION
+- Keep if possibly relevant to TASKS
+- Keep if meaningful or part of TOOLS
 
 Set the field 'explain' describing your decision.
 If message is skipped, do not continue to next steps. 
@@ -60,18 +58,17 @@ If message is skipped, do not continue to next steps.
   <%= data.activeTask %>
 <% } %>
 
-Analyze the conversation and match one 'intent' from TASKS based on the user message intention. 
-Populate the field 'intent' in response.
+Analyze the conversation and match one of TASKS based on the user message intention. 
+Populate the field 'intent' in response. Set taskId only with one from TASKS.
 
 Set the field 'match' to 'true' in those cases:
 - if there is an explicit match with an intent
-- if the assistant asked explicitly for one intent and the user is confirming or declining
-- if the user is not asking for clarification or general information
+- if the assistant asked explicitly for a task and the user is confirming or declining
 
 Set the field 'trigger' to 'true' in those cases:
-- user is not asking for clarifications or information
-- user intention matches precisely the task description
-- user confirms a task that has been proposed by the assistant in the last message from CONVERSATION
+- user is not asking for clarifications or information on a topic
+- user request matches a 'description' in TASKS
+- user confirms one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
 - ACTIVE TASK is not available
 
 <% if (data.activeTask) { %>
