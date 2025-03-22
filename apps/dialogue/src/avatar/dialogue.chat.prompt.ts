@@ -37,7 +37,7 @@ Never add Notes or Explanations.
 
 export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
   'chat',
-  `Execute sequentially the following tasks delimited by markup titles.
+  `Execute sequentially the following tasks delimited by markdown titles.
 
 # TOOLS
 Match a tool from TOOLS based on the USER MESSAGE, strictly following all these rules:

@@ -27,8 +27,8 @@ export const intentSystemPrompt = PromptTemplate.create<IntentSystemPrompt>(
 ## ANSWER FORMAT
 Answer with a parsable JSON object collecting all steps and formatted as following. Do not add notes or explanations.
 {
-  filter: { skip: boolean, explain: boolean },
-  intent: { taskId: string, match: boolean, trigger: boolean, cancel: boolean, explain: string }
+  "filter": { "skip": boolean, "explain": boolean },
+  "intent": { "taskId": string, "match": boolean, "trigger": boolean, "cancel": boolean, "explain": string }
 }
 `,
 );
