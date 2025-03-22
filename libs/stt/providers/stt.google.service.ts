@@ -62,11 +62,10 @@ export class GoogleSpeechToText implements ISpeechToText {
     const request: google.cloud.speech.v1.IRecognizeRequest = {
       audio: audio,
       config: {
-        // encoding: 1,
-        //if uncertain not use it
-        // sampleRateHertz: 8129,
-        model: 'latest_short',
-        useEnhanced: true,
+        encoding: 'LINEAR16',
+        sampleRateHertz: 16000,
+        // model: 'latest_short',
+        // useEnhanced: true,
         languageCode,
         speechContexts: [
           {
