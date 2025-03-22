@@ -4,6 +4,8 @@ import {
   BaseSystemPromptParams,
 } from '../dialogue.system.prompt';
 
+type AvatarChatSystemPromptParams = BaseSystemPromptParams;
+
 type AvatarChatPromptParams = {
   suggestedTasks?: string;
   task?: string;
@@ -12,7 +14,7 @@ type AvatarChatPromptParams = {
 };
 
 export const avatarSystemChatPrompt =
-  PromptTemplate.create<BaseSystemPromptParams>(
+  PromptTemplate.create<AvatarChatSystemPromptParams>(
     'chat-system',
     `
 You provide answer to an AVATAR discussing with USER in the APPLICATION context. 
@@ -29,7 +31,7 @@ Never add Notes or Explanations.
 <!-- Output in parsable JSON, following exactly this structure.  -->
 {
   "'name' field of the matching tool": { 
-    "optional, matching argument 'name'": "the value extracted from USER message" 
+    "optional, matching argument 'name'": "the value extracted from USER MESSAGE" 
   } 
 }
 </tools>`,
