@@ -147,6 +147,7 @@ export class DialogueWelcomeService {
       const buttons: ButtonsUIContentDto = {
         appId: ev.appId,
         sessionId: ev.record.sessionId,
+        ts: new Date(),
         metadata: {
           context: 'welcome-tools',
         },
@@ -163,6 +164,7 @@ export class DialogueWelcomeService {
         },
 
         contentType: 'buttons',
+        messageId: getMessageId(),
         chunkId: getChunkId(),
 
         requestId: ulid(),
