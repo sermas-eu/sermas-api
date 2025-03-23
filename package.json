@@ -36,6 +36,7 @@
     "@huggingface/inference": "^2.8.1",
     "@keycloak/keycloak-admin-client": "^24.0.3",
     "@mistralai/mistralai": "^1.0.4",
+    "@mistralai/mistralai-gcp": "^1.5.0",
     "@nestjs/cache-manager": "^2.2.2",
     "@nestjs/common": "^10.3.7",
     "@nestjs/config": "^3.2.2",
