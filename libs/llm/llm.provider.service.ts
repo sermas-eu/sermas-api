@@ -51,6 +51,7 @@ import { convertToolsToPrompt, toolsPrompt } from './tools/prompt.tools';
 import { LLMToolsResponse, SelectedTool } from './tools/tool.dto';
 import { parseJSON } from './util';
 import { VertexAIChatProvider } from './providers/vertexai/vertexai.chat.provider';
+import { GCPMistralChatProvider } from './providers/gcp-mistral/gcp-mistral.chat.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -60,6 +61,7 @@ export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   gemini: 'gemini-1.5-flash',
   huggingface: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
   azure_openai: 'gpt-4o',
+  gcp_mistral: 'mistral-small-2503',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
@@ -322,13 +324,25 @@ export class LLMProviderService implements OnModuleInit {
           availableModels,
         });
         break;
+      case 'gcp_mistral':
+        provider = new GCPMistralChatProvider({
+          // No need to pass the API key: authentication uses the service account at GOOGLE_APPLICATION_CREDENTIALS
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('GCP_MISTRAL_BASEURL'),
+          model,
+          availableModels,
+          region: this.config.get('GCP_MISTRAL_REGION'),
+          project: this.config.get('GCP_MISTRAL_PROJECT'),
+        });
+        break;
       case 'vertexai':
         provider = new VertexAIChatProvider({
           provider: config.provider,
-          baseURL: config.baseURL || this.config.get('VERTEXAI_BASEURL'),
           model,
           apiKey: config.apiKey || this.config.get('VERTEXAI_API_KEY'),
           availableModels,
+          region: this.config.get('VERTEXAI_REGION'),
+          project: this.config.get('VERTEXAI_PROJECT'),
         });
         break;
     }

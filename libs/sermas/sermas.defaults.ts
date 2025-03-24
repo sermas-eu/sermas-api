@@ -227,11 +227,20 @@ export const SermasDefaultConfig = {
 
   // VERTEXAI_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
   VERTEXAI_API_KEY: '',
-  // VERTEXAI_CHAT_MODELS Supported chat models from Hugging Face. Leave empty to allow any.
+  // VERTEXAI_CHAT_MODELS Supported Google chat models under Vertex AI. Leave empty to allow any.
   VERTEXAI_CHAT_MODELS: 'mistral-small-2503',
-  // VERTEXAI_BASEURL Base URL for Hugging Face inference service
-  VERTEXAI_BASEURL:
-    'https://europe-west4-aiplatform.googleapis.com/v1/projects/sermas-ga-nr-101070351/locations/europe-west4/publishers/mistralai/models/mistral-small-2503:rawPredict',
+  // VERTEXAI_REGION Google Cloud Processing region for Vertex AI
+  VERTEXAI_REGION: '',
+  // VERTEXAI_PROJECT Google Cloud project ID for Vertex AI
+  VERTEXAI_PROJECT: '',
+
+  // GCP_MISTRAL_CHAT_MODELS Supported Mistral chat models under Google Cloud. Leave empty to allow any.
+  GCP_MISTRAL_CHAT_MODELS: 'mistral-small-2503',
+  // GCP_MISTRAL_REGION Google Cloud Processing region for Mistral
+  GCP_MISTRAL_REGION: '',
+  // GCP_MISTRAL_PROJECT Google Cloud project ID for Mistral
+  GCP_MISTRAL_PROJECT: '',
+
 
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',
