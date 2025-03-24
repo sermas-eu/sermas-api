@@ -259,9 +259,16 @@ export class DialogueDocumentService implements OnModuleInit {
       'sitemap.txt',
     ].map((u) => website.url + '/' + u);
     const sitemap = await Sitemap.load(urls);
+    // add base url
+    sitemap.urls.push(website.url);
     this.logger.log(`Found ${sitemap.urls.length} URLs`);
     if (sitemap.urls.length) {
-      await this.scrapUrls(appId, sitemap.urls, website.filterPaths, this);
+      await this.scrapUrls(
+        appId,
+        sitemap.urls,
+        website.filterPaths || [],
+        this,
+      );
     }
   }
 
