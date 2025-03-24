@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ToolsParameterSchema } from 'apps/platform/src/app/platform.app.dto';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { SermasSessionDto } from 'libs/sermas/sermas.dto';
@@ -27,3 +27,8 @@ export type OutgoingChunkQueue = {
     }
   >;
 };
+
+export class DialogueAvatarSpeechControlDto extends SermasSessionDto {
+  @ApiPropertyOptional()
+  chunkId?: string;
+}

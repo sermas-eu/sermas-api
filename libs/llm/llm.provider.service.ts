@@ -357,7 +357,7 @@ export class LLMProviderService implements OnModuleInit {
             if (!avail) return [];
 
             const models = await instance.getModels();
-            return models.map((model) => `${provider}/${model}`);
+            return (models || []).map((model) => `${provider}/${model}`);
           } catch (e) {
             this.logger.warn(
               `Failed to fetch model for ${provider}: ${e.message}`,

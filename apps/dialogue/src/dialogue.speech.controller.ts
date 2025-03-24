@@ -26,12 +26,12 @@ import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
 import { ApiUpload } from 'libs/decorator/openapi.upload.decorator';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { DefaultLanguage } from 'libs/language/lang-codes';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { getChunkId } from 'libs/sermas/sermas.utils';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
 import { ulid } from 'ulidx';
+import { DialogueAvatarSpeechControlDto } from './dialogue.speech.dto';
 
 @ApiBearerAuth()
 @Controller('dialogue/speech')
@@ -154,7 +154,7 @@ export class DialogueSpeechController {
     return this.speech.chat(dialogueMessagePayload);
   }
 
-  @Post('stop/:appId/:sessionId')
+  @Post('stop/:appId/:sessionId/:chunkId')
   @ApiScopes('speech')
   @ApiOkResponse()
   @ApiOperationName()
@@ -162,13 +162,15 @@ export class DialogueSpeechController {
     @AuthenticatedUser() user: AuthJwtUser,
     @Param('appId') appId: string,
     @Param('sessionId') sessionId: string,
+    @Param('chunkId') chunkId: string,
   ): Promise<void> {
     if (!appId) throw new BadRequestException(`Missing appId`);
     if (!sessionId) throw new BadRequestException(`Missing sessionId`);
 
-    const stopMessage: SermasSessionDto = {
+    const stopMessage: DialogueAvatarSpeechControlDto = {
       appId,
       sessionId,
+      chunkId,
     };
     return this.speech.stopAgentSpeech(stopMessage);
   }

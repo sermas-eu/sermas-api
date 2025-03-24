@@ -4,7 +4,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { convertRawToWav, convertWav } from 'libs/language/audio';
 
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { DialogueAsyncApiService } from './dialogue.async.service';
 import { DialogueEmotionService } from './dialogue.emotion.service';
 
@@ -35,6 +34,7 @@ import {
 } from './dialogue.request-monitor.dto';
 import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 import {
+  DialogueAvatarSpeechControlDto,
   OutgoingChunkQueue,
   OutgoingQueueMessage,
 } from './dialogue.speech.dto';
@@ -332,7 +332,10 @@ export class DialogueSpeechService {
       return;
     }
 
-    await this.stopAgentSpeech(payload);
+    await this.stopAgentSpeech({
+      ...payload,
+      chunkId: payload.message.chunkId,
+    });
 
     // emit user message
     this.emitter.emit('dialogue.chat.message.user', payload.message);
@@ -624,7 +627,7 @@ export class DialogueSpeechService {
     });
   }
 
-  async stopAgentSpeech(ev: SermasSessionDto) {
+  async stopAgentSpeech(ev: DialogueAvatarSpeechControlDto) {
     this.logger.debug(`Send avatar speech STOP sessionId=${ev.sessionId}`);
     this.emitter.emit('dialogue.chat.stop', ev);
     this.asyncApi.agentStopSpeech(ev);

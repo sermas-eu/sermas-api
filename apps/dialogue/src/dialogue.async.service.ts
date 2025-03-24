@@ -2,12 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { mapMqttTopic } from 'libs/util';
 import { AsyncApi } from 'nestjs-asyncapi';
 import { DialogueSessionRequestDto } from './dialogue.request-monitor.dto';
+import { DialogueAvatarSpeechControlDto } from './dialogue.speech.dto';
 
 @AsyncApi()
 @Injectable()
@@ -41,33 +41,33 @@ export class DialogueAsyncApiService {
   @AsyncApiOperationName({
     channel: SermasTopics.dialogue.agentStopSpeech,
     message: {
-      payload: SermasSessionDto,
+      payload: DialogueAvatarSpeechControlDto,
     },
     description: 'Publish a stop speaking command for the agent',
   })
-  async agentStopSpeech(payload: SermasSessionDto) {
+  async agentStopSpeech(payload: DialogueAvatarSpeechControlDto) {
     this.broker.publish(SermasTopics.dialogue.agentStopSpeech, payload);
   }
 
   @AsyncApiOperationName({
     channel: SermasTopics.dialogue.agentPauseSpeech,
     message: {
-      payload: SermasSessionDto,
+      payload: DialogueAvatarSpeechControlDto,
     },
     description: 'Publish a pause speaking command for the agent',
   })
-  async agentPauseSpeech(payload: SermasSessionDto) {
+  async agentPauseSpeech(payload: DialogueAvatarSpeechControlDto) {
     this.broker.publish(SermasTopics.dialogue.agentPauseSpeech, payload);
   }
 
   @AsyncApiOperationName({
     channel: SermasTopics.dialogue.agentContinueSpeech,
     message: {
-      payload: SermasSessionDto,
+      payload: DialogueAvatarSpeechControlDto,
     },
     description: 'Publish a continue speaking command for the agent',
   })
-  async agentContinueSpeech(payload: SermasSessionDto) {
+  async agentContinueSpeech(payload: DialogueAvatarSpeechControlDto) {
     this.broker.publish(SermasTopics.dialogue.agentContinueSpeech, payload);
   }
 
