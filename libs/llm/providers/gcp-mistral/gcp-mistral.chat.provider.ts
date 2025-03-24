@@ -65,8 +65,9 @@ export class GCPMistralChatProvider extends LLMChatProvider {
     const result = await this.getApiClient().chat.stream(request);
     (async () => {
       for await (const event of result) {
-        if (aborted) break;
-        let chunk = event.data.choices.at(0)?.delta.content;
+        const choice = event.data.choices.at(0);
+        if (aborted || choice?.finishReason) break;
+        let chunk = choice?.delta.content;
         if (typeof chunk !== 'string') {
           const contentChunk = chunk.at(0) as ContentChunk;
           chunk = contentChunk.text;
