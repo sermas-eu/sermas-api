@@ -137,7 +137,9 @@ export class LLMProviderService implements OnModuleInit {
   async getChatServiceByTag(
     config: LLMSendArgs | LLMProviderConfig,
   ): Promise<string[]> {
-    const defaultService = this.config.get('LLM_SERVICE_' + config.tag);
+    const defaultService = this.config.get(
+      'LLM_SERVICE_' + config.tag.toUpperCase(),
+    );
 
     let provider: string = undefined,
       model: string = undefined;
