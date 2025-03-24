@@ -45,7 +45,7 @@ export class DialogueToolsTriggerService {
   async trigger(payload: ToolTriggerEventDto) {
     const { appId, sessionId, schema, values } = payload;
     this.logger.log(
-      `Trigger tool name=${payload.name} appId=${payload.appId} sessionId=${payload.sessionId}`,
+      `Trigger tool '${schema.description}' name=${payload.name} appId=${payload.appId} sessionId=${payload.sessionId}`,
     );
 
     const app = await this.platformAppService.readApp(appId);

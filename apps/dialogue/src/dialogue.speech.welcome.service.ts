@@ -4,6 +4,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { DialogueEmotionService } from './dialogue.emotion.service';
 
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
+import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
@@ -13,16 +14,16 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { packAvatarObject } from './dialogue.chat.prompt';
+import { ulid } from 'ulidx';
+import { packAvatarObject } from './avatar/utils';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import {
   welcomeMessagePrompt,
-  welcomeToolsPrompt,
+  welcomeMessageSystemPrompt,
 } from './dialogue.speech.welcome.prompt';
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
-import { createSessionContext } from 'apps/session/src/session.context';
 
 @Injectable()
 export class DialogueWelcomeService {
@@ -62,6 +63,8 @@ export class DialogueWelcomeService {
     const tasks = await this.tasks.list(ev.appId);
     const repositories = await this.tools.loadFromSession(ev);
     const tools = (repositories || []).map((r) => r.tools || []).flat();
+    const emotion =
+      (await this.emotion.getUserEmotion(ev.record.sessionId)) || undefined;
 
     const toolsList = [
       ...(tools || []).map((t) => ({
@@ -80,116 +83,95 @@ export class DialogueWelcomeService {
 
     const perf = this.monitor.performance({
       ...ev,
-      label: 'chat.welcome-text',
+      label: 'welcome',
     });
 
     const llm = await this.session.getLLM(ev.sessionId);
 
-    const welcomeMessageChat = await this.llmProvider.chat({
-      // system: createListToolsPrompt(app, toolsList, avatarSettings),
+    type WelcomeMessageChatResponse = {
+      message: string;
+      labels: string[];
+    };
+
+    const response = await this.llmProvider.chat<WelcomeMessageChatResponse>({
       ...this.llmProvider.extractProviderName(llm?.tools),
-      system: welcomeMessagePrompt({
-        type: 'welcome',
-        settings,
+      system: welcomeMessageSystemPrompt({
+        app: settings.prompt?.text,
+        language: settings.language,
         avatar: packAvatarObject(avatar),
+        emotion,
       }),
-      stream: true,
+      user: welcomeMessagePrompt({
+        type: 'welcome',
+        tools: JSON.stringify(
+          toolsList.map((t) => ({ label: t.label, rephrase: t.rephrase })),
+        ),
+      }),
+      stream: false,
+      json: true,
       tag: 'chat',
       sessionContext: createSessionContext(ev),
     });
 
-    perf();
-
-    // this.logger.warn(welcomePrompt);
-
-    const emotion =
-      (await this.emotion.getUserEmotion(ev.record.sessionId)) || undefined;
-
-    const messageId = getMessageId();
-
-    const onChatData = async (text: string) => {
+    if (response.message) {
       const msg: DialogueMessageDto = {
         actor: 'agent',
         appId: ev.appId,
         language: settings.language,
         sessionId: ev.record.sessionId,
-        text,
+        text: response.message,
         gender: avatar.gender,
         emotion,
         ts: new Date(),
-        messageId,
+
+        messageId: getMessageId(),
         chunkId: getChunkId(),
+
+        requestId: ulid(),
       };
 
       await this.speech.chat(msg);
-    };
-
-    // welcomeChat.stream.on('data', onChatData).on('end', () => {
-    //   this.logger.debug(`Welcome response sent`);
-
-    let buttonsPromise = Promise.resolve<ButtonsUIContentDto | null>(null);
-
-    if (toolsList.length) {
-      buttonsPromise = this.llmProvider
-        .chat<string[]>({
-          stream: false,
-          json: true,
-          system: welcomeToolsPrompt({
-            tools: JSON.stringify(
-              toolsList.map((t) => ({ label: t.label, rephrase: t.rephrase })),
-            ),
-            language: settings.language,
-          }),
-          tag: 'translation',
-          sessionContext: createSessionContext(ev),
-        })
-        .then((buttonsList) => {
-          if (!buttonsList || !buttonsList.length) {
-            this.logger.warn(
-              `Failed to generate welcome buttons, invalid response`,
-            );
-            return [];
-          }
-
-          const buttons: ButtonsUIContentDto = {
-            appId: ev.appId,
-            sessionId: ev.record.sessionId,
-            metadata: {
-              context: 'welcome-tools',
-            },
-            options: {
-              ttsEnabled: false,
-              clearScreen: true,
-            },
-            content: {
-              label: '',
-              list: toolsList.map((t, i) => ({
-                label: buttonsList[i] || t.label,
-                value: t.value,
-              })),
-            },
-            contentType: 'buttons',
-            chunkId: getChunkId(),
-          };
-          return buttons;
-        })
-        .catch((err) => {
-          this.logger.error(`Failed to generate welcome buttons: ${err.stack}`);
-          return Promise.resolve(null);
-        });
     }
 
-    welcomeMessageChat.stream?.on('data', onChatData).on('end', async () => {
-      if (toolsList.length) {
-        const buttons = await buttonsPromise;
-        if (buttons) {
-          await this.broker.publish(SermasTopics.ui.content, buttons);
-        }
+    if (response.labels) {
+      let buttonsList = response.labels;
+      if (!buttonsList || !buttonsList.length) {
+        this.logger.warn(
+          `Failed to generate welcome buttons, invalid response`,
+        );
+        buttonsList = [];
       }
-      this.logger.verbose(`Welcome message sent`);
-      perf('welcome-text.completed');
-    });
-    // });
+
+      const buttons: ButtonsUIContentDto = {
+        appId: ev.appId,
+        sessionId: ev.record.sessionId,
+        ts: new Date(),
+        metadata: {
+          context: 'welcome-tools',
+        },
+        options: {
+          ttsEnabled: false,
+          clearScreen: true,
+        },
+        content: {
+          label: '',
+          list: toolsList.map((t, i) => ({
+            label: buttonsList[i] || t.label,
+            value: t.value,
+          })),
+        },
+
+        contentType: 'buttons',
+        messageId: getMessageId(),
+        chunkId: getChunkId(),
+
+        requestId: ulid(),
+      };
+
+      await this.broker.publish(SermasTopics.ui.content, buttons);
+    }
+
+    perf();
   }
 
   @OnEvent('dialogue.tool.trigger')

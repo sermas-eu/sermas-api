@@ -84,7 +84,7 @@
     "nestjs-minio-client": "^2.2.0",
     "node-uuid": "^1.4.8",
     "ollama": "^0.5.2",
-    "openai": "^4.80.0",
+    "openai": "^4.89.0",
     "openapi-client-axios": "^7.5.4",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
