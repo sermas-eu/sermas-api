@@ -241,7 +241,6 @@ export const SermasDefaultConfig = {
   // GCP_MISTRAL_PROJECT Google Cloud project ID for Mistral
   GCP_MISTRAL_PROJECT: '',
 
-
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',
   // DATASET_BUCKET Data logger bucket name
