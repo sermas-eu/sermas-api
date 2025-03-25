@@ -36,9 +36,9 @@ export class VertexAIChatProvider extends LLMChatProvider {
     return 'vertexai';
   }
 
-  available(): Promise<boolean> {
-    // TODO...
-    return new Promise<boolean>(() => true);
+  async available(): Promise<boolean> {
+    // TODO: SDK does not provide a health check endpoint
+    return true;
   }
 
   public async getModels() {

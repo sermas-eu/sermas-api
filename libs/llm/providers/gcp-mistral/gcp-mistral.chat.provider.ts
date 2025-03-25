@@ -30,9 +30,9 @@ export class GCPMistralChatProvider extends LLMChatProvider {
     return 'gcp-mistral';
   }
 
-  available(): Promise<boolean> {
-    // TODO...
-    return new Promise<boolean>(() => true);
+  async available(): Promise<boolean> {
+    // TODO: SDK does not provide a health check endpoint
+    return true;
   }
 
   public async getModels() {
