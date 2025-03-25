@@ -16,7 +16,11 @@ import { AzureTextToSpeech } from './providers/tts.azure.provider';
 import { SSMLService } from './ssml/ssml.service';
 import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto';
 
-import { createSessionContext } from 'apps/session/src/session.context';
+import {
+  createSessionContext,
+  SessionContext,
+} from 'apps/session/src/session.context';
+import { hash } from 'libs/util';
 
 @Injectable()
 export class TTSProviderService {
@@ -41,6 +45,63 @@ export class TTSProviderService {
     @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
+  normalizeText(text: string): string | undefined {
+    if (!text || !text.length) return undefined;
+
+    // do not translate links and markdown
+    try {
+      text = text.replace(/https?:\/\/[^\s]+/g, '');
+      text = text.replace(/!\[.*?\]\(.*?\)/g, ''); // Rimuove immagini Markdown ![alt text](url)
+      text = text.replace(/\[.*?\]\(.*?\)/g, ''); // Rimuove link Markdown [text](url)
+      text = text.replace(/[_*~`>#+-]/g, ' '); // Rimuove altri caratteri Markdown (_ * ~ ` > # + -)
+      // remove emoticons
+      text = text.replace(
+        /[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]/gu,
+        ' ',
+      );
+
+      // cleanup formatting
+      text = text
+        .replace(/\n|\t|\r/gm, ' ')
+        .replace(/ +/gm, ' ')
+        .trim();
+    } catch (e) {
+      this.logger.warn('Error applying text filtering');
+      return undefined;
+    }
+
+    return text.length ? text : undefined;
+  }
+
+  async generateSSML(data: {
+    ev: DialogueTextToSpeechDto;
+    params: SpeakParam;
+    sessionContext: SessionContext;
+  }): Promise<string | undefined> {
+    const { params, ev, sessionContext } = data;
+
+    if (params.ssml || !params.text) return params.ssml || undefined;
+
+    const ssmlGenerate = this.config.get('SSML_GENERATE') === '1';
+    if (!ssmlGenerate) return undefined;
+
+    const session = await this.session.read(ev.sessionId, false);
+    let context = '';
+    if (session && session.settings?.prompt?.text) {
+      context = `Your application context is: ${session.settings?.prompt?.text?.replace(/\n/g, ' ')}`;
+    }
+
+    return await this.ssmlService.generate(
+      {
+        text: params.text,
+        language: params.languageCode,
+        emotion: params.emotion,
+        context,
+      },
+      sessionContext,
+    );
+  }
+
   async generateTTS(ev: DialogueTextToSpeechDto): Promise<Buffer> {
     if (!ev.text && !ev.ssml) return Buffer.from([]);
 
@@ -62,24 +123,9 @@ export class TTSProviderService {
     });
 
     const ssml = ev.ssml;
-    let text = ev.text;
+    const text = this.normalizeText(ev.text);
 
-    // do not translate links and markdown
-    try {
-      text = text.replace(/https?:\/\/[^\s]+/g, '');
-      text = text.replace(/!\[.*?\]\(.*?\)/g, ''); // Rimuove immagini Markdown ![alt text](url)
-      text = text.replace(/\[.*?\]\(.*?\)/g, ''); // Rimuove link Markdown [text](url)
-      text = text.replace(/[_*~`>#+-]/g, ' '); // Rimuove altri caratteri Markdown (_ * ~ ` > # + -)
-      // remove emoticons
-      text = text.replace(
-        /[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]/gu,
-        ' ',
-      );
-    } catch (e) {
-      this.logger.warn('Error applying text filtering');
-      return Buffer.from([]);
-    }
-    if (text.length < 2) {
+    if (!text || !text.length) {
       this.logger.verbose('Empty text, skip');
       return Buffer.from([]);
     }
@@ -112,35 +158,19 @@ export class TTSProviderService {
       model: ttsModel,
     };
 
-    if (!params.ssml && params.text) {
-      const ssmlGenerate = this.config.get('SSML_GENERATE') === '1';
-      if (ssmlGenerate) {
-        const session = await this.session.read(ev.sessionId, false);
-        let context = '';
-        if (session && session.settings?.prompt?.text) {
-          context = `Your application context is: ${session.settings?.prompt?.text?.replace(/\n/g, ' ')}`;
-        }
+    // generate SSML markup, if enabled
+    params.ssml = await this.generateSSML({ ev, params, sessionContext });
 
-        params.ssml = await this.ssmlService.generate(
-          {
-            text,
-            language: params.languageCode,
-            emotion: params.emotion,
-            context,
-          },
-          sessionContext,
-        );
-      }
-    }
-
-    const cacheKey = [
-      params.ssml,
-      params.text,
-      params.languageCode,
-      params.gender,
-      ttsProvider,
-      ttsModel || '',
-    ].join('-');
+    const cacheKey = hash(
+      [
+        params.ssml,
+        params.text,
+        params.languageCode,
+        params.gender,
+        ttsProvider,
+        ttsModel || '',
+      ].join(''),
+    );
 
     const cached = await this.cache.get<Buffer>(cacheKey);
     if (cached) {

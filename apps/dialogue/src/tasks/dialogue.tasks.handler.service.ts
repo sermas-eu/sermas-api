@@ -152,9 +152,11 @@ export class DialogueTasksHandlerService {
     if (!ev.sessionId) return;
 
     if (ev.values?.context !== TOOL_CONTEXT_TASK_FIELD) {
-      this.logger.debug(`Tool context=task-field not set, skip task handler`);
       return;
     }
+    this.logger.debug(
+      `Tool context=${TOOL_CONTEXT_TASK_FIELD} set, execute task handler`,
+    );
 
     if (ev.name === TOOL_CANCEL_TASK_NAME) {
       if (!ev.values?.taskId) {

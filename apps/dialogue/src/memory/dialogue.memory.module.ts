@@ -5,6 +5,7 @@ import { DialogueMemoryController } from './dialogue.memory.controller';
 import { DialogueMemoryEventsService } from './dialogue.memory.events.service';
 import { DialogueMemory, DialogueMemorySchema } from './dialogue.memory.schema';
 import { DialogueMemoryService } from './dialogue.memory.service';
+import { DialogueMemorySummaryService } from './dialogue.memory.summary.service';
 
 @Module({
   imports: [
@@ -14,7 +15,11 @@ import { DialogueMemoryService } from './dialogue.memory.service';
     ]),
   ],
   controllers: [DialogueMemoryController],
-  providers: [DialogueMemoryService, DialogueMemoryEventsService],
+  providers: [
+    DialogueMemoryService,
+    DialogueMemoryEventsService,
+    DialogueMemorySummaryService,
+  ],
   exports: [DialogueMemoryService],
 })
 export class DialogueMemoryModule {}

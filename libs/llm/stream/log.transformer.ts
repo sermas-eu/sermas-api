@@ -17,7 +17,7 @@ export class LogTransformer extends Transform {
     encoding: string,
     callback: CallableFunction,
   ) {
-    if (chunk) this.buffer += chunk.toString();
+    if (chunk) this.buffer += (chunk || '').toString();
     this.push(chunk);
     callback();
   }

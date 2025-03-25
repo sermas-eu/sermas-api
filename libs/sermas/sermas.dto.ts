@@ -13,6 +13,11 @@ export class SermasBaseDto {
   clientId?: string;
 
   @ApiPropertyOptional({
+    description: 'Request identifier for monitoring purposes',
+  })
+  requestId?: string;
+
+  @ApiPropertyOptional({
     description: 'Reference to the user interacting with the system',
   })
   userId?: string;

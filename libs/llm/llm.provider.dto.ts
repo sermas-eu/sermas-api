@@ -1,13 +1,12 @@
 import { SessionContext } from 'apps/session/src/session.context';
+import { Transform } from 'stream';
 import { PromptTemplateOutput } from './prompt/prompt.template';
 import {
-  LLMCallResult,
   LLMMessage,
   LLMPromptTag,
   LLMProvider,
   LLMProviderConfig,
 } from './providers/provider.dto';
-import { LLMTool, SelectedTool } from './tools/tool.dto';
 
 export type LLMSendArgs = LLMProviderConfig & {
   messages: LLMMessage[];
@@ -16,6 +15,7 @@ export type LLMSendArgs = LLMProviderConfig & {
   llmCallId?: string;
 
   sessionContext?: SessionContext;
+  transformers?: Transform[];
 };
 
 export type LLMChatArgs = LLMProviderConfig & {
@@ -43,32 +43,9 @@ export type LLMChatRequest = {
   messages?: LLMMessage[];
   system?: PromptTemplateOutput | string;
   user?: PromptTemplateOutput | string;
+
+  transformers?: Transform[];
 } & LLMBaseArgs;
-
-export type LLMToolsArgs = {
-  tools: LLMTool[];
-  history?: string;
-  user?: string;
-} & LLMBaseArgs;
-
-export type LLMParallelResult = LLMCallResult & {
-  tools?: SelectedTool[];
-};
-
-export type AvatarChat = {
-  chat?: PromptTemplateOutput | string;
-
-  tools?: LLMTool[];
-  history?: string;
-  user?: string;
-} & LLMProviderConfig & {
-    chatArgs?: Partial<LLMChatArgs>;
-    toolsArgs?: Partial<LLMChatArgs>;
-    provider?: LLMProvider;
-    skipChat?: boolean;
-
-    sessionContext?: SessionContext;
-  };
 
 export type LLMResultEvent = {
   sessionId?: string;

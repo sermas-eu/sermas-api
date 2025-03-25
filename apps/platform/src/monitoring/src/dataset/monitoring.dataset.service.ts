@@ -98,7 +98,8 @@ export class MonitoringDatasetService {
       );
       this.logger.verbose(`Saved audio chunck path=${assetPath}`);
     } catch (e: any) {
-      this.logger.warn(`Failed to save audio chunk ${assetPath}: ${e.stack}`);
+      this.logger.warn(`Failed to save audio chunk ${assetPath}`);
+      this.logger.debug(e.stack);
     }
   }
 

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ToolsParameterSchema } from 'apps/platform/src/app/platform.app.dto';
+import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionService } from 'apps/session/src/session.service';
 import {
   ButtonsContentDto,
@@ -15,6 +16,7 @@ import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId } from 'libs/sermas/sermas.utils';
 import { uuidv4 } from 'libs/util';
+import { ulid } from 'ulidx';
 import {
   TOOL_CATCH_ALL,
   TOOL_CATCH_ALL_VALUE,
@@ -43,7 +45,6 @@ import {
   TaskEventTriggerDto,
   TaskFieldDto,
 } from './store/dialogue.tasks.store.dto';
-import { createSessionContext } from 'apps/session/src/session.context';
 
 interface TaskFieldContext {
   task: DialogueTaskDto;
@@ -627,6 +628,7 @@ Return the 'value' field value`;
       language,
       text,
       messageId: getChunkId(),
+      requestId: ulid(),
       ts: new Date(),
     };
 
@@ -637,6 +639,8 @@ Return the 'value' field value`;
 
   async sendUiContent(content: ButtonsUIContentDto);
   async sendUiContent(content: UIContentDto) {
+    content.requestId = content.requestId || ulid();
+
     content.options = content.options || {};
     content.options.ttsEnabled = true;
 

@@ -5,8 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { SelectedTool } from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { SelectedTool } from 'libs/llm/tools/tool.dto';
 import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
 import { deepcopy, uuidv4 } from 'libs/util';
 import { DialogueToolNotMatchingDto } from '../dialogue.chat.dto';
@@ -148,11 +148,12 @@ export class DialogueToolsService {
 
       repository.tools = repo.tools;
 
-      this.logger.verbose(
-        `Set tools to repositoryId=${repository.repositoryId} sessionId=${repository.sessionId}`,
+      await this.toolsRepository.save(repository);
+
+      this.logger.debug(
+        `Set tools ${repository.tools?.map((t) => `${t.name}:${t.description}`).join(', ')} sessionId=${repository.sessionId} repositoryId=${repository.repositoryId}`,
       );
 
-      await this.toolsRepository.save(repository);
       this.publishChanged('created', repository);
 
       return repository;
@@ -178,9 +179,10 @@ export class DialogueToolsService {
 
       repository.options = repo.options;
 
-      this.logger.verbose(
-        `Added tools to repositoryId=${repository.repositoryId} sessionId=${repository.sessionId}`,
+      this.logger.debug(
+        `Added tools ${repository.tools?.map((t) => `${t.name}:${t.description}`).join(', ')} sessionId=${repository.sessionId} repositoryId=${repository.repositoryId}`,
       );
+
       await this.toolsRepository.save(repository);
 
       this.publishChanged('updated', repository);
