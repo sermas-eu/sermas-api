@@ -83,7 +83,7 @@ export class IdentityTrackerService {
     if (typeof this.embeddings[sessionId] === 'undefined') {
       this.initEmbeddings(sessionId);
     }
-    this.logger.debug(`Saving agent embedding for sessionId=${sessionId}`);
+    this.logger.verbose(`Saving agent embedding for sessionId=${sessionId}`);
     this.embeddings[sessionId].agentEmbedding = embedding;
   }
 

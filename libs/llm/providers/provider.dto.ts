@@ -36,6 +36,8 @@ export interface LLMProviderConfig {
   prompt?: string;
   tag?: LLMPromptTag;
   apiVersion?: string;
+  region?: string;
+  project?: string;
 }
 
 export interface LLMEmbeddingConfig extends LLMProviderConfig {

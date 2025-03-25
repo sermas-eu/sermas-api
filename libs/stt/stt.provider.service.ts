@@ -3,13 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { DefaultLanguage } from 'libs/language/lang-codes';
 import { MonitorService } from 'libs/monitor/monitor.service';
-import { GoogleSpeechToText } from './providers/stt.google.service';
-import { OpenAISpeechToText } from './providers/stt.openai.service';
-import { WhisperSpeechToText } from './providers/stt.whisper.service';
-import { OraiSpeechToText } from './providers/stt.orai.service';
-import { DialogueSpeechToTextDto } from './stt.dto';
 import { AzureSpeechToText } from './providers/stt.azure.service';
+import { GoogleSpeechToText } from './providers/stt.google.service';
 import { MmsSpeechToText } from './providers/stt.mms.service';
+import { OpenAISpeechToText } from './providers/stt.openai.service';
+import { OraiSpeechToText } from './providers/stt.orai.service';
+import { WhisperSpeechToText } from './providers/stt.whisper.service';
+import { DialogueSpeechToTextDto } from './stt.dto';
 
 export type STTResponse = {
   provider: string;
@@ -35,20 +35,7 @@ export class STTProviderService {
   ) {}
 
   async convertToText(payload: DialogueSpeechToTextDto): Promise<STTResponse> {
-    const {
-      buffer,
-      appId,
-      clientId,
-      language,
-      gender,
-      llm,
-      sessionId,
-      avatar,
-      messageId,
-      chunkId,
-      ts,
-      userId,
-    } = payload;
+    const { buffer, language } = payload;
 
     const provider = this.configService.get('STT_SERVICE');
     let text = '';
@@ -63,20 +50,16 @@ export class STTProviderService {
     });
 
     const dialogueMessagePayload: DialogueMessageDto = {
+      ...payload,
       actor: 'agent',
-      appId,
-      clientId,
-      avatar,
-      messageId,
-      chunkId,
-      userId,
       text: '',
-      gender,
-      llm,
-      sessionId,
-      ts: ts || new Date(),
+      ts: payload.ts || new Date(),
       language: language || DefaultLanguage,
     };
+
+    if (dialogueMessagePayload['buffer'])
+      delete dialogueMessagePayload['buffer'];
+
     let response;
     try {
       switch (provider) {

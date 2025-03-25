@@ -9,6 +9,7 @@ import { SessionService } from 'apps/session/src/session.service';
 import { getChunkId } from 'libs/sermas/sermas.utils';
 import { LLMTranslationService } from 'libs/translation/translation.service';
 import { toDataURL } from 'qrcode';
+import { ulid } from 'ulidx';
 import { UIAsyncApiService } from './ui.async.service';
 import {
   ButtonsContentDto,
@@ -27,59 +28,6 @@ export class UIService {
     private readonly session: SessionService,
     private readonly translation: LLMTranslationService,
   ) {}
-
-  // onModuleInit() {
-  //   const contents: UIContentDto[] = [
-  //     // {
-  //     //   appId: 'mimex',
-  //     //   type: 'image',
-  //     //   content: {
-  //     //     src: 'https://sermasproject.eu/wp-content/uploads/2023/08/sermas-xr-homepage.png',
-  //     //     height: 250,
-  //     //     alt: 'SERMAS robot',
-  //     //   }
-  //     // } as ImageUIContentDto,
-  //     // {
-  //     //   appId: 'mimex',
-  //     //   type: 'webpage',
-  //     //   content: {
-  //     //     url: 'https://example.com',
-  //     //   }
-  //     // } as WebpageUIContentDto,
-  //     // {
-  //     //   appId: 'mimex',
-  //     //   type: 'email',
-  //     //   content: {
-  //     //     email: 'info@sermasproject.eu',
-  //     //     label: 'Contact sales'
-  //     //   }
-  //     // } as EmailUIContentDto,
-  //     // {
-  //     //   appId: 'mimex',
-  //     //   type: 'html',
-  //     //   content: {
-  //     //     html: `<div class="title">Hello world</div>`
-  //     //   }
-  //     // } as HtmlUIContentDto,
-  //   ];
-
-  //   // let i = 0
-  //   // setInterval(() => {
-  //   //   if (!contents[i]) return
-  //   //   this.logger.debug(`Send content ${contents[i].type}`)
-  //   //   this.showContent(contents[i])
-  //   //   i++
-  //   //   if (i === contents.length) i = 0
-  //   // }, 5000)
-  // }
-
-  // async getAssetUrl(path: string): Promise<string> {
-  //   return await this.minioService.client.presignedGetObject(
-  //     REPOSITORY_BUCKET,
-  //     path,
-  //     60 * 60, // 1 hr expiration
-  //   );
-  // }
 
   // clear screen on session close
   async onSessionChanged(ev: SessionChangedDto) {
@@ -100,6 +48,8 @@ export class UIService {
     this.logger.verbose(
       `send content contentType=${uiContent.contentType} appId=${uiContent.appId} sessionId=${uiContent.sessionId}`,
     );
+
+    uiContent.requestId = uiContent.requestId || ulid();
 
     uiContent.ts = uiContent.ts || new Date();
     uiContent.chunkId = uiContent.chunkId || getChunkId(uiContent.ts);

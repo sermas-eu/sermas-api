@@ -6,10 +6,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
 import {
   AgentEvaluatePromptDto,
   AgentEvaluatePromptResponseDto,
@@ -35,7 +33,6 @@ export class SessionPromptController {
   })
   async prompt(
     @Body() payload: AgentEvaluatePromptDto,
-    @AuthenticatedUser() user: AuthJwtUser,
   ): Promise<AgentEvaluatePromptResponseDto> {
     return this.promptService.prompt(payload);
   }

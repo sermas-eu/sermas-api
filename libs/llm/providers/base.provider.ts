@@ -33,14 +33,14 @@ export abstract class LLMProvider<
     if (this.models === undefined) return true;
     const modelName: string = model.split(':')[0];
     return this.models.some((m) => {
-        const parts = m.split(':');
-        const isWildcard = parts.length > 1 && parts[1] === '*';
-        return (
-          m === model ||  // Perfect match 
-          (parts[0] === modelName && model === modelName) ||  // Name match (tag was not specified)
-          (parts[0] === modelName && isWildcard)  // Wildcard match
-        );
-      });
+      const parts = m.split(':');
+      const isWildcard = parts.length > 1 && parts[1] === '*';
+      return (
+        m === model || // Perfect match
+        (parts[0] === modelName && model === modelName) || // Name match (tag was not specified)
+        (parts[0] === modelName && isWildcard) // Wildcard match
+      );
+    });
   }
 
   getAdapter(model: string) {

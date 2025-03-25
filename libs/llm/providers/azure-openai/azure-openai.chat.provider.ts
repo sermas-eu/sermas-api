@@ -37,8 +37,9 @@ export class AzureOpenAIChatProvider extends LLMChatProvider {
 
   public async getModels() {
     if (this.models === undefined) {
-      const models = await this.getApiClient().models.list();
-      this.models = models.data.map((model) => model.id);
+      // TODO: check this call as it returns 404
+      // const models = await this.getApiClient().models.list();
+      // this.models = models.data.map((model) => model.id);
     }
     return this.models;
   }

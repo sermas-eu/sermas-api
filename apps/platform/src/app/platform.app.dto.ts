@@ -19,7 +19,7 @@ import {
   ToolParamType,
   ToolRequestConfig,
   ToolSchemaTypeList,
-} from 'libs/llm/tools/tool.dto';
+} from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
 import { SermasRecordChangedDto } from 'libs/sermas/sermas.dto';
 import * as sanitizeHtml from 'sanitize-html';
 import { PlatformModuleConfigDto } from '../mod/mod.dto';

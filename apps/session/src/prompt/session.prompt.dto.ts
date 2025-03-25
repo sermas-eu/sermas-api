@@ -40,9 +40,9 @@ export type AgentEvaluatePromptFormat =
 export class AgentEvaluatePromptResponseDto {
   @ApiProperty({
     description: 'Result of the call',
-    type: Object,
+    type: String,
   })
-  result: string | object;
+  result: string;
   @ApiProperty({
     description: `Response format (${AgentEvaluatePromptFormatList})`,
     enum: AgentEvaluatePromptFormatList,

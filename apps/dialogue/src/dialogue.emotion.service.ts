@@ -24,6 +24,10 @@ export class DialogueEmotionService {
   }
 
   getUserEmotion(sessionId: string): Emotion | null {
-    return this.cache[sessionId] || null;
+    const emotion = this.cache[sessionId] || null;
+    if (emotion) {
+      this.logger.verbose(`Current user emotion: ${emotion}`);
+    }
+    return emotion;
   }
 }

@@ -102,7 +102,7 @@ export class DialogueTasksService implements OnModuleInit {
       if (task.options?.enableTool) {
         const repositoryId = task.options?.repositoryId;
         this.logger.log(
-          `Enabling taskId=${task.taskId} as tool with repostoryId=${repositoryId} sessionId=${task.sessionId || ''}`,
+          `Enabling taskId=${task.taskId} as tool with repositoryId=${repositoryId} sessionId=${task.sessionId || ''}`,
         );
         await this.tools.add({
           repositoryId,
