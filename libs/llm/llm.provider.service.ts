@@ -344,7 +344,7 @@ export class LLMProviderService implements OnModuleInit {
         break;
     }
     if (!provider) {
-      this.logger.warning(`LLM provider ${config.provider} not found`);
+      this.logger.warn(`LLM provider ${config.provider} not found`);
       return null;
     }
 
