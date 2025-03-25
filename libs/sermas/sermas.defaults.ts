@@ -121,7 +121,7 @@ export const SermasDefaultConfig = {
   // ELEVENIO_MODELS Elevenio models
   ELEVENIO_MODELS: 'eleven_multilingual_v2',
 
-  // LLM_SERVICE default LLM service to use (supported: openai, groq, ollama)
+  // LLM_SERVICE default LLM service to use (supported: openai, groq, ollama, azure_openai, vertexai)
   LLM_SERVICE: 'openai',
 
   // LLM_SERVICE_CHAT LLM service to use for textual chat in format provider/model. If not provided will use LLM_SERVICE
@@ -223,6 +223,22 @@ export const SermasDefaultConfig = {
   AZURE_OPENAI_EMBEDDINGS_MODEL: 'text-embedding-ada-002',
   // AZURE_OPENAI_CHAT_API_VERSION Version of embeddings model distributed in Azure
   AZURE_OPENAI_EMBEDDINGS_API_VERSION: '2023-05-15',
+
+  // VERTEXAI_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
+  VERTEXAI_API_KEY: '',
+  // VERTEXAI_CHAT_MODELS Supported Google chat models under Vertex AI. Leave empty to allow any.
+  VERTEXAI_CHAT_MODELS: 'mistral-small-2503',
+  // VERTEXAI_REGION Google Cloud Processing region for Vertex AI
+  VERTEXAI_REGION: '',
+  // VERTEXAI_PROJECT Google Cloud project ID for Vertex AI
+  VERTEXAI_PROJECT: '',
+
+  // GCP_MISTRAL_CHAT_MODELS Supported Mistral chat models under Google Cloud. Leave empty to allow any.
+  GCP_MISTRAL_CHAT_MODELS: 'mistral-small-2503',
+  // GCP_MISTRAL_REGION Google Cloud Processing region for Mistral
+  GCP_MISTRAL_REGION: '',
+  // GCP_MISTRAL_PROJECT Google Cloud project ID for Mistral
+  GCP_MISTRAL_PROJECT: '',
 
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',

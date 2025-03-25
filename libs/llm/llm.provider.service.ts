@@ -45,6 +45,8 @@ import { LogTransformer } from './stream/log.transformer';
 import { TextTransformer } from './stream/text-transformer.stream';
 import { readResponse } from './stream/util';
 import { extractProviderName, parseJSON } from './util';
+import { VertexAIChatProvider } from './providers/vertexai/vertexai.chat.provider';
+import { GCPMistralChatProvider } from './providers/gcp-mistral/gcp-mistral.chat.provider';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -54,6 +56,7 @@ export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   gemini: 'gemini-1.5-flash',
   huggingface: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
   azure_openai: 'gpt-4o',
+  gcp_mistral: 'mistral-small-2503',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
@@ -119,7 +122,9 @@ export class LLMProviderService implements OnModuleInit {
   async getChatServiceByTag(
     config: LLMSendArgs | LLMProviderConfig,
   ): Promise<string[]> {
-    const defaultService = this.config.get('LLM_SERVICE_' + config.tag);
+    const defaultService = this.config.get(
+      'LLM_SERVICE_' + config.tag.toUpperCase(),
+    );
 
     let provider: string = undefined,
       model: string = undefined;
@@ -198,7 +203,6 @@ export class LLMProviderService implements OnModuleInit {
 
       if (!config.provider) {
         config.provider = this.getDefaultChatProvider();
-        config.model = this.getDefaultChatProviderModel(config.provider);
         this.logger.verbose(
           `No LLM provider selected, using defaults for ${config.provider}`,
         );
@@ -307,9 +311,30 @@ export class LLMProviderService implements OnModuleInit {
           availableModels,
         });
         break;
+      case 'gcp_mistral':
+        provider = new GCPMistralChatProvider({
+          // No need to pass the API key: authentication uses the service account at GOOGLE_APPLICATION_CREDENTIALS
+          provider: config.provider,
+          baseURL: config.baseURL || this.config.get('GCP_MISTRAL_BASEURL'),
+          model,
+          availableModels,
+          region: this.config.get('GCP_MISTRAL_REGION'),
+          project: this.config.get('GCP_MISTRAL_PROJECT'),
+        });
+        break;
+      case 'vertexai':
+        provider = new VertexAIChatProvider({
+          provider: config.provider,
+          model,
+          apiKey: config.apiKey || this.config.get('VERTEXAI_API_KEY'),
+          availableModels,
+          region: this.config.get('VERTEXAI_REGION'),
+          project: this.config.get('VERTEXAI_PROJECT'),
+        });
+        break;
     }
     if (!provider) {
-      // throw new Error(`LLM provider ${config.provider} not found`);
+      this.logger.warn(`LLM provider ${config.provider} not found`);
       return null;
     }
 
@@ -675,9 +700,9 @@ export class LLMProviderService implements OnModuleInit {
     const cached = await this.cache.get(args.messages);
     if (cached) {
       this.logger.debug(`Using cached response`);
-      // this.logger.debug(
-      //   `Cached message:\n${JSON.stringify(args.messages)}\nresponse:\n${cached}`,
-      // );
+      this.logger.verbose(
+        `Cached message:\n${JSON.stringify(args.messages)}\nresponse:\n${cached}`,
+      );
       if (args.stream) {
         const returnStream = this.applyTransformers(
           args,
