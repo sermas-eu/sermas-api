@@ -105,17 +105,7 @@ export class LLMProviderService implements OnModuleInit {
   }
 
   extractProviderName(service: string) {
-    const data: { provider: string; model: string } = {
-      provider: undefined,
-      model: undefined,
-    };
-    if (!service) return data;
-    const parts = service.split('/');
-    if (parts.length) {
-      data.provider = parts.shift();
-      if (parts.length) data.model = parts.join('/');
-    }
-    return data;
+    return extractProviderName(service);
   }
 
   getDefaultChatProviderModel(provider: LLMProvider) {
