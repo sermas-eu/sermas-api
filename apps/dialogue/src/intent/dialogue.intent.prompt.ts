@@ -67,7 +67,7 @@ Set the field 'match' to 'true' in those cases:
 
 Set the field 'trigger' to false except for those cases:
 - if user request precisely matches the 'description' field of one TASKS, ignore intents.
-- user confirms one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
+- user accepts one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
 - ACTIVE TASK is not available
 
 <% if (data.activeTask) { %>
