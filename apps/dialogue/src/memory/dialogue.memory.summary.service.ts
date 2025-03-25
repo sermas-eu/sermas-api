@@ -7,7 +7,14 @@ import { Model } from 'mongoose';
 import { DialogueMemory } from './dialogue.memory.schema';
 import { conversationToText } from './util';
 
+// number of recent messages to return in the history
+const MAX_RAW_HISTORY = 3;
+
+// min number of messages to summarize, excluded those in MAX_RAW_HISTORY
+const MIN_SUMMARIZE_MESSAGES = 2;
+
 type CachedSummary = {
+  lastIndex: number;
   ts: Date;
   summary: string;
 };
@@ -27,15 +34,23 @@ export class DialogueMemorySummaryService {
     const cached = await this.cacheManager.get<CachedSummary>(
       `summary-${sessionId}`,
     );
-    if (cached && cached.summary) return cached.summary;
-
-    this.generateSummary(sessionId);
 
     let messages = await this.loadMessages(sessionId);
 
+    if (cached && cached.summary) {
+      let newMessages = messages.filter((m, i) => i > cached.lastIndex);
+      if (newMessages.length > MAX_RAW_HISTORY) {
+        newMessages = newMessages.slice(-1 * MAX_RAW_HISTORY);
+      }
+
+      return `${cached.summary}\n${conversationToText(newMessages, true)}`;
+    }
+
+    this.generateSummary(sessionId);
+
     // cut-off longer history
-    if (messages.length > 5) {
-      messages = messages.slice(-5);
+    if (messages.length > MAX_RAW_HISTORY) {
+      messages = messages.slice(-1 * MAX_RAW_HISTORY);
     }
     return conversationToText(messages, true);
   }
@@ -52,40 +67,41 @@ export class DialogueMemorySummaryService {
     if (!messages.length) return;
 
     // generate only after user message
-    if (
-      messages[messages.length - 1] &&
-      messages[messages.length - 1].role === 'assistant'
-    ) {
-      return;
-    }
+    // if (
+    //   messages[messages.length - 1] &&
+    //   messages[messages.length - 1].role === 'assistant'
+    // ) {
+    //   return;
+    // }
 
-    // use history
-    if (messages.length <= 3) return;
+    // use raw messages
+    if (messages.length <= MAX_RAW_HISTORY) return;
 
-    const newerMessages = messages.splice(-3);
-    const history = conversationToText(messages, true);
+    const olderMessages = messages.slice(0, -1 * MAX_RAW_HISTORY);
+    if (olderMessages.length < MIN_SUMMARIZE_MESSAGES) return;
+
+    const history = conversationToText(olderMessages, true);
 
     try {
-      let summary = await this.llmProvider.chat({
+      const summary = await this.llmProvider.chat({
         user: `
-        Summarize the following interaction between user and assistant (agent) in a few sentences, use english language. 
-        Be precise but coincise. Do not add notes or explanation.
-        
-        ${history}`,
+Summarize the following interaction between user and assistant (agent) in a few sentences, use english language. Be precise but coincise. 
+Do not add notes or explanation.
+
+${history}`,
         stream: false,
         json: false,
         tag: 'chat',
         sessionContext: createSessionContext({ sessionId }),
       });
 
-      summary += '\n' + conversationToText(newerMessages, true);
-
       const cachedSummary: CachedSummary = {
+        lastIndex: olderMessages.length - 1,
         ts: new Date(),
         summary,
       };
 
-      this.cacheManager.set(
+      await this.cacheManager.set(
         `summary-${sessionId}`,
         cachedSummary,
         5 * 60 * 1000,

@@ -88,7 +88,7 @@ export class DialogueMemoryService implements OnModuleInit {
     await session.save();
 
     // regenerate cache
-    await this.summary.generateSummary(sessionId);
+    this.summary.generateSummary(sessionId);
   }
 
   getSummary(sessionId: string) {
