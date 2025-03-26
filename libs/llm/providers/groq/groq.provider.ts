@@ -63,9 +63,9 @@ export class GroqChatProvider extends LLMChatProvider {
 
     if (!isStream) {
       const res = await this.groq.chat.completions.create({
-        top_p: 1,
+        top_p: this.config.top_p,
         max_tokens: 1024,
-        temperature: 1,
+        temperature: this.config.temperature,
         model: this.config.model,
         messages,
         stream: false,

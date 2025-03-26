@@ -68,6 +68,8 @@ export class HuggingfaceChatProvider extends LLMChatProvider {
       model: this.config.model,
       messages: messages,
       max_tokens: 512,
+      top_p: this.config.top_p,
+      temperature: this.config.temperature,
     };
 
     if (!isStream) {

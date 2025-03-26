@@ -38,6 +38,8 @@ export interface LLMProviderConfig {
   apiVersion?: string;
   region?: string;
   project?: string;
+  temperature?: number;
+  top_p?: number;
 }
 
 export interface LLMEmbeddingConfig extends LLMProviderConfig {

@@ -189,6 +189,11 @@ export class LLMProviderService implements OnModuleInit {
   async getChatProvider(userConfig: LLMSendArgs | LLMProviderConfig) {
     const config: LLMProviderConfig = { ...userConfig };
 
+    if (config.temperature === undefined)
+      config.temperature = this.config.get<number>('LLM_TEMPERATURE');
+    if (config.top_p === undefined)
+      config.top_p = this.config.get<number>('LLM_TOP_P');
+
     if (!config.provider) {
       if (config.tag) {
         const [tagProvider, tagModel] = await this.getChatServiceByTag(config);
