@@ -49,6 +49,8 @@ export class GCPMistralChatProvider extends LLMChatProvider {
     const request = {
       model: this.config.model,
       messages: [...messages],
+      topP: this.config.top_p,
+      temperature: this.config.temperature,
     };
 
     if (!isStream) {
