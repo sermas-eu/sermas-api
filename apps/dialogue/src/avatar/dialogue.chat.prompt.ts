@@ -24,12 +24,11 @@ The avatar conversation is converted to speech and must be fast and coincise, av
 ${BaseSystemPrompt}
 
 ## Response format
-Always start your answer starting with a <tools> tag containing the identified tools. Append then the chat response as plain text, do not use emoticons. 
+Always start your answer starting with a <tools> tag containing the identified tools in parsable JSON, following exactly the example structure. Append then the chat response as plain text, do not use emoticons. 
 Never add Notes or Explanations.
 
 ### Example:
 <tools>
-<!-- Output in parsable JSON, following exactly this structure.  -->
 {
   "'name' field of the matching tool": { 
     "optional, matching argument 'name'": "the value extracted from USER MESSAGE" 
