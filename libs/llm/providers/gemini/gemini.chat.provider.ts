@@ -2,6 +2,7 @@ import {
   Content,
   GenerativeModel,
   GoogleGenerativeAI,
+  GenerationConfig,
 } from '@google/generative-ai';
 import {
   LLMCallResult,
@@ -27,8 +28,13 @@ export class GeminiChatProvider extends LLMChatProvider {
 
   protected createClient() {
     const genai = new GoogleGenerativeAI(this.config.apiKey);
+    const config: GenerationConfig = {
+      topP: this.config.top_p,
+      temperature: this.config.temperature,
+    };
     return genai.getGenerativeModel({
       model: this.config.model,
+      generationConfig: config,
     });
   }
 

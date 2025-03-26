@@ -55,6 +55,8 @@ export class MistralChatProvider extends LLMChatProvider {
       model: this.config.model,
       messages,
       stream: isStream,
+      topP: this.config.top_p,
+      temperature: this.config.temperature,
     });
 
     if (!isStream) {
