@@ -258,7 +258,9 @@ export class DialogueIntentService {
       }
 
       if (selectedTask) {
-        this.logger.log(`Trigger task ${selectedTask.name}`);
+        this.logger.log(
+          `Trigger task '${selectedTask.name}' sessionId=${message.sessionId}`,
+        );
 
         const ev: ToolTriggerEventDto = {
           appId: selectedTask.appId,
@@ -407,11 +409,11 @@ export class DialogueIntentService {
             currentTask: args.currentTask,
           };
           this.emitter.emit('dialogue.tools.not_matching', notFoundEvent);
-          this.monitor.error({
-            label: `No tools matching`,
-            appId,
-            sessionId,
-          });
+          // this.monitor.error({
+          //   label: `No tools matching`,
+          //   appId,
+          //   sessionId,
+          // });
           this.logger.debug(
             `No tools matching, tools=${args.tools.length} [${args.tools.map((t) => t.name + ':' + t.description).join('; ')}]`,
           );

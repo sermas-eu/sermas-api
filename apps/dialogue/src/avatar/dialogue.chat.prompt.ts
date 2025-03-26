@@ -3,6 +3,7 @@ import {
   BaseSystemPrompt,
   BaseSystemPromptParams,
 } from '../dialogue.system.prompt';
+import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto';
 
 type AvatarChatSystemPromptParams = BaseSystemPromptParams;
 
@@ -43,10 +44,11 @@ export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
 
 # TOOLS
 Match a tool from TOOLS based on the USER MESSAGE, strictly following all these rules:
+- alway match the tool named '${TOOL_CATCH_ALL}' when available in TOOLS, ignore other tools.
 - find an item based on the 'description' field of each TOOLS.
 - the USER MESSAGE should have a match by meaning or partial overlap with the description of one TOOLS.
 - never match a tool if the user is providing a question or asking for clarifications.
-- the matching tool must be one of those in TOOLS
+- the matching tool must be one of those in TOOLS.
 
 Return an empty object if there is no match or no TOOLS are available. Skip the next section if tools are found. 
 Never mention tools in the chat response.
