@@ -54,8 +54,7 @@ If message is skipped, do not continue to next steps.
 # INTENTS
 
 <% if (data.activeTask) { %>
-  ## ACTIVE TASK
-  <%= data.activeTask %>
+  ## ACTIVE TASK: <%= data.activeTask %>
 <% } %>
 
 Analyze the conversation and match one of TASKS based on the user message intention.

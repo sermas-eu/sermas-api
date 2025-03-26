@@ -3,6 +3,7 @@ import {
   BaseSystemPrompt,
   BaseSystemPromptParams,
 } from '../dialogue.system.prompt';
+import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto';
 
 type AvatarChatSystemPromptParams = BaseSystemPromptParams;
 
@@ -23,12 +24,11 @@ The avatar conversation is converted to speech and must be fast and coincise, av
 ${BaseSystemPrompt}
 
 ## Response format
-Always start your answer starting with a <tools> tag containing the identified tools. Append then the chat response as plain text, do not use emoticons. 
+Always start your answer starting with a <tools> tag containing the identified tools in parsable JSON, following exactly the example structure. Append then the chat response as plain text, do not use emoticons. 
 Never add Notes or Explanations.
 
 ### Example:
 <tools>
-<!-- Output in parsable JSON, following exactly this structure.  -->
 {
   "'name' field of the matching tool": { 
     "optional, matching argument 'name'": "the value extracted from USER MESSAGE" 
@@ -43,10 +43,11 @@ export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
 
 # TOOLS
 Match a tool from TOOLS based on the USER MESSAGE, strictly following all these rules:
+- alway match the tool named '${TOOL_CATCH_ALL}' when available in TOOLS, ignore other tools.
 - find an item based on the 'description' field of each TOOLS.
 - the USER MESSAGE should have a match by meaning or partial overlap with the description of one TOOLS.
 - never match a tool if the user is providing a question or asking for clarifications.
-- the matching tool must be one of those in TOOLS
+- the matching tool must be one of those in TOOLS.
 
 Return an empty object if there is no match or no TOOLS are available. Skip the next section if tools are found. 
 Never mention tools in the chat response.
