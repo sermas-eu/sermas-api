@@ -29,7 +29,7 @@ Never add Notes or Explanations.
 { "skip": boolean, "explain": string }
 </filter>
 <tools>
-{ "tool 'name' field": { "matching argument 'name'": "value extracted from USER MESSAGE" } }
+{ "tool name": { "argument name": "value extracted from USER MESSAGE" } }
 </tools>
 <intents>
 { "taskId": string, "match": boolean, "trigger": boolean, "cancel": boolean, "explain": string }
@@ -61,9 +61,11 @@ Match a tool from TOOLS based on the USER MESSAGE, strictly following all these 
 - find matches based on the 'description' field of TOOLS.
 - the USER MESSAGE should have a match by meaning or partial overlap with the 'description' of one TOOLS.
 - never match a tool if the user is providing a question or asking for clarifications.
-- the matching tool 'name' must be in TOOLS.
+- the matching tool must be in TOOLS.
 
-Return an empty object if there is no match or no TOOLS are available. Skip the next section if tools are found. 
+Return an empty object if there is no match or no TOOLS are available. 
+Populate the tools list using the tool 'name' field as key and an object as value with the key-value of tool param 'name' and value extracted from user message.
+Skip the next section if tools are found. 
 Never mention tools in the chat response.
 
 # INTENTS
