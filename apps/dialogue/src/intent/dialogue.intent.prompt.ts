@@ -64,12 +64,12 @@ Set the field 'match' to 'true' in those cases:
 - if there is an explicit match with an intent
 - if the assistant asked explicitly for a task and the user is confirming or declining
 
-<% if (!data.activeTask) { %>
-  Set the field 'trigger' to false except for those cases:
-  - if user request precisely matches the 'description' field of one TASKS, ignore intents.
-  - user accepts one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
-<% } else { %>
-  Set the field 'trigger' to false.
+Set the field 'trigger' to false except for those cases:
+- if user request precisely matches the 'description' field of one TASKS, ignore intents.
+- user accepts one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
+- ACTIVE TASK is available
+
+<% if (data.activeTask) { %>
   If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
 <% } %>
 
