@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { packAvatarObject } from 'apps/dialogue/src/avatar/utils';
+import { packAvatarObject } from 'apps/dialogue/src/chat/utils';
 import { DialogueVectorStoreService } from 'apps/dialogue/src/document/dialogue.vectorstore.service';
 import { DialogueMemoryService } from 'apps/dialogue/src/memory/dialogue.memory.service';
 import {

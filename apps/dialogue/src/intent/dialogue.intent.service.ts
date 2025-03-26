@@ -1,22 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { DialogueMemoryService } from 'apps/dialogue/src/memory/dialogue.memory.service';
 import { DialogueTasksService } from 'apps/dialogue/src/tasks/dialogue.tasks.service';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { SessionService } from 'apps/session/src/session.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { convertToolsToPlainList, packAvatarObject } from '../avatar/utils';
-import {
-  DialogueChatValidationEvent,
-  DialogueToolNotMatchingDto,
-} from '../dialogue.chat.dto';
+import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
 import {
   DialogueTaskDto,
   TaskFieldDto,
 } from '../tasks/store/dialogue.tasks.store.dto';
-import { intentPrompt, intentSystemPrompt } from './dialogue.intent.prompt';
 
 import {
   TOOL_CATCH_ALL,
@@ -27,7 +17,7 @@ import {
   AppSettingsDto,
   AppToolsDTO,
 } from 'apps/platform/src/app/platform.app.dto';
-import { SelectedTool } from '../avatar/dialogue.chat.tools.dto';
+import { SelectedTool } from '../chat/dialogue.chat.tools.dto';
 import { DialogueTasksHandlerService } from '../tasks/dialogue.tasks.handler.service';
 import { DialogueToolsService } from '../tools/dialogue.tools.service';
 import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto';
@@ -36,8 +26,6 @@ import { extractToolValues } from '../tools/utils';
 import {
   ActiveTaskRecord,
   IntentActiveTools,
-  TaskIntentMatch,
-  TaskIntentMatchResult,
   TaskIntentResult,
   TaskIntentsList,
   TaskIntentWrapper,
@@ -48,16 +36,10 @@ export class DialogueIntentService {
   private readonly logger = new Logger(DialogueIntentService.name);
 
   constructor(
-    private readonly session: SessionService,
-    private readonly llm: LLMProviderService,
-
     private readonly emitter: EventEmitter2,
-    private readonly memory: DialogueMemoryService,
     private readonly tasks: DialogueTasksService,
-
     private readonly tools: DialogueToolsService,
     private readonly tasksHandler: DialogueTasksHandlerService,
-    private readonly monitor: MonitorService,
   ) {}
 
   async getActiveTaskRecord(sessionId: string): Promise<ActiveTaskRecord> {
@@ -89,94 +71,10 @@ export class DialogueIntentService {
     return { tasks, intents };
   }
 
-  async match(
-    message: DialogueMessageDto,
-  ): Promise<TaskIntentMatchResult | null> {
-    const activeTask = await this.getActiveTaskRecord(message.sessionId);
-
-    const userMessage = message.text;
-    const history = await this.memory.getSummary(message.sessionId);
-    const settings = await this.session.getSettings(message);
-    const avatar = await this.session.getAvatar(message);
-
-    const { tasks, intents } = await this.getTaskIntentList(message.appId);
-
-    const perf = this.monitor.performance({
-      ...message,
-      label: 'intents',
-    });
-
-    const sessionRepositories = await this.tools.loadFromSession(message);
-    const tools = sessionRepositories.map((r) => r.tools).flat();
-
-    const llm = await this.session.getLLM(message.sessionId);
-
-    const response = await this.llm.chat<TaskIntentMatch>({
-      ...this.llm.extractProviderName(llm?.intent),
-      stream: false,
-      json: true,
-      system: intentSystemPrompt({
-        app: settings.prompt.text,
-        avatar: packAvatarObject(avatar),
-        language: settings.language,
-        history: history,
-        // empty tasks to ease the tools selection
-        intents: activeTask.task ? [] : JSON.stringify(intents),
-        message: userMessage,
-        tools: convertToolsToPlainList(tools),
-      }),
-      user: intentPrompt({
-        activeTask: activeTask.task?.name,
-      }),
-      tag: 'intent',
-      sessionContext: createSessionContext(message),
-    });
-
-    perf();
-
-    // handle skip case
-    const validationEvent: DialogueChatValidationEvent = {
-      appId: message.appId,
-      sessionId: message.sessionId,
-      message: message,
-      skip: response?.filter?.skip,
-    };
-    this.emitter.emit('dialogue.chat.validation', validationEvent);
-
-    const result: TaskIntentMatchResult = {
-      skipResponse: response?.filter?.skip === true,
-    };
-
-    if (response?.filter?.explain) {
-      this.logger.debug(`Intent filter reason: ${response?.filter?.explain}`);
-    }
-
-    if (response?.filter?.skip) {
-      this.logger.debug(`Skipping user request message=${message.text}`);
-      return result;
-    }
-
-    // handle intent case
-    if (response?.intent) {
-      if (response.intent.explain) {
-        this.logger.debug(`Intent explanation: ${response.intent.explain}`);
-      }
-
-      result.task = await this.handleTaskIntent({
-        message,
-        taskIntent: response.intent,
-        activeTask,
-        tasks,
-      });
-      // skip response?
-      result.skipResponse = result.task.skipResponse;
-    } else {
-      this.logger.debug(`Intent not found for sessionId=${message.sessionId}`);
-    }
-
-    result.tools = await this.retrieveCurrentTools(message, result.task);
-
-    return result;
+  async getCurrentField(task: DialogueTaskDto, sessionId: string) {
+    if (!task) return undefined;
+    const field = await this.tasks.getCurrentField(task.taskId, sessionId);
+    return field || undefined;
   }
 
   /**
@@ -282,13 +180,10 @@ export class DialogueIntentService {
       }
     }
 
-    let currentField: TaskFieldDto;
-    if (currentTask) {
-      currentField = await this.tasks.getCurrentField(
-        currentTask.taskId,
-        message.sessionId,
-      );
-    }
+    const currentField = await this.getCurrentField(
+      currentTask,
+      message.sessionId,
+    );
 
     return {
       cancelledTaskId,

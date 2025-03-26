@@ -3,8 +3,8 @@ import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
 import {
   DialogueTaskDto,
   TaskFieldDto,
-} from './tasks/store/dialogue.tasks.store.dto';
-import { DialogueToolsRepositoryDto } from './tools/repository/dialogue.tools.repository.dto';
+} from '../tasks/store/dialogue.tasks.store.dto';
+import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 
 export class DialogueChatValidationEvent {

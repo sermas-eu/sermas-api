@@ -3,9 +3,12 @@ import { Transform } from 'stream';
 export const MIN_SENTENCE_LENGTH = 15;
 
 export class SentenceTransformer extends Transform {
-  private buffer = '';
+  private buffer: string | undefined;
 
-  constructor() {
+  constructor(
+    private readonly onInit?: () => void,
+    private readonly onComplete?: () => void,
+  ) {
     super();
   }
 
@@ -16,6 +19,11 @@ export class SentenceTransformer extends Transform {
   ) {
     chunk = chunk || '';
     chunk = chunk.toString();
+
+    if (this.buffer === undefined) {
+      if (this.onInit) this.onInit();
+      this.buffer = '';
+    }
 
     this.buffer += chunk.toString();
 
@@ -46,15 +54,17 @@ export class SentenceTransformer extends Transform {
   }
 
   sendBuffer(buffer: string) {
+    if (!buffer) return;
     this.push(buffer.replace(/^\n+/gm, '').replace(/\n+$/gm, ''));
   }
 
   _flush(callback: CallableFunction) {
     // Flush the remaining incomplete phrase
-    if (this.buffer.trim().length > 0) {
+    if (this.buffer && this.buffer.trim().length > 0) {
       this.sendBuffer(this.buffer);
       this.buffer = '';
     }
+    if (this.onComplete) this.onComplete();
     callback();
   }
 }

@@ -66,3 +66,8 @@ export type IntentActiveTools = {
   matchOrRemoveTask: boolean;
   hasCatchAll: AppToolsDTO;
 };
+
+export type ActiveTools = {
+  tools: AppToolsDTO[];
+  repositories: DialogueToolsRepositoryDto[];
+};
