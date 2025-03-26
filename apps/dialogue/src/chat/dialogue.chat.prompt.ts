@@ -29,7 +29,7 @@ Never add Notes or Explanations.
 { "skip": boolean, "explain": string }
 </filter>
 <tools>
-{ "'name' field of the matching tool": { "optional, matching argument 'name'": "the value extracted from USER MESSAGE" } }
+{ "tool 'name' field": { "matching argument 'name'": "value extracted from USER MESSAGE" } }
 </tools>
 <intents>
 { "taskId": string, "match": boolean, "trigger": boolean, "cancel": boolean, "explain": string }
@@ -57,17 +57,41 @@ If message is skipped, do not continue to next steps.
 
 # TOOLS
 Match a tool from TOOLS based on the USER MESSAGE, strictly following all these rules:
-- alway match the tool named '${TOOL_CATCH_ALL}' when available in TOOLS, ignore other tools.
-- find an item based on the 'description' field of each TOOLS.
-- the USER MESSAGE should have a match by meaning or partial overlap with the description of one TOOLS.
+- always match the tool named '${TOOL_CATCH_ALL}' when available in TOOLS, ignore other tools.
+- find matches based on the 'description' field of TOOLS.
+- the USER MESSAGE should have a match by meaning or partial overlap with the 'description' of one TOOLS.
 - never match a tool if the user is providing a question or asking for clarifications.
-- the matching tool must be one of those in TOOLS.
+- the matching tool 'name' must be in TOOLS.
 
 Return an empty object if there is no match or no TOOLS are available. Skip the next section if tools are found. 
 Never mention tools in the chat response.
 
+# INTENTS
+<% if (data.activeTask) { %>
+  ## ACTIVE TASK: <%= data.activeTask %>
+<% } %>
+
+Analyze the conversation and match one of TASKS based on the user message intention.
+Populate the field 'intent' in response. Set taskId only with one from TASKS.
+
+Set the field 'match' to 'true' in those cases:
+- if there is an explicit match with an intent
+- if the assistant asked explicitly for a task and the user is confirming or declining
+
+Set the field 'trigger' to false except for those cases:
+- if USER REQUEST precisely match the 'description' field of one of TASKS, ignoring intents.
+- user accepts one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
+- ACTIVE TASK is not available
+
+<% if (data.activeTask) { %>
+  If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
+<% } %>
+
+Set the field 'explain' describing why you set those values. If a task 'match' and 'trigger' are true, skip the next section.
+
 # CHAT RESPONSE
-Your answer to USER MESSAGE, based on the overall context information. Ask for clarification if you have no elements to answer precisely.
+You are an AVATAR (also assistant or agent) discussing with USER in the APPLICATION context. The conversation is speech-based and must be fast and coincise, avoid repetitions.
+Answer to USER MESSAGE, based on the overall context information. Ask for clarification if you have no elements to answer precisely.
 Never mention tools in the chat response.
 
 <% if (data.field || data.task) { %>
@@ -118,32 +142,5 @@ Never mention tools in the chat response.
     <%= data.knowledge %>
   <% } %>
 
-<% } %>
-
-# INTENTS
-<% if (data.activeTask) { %>
-  ## ACTIVE TASK: <%= data.activeTask %>
-<% } %>
-
-Analyze the conversation and match one of TASKS based on the user message intention.
-Populate the field 'intent' in response. Set taskId only with one from TASKS.
-
-Set the field 'match' to 'true' in those cases:
-- if there is an explicit match with an intent
-- if the assistant asked explicitly for a task and the user is confirming or declining
-
-Set the field 'trigger' to false except for those cases:
-- if user request precisely matches the 'description' field of one TASKS, ignore intents.
-- user accepts one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
-- ACTIVE TASK is not available
-
-<% if (data.activeTask) { %>
-  If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
-<% } %>
-
-Set the field 'explain' describing why you set those values
-
-# CHAT
-You are an AVATAR discussing with USER in the APPLICATION context. The conversation is speech-based and must be fast and coincise, avoid repetitions.
-`,
+<% } %>`,
 );

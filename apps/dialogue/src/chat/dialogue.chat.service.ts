@@ -9,18 +9,20 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
 import {
+  DialogueChatProgressEvent,
+  DialogueChatValidationEvent,
   LLMChatData,
   LLMCombinedResult,
   LLMParsedResult,
 } from './dialogue.chat.dto';
 import { convertToolsToPrompt, packAvatarObject } from './utils';
-import {
-  DialogueChatProgressEvent,
-  DialogueChatValidationEvent,
-} from './dialogue.chat.dto';
 
 import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
+import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service';
+import { DialogueIntentService } from '../intent/dialogue.intent.service';
+import { DialogueMemoryService } from '../memory/dialogue.memory.service';
+import { convertTaskToPrompt } from '../tasks/util';
 import {
   avatarChatPrompt,
   AvatarChatPromptParams,
@@ -30,10 +32,6 @@ import {
 import { SelectedTool } from './dialogue.chat.tools.dto';
 import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer';
 import { SentenceTransformer } from './transformer/sentence.transformer';
-import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service';
-import { DialogueIntentService } from '../intent/dialogue.intent.service';
-import { DialogueMemoryService } from '../memory/dialogue.memory.service';
-import { convertTaskToPrompt } from '../tasks/util';
 
 @Injectable()
 export class DialogueChatService {
@@ -80,8 +78,10 @@ export class DialogueChatService {
     this.emitter.emit('dialogue.chat.validation', validationEvent);
 
     // skip
+    this.logger.debug(`User message: ${message.text}`);
+
     if (response?.filter?.explain) {
-      this.logger.debug(`filter explanation: ${response?.filter?.explain}`);
+      this.logger.debug(`Filter explanation: ${response?.filter?.explain}`);
     }
     if (response?.filter?.skip) {
       this.logger.debug(`Skipping user request message=${message.text}`);

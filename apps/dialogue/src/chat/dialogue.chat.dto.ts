@@ -1,11 +1,42 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
+import {
+  AppSettingsDto,
+  AppToolsDTO,
+} from 'apps/platform/src/app/platform.app.dto';
+import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
+import { LLMCallResult } from 'libs/llm/providers/provider.dto';
+import {
+  ActiveTaskRecord,
+  IntentActiveTools,
+  TaskFilterWrapper,
+  TaskIntentWrapper,
+} from '../intent/dialogue.intent.dto';
 import {
   DialogueTaskDto,
   TaskFieldDto,
 } from '../tasks/store/dialogue.tasks.store.dto';
 import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
+import { SelectedTool } from './dialogue.chat.tools.dto';
+
+export type LLMParsedResult = {
+  tools?: SelectedTool[];
+  intent?: TaskIntentWrapper;
+  filter?: TaskFilterWrapper;
+};
+
+export type LLMChatData = {
+  data: {
+    appId: string;
+    sessionId: string;
+    settings?: Partial<AppSettingsDto>;
+    activeTools: IntentActiveTools;
+    currentField?: TaskFieldDto;
+    activeTask?: ActiveTaskRecord;
+    tasks?: DialogueTaskDto[];
+  };
+};
+
+export type LLMCombinedResult = LLMCallResult & LLMParsedResult & LLMChatData;
 
 export class DialogueChatValidationEvent {
   skip: boolean;
