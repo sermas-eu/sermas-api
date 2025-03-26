@@ -54,8 +54,7 @@ If message is skipped, do not continue to next steps.
 # INTENTS
 
 <% if (data.activeTask) { %>
-  ## ACTIVE TASK
-  <%= data.activeTask %>
+  ## ACTIVE TASK: <%= data.activeTask %>
 <% } %>
 
 Analyze the conversation and match one of TASKS based on the user message intention.
@@ -67,7 +66,7 @@ Set the field 'match' to 'true' in those cases:
 
 Set the field 'trigger' to false except for those cases:
 - if user request precisely matches the 'description' field of one TASKS, ignore intents.
-- user confirms one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
+- user accepts one of TASKS that has been proposed by the assistant in the last message from CONVERSATION
 - ACTIVE TASK is not available
 
 <% if (data.activeTask) { %>

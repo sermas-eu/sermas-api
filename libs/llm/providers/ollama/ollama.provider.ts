@@ -195,6 +195,8 @@ export class OllamaChatProvider
 
     const ollamaOptions = {
       num_predict: 1500,
+      top_p: this.config.top_p,
+      temperature: this.config.temperature,
     };
 
     const callOllama = async (args: ChatRequest & { stream: boolean }) => {

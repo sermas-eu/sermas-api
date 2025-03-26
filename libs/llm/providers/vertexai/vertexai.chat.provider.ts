@@ -61,7 +61,11 @@ export class VertexAIChatProvider extends LLMChatProvider {
           threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         },
       ],
-      generationConfig: { maxOutputTokens: 512 },
+      generationConfig: {
+        maxOutputTokens: 512,
+        topP: this.config.top_p,
+        temperature: this.config.temperature,
+      },
     });
 
     const stream = new ChatMessageStream();

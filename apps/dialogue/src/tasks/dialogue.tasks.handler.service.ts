@@ -397,7 +397,7 @@ export class DialogueTasksHandlerService {
 
     try {
       const task = tasks[0];
-      this.logger.log(`Task matches ${task.name}`);
+      this.logger.verbose(`Task matches ${task.name}`);
 
       let record = await this.ensureRecord(ev.sessionId, task);
 

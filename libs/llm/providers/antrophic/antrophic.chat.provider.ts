@@ -59,6 +59,8 @@ export class AntrophicChatProvider extends LLMChatProvider {
       messages: messages,
       model: this.config.model,
       stream: isStream,
+      top_p: this.config.top_p,
+      temperature: this.config.temperature,
     });
 
     if (!isStream) {
