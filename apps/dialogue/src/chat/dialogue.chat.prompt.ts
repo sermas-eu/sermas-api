@@ -57,13 +57,12 @@ Set the field 'explain' describing your decision.
 If message is skipped, do not continue to next steps. 
 
 # TOOLS
-Find textual matches for one or more of provided TOOLS list with USER MESSAGE.
-Do not interpret logically the user message, match textual correlation.
+Find matches of provided TOOLS list with USER MESSAGE. Do not interpret the user message, match only with the textual correlation.
 
 Follow those rules sequentially, when one matches skip the following.
-1. If a tool with name '${TOOL_CATCH_ALL}' is available, match it directly.
+1. If a tool with name '${TOOL_CATCH_ALL}' is available, match it directly. Exceptio if there is an ACTIVE TASK and user want to cancel or abort it.
 2. Using TOOLS 'description' match with at least one of those rules:
-a) is equal or has partial overlap, ignore cases b) user message is similar by meaning
+a) message is equal or has partial overlap, ignoring text cases b) user message is similar by meaning
 
 Populate the 'matches' field with an object using the tool 'name' field as key and an object as value 
 with the key-value of tool param 'name' and value extracted from user message.
@@ -116,9 +115,7 @@ Never mention tools in the chat response.
     Use KNOWLEDGE when relevant to the user message.
   <% } %>
 
-  <% if (data.suggestedTasks) { %>
-    Propose one of TASKS depending on context, be precise in the task offering description.
-  <% } %>
+  Propose one of TASKS that has been set to 'match' true in the INTENTS section.
 
 <% } %>
 
@@ -134,11 +131,6 @@ Never mention tools in the chat response.
   <% } %>
 
 <% } else { %>
-
-  <% if (data.suggestedTasks) { %>
-    ## TASKS:
-    <%= data.suggestedTasks %>
-  <% } %>
 
   <% if (data.knowledge) { %>
     ## KNOWLEDGE:
