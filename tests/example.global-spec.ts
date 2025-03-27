@@ -2,7 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from 'apps/api/src/app.module';
-import { CliProgram } from '../../sermas-cli/src/cli';
+// import { CliProgram } from '@sermas/cli/dist/cli'; // TODO: Export class
+import { CliProgram } from '../../sermas-cli/src/cli'; // TODO: Export class
 
 describe('TTS (e2e)', () => {
   let app: INestApplication;
@@ -45,7 +46,21 @@ describe('TTS (e2e)', () => {
       .expect(404);
   });
 
-  it('should list apps', () => {  // Just a Dummy
+  it('should list apps', () => {
+    // Just a Dummy
     expect(cli.parse(['--yaml', 'app', 'list'])).toBeDefined();
+  });
+
+  it('should run poa tests', () => {
+    // Just a Dummy
+    expect(
+      cli.parse([
+        '--log-level',
+        'verbose',
+        'app',
+        'batch',
+        '../../tmp/repository/labs/sermas-private/apps/poa',
+      ]),
+    ).toBeDefined();
   });
 });
