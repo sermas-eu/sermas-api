@@ -56,14 +56,16 @@ Set the field 'explain' describing your decision.
 If message is skipped, do not continue to next steps. 
 
 # TOOLS
-Match a tool from TOOLS based on the USER MESSAGE, strictly following all these rules:
-- if available, always match a tool named '${TOOL_CATCH_ALL}', ignoring other tools.
-- find matches based on the 'description' field of TOOLS.
-- USER MESSAGE should have a match by meaning or partial overlapping with the 'description' of one TOOLS.
-- never match a tool if the user is asking for clarifications.
-- the matching tool must be in TOOLS.
+Find textual matches for one or more of provided TOOLS list with USER MESSAGE.
+Do not interpret logically the user message, match textual correlation.
 
-Populate the 'matches' field with an object using the tool 'name' field as key and an object as value with the key-value of tool param 'name' and value extracted from user message.
+Follow those rules sequentially, when one matches skip the following.
+1. If a tool with name '${TOOL_CATCH_ALL}' is available, match it directly.
+2. Using TOOLS 'description' match with at least one of those rules:
+a) is equal or has partial overlap, ignore cases b) user message is similar by meaning
+
+Populate the 'matches' field with an object using the tool 'name' field as key and an object as value 
+with the key-value of tool param 'name' and value extracted from user message.
 Set 'matches' to an empty object if there is no match or no TOOLS are available. 
 Set the field 'explain' describing why you set those values, omit if 'tools' is empty.
 

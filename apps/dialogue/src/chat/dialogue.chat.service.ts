@@ -21,6 +21,7 @@ import { convertToolsToPrompt, packAvatarObject } from './utils';
 
 import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
+import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service';
 import { DialogueIntentService } from '../intent/dialogue.intent.service';
 import { DialogueMemoryService } from '../memory/dialogue.memory.service';
@@ -48,6 +49,24 @@ export class DialogueChatService {
     private readonly vectorStore: DialogueVectorStoreService,
     private readonly monitor: MonitorService,
   ) {}
+
+  logExplanation(
+    data: {
+      explain: string;
+      context: 'tools' | 'intent' | 'filter';
+    } & SermasSessionDto,
+  ) {
+    this.logger.debug(
+      `${data.context} explanation: ${data.explain} sessionId=${data.sessionId} appId=${data.appId}`,
+    );
+    this.monitor.log({
+      type: 'log',
+      value: data.explain,
+      label: 'explain.' + data.context,
+      appId: data.appId,
+      sessionId: data.sessionId,
+    });
+  }
 
   async inference(
     message: DialogueMessageDto,
@@ -83,7 +102,11 @@ export class DialogueChatService {
     this.logger.debug(`User message: ${message.text}`);
 
     if (response?.filter?.explain) {
-      this.logger.debug(`Filter explanation: ${response?.filter?.explain}`);
+      this.logExplanation({
+        ...message,
+        context: 'filter',
+        explain: response?.filter?.explain,
+      });
     }
     if (response?.filter?.skip) {
       this.logger.debug(`Skipping user request message=${message.text}`);
@@ -91,15 +114,21 @@ export class DialogueChatService {
     }
 
     if (response?.tools?.explain) {
-      this.logger.debug(
-        `Tools explanation: ${response?.tools?.explain} tools=[${response?.data?.activeTools.tools.map((t) => `${t.name}: ${t.description}`).join(',')}]`,
-      );
+      this.logExplanation({
+        ...message,
+        context: 'tools',
+        explain: response?.tools?.explain,
+      });
     }
 
     // intents
     if (response?.intent) {
       if (response.intent.explain) {
-        this.logger.debug(`Intent explanation: ${response.intent.explain}`);
+        this.logExplanation({
+          ...message,
+          context: 'intent',
+          explain: response?.intent?.explain,
+        });
       }
 
       const taskResult = await this.intent.handleTaskIntent({
@@ -153,8 +182,9 @@ export class DialogueChatService {
 
     const chunkBuffer = '';
 
-    const skipChatResponse =
-      settings?.chatModeEnabled === false || skipResponse;
+    const isChatModeDisabled = settings?.chatModeEnabled === false;
+
+    const skipChatResponse = isChatModeDisabled || skipResponse;
 
     if (skipChatResponse) {
       if (!hasToolsMatches && response.data.activeTools?.tools?.length) {
@@ -170,7 +200,9 @@ export class DialogueChatService {
         // TODO ask to repeat / retry ?
       }
 
-      this.logger.debug(`Skipping chat response.`);
+      this.logger.debug(
+        `Skipping chat response isChatModeDisabled=${isChatModeDisabled} skipResponse=${skipResponse}`,
+      );
 
       if (response.abort) response.abort();
 
