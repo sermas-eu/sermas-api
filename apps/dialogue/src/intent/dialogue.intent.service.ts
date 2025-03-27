@@ -220,6 +220,10 @@ export class DialogueIntentService {
   }) {
     const { appId, sessionId } = args;
 
+    if (args.isToolExclusive) {
+      this.logger.debug(`isToolExclusive=true will skip chat response`);
+    }
+
     let skipResponse = args.isToolExclusive;
     let hasToolsMatches = false;
 
@@ -254,6 +258,9 @@ export class DialogueIntentService {
         const toolschema = matchingTool;
         // skip response from LLM
         if (toolschema.skipResponse === true) {
+          this.logger.debug(
+            `Tool ${toolschema.name} (${toolschema.description}) set skip response`,
+          );
           skipResponse = true;
         }
 

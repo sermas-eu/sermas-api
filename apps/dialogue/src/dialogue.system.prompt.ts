@@ -4,6 +4,7 @@ export type BaseSystemPromptParams = {
   language?: string;
   history?: string;
   intents?: string;
+  activeTask?: string;
   message?: string;
   emotion?: string;
   tools?: string;
@@ -30,6 +31,10 @@ export const BaseSystemPrompt = `
 <% if (data.intents) { %>
   ## INTENTS
   <%= data.intents %>
+<% } %>
+<% if (data.activeTask) { %>
+  ## ACTIVE TASK
+  <%= data.activeTask %>
 <% } %>
 <% if (data.tools) { %>
   ## TOOLS

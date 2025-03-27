@@ -10,6 +10,7 @@ export type AvatarChatSystemPromptParams = BaseSystemPromptParams;
 export type AvatarChatPromptParams = {
   suggestedTasks?: string;
   task?: string;
+  activeTask?: string;
   field?: string;
   knowledge?: string;
 };
@@ -72,9 +73,6 @@ Set the field 'explain' describing why you set those values, omit if 'tools' is 
 Never mention tools in the chat response. Skip the next section if a tool is found. 
 
 # INTENTS
-<% if (data.activeTask) { %>
-  ## ACTIVE TASK: <%= data.activeTask %>
-<% } %>
 
 Analyze the conversation and match one of TASKS based on the user message intention.
 Populate the field 'intent' in response. Set taskId only with one from TASKS.

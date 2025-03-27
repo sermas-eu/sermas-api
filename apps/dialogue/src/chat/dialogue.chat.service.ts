@@ -326,12 +326,14 @@ export class DialogueChatService {
       message: message.text,
       tools: convertToolsToPrompt(activeTools.tools),
       intents: currentTask ? undefined : JSON.stringify(intents),
+      activeTask: currentTask?.name,
     };
 
     const chatPromptParams: AvatarChatPromptParams = {
       knowledge,
       suggestedTasks: convertTaskToPrompt(suggestedTasks),
       // track current task progress
+      activeTask: currentTask?.name,
       task:
         currentTask && (currentTask.hint || currentTask.description)
           ? `${currentTask.name}: ${currentTask.hint || currentTask.description}`
