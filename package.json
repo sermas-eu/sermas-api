@@ -22,7 +22,7 @@
     "test:watch": "NODE_ENV=test jest --watch --silent=false --runInBand --colors --verbose=true",
     "test:cov": "NODE_ENV=test jest --coverage --silent=false",
     "test:debug": "LOG_LEVEL=debug DEBUG=jest NODE_ENV=test node --inspect=0.0.0.0:9229 -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand --watchAll --silent=false --verbose=true --useStderr=true",
-    "test:e2e": "NODE_ENV=test jest --coverage --silent=false --config ./tests/jest-e2e.json"
+    "test:e2e": "NODE_ENV=test jest --coverage --silent=false --detectOpenHandles --config ./tests/jest-e2e.json"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.9",

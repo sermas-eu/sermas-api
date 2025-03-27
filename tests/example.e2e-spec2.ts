@@ -1,67 +1,37 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TTSModule } from '../libs/tts/tts.module';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { SSMLService } from 'libs/tts/ssml/ssml.service';
-import { TTSProviderService } from 'libs/tts/tts.provider.service';
-import { BarkAITextToSpeech } from 'libs/tts/providers/tts.bark-ai.provider';
-import { ElevenIOTextToSpeech } from 'libs/tts/providers/tts.elevenio.provider';
-import { OpenAITextToSpeech } from 'libs/tts/providers/tts.openai.provider';
-import { GoogleTextToSpeech } from 'libs/tts/providers/tts.google.provider';
-import { AzureTextToSpeech } from 'libs/tts/providers/tts.azure.provider';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { LLMCacheService } from 'libs/llm/llm.cache.service';
-import { CacheModule, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { SessionService } from 'apps/session/src/session.service';
-import { LLMService } from 'libs/llm/llm.service';
+import { AppModule } from 'apps/api/src/app.module';
+import { CliProgram } from '../../sermas-cli/src/cli';
 
 describe('TTS (e2e)', () => {
   let app: INestApplication;
+  let cli: CliProgram;
 
-  // In your imports:
-  CacheModule.register({
-    ttl: 0, // Test configuration
-    max: 0,
-    isGlobal: true,
+  beforeAll(async () => {
+    jest.setTimeout(15 * 1000);
+    process.env.REDIS_URL = 'redis://localhost:6379';
+    process.env.MONGODB_URI = 'mongodb://localhost:27017/sermas';
+    process.env.MQTT_URL = 'localhost';
+    process.env.CHROMA_URL = 'http://localhost:8007';
+    process.env.MINIO_URL = 'http://localhost:9000';
   });
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot()],
-      providers: [
-        SSMLService,
-        LLMProviderService,
-        LLMCacheService,
-        LLMService,
-        TTSProviderService,
-        BarkAITextToSpeech,
-        ElevenIOTextToSpeech,
-        OpenAITextToSpeech,
-        GoogleTextToSpeech,
-        AzureTextToSpeech,
-        ConfigService,
-        EventEmitter2,
-        MonitorService,
-        SessionService,
-        // Mock CACHE_MANAGER
-        {
-          provide: CACHE_MANAGER,
-          useValue: {
-            get: jest.fn(),
-            set: jest.fn(),
-            del: jest.fn(),
-            reset: jest.fn(),
-            // Add other cache methods your service uses
-          },
-        },
-      ],
+      imports: [AppModule],
+      providers: [],
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    await app.init();
+    await app.listen(1979);
+
+    cli = new CliProgram();
+    await cli.init();
+  });
+
+  afterEach(async () => {
+    if (app) await app.close();
   });
 
   it('should be defined', () => {
@@ -73,5 +43,9 @@ describe('TTS (e2e)', () => {
       .post('/api/dialogue/speech/tts')
       .send({ text: 'Hello, world!' })
       .expect(404);
+  });
+
+  it('should list apps', () => {  // Just a Dummy
+    expect(cli.parse(['--yaml', 'app', 'list'])).toBeDefined();
   });
 });
