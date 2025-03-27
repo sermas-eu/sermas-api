@@ -18,8 +18,18 @@ import {
 import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto';
 import { SelectedTool } from './dialogue.chat.tools.dto';
 
+export type MatchingToolsResult = {
+  matches?: Record<string, Record<string, any>>;
+  explain?: string;
+};
+
+export type ToolsWrapper = {
+  matches?: SelectedTool[];
+  explain?: string;
+};
+
 export type LLMParsedResult = {
-  tools?: SelectedTool[];
+  tools?: ToolsWrapper;
   intent?: TaskIntentWrapper;
   filter?: TaskFilterWrapper;
 };

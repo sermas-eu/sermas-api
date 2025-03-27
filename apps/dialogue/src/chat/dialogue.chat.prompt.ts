@@ -29,7 +29,7 @@ Never add Notes or Explanations.
 { "skip": boolean, "explain": string }
 </filter>
 <tools>
-{ "tool name": { "argument name": "value extracted from USER MESSAGE" } }
+{ "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
 </tools>
 <intents>
 { "taskId": string, "match": boolean, "trigger": boolean, "cancel": boolean, "explain": string }
@@ -57,16 +57,17 @@ If message is skipped, do not continue to next steps.
 
 # TOOLS
 Match a tool from TOOLS based on the USER MESSAGE, strictly following all these rules:
-- always match the tool named '${TOOL_CATCH_ALL}' when available in TOOLS, ignore other tools.
+- if available, always match a tool named '${TOOL_CATCH_ALL}', ignoring other tools.
 - find matches based on the 'description' field of TOOLS.
-- the USER MESSAGE should have a match by meaning or partial overlap with the 'description' of one TOOLS.
-- never match a tool if the user is providing a question or asking for clarifications.
+- USER MESSAGE should have a match by meaning or partial overlapping with the 'description' of one TOOLS.
+- never match a tool if the user is asking for clarifications.
 - the matching tool must be in TOOLS.
 
-Return an empty object if there is no match or no TOOLS are available. 
-Populate the tools list using the tool 'name' field as key and an object as value with the key-value of tool param 'name' and value extracted from user message.
-Skip the next section if tools are found. 
-Never mention tools in the chat response.
+Populate the 'matches' field with an object using the tool 'name' field as key and an object as value with the key-value of tool param 'name' and value extracted from user message.
+Set 'matches' to an empty object if there is no match or no TOOLS are available. 
+Set the field 'explain' describing why you set those values, omit if 'tools' is empty.
+
+Never mention tools in the chat response. Skip the next section if a tool is found. 
 
 # INTENTS
 <% if (data.activeTask) { %>

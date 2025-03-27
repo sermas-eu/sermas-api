@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DialogueTasksService } from 'apps/dialogue/src/tasks/dialogue.tasks.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
+import {
+  DialogueToolNotMatchingDto,
+  ToolsWrapper,
+} from '../chat/dialogue.chat.dto';
 import {
   DialogueTaskDto,
   TaskFieldDto,
@@ -199,11 +202,9 @@ export class DialogueIntentService {
     appId: string;
     sessionId: string;
 
-    selectedTools: SelectedTool<{
-      [param: string]: any;
-    }>[];
+    selectedTools: ToolsWrapper;
 
-    tools: AppToolsDTO[];
+    availableTools: AppToolsDTO[];
     repositories: DialogueToolsRepositoryDto[];
 
     text: string;
@@ -220,14 +221,17 @@ export class DialogueIntentService {
     const { appId, sessionId } = args;
 
     let skipResponse = args.isToolExclusive;
+    let hasToolsMatches = false;
 
-    if (args.selectedTools && args.selectedTools.length) {
+    const selectedTools = args.selectedTools?.matches;
+
+    if (selectedTools && selectedTools.length) {
       skipResponse = args.isToolExclusive || args.settings?.skipToolResponse;
 
       // tools matched
       // this.logger.debug(`Matching tools ${args.selectedTools.map((t) => t.name)}`);
 
-      for (const tool of args.selectedTools) {
+      for (const tool of selectedTools) {
         const matchingRepository = this.tools.getRepositoryByTool(
           args.repositories,
           tool,
@@ -254,6 +258,9 @@ export class DialogueIntentService {
         }
 
         this.logger.debug(`Trigger tool ${tool.name} sessionId=${sessionId}`);
+
+        hasToolsMatches = true;
+
         this.triggerTool({
           tool,
           repository: matchingRepository,
@@ -262,7 +269,7 @@ export class DialogueIntentService {
         });
       }
     } else {
-      if (args.tools.length) {
+      if (args.availableTools.length) {
         if (args.hasCatchAll) {
           const tool: SelectedTool = {
             name: args.hasCatchAll.name,
@@ -287,6 +294,8 @@ export class DialogueIntentService {
               });
             }
 
+            hasToolsMatches = true;
+
             this.triggerTool({
               tool,
               repository: matchingRepository,
@@ -298,19 +307,15 @@ export class DialogueIntentService {
           const notFoundEvent: DialogueToolNotMatchingDto = {
             appId,
             sessionId,
-            tools: args.tools,
+            tools: args.availableTools,
             repositories: args.repositories,
             currentField: args.currentField,
             currentTask: args.currentTask,
           };
           this.emitter.emit('dialogue.tools.not_matching', notFoundEvent);
-          // this.monitor.error({
-          //   label: `No tools matching`,
-          //   appId,
-          //   sessionId,
-          // });
+
           this.logger.debug(
-            `No tools matching, tools=${args.tools.length} [${args.tools.map((t) => t.name + ':' + t.description).join('; ')}]`,
+            `No tools matching, tools=${args.availableTools.length} [${args.availableTools.map((t) => t.name + ':' + t.description).join('; ')}]`,
           );
 
           if (args.matchOrRemoveTask) {
@@ -325,6 +330,7 @@ export class DialogueIntentService {
 
     return {
       skipResponse,
+      hasToolsMatches,
     };
   }
 

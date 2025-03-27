@@ -14,6 +14,8 @@ import {
   LLMChatData,
   LLMCombinedResult,
   LLMParsedResult,
+  MatchingToolsResult,
+  ToolsWrapper,
 } from './dialogue.chat.dto';
 import { convertToolsToPrompt, packAvatarObject } from './utils';
 
@@ -88,6 +90,12 @@ export class DialogueChatService {
       return;
     }
 
+    if (response?.tools?.explain) {
+      this.logger.debug(
+        `Tools explanation: ${response?.tools?.explain} tools=[${response?.data?.activeTools.tools.map((t) => `${t.name}: ${t.description}`).join(',')}]`,
+      );
+    }
+
     // intents
     if (response?.intent) {
       if (response.intent.explain) {
@@ -113,14 +121,15 @@ export class DialogueChatService {
     const { appId, sessionId, settings } = response.data;
 
     // tools
-    const { skipResponse } = await this.intent.handleTools({
+    const { skipResponse, hasToolsMatches } = await this.intent.handleTools({
       appId,
       sessionId,
       text: message.text,
       settings,
 
       selectedTools: response.tools,
-      tools: response.data.activeTools?.tools,
+      availableTools: response.data.activeTools?.tools,
+
       repositories: response.data.activeTools?.repositories,
 
       currentField: response.data.currentField,
@@ -148,8 +157,23 @@ export class DialogueChatService {
       settings?.chatModeEnabled === false || skipResponse;
 
     if (skipChatResponse) {
+      if (!hasToolsMatches && response.data.activeTools?.tools?.length) {
+        this.logger.error(
+          `Skipping chat response but no task or tools matching sessionId=${sessionId} appId=${appId}`,
+        );
+        this.monitor.error({
+          label: `Failed to provide an answer`,
+          appId,
+          sessionId,
+        });
+
+        // TODO ask to repeat / retry ?
+      }
+
       this.logger.debug(`Skipping chat response.`);
+
       if (response.abort) response.abort();
+
       return;
     }
 
@@ -348,17 +372,20 @@ export class DialogueChatService {
     return await promise;
   }
 
-  parseMatchingTools(rawJson: string, tools: AppToolsDTO[]) {
-    if (!rawJson) return [];
-    const res = parseJSON<Record<string, any>>(rawJson);
-
+  parseMatchingTools(rawJson: string, tools: AppToolsDTO[]): ToolsWrapper {
     const selectedTools: SelectedTool[] = [];
 
-    if (!res || !Object.keys(res).length) {
-      return selectedTools;
+    if (!rawJson) return { matches: selectedTools };
+
+    const res = parseJSON<MatchingToolsResult>(rawJson);
+
+    const explain = res?.explain || undefined;
+
+    if (!res || !res.matches || !Object.keys(res.matches).length) {
+      return { matches: selectedTools, explain };
     }
 
-    for (const name in res) {
+    for (const name in res.matches) {
       const filtered = tools.filter((t) => t.name === name);
       if (!filtered.length) {
         this.logger.warn(
@@ -375,7 +402,8 @@ export class DialogueChatService {
 
       selectedTools.push(tool);
     }
-    return selectedTools;
+
+    return { matches: selectedTools, explain };
   }
 
   emitChatProgress(ev: DialogueChatProgressEvent) {
