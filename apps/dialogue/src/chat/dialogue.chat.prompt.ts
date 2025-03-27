@@ -21,13 +21,13 @@ export const avatarSystemChatPrompt =
     `${BaseSystemPrompt}
 
 ## Response format
-Always follow Example structure in your answer. Provide correct and parsable JSON in markup tags.
+Strictly follow the following Example structure in your answer. Provide correct and parsable JSON in markup tags.
 Append then the CHAT response as plain text, do not use emoticons. 
 Never add Notes or Explanations.
 
 ### Example:
 <filter>
-{ "skip": boolean, "explain": string }
+{ "skip": boolean, "answer": string, "explain": string }
 </filter>
 <tools>
 { "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
@@ -44,15 +44,10 @@ export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
 
 # FILTER
 
-Identify if a USER MESSAGE is relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS information.
-Populate the filed 'filter' in response.
-
-Decide to set field 'skip' after considering all the following statements:
-- Skip if reflecting, self-talking or background noise
-- Keep if related to the CONVERSATION or APPLICATION
-- Keep if possibly relevant to TASKS
-- Keep if meaningful or part of TOOLS
-
+Identify if USER MESSAGE is relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS information.
+Populate the field 'filter' in response.
+Set 'skip' to true when message is clearly self-talking or incomplete (like from background noise), leave 'answer' empty.
+Keep a well formatted and correct message, even if not relevant but set 'answer' to inform the user
 Set the field 'explain' describing your decision.
 If message is skipped, do not continue to next steps. 
 

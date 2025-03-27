@@ -1,7 +1,7 @@
 import {
   LLMCallResult,
-  LLMMessage,
   LLMChatOptions,
+  LLMMessage,
   LLMProviderConfig,
 } from 'libs/llm/providers/provider.dto';
 import { ChatMessageStream } from 'libs/llm/stream/chat-message.stream';
@@ -61,7 +61,6 @@ export class OpenAIChatProvider extends LLMChatProvider {
     }
 
     const stream = new ChatMessageStream();
-
     const res = await this.getApiClient().chat.completions.create({
       model: this.config.model,
       messages,

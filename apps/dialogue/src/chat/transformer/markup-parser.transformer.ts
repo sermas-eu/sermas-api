@@ -7,6 +7,8 @@ export class StreamingMarkupParserTransformer extends Transform {
   private tagIsClosed = false;
   private tagIsNotFound = false;
 
+  private callbackCalled = false;
+
   private readonly openTag: string;
   private readonly closeTag: string;
 
@@ -43,7 +45,9 @@ export class StreamingMarkupParserTransformer extends Transform {
         this.tagIsClosed = true;
 
         const rawJson = this.buffer.slice(this.openTag.length, closeTagPos);
+
         this.onContent(rawJson);
+        this.callbackCalled = true;
 
         this.buffer = this.buffer.slice(
           closeTagPos + this.closeTag.length, //+1 is carriage return
@@ -70,7 +74,10 @@ export class StreamingMarkupParserTransformer extends Transform {
 
   sendBuffer() {
     // tag not found at this point
-    if (this.buffer.length > 100 && this.isTagContent === false) {
+    if (
+      this.buffer.length > this.openTag.length &&
+      this.isTagContent === false
+    ) {
       this.tagIsNotFound = true;
     }
 
@@ -88,6 +95,9 @@ export class StreamingMarkupParserTransformer extends Transform {
     // Flush the remaining incomplete phrase
     if (this.buffer.trim().length > 0) {
       this.sendBuffer();
+    }
+    if (!this.callbackCalled) {
+      this.onContent && this.onContent(undefined);
     }
     callback();
   }

@@ -110,6 +110,16 @@ export class DialogueChatService {
     }
     if (response?.filter?.skip) {
       this.logger.debug(`Skipping user request message=${message.text}`);
+
+      if (response?.filter?.answer) {
+        this.sendMessage(
+          message,
+          getMessageId(),
+          getChunkId(),
+          response?.filter?.answer,
+        );
+      }
+
       return;
     }
 
@@ -389,7 +399,9 @@ export class DialogueChatService {
           new StreamingMarkupParserTransformer(
             'intents',
             (res: string | undefined) => {
-              llmParsedResult.intent = parseJSON(res) || undefined;
+              if (res) {
+                llmParsedResult.intent = parseJSON(res) || undefined;
+              }
             },
           ),
           new SentenceTransformer(() => {

@@ -64,6 +64,12 @@ export class SentenceTransformer extends Transform {
       this.sendBuffer(this.buffer);
       this.buffer = '';
     }
+
+    // stream stopped before this transform
+    if (this.buffer === undefined) {
+      if (this.onInit) this.onInit();
+    }
+
     if (this.onComplete) this.onComplete();
     callback();
   }

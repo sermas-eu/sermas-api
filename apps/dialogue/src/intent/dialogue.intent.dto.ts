@@ -18,6 +18,7 @@ export type TaskIntentWrapper = {
 export type TaskFilterWrapper = {
   skip: boolean;
   explain: string;
+  answer?: string;
 };
 
 export type TaskIntentMatch = {
