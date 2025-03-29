@@ -57,7 +57,7 @@ export class DialogueChatService {
     } & SermasSessionDto,
   ) {
     this.logger.debug(
-      `${data.context} explanation: ${data.explain} sessionId=${data.sessionId} appId=${data.appId}`,
+      `${data.context.toUpperCase()} explanation: ${data.explain} sessionId=${data.sessionId} appId=${data.appId}`,
     );
     this.monitor.log({
       type: 'log',
@@ -108,6 +108,7 @@ export class DialogueChatService {
         explain: response?.filter?.explain,
       });
     }
+
     if (response?.filter?.skip) {
       this.logger.debug(`Skipping user request message=${message.text}`);
 
