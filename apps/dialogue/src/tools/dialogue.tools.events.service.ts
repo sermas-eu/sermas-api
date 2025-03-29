@@ -15,11 +15,11 @@ import { UIInteractionDTO, UIInteractionEventDto } from 'apps/ui/src/ui.dto';
 import {
   ToolParamType,
   ToolSchemaTypeList,
-} from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
+} from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
 import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { hash, uuidv4 } from 'libs/util';
-import { DialogueToolNotMatchingDto } from '../dialogue.chat.dto';
+import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
 import { DialogueTaskChangedDto } from '../tasks/dialogue.tasks.dto';
 import { DialogueToolTriggeredEventDto } from './dialogue.tools.dto';
 import { DialogueToolsService } from './dialogue.tools.service';

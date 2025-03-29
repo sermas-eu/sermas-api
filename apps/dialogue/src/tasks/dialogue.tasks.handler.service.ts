@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { uuidv4 } from 'libs/util';
-import { DialogueToolNotMatchingDto } from '../dialogue.chat.dto';
+import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
 import { DialogueMemoryService } from '../memory/dialogue.memory.service';
 import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto';
 import { DialogueTasksAsyncApiService } from './dialogue.tasks.async.service';

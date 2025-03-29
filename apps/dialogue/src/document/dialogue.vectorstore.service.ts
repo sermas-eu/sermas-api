@@ -225,7 +225,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     const perf = this.monitor.performance({
       appId,
       label: 'embeddings.search',
-      threshold: 500,
+      threshold: 1000,
     });
 
     const response = await collection.query({

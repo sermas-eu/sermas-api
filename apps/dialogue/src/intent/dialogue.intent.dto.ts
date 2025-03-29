@@ -18,6 +18,7 @@ export type TaskIntentWrapper = {
 export type TaskFilterWrapper = {
   skip: boolean;
   explain: string;
+  answer?: string;
 };
 
 export type TaskIntentMatch = {
@@ -65,4 +66,9 @@ export type IntentActiveTools = {
   isToolExclusive: boolean;
   matchOrRemoveTask: boolean;
   hasCatchAll: AppToolsDTO;
+};
+
+export type ActiveTools = {
+  tools: AppToolsDTO[];
+  repositories: DialogueToolsRepositoryDto[];
 };

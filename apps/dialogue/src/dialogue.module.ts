@@ -5,9 +5,8 @@ import { AuthModule } from 'apps/auth/src/auth.module';
 import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
 import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service';
-import { DialogueChatAvatarService } from './avatar/dialogue.chat.avatar.service';
 import { DialogueAsyncApiService } from './dialogue.async.service';
-import { DialogueChatService } from './dialogue.chat.service';
+import { DialogueChatService } from './chat/dialogue.chat.service';
 import { DialogueEmotionService } from './dialogue.emotion.service';
 import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 import { DialogueSpeechController } from './dialogue.speech.controller';
@@ -48,7 +47,6 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
     SpeechBrainService,
     IdentityTrackerService,
     DialogueRequestMonitorService,
-    DialogueChatAvatarService,
   ],
   exports: [DialogueSpeechService],
 })

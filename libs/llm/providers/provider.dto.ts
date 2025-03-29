@@ -40,6 +40,7 @@ export interface LLMProviderConfig {
   project?: string;
   temperature?: number;
   top_p?: number;
+  timeout?: number;
 }
 
 export interface LLMEmbeddingConfig extends LLMProviderConfig {
@@ -59,6 +60,7 @@ export class LLMMessage {
 export interface LLMChatOptions {
   json?: boolean;
   stream?: boolean;
+  timeout?: number;
 }
 
 export interface LLMCallResult {

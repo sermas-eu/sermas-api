@@ -1,4 +1,4 @@
-import { SelectedTool } from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
+import { SelectedTool } from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
 
 export interface ToolTriggerEventDto
   extends SelectedTool<{
