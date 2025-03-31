@@ -15,7 +15,7 @@ import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { ulid } from 'ulidx';
-import { packAvatarObject } from './avatar/utils';
+import { packAvatarObject } from './chat/utils';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import {
   welcomeMessagePrompt,

@@ -26,8 +26,8 @@ import { LLMTranslationService } from '../../../libs/translation/translation.ser
 import {
   DialogueChatProgressEvent,
   DialogueChatValidationEvent,
-} from './dialogue.chat.dto';
-import { DialogueChatService } from './dialogue.chat.service';
+} from './chat/dialogue.chat.dto';
+import { DialogueChatService } from './chat/dialogue.chat.service';
 import {
   DialogueSessionRequestEvent,
   DialogueSessionRequestStatus,

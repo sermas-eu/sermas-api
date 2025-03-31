@@ -20,7 +20,7 @@ import { DialogueAsyncApiService } from './dialogue.async.service';
 import {
   DialogueChatProgressEvent,
   DialogueChatValidationEvent,
-} from './dialogue.chat.dto';
+} from './chat/dialogue.chat.dto';
 import { DialogueSessionRequestEvent } from './dialogue.request-monitor.dto';
 import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 import { DialogueSpeechService } from './dialogue.speech.service';
