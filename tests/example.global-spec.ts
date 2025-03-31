@@ -2,15 +2,16 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from 'apps/api/src/app.module';
-// import { CliProgram } from '@sermas/cli/dist/cli'; // TODO: Export class
-import { CliProgram } from '../../sermas-cli/src/cli'; // TODO: Export class
+import { CliProgram } from '@sermas/cli/dist/cli';
 
 describe('TTS (e2e)', () => {
   let app: INestApplication;
   let cli: CliProgram;
+  const testPort: number = 1979;
 
   beforeAll(async () => {
     jest.setTimeout(15 * 1000);
+    process.env.BASE_URL = `http://localhost:${testPort}`;
     process.env.REDIS_URL = 'redis://localhost:6379';
     process.env.MONGODB_URI = 'mongodb://localhost:27017/sermas';
     process.env.MQTT_URL = 'localhost';
@@ -25,7 +26,7 @@ describe('TTS (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    await app.listen(1979);
+    await app.listen(testPort);
 
     cli = new CliProgram();
     await cli.init();
@@ -46,10 +47,16 @@ describe('TTS (e2e)', () => {
       .expect(404);
   });
 
-  it('should list apps', () => {
-    // Just a Dummy
-    expect(cli.parse(['--yaml', 'app', 'list'])).toBeDefined();
-  });
+  it(
+    'should list apps',
+    () => {
+      // Just a Dummy
+      expect(cli.parse(['--yaml', 'app', 'list'], { from: 'user' })).toEqual(
+        42,
+      );
+    },
+    10 * 1000,
+  );
 
   it('should run poa tests', () => {
     // Just a Dummy
@@ -61,6 +68,6 @@ describe('TTS (e2e)', () => {
         'batch',
         '../../tmp/repository/labs/sermas-private/apps/poa',
       ]),
-    ).toBeDefined();
+    ).toEqual(42);
   });
 });
