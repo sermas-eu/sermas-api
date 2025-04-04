@@ -58,16 +58,23 @@ describe('TTS (e2e)', () => {
     10 * 1000,
   );
 
-  it('should run poa tests', () => {
-    // Just a Dummy
-    expect(
-      cli.parse([
-        '--log-level',
-        'verbose',
-        'app',
-        'batch',
-        '../../tmp/repository/labs/sermas-private/apps/poa',
-      ]),
-    ).toEqual(42);
-  });
+  it(
+    'should run poa tests',
+    async () => {
+      // Just a Dummy
+      expect(
+        await cli.parse(
+          [
+            '--log-level',
+            'verbose',
+            'app',
+            'batch',
+            '../../tmp/repository/labs/sermas-private/apps/poa',
+          ],
+          { from: 'user' },
+        ),
+      ).toEqual(42);
+    },
+    15 * 1000,
+  );
 });
