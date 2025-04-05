@@ -130,6 +130,9 @@ export class PlatformModuleService implements OnModuleInit {
   async setupAsyncApi(app: INestApplication) {
     try {
       const asyncapiDocument = await this.getAsyncApiDocument();
+
+      // console.warn(JSON.stringify(asyncapiDocument));
+
       await SermasAsyncApiModule.setup(
         ASYNCAPI_BASEURL,
         app,

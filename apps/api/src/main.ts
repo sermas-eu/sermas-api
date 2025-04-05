@@ -11,8 +11,8 @@ async function bootstrap() {
   const logLevel: LogLevel[] = process.env.LOG_LEVEL
     ? [process.env.LOG_LEVEL as LogLevel]
     : isNodeEnv('development')
-    ? ['debug']
-    : ['log', 'error', 'warn'];
+      ? ['debug']
+      : ['log', 'error', 'warn'];
 
   const app = await NestFactory.create(AppModule, {
     cors: true,

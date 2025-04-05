@@ -103,6 +103,10 @@ export class DialogueSpeechEventService {
   ) {
     if (!payload.sessionId) return;
 
+    if (payload.interaction.element === 'navigation') {
+      return;
+    }
+
     const message: DialogueMessageDto = {
       actor: 'user',
       appId: payload.appId,

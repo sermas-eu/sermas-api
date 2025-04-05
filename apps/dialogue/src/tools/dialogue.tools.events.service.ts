@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import {
+  ToolParamType,
+  ToolSchemaTypeList,
+} from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
+import {
   AppToolsDTO,
   PlatformAppChangedDto,
   ToolsParameterSchema,
@@ -12,10 +16,6 @@ import {
   UIContentDto,
 } from 'apps/ui/src/ui.content.dto';
 import { UIInteractionDTO, UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import {
-  ToolParamType,
-  ToolSchemaTypeList,
-} from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
 import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { hash, uuidv4 } from 'libs/util';
@@ -241,13 +241,15 @@ export class DialogueToolsEventsService {
     if (!payload.sessionId) return;
     // console.warn(JSON.stringify(payload, null, 2));
 
+    if (payload.interaction.element === 'navigation') return;
+
     const repositories = await this.tools.search({
       sessionId: payload.sessionId,
     });
 
     if (!repositories.length) {
-      this.logger.warn(
-        `onUiInteraction: No tools repository found for sessionId=${payload.sessionId}`,
+      this.logger.debug(
+        `onUiInteraction: No tools repository found for sessionId=${payload.sessionId} element=${payload.interaction.element}`,
       );
       return;
     }
