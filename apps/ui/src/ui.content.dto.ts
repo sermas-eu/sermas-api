@@ -361,6 +361,37 @@ export class QuizUIContentDto extends UIContentDto<QuizContentDto> {
   content: QuizContentDto;
 }
 
+export class NavigationItemDto {
+  @ApiProperty()
+  label: string;
+  @ApiProperty()
+  id: string;
+
+  @ApiPropertyOptional()
+  url?: string;
+  @ApiPropertyOptional()
+  group?: string;
+
+  @ApiPropertyOptional()
+  selected?: boolean;
+
+  @ApiPropertyOptional({ type: [NavigationItemDto] })
+  items?: NavigationItemDto[];
+}
+
+// navigation
+export class NavigationContentDto {
+  @ApiProperty({ type: [NavigationItemDto] })
+  items: NavigationItemDto[];
+}
+
+export class NavigationUIContentDto extends UIContentDto<NavigationContentDto> {
+  @ApiProperty({
+    type: NavigationContentDto,
+  })
+  content: NavigationContentDto;
+}
+
 // clear
 export class ClearUIContentDto extends UIContentDto<void> {}
 
