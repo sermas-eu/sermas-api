@@ -86,10 +86,9 @@ export const SermasDefaultConfig = {
   CHROMA_URL: 'http://chromadb:8000',
 
   // DEFAULT_MODEL_PATH Minio based path to the default avatar glb model
-  DEFAULT_MODEL_PATH: 'default/avatars/default/654cc759f1a79ed2ebab0207.glb',
+  DEFAULT_MODEL_PATH: '',
   // DEFAULT_BACKGROUND_PATH Minio based path to the default background for the kiosk
-  DEFAULT_BACKGROUND_PATH:
-    'default/backgrounds/default/milad-fakurian-nY14Fs8pxT8-unsplash.jpg',
+  DEFAULT_BACKGROUND_PATH: '',
 
   // TRANSLATION_SERVICE Provider name to translate messages
   TRANSLATION_SERVICE: 'openai',

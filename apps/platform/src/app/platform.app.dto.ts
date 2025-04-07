@@ -253,6 +253,11 @@ export class AppSettingsDto implements Record<string, any> {
     description: 'Repository',
   })
   githubRepository?: string;
+  @ApiPropertyOptional({
+    description:
+      'Markdown formatted content with information about the app shown in navbar of the kiosk',
+  })
+  impressum?: string;
 }
 
 export class AppClientDto {

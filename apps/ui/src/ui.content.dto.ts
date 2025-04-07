@@ -19,6 +19,7 @@ export const SupportedContentTypeList = [
   'link',
   'dialogue-message',
   'navigation',
+  'navigation-menu',
   'buttons',
   'quiz',
   'clear-screen',
@@ -359,6 +360,37 @@ export class QuizUIContentDto extends UIContentDto<QuizContentDto> {
     type: QuizContentDto,
   })
   content: QuizContentDto;
+}
+
+export class NavigationMenuItemDto {
+  @ApiProperty()
+  label: string;
+  @ApiProperty()
+  id: string;
+
+  @ApiPropertyOptional()
+  url?: string;
+  @ApiPropertyOptional()
+  group?: string;
+
+  @ApiPropertyOptional()
+  selected?: boolean;
+
+  @ApiPropertyOptional({ type: [NavigationMenuItemDto] })
+  items?: NavigationMenuItemDto[];
+}
+
+// navigation
+export class NavigationMenuContentDto {
+  @ApiProperty({ type: [NavigationMenuItemDto] })
+  items: NavigationMenuItemDto[];
+}
+
+export class NavigationMenuUIContentDto extends UIContentDto<NavigationMenuContentDto> {
+  @ApiProperty({
+    type: NavigationMenuContentDto,
+  })
+  content: NavigationMenuContentDto;
 }
 
 // clear
