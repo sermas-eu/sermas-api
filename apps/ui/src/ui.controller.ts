@@ -27,7 +27,7 @@ import {
   HtmlUIContentDto,
   ImageUIContentDto,
   LinkUIContentDto,
-  NavigationUIContentDto,
+  NavigationMenuUIContentDto,
   ObjectUIContentDto,
   PdfUIContentDto,
   QuizUIContentDto,
@@ -63,7 +63,7 @@ import { UIService } from './ui.service';
   BackgroundUIAudioDto,
   //
   UiInteractionButtonDto,
-  NavigationUIContentDto,
+  NavigationMenuUIContentDto,
 )
 export class UIController {
   constructor(

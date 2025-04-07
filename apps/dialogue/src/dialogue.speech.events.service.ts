@@ -103,7 +103,7 @@ export class DialogueSpeechEventService {
   ) {
     if (!payload.sessionId) return;
 
-    if (payload.interaction.element === 'navigation') {
+    if (payload.interaction.element === 'navigation-menu') {
       return;
     }
 

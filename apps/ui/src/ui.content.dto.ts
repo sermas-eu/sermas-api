@@ -19,6 +19,7 @@ export const SupportedContentTypeList = [
   'link',
   'dialogue-message',
   'navigation',
+  'navigation-menu',
   'buttons',
   'quiz',
   'clear-screen',
@@ -361,7 +362,7 @@ export class QuizUIContentDto extends UIContentDto<QuizContentDto> {
   content: QuizContentDto;
 }
 
-export class NavigationItemDto {
+export class NavigationMenuItemDto {
   @ApiProperty()
   label: string;
   @ApiProperty()
@@ -375,21 +376,21 @@ export class NavigationItemDto {
   @ApiPropertyOptional()
   selected?: boolean;
 
-  @ApiPropertyOptional({ type: [NavigationItemDto] })
-  items?: NavigationItemDto[];
+  @ApiPropertyOptional({ type: [NavigationMenuItemDto] })
+  items?: NavigationMenuItemDto[];
 }
 
 // navigation
-export class NavigationContentDto {
-  @ApiProperty({ type: [NavigationItemDto] })
-  items: NavigationItemDto[];
+export class NavigationMenuContentDto {
+  @ApiProperty({ type: [NavigationMenuItemDto] })
+  items: NavigationMenuItemDto[];
 }
 
-export class NavigationUIContentDto extends UIContentDto<NavigationContentDto> {
+export class NavigationMenuUIContentDto extends UIContentDto<NavigationMenuContentDto> {
   @ApiProperty({
-    type: NavigationContentDto,
+    type: NavigationMenuContentDto,
   })
-  content: NavigationContentDto;
+  content: NavigationMenuContentDto;
 }
 
 // clear

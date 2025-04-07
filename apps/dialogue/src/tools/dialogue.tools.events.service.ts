@@ -241,7 +241,7 @@ export class DialogueToolsEventsService {
     if (!payload.sessionId) return;
     // console.warn(JSON.stringify(payload, null, 2));
 
-    if (payload.interaction.element === 'navigation') return;
+    if (payload.interaction.element === 'navigation-menu') return;
 
     const repositories = await this.tools.search({
       sessionId: payload.sessionId,
