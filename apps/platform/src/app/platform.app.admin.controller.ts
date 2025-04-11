@@ -15,7 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { AdminRole } from 'libs/decorator/admin-role.decorator';
-import { ApiScopes } from 'libs/decorator/openapi.decorator';
+import { ApiScopeAdmin } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
 import { Resource } from 'nest-keycloak-connect';
 import { PlatformAppDto, PlatformAppExportFilterDto } from './platform.app.dto';
@@ -29,7 +29,7 @@ export class PlatformAppAdminController {
   constructor(private readonly platformAppService: PlatformAppService) {}
 
   @Post('import')
-  @ApiScopes('app')
+  @ApiScopeAdmin('app')
   @ApiOkResponse({
     type: PlatformAppDto,
     isArray: true,
@@ -56,7 +56,7 @@ export class PlatformAppAdminController {
   }
 
   @Post('export')
-  @ApiScopes('app')
+  @ApiScopeAdmin('app')
   @ApiOkResponse({
     type: PlatformAppDto,
     isArray: true,
@@ -75,7 +75,7 @@ export class PlatformAppAdminController {
   }
 
   @Post('remove')
-  @ApiScopes('app')
+  @ApiScopeAdmin('app')
   @ApiOkResponse()
   @ApiBadRequestResponse()
   @ApiOperationName({

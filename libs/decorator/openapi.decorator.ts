@@ -29,6 +29,22 @@ export function ApiScopes(params: string | string[]) {
   return applyDecorators(...decorators);
 }
 
+export function ApiScopeAdmin(scope: string) {
+  return applyDecorators(...[ApiScopes([scope, `${scope}:admin`])]);
+}
+
+export function ApiScopeWrite(scope: string) {
+  return applyDecorators(
+    ...[ApiScopes([scope, `${scope}:write`, `${scope}:editor`])],
+  );
+}
+
+export function ApiScopeRead(scope: string) {
+  return applyDecorators(
+    ...[ApiScopes([scope, `${scope}:read`, `${scope}:editor`])],
+  );
+}
+
 export interface ApiGenericPropertyOptions extends ApiPropertyOptions {
   genericModels?: Function[]; // eslint-disable-line
 }

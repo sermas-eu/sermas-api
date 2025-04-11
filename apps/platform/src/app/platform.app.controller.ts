@@ -19,7 +19,11 @@ import {
 } from '@nestjs/swagger';
 import { AuthJwtUser } from 'apps/auth/src/auth.dto';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
+import {
+  ApiResource,
+  ApiScopeRead,
+  ApiScopeWrite,
+} from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
 import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
 import {
@@ -51,7 +55,7 @@ export class PlatformAppController {
 
   @Get('repository/defaults')
   @Public()
-  @ApiScopes('app')
+  @ApiScopeRead('app')
   @ApiOkResponse({
     type: RepositoryConfigDto,
   })
@@ -64,7 +68,7 @@ export class PlatformAppController {
 
   @Get()
   @Public()
-  @ApiScopes('app')
+  @ApiScopeRead('app')
   @ApiOkResponse({
     type: PlatformAppDto,
     isArray: true,
@@ -74,7 +78,7 @@ export class PlatformAppController {
   }
 
   @Post()
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeWrite('app')
   @ApiOkResponse({
     type: PlatformAppDto,
   })
@@ -85,7 +89,7 @@ export class PlatformAppController {
   }
 
   @Get('list')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeRead('app')
   @ApiOkResponse({
     type: PlatformAppDto,
     isArray: true,
@@ -99,7 +103,7 @@ export class PlatformAppController {
   }
 
   @Put()
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeWrite('app')
   @ApiOkResponse({
     type: PlatformAppDto,
   })
@@ -110,7 +114,7 @@ export class PlatformAppController {
   }
 
   @Put(':appId/tools')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeWrite('app')
   @ApiOkResponse()
   @ApiBody({
     type: [AppToolsDTO],
@@ -125,7 +129,7 @@ export class PlatformAppController {
   }
 
   @Put(':appId/settings')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeWrite('app')
   @ApiOkResponse()
   @ApiBody({
     type: [AppSettingsDto],
@@ -140,7 +144,7 @@ export class PlatformAppController {
   }
 
   @Get(':appId/repository')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeRead('app')
   @ApiOkResponse({
     type: RepositoryConfigDto,
   })
@@ -151,7 +155,7 @@ export class PlatformAppController {
   }
 
   @Get(':appId/repository/robots')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeRead('app')
   @ApiOkResponse({
     type: RepositoryRobotModelDto,
   })
@@ -165,7 +169,7 @@ export class PlatformAppController {
   }
 
   @Get(':appId/repository/avatars')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeRead('app')
   @ApiOkResponse({
     type: RepositoryAvatarDto,
   })
@@ -179,7 +183,7 @@ export class PlatformAppController {
   }
 
   @Get(':appId/repository/backgrounds')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeRead('app')
   @ApiOkResponse({
     type: RepositoryConfigDto,
   })
@@ -193,18 +197,18 @@ export class PlatformAppController {
   }
 
   @Get(':appId')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeRead('app')
   @ApiOkResponse({
     type: PlatformAppDto,
   })
   @ApiBadRequestResponse()
   @ApiOperationName()
   readApp(@Param('appId') appId: string): Promise<PlatformAppDto> {
-    return this.platformAppService.readApp(appId);
+    return this.platformAppService.readApp(appId, true, true);
   }
 
   @Delete(':appId')
-  @ApiScopes(['app', 'app:editor'])
+  @ApiScopeWrite('app')
   @ApiOkResponse()
   @ApiBadRequestResponse()
   @ApiOperationName()

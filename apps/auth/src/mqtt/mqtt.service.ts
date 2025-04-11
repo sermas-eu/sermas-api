@@ -34,8 +34,8 @@ export class MqttService {
       payload.acc === MqttAclAcc.WRITE
         ? 'Write'
         : payload.acc === MqttAclAcc.READ
-        ? 'Read'
-        : 'Subscribe';
+          ? 'Read'
+          : 'Subscribe';
 
     if (process.env.LOG_REQUEST === '1')
       this.logger.debug(`ACL ${action} ${payload.topic} clientId=${user.azp}`);

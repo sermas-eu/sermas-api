@@ -297,8 +297,9 @@ export class PlatformKeycloakService implements OnModuleInit {
       secret,
       description: data.name,
       options: {
-        ...(options || {}),
         allowScopeWildcard: true,
+        allowFineGrained: true,
+        ...(options || {}),
       },
     });
 

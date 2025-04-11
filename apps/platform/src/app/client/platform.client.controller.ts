@@ -6,10 +6,14 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
+import {
+  ApiResource,
+  ApiScopeRead,
+  ApiScopeWrite,
+} from 'libs/decorator/openapi.decorator';
+import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
 import { AppClientDto } from '../platform.app.dto';
 import { PlatformAppClientService } from './platform.client.service';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
 
 @ApiBearerAuth()
 @ApiTags('PLATFORM')
@@ -19,7 +23,7 @@ export class PlatformAppClientController {
   constructor(private readonly client: PlatformAppClientService) {}
 
   @Post()
-  @ApiScopes('client')
+  @ApiScopeWrite('client')
   @ApiOkResponse({
     type: AppClientDto,
   })
@@ -34,7 +38,7 @@ export class PlatformAppClientController {
   }
 
   @Get(':clientId')
-  @ApiScopes('client')
+  @ApiScopeRead('client')
   @ApiOkResponse({
     type: AppClientDto,
   })
@@ -48,7 +52,7 @@ export class PlatformAppClientController {
   }
 
   @Get(':clientId/topics')
-  @ApiScopes('client')
+  @ApiScopeRead('client')
   @ApiOkResponse({
     type: String,
     isArray: true,
@@ -63,7 +67,7 @@ export class PlatformAppClientController {
   }
 
   @Delete(':clientId')
-  @ApiScopes('client')
+  @ApiScopeWrite('client')
   @ApiOkResponse()
   @ApiBadRequestResponse()
   @ApiOperationName()

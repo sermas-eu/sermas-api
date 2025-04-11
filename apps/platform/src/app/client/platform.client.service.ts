@@ -155,7 +155,7 @@ export class PlatformAppClientService {
     const topics = this.topics.getTopicsList();
     const topicsTree = this.topics.toTree();
 
-    const matches = client.permissions.reduce((list, p) => {
+    const matches: string[] = client.permissions.reduce((list, p) => {
       const [resource, scope] = p.split('.');
 
       if (scope === '*') {
@@ -169,7 +169,7 @@ export class PlatformAppClientService {
 
     return topics.filter((topic) => {
       const [, , resource, scope] = topic.split('/');
-      return matches.includes(`${resource}/${scope}`);
+      return matches.filter((m) => m.startsWith(`${resource}/${scope}`));
     });
   }
 }

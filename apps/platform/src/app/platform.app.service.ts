@@ -239,11 +239,24 @@ export class PlatformAppService implements OnModuleInit {
     await this.publishApp(app, 'deleted');
   }
 
-  async readApp(appId: string, failIfNotFound = true): Promise<PlatformAppDto> {
+  async readApp(
+    appId: string,
+    failIfNotFound = true,
+    redacted = false,
+  ): Promise<PlatformAppDto> {
     const cacheKey = this.cacheKey(appId);
     const cached = await this.cacheManager.get(cacheKey);
 
-    if (cached) return cached as PlatformAppDto;
+    const renderApp = (app: PlatformAppDto) => {
+      if (redacted) {
+        if (app.clients) delete app.clients;
+        if (app.modules) delete app.modules;
+        return app;
+      }
+      return app;
+    };
+
+    if (cached) return renderApp(cached as PlatformAppDto);
 
     const doc = await this.loadApp(appId);
     if (!doc) {
@@ -251,12 +264,12 @@ export class PlatformAppService implements OnModuleInit {
       else return null;
     }
 
-    const app = toDTO(doc);
+    const app = toDTO<PlatformAppDto>(doc);
 
     // set cache
     this.cacheManager.set(cacheKey, app);
 
-    return app;
+    return renderApp(app);
   }
 
   ensureRepositoryDefaults(data: Partial<PlatformAppDto>) {
@@ -510,7 +523,9 @@ export class PlatformAppService implements OnModuleInit {
             clientId: m.moduleId,
             secret: m.secret,
             name: m.name || m.moduleId,
-            permissions: (m.supports || []).map((s) => `${s}.*`),
+            permissions: (m.supports || []).map((s) =>
+              s.indexOf('.') === -1 && s.indexOf(':') === -1 ? `${s}.*` : s,
+            ),
           })),
         );
       }
