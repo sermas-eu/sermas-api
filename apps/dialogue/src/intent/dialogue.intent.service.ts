@@ -268,6 +268,11 @@ export class DialogueIntentService {
 
         hasToolsMatches = true;
 
+        tool.values = {
+          ...(tool.values || {}),
+          value: args.text,
+        };
+
         this.triggerTool({
           tool,
           repository: matchingRepository,
