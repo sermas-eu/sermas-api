@@ -3,8 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from 'apps/api/src/app.module';
 import { CliProgram } from '@sermas/cli/dist/cli';
-import { run } from '@sermas/cli/dist/commands/app/batch';
-import { CommandParams } from '@sermas/cli/dist/libs/dto/cli.dto';
+import run from '@sermas/cli/dist/commands/app/batch';
+import CommandParams from '@sermas/cli/dist/libs/dto/cli.dto';
 
 describe('TTS (e2e)', () => {
   let app: INestApplication;
