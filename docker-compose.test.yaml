@@ -1,0 +1,16 @@
+networks:
+  sermas_dev:
+    external: true
+
+services:
+  test-api:
+    entrypoint: npm
+    command: run test:debug
+    networks:
+      sermas_dev:
+    image: ghcr.io/sermas-eu/api:dev
+    build: .
+    volumes:
+      - ./:/app
+    ports:
+      - 9229:9229
