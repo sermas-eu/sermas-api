@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from 'apps/api/src/app.module';
 import { CliProgram } from '@sermas/cli/dist/cli';
-import { CliProgram } from '@sermas/cli/dist/cli/';
 
 describe('TTS (e2e)', () => {
   let app: INestApplication;
