@@ -82,7 +82,7 @@ Set the field 'trigger' to 'true' only in those cases:
 - if USER MESSAGE text precisely match a 'taskDescription', ignore 'intents' field
 - if user accepts a task proposed by the assistant in the previous message
 
-If the assistant has not proposed a task in the previous message, set 'trigger' to false.
+If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
 If an ACTIVE TASK is available, set 'trigger' to false.
 
 Set 'taskId' only with one from TASKS that has 'match' true.

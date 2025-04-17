@@ -22,8 +22,8 @@ Current date: ${new Date().toISOString()}
   <%= data.avatar %>
 <% } %>
 <% if (data.language) { %>
-  ## USE LANGUAGE
-  <%= data.language %>
+  ## LANGUAGE
+  Assistant conversation response must be in language <%= data.language %>
 <% } %>
 <% if (data.history) { %>
   ## CONVERSATION
