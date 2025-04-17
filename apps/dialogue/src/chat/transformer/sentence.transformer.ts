@@ -28,7 +28,8 @@ export class SentenceTransformer extends Transform {
     this.buffer += chunk.toString();
 
     if (this.buffer.length >= MIN_SENTENCE_LENGTH) {
-      const regex = /[^\d|.| ][.?!][\s|\n]?/i;
+      // const regex = /[^\d|.| ][.?!][^a-z]?[\s|\n]?/i;
+      const regex = /[^.?!]+[.!?]+[\])'"`’”]*|.+/gi;
       let match = this.buffer.match(regex);
       let phrase = '';
       while (match && match?.index !== undefined) {
