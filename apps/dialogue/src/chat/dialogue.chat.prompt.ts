@@ -1,6 +1,6 @@
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import {
-  BaseSystemPrompt,
+  createBaseSystemPrompt,
   BaseSystemPromptParams,
 } from '../dialogue.system.prompt';
 import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto';
@@ -18,7 +18,7 @@ export type AvatarChatPromptParams = {
 export const avatarSystemChatPrompt =
   PromptTemplate.create<AvatarChatSystemPromptParams>(
     'chat-system',
-    `${BaseSystemPrompt}
+    `${createBaseSystemPrompt()}
 
 ## Response format
 Strictly output the structure in Example in your answer, without markdown titles or other additions. Provide correct and parsable JSON in markup tags.

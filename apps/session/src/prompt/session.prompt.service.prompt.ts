@@ -1,5 +1,5 @@
 import {
-  BaseSystemPrompt,
+  createBaseSystemPrompt,
   BaseSystemPromptParams,
 } from 'apps/dialogue/src/dialogue.system.prompt';
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
@@ -12,7 +12,7 @@ export type AgentEvaluatePromptParams = BaseSystemPromptParams & {
 export const sessionPrompt = PromptTemplate.create<AgentEvaluatePromptParams>(
   'session-prompt',
   `
-  ${BaseSystemPrompt}
+  ${createBaseSystemPrompt()}
   
   <% if (data.knowledge) { %>
     ## KNOWLEDGE 

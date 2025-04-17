@@ -1,6 +1,6 @@
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import {
-  BaseSystemPrompt,
+  createBaseSystemPrompt,
   BaseSystemPromptParams,
 } from '../dialogue.system.prompt';
 
@@ -22,7 +22,7 @@ export type IntentResponse = {
 
 export const intentSystemPrompt = PromptTemplate.create<IntentSystemPrompt>(
   'intent-match-system',
-  `${BaseSystemPrompt}
+  `${createBaseSystemPrompt()}
 
 ## ANSWER FORMAT
 Answer with a parsable JSON object collecting all steps and formatted as following. Do not add notes or explanations.

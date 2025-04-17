@@ -11,7 +11,8 @@ export type BaseSystemPromptParams = {
   tasks?: string;
 };
 
-export const BaseSystemPrompt = `
+export const createBaseSystemPrompt = () => `
+Current date: ${new Date().toISOString()}
 <% if (data.app) { %>
   ## APPLICATION
   <%= data.app %>
