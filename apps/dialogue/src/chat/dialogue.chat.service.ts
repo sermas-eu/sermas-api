@@ -224,7 +224,7 @@ export class DialogueChatService {
       .on('data', (chunk: Buffer | string) => {
         perf('stream');
 
-        const text = chunk.toString();
+        let text = chunk.toString();
 
         (text || '')
           .split('\n')
@@ -250,13 +250,18 @@ export class DialogueChatService {
         if (text) {
           // chunkBuffer = chunkBuffer.substring(toSend.length);
 
-          // // sometimes, somehow it starts the answer like this
-          // const trimPrefixes = ['ASSISTANT:', 'USER:', 'UTENTE:'];
-          // trimPrefixes.forEach((trimPrefix) => {
-          //   if (toSend.startsWith(trimPrefix)) {
-          //     toSend = toSend.substring(trimPrefix.length);
-          //   }
-          // });
+          // sometimes, somehow it starts the answer like this
+          const trimPrefixes = [
+            'ASSISTANT:',
+            'USER:',
+            'UTENTE:',
+            'CHAT RESPONSE:',
+          ];
+          trimPrefixes.forEach((trimPrefix) => {
+            if (text.startsWith(trimPrefix)) {
+              text = text.substring(trimPrefix.length);
+            }
+          });
 
           const chunkId = getChunkId();
           // this.sendMessage(message, messageId, chunkId, toSend);
