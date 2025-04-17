@@ -21,11 +21,11 @@ export const avatarSystemChatPrompt =
     `${BaseSystemPrompt}
 
 ## Response format
-Strictly follow the following Example structure in your answer. Provide correct and parsable JSON in markup tags.
+Strictly output the structure in Example in your answer, without markdown titles or other additions. Provide correct and parsable JSON in markup tags.
 Append then the CHAT response as plain text, do not use emoticons. 
 Never add Notes or Explanations.
 
-### Example:
+### Example
 <filter>
 { "skip": boolean, "answer": string, "explain": string }
 </filter>
@@ -47,7 +47,8 @@ export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
 Identify if USER MESSAGE could be relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS.
 Populate the field 'filter' in response.
 
-Set 'skip' to true when message is clearly self-talking or an incomplete formulation (like from background noise), leave 'answer' empty.
+Set 'skip' to true when messagean incomplete formulation (like from background noise), leave 'answer' empty.
+Set 'skip' to true when message is clearly self-talking or possibly chattering with someone else.
 Set 'skip' to false when message is a well formatted and correct message, even if not relevant.
 
 Set the field 'explain' describing your decision.
@@ -59,7 +60,7 @@ Find matches of provided TOOLS list with USER MESSAGE.
 
 Follow those rules sequentially, when one matches skip the following.
 - If a tool with name '${TOOL_CATCH_ALL}' is available, match it directly. Exception if there is an ACTIVE TASK and user want to cancel or abort it.
-- match strictly the USER REQUEST to be equal or part of TOOLS 'description'.
+- the text of USER REQUEST matches completely or in part the TOOLS 'description'.
 - the USER MESSAGE should have a match by meaning or partial overlap with the description of one TOOLS.
 
 Populate the 'matches' field with an object using the tool 'name' field as key and an object as value 
@@ -70,18 +71,18 @@ Set the field 'explain' describing why you set those values, omit if 'tools' is 
 Never mention tools in the chat response. Skip the next section if a tool is found. 
 
 # INTENTS
-
 Analyze CONVERSATION and match one of TASKS based on the USER MESSAGE intention.
 Populate the field 'intent' in response. 
 
 Set the field 'match' to 'true' only in those cases:
-- if there is an explicit match with an intent
+- if there is a precise match with one of 'intents' description
 - if the assistant asked explicitly in the previous message for a task and the user is confirming or declining
 
 Set the field 'trigger' to 'true' only in those cases:
-- if USER MESSAGE equals or has partial overlap to TASKS 'description', ignore intents.
+- if USER MESSAGE text precisely match a 'taskDescription', ignore 'intents' field
 - if user accepts a task proposed by the assistant in the previous message
 
+If the assistant has not proposed a task in the previous message, set 'trigger' to false.
 If an ACTIVE TASK is available, set 'trigger' to false.
 
 Set 'taskId' only with one from TASKS that has 'match' true.
@@ -116,8 +117,6 @@ Never mention tools in the chat response.
     Use KNOWLEDGE when relevant to the user message.
   <% } %>
 
-  Propose one of TASKS that has been set to 'match' true in the INTENTS section.
-
 <% } %>
 
 <% if (data.field || data.task) { %>
@@ -137,6 +136,8 @@ Never mention tools in the chat response.
     ## KNOWLEDGE:
     <%= data.knowledge %>
   <% } %>
+
+  Propose TASKS that has 'match' to true in the INTENTS section.
 
 <% } %>`,
 );
