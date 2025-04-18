@@ -148,6 +148,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     const perf = this.monitor.performance({
       appId,
       label: 'document.save',
+      threshold: 10 * 1000,
     });
 
     for (const document of documents) {
@@ -197,7 +198,10 @@ export class DialogueVectorStoreService implements OnModuleInit {
     }
   }
 
-  async getCollection(appId: string) {
+  async getCollection(
+    appId: string,
+    embeddingFunction?: IEmbeddingFunction | null,
+  ) {
     if (!appId) return null;
     const name = hash(appId);
 
@@ -205,7 +209,11 @@ export class DialogueVectorStoreService implements OnModuleInit {
       try {
         this.collections[name] = await this.client.getOrCreateCollection({
           name,
-          embeddingFunction: this.embeddingFunction,
+          // use default embedding function if param is set to null
+          embeddingFunction:
+            embeddingFunction === null
+              ? undefined
+              : embeddingFunction || this.embeddingFunction,
         });
         this.logger.debug(`Loaded collection ${appId} (name=${name})`);
       } catch (e) {

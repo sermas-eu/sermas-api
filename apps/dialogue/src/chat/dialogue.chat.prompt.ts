@@ -43,7 +43,6 @@ export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
   `Execute sequentially the following tasks delimited by markdown titles.
 
 # FILTER
-
 Identify if USER MESSAGE could be relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS.
 Populate the field 'filter' in response.
 
@@ -74,13 +73,13 @@ Never mention tools in the chat response. Skip the next section if a tool is fou
 Analyze CONVERSATION and match one of TASKS based on the USER MESSAGE intention.
 Populate the field 'intent' in response. 
 
-Set the field 'match' to 'true' only in those cases:
-- if there is a precise match with one of 'intents' description
-- if the assistant asked explicitly in the previous message for a task and the user is confirming or declining
+Set the field 'match' to 'true' in one of those cases:
+- there is a match with one of 'intents' or 'taskDescription'
+- the assistant asked explicitly in the previous message for a task and the user is confirming or declining
 
 Set the field 'trigger' to 'true' only in those cases:
-- if USER MESSAGE text precisely match a 'taskDescription', ignore 'intents' field
-- if user accepts a task proposed by the assistant in the previous message
+- USER MESSAGE text precisely match a 'taskDescription', ignore 'intents' field
+- user accepts a task proposed by the assistant in the previous message
 
 If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
 If an ACTIVE TASK is available, set 'trigger' to false.
@@ -137,7 +136,7 @@ Never mention tools in the chat response.
     <%= data.knowledge %>
   <% } %>
 
-  Propose TASKS that has 'match' to true in the INTENTS section.
+  Always propose the task when match=true from the INTENTS section.
 
 <% } %>`,
 );

@@ -23,7 +23,7 @@ Current date: ${new Date().toISOString()}
 <% } %>
 <% if (data.language) { %>
   ## LANGUAGE
-  Assistant conversation response must be in language <%= data.language %>
+  Conversation response must always be in language <%= data.language %>
 <% } %>
 <% if (data.history) { %>
   ## CONVERSATION
