@@ -81,14 +81,17 @@ Set the field 'trigger' to 'true' only in those cases:
 - USER MESSAGE text precisely match a 'taskDescription', ignore 'intents' field
 - user accepts a task proposed by the assistant in the previous message
 
+<% if (data.activeTask) { %>
+Set the field 'cancel' to true:
+- If the last messages in CONVERSATION meaning matches with 'intents' or 'taskDescription' of another task in TASKS
+- If USER MESSAGE indicates is not interested to continue or want to cancel the task
+
+Set 'trigger' to false with an ACTIVE TASK
+<% } %>
+
 If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
-If an ACTIVE TASK is available, set 'trigger' to false.
 
 Set 'taskId' only with one from TASKS that has 'match' true.
-
-<% if (data.activeTask) { %>
-  If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
-<% } %>
 
 Set the field 'explain' describing why you set match,trigger and cancel values. If a task 'match' and 'trigger' are true, skip the next section.
 
@@ -120,23 +123,25 @@ Never mention tools in the chat response.
 
 <% if (data.field || data.task) { %>
   <% if (data.task) { %>
-    ## CURRENT TASK:
+    ## CURRENT TASK
     <%= data.task %>
   <% } %>
 
   <% if (data.field) { %>
-    ## CURRENT FIELD:
+    ## CURRENT FIELD 
     <%= data.field %>
   <% } %>
 
 <% } else { %>
 
   <% if (data.knowledge) { %>
-    ## KNOWLEDGE:
+    ## KNOWLEDGE
     <%= data.knowledge %>
   <% } %>
 
-  Always propose the task when match=true from the INTENTS section.
+  Considering the INTENTS section:
+  - if match=true, always propose the task 
+  - if cancel=true, always propose the new matching task 
 
 <% } %>`,
 );

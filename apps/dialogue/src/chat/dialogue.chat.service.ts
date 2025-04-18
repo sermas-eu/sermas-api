@@ -352,7 +352,7 @@ export class DialogueChatService {
       activeTask: currentTask?.name,
       task:
         currentTask && (currentTask.hint || currentTask.description)
-          ? `${currentTask.name}: ${currentTask.hint || currentTask.description}`
+          ? `${currentTask.name}\n${currentTask.hint || currentTask.description}`
           : undefined,
       field:
         currentField && currentField?.hint
