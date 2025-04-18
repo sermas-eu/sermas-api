@@ -66,7 +66,7 @@ export class DialogueIntentService {
     const intents: TaskIntentsList[] = tasks.map(
       (t): TaskIntentsList => ({
         taskId: t.taskId,
-        description: t.description,
+        taskDescription: t.description,
         intents: t.intents.filter((i) => i.name && i.description),
       }),
     );

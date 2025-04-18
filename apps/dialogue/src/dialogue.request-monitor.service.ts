@@ -6,6 +6,7 @@ import {
   DialogueSessionRequestStatus,
   DialogueSessionRequestTracker,
 } from './dialogue.request-monitor.dto';
+import { Interval } from '@nestjs/schedule';
 
 const CACHE_TTL = 3 * 60 * 1000; // 3 min
 
@@ -26,6 +27,7 @@ export class DialogueRequestMonitorService {
     private readonly monitor: MonitorService,
   ) {}
 
+  @Interval(1000)
   private clearCached() {
     for (const sessionId in this.requestMonitor) {
       for (const requestId in this.requestMonitor[sessionId]) {

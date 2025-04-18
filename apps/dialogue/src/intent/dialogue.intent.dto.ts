@@ -37,7 +37,7 @@ export type TaskIntentMatchResult = {
 
 export type TaskIntentsList = {
   taskId?: string;
-  description: string;
+  taskDescription: string;
   intents: TaskIntentDto[];
 };
 
