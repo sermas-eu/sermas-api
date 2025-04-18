@@ -12,5 +12,6 @@ services:
     build: .
     volumes:
       - ./:/app
+      - ../../tmp/repository/labs/sermas-private/apps:/testapps
     ports:
       - 9229:9229
