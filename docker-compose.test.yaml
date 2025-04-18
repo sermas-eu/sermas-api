@@ -5,7 +5,7 @@ networks:
 services:
   test-api:
     entrypoint: npm
-    command: run test:debug
+    command: run test:watch
     networks:
       sermas_dev:
     image: ghcr.io/sermas-eu/api:dev
