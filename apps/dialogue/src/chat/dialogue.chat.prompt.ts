@@ -40,7 +40,7 @@ Never add Notes or Explanations.
 
 export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
   'chat',
-  `Execute sequentially the following tasks delimited by markdown titles.
+  `Execute sequentially the following sections delimited by markdown titles.
 
 # FILTER
 Identify if USER MESSAGE could be relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS.
@@ -52,22 +52,7 @@ Set 'skip' to false when message is a well formatted and correct message, even i
 
 Set the field 'explain' describing your decision.
 Set the field 'answer' to provide feedback to the user.
-If message is skipped, do not continue to next steps. 
-
-# TOOLS
-Find matches of provided TOOLS list with USER MESSAGE. 
-
-Follow those rules sequentially, when one matches skip the following.
-- If a tool with name '${TOOL_CATCH_ALL}' is available, match it directly. Exception if there is an ACTIVE TASK and user want to cancel or abort it.
-- the text of USER REQUEST matches completely or in part the TOOLS 'description'.
-- the USER MESSAGE should have a match by meaning or partial overlap with the description of one TOOLS.
-
-Populate the 'matches' field with an object using the tool 'name' field as key and an object as value 
-with the key-value of tool param 'name' and value extracted from user message.
-Set 'matches' to an empty object if there is no match or no TOOLS are available. 
-Set the field 'explain' describing why you set those values, omit if 'tools' is empty.
-
-Never mention tools in the chat response. Skip the next section if a tool is found. 
+If message is skipped, do not continue with other sections. 
 
 # INTENTS
 Analyze CONVERSATION and match one of TASKS based on user intention.
@@ -80,24 +65,45 @@ Set the field 'match' to 'true' evaluating sequqentially the following cases:
 
 ## TRIGGER
 Set the field 'trigger' to 'true' only in those cases:
-- USER MESSAGE text match a 'taskDescription', ignore 'intents' field
-- user accepts a task proposed by the assistant in the previous message
+- USER MESSAGE text match precisely the 'taskDescription'
+- user accepts a task already proposed by the assistant in the previous messages
 
 If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
 
 Set 'taskId' only with one from TASKS that has 'match' true.
 
-Set the field 'explain' describing why you set match,trigger and cancel values. 
-If a task 'match' and 'trigger' are true, skip the next section.
+Set the field 'explain' describing why you set match, trigger and cancel values. 
+If a task 'match' and 'trigger' are true, skip all the next sections.
 
 <% if (data.activeTask) { %>
 ## CANCEL
-Evaluate the last messages in CONVERSATION between user and agent to evaluate if the ongoing task '<%= data.activeTask %>' should be cancelled. 
+Evaluate the recent messages in CONVERSATION between user and agent to evaluate if the ongoing task '<%= data.activeTask %>' should be cancelled. 
 Set the field 'cancel' to true evaluating sequentially the following cases:
 - user explicitly ask to cancel the task
 - there is no interest or the conditions to continue with the task
-- another task in TASKS matches with 'intents' or 'taskDescription'
+- another task in TASKS has 'intents' or 'taskDescription' that matches better the converastion subject
+- another task in TASKS has 'taskDescription' that match USER MESSAGE
 <% } %>
+
+<% if (!data.activeTask) { %>
+  If a task 'match', skip the next section.
+<% } %>
+
+# TOOLS
+Find matches of provided TOOLS list with USER MESSAGE. 
+
+Follow those rules sequentially, when one matches skip the following.
+- if USER MESSAGE is a request for information or a question, skip all tools.
+- If a tool with name '${TOOL_CATCH_ALL}' is available, match it directly.
+- the text of USER REQUEST matches completely or in part the TOOLS 'description' text.
+- the USER MESSAGE is a rephrasing of the description of a TOOLS.
+
+Populate the 'matches' field with an object using the tool 'name' field as key and an object as value 
+with the key-value of tool param 'name' and value extracted from user message.
+Set 'matches' to an empty object if there is no match or no TOOLS are available. 
+Set the field 'explain' describing why you set those values, omit if 'tools' is empty.
+
+Never mention tools in the chat response. Skip the next section if a tool is found. 
 
 # CHAT RESPONSE
 You are an AVATAR (also assistant or agent) discussing with USER in the APPLICATION context. The conversation is speech-based and must be fast and coincise, avoid repetitions.
@@ -125,11 +131,6 @@ Never mention tools in the chat response.
 
 <% } %>
 
-Considering the INTENTS section:
-- if match=true, always propose the task 
-- if cancel=true, notify  the user about the cancellation 
-
-
 <% if (data.field || data.task) { %>
   <% if (data.task) { %>
     ## CURRENT TASK
@@ -148,5 +149,12 @@ Considering the INTENTS section:
     <%= data.knowledge %>
   <% } %>
 
-<% } %>`,
+<% } %>
+
+
+## REACTION
+Based on the previous INTENTS section evaluation:
+If a task match explicitly propose with a question the task.
+If a task is cancelled propose with a question the NEW task.
+`,
 );

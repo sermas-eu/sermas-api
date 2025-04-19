@@ -124,6 +124,14 @@ export class DialogueChatService {
       return;
     }
 
+    if (response?.intent?.explain) {
+      this.logExplanation({
+        ...message,
+        context: 'intent',
+        explain: response?.intent?.explain,
+      });
+    }
+
     if (response?.tools?.explain) {
       this.logExplanation({
         ...message,
@@ -134,14 +142,6 @@ export class DialogueChatService {
 
     // intents
     if (response?.intent) {
-      if (response.intent.explain) {
-        this.logExplanation({
-          ...message,
-          context: 'intent',
-          explain: response?.intent?.explain,
-        });
-      }
-
       const taskResult = await this.intent.handleTaskIntent({
         message,
         taskIntent: response.intent,
@@ -394,20 +394,20 @@ export class DialogueChatService {
             },
           ),
           new StreamingMarkupParserTransformer(
+            'intents',
+            (res: string | undefined) => {
+              if (res) {
+                llmParsedResult.intent = parseJSON(res) || undefined;
+              }
+            },
+          ),
+          new StreamingMarkupParserTransformer(
             'tools',
             (res: string | undefined) => {
               llmParsedResult.tools = this.parseMatchingTools(
                 res,
                 activeTools.tools,
               );
-            },
-          ),
-          new StreamingMarkupParserTransformer(
-            'intents',
-            (res: string | undefined) => {
-              if (res) {
-                llmParsedResult.intent = parseJSON(res) || undefined;
-              }
             },
           ),
           new SentenceTransformer(() => {
