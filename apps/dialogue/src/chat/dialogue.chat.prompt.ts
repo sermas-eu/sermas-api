@@ -64,9 +64,10 @@ Set the field 'match' to 'true' evaluating sequqentially the following cases:
 - the assistant asked explicitly in the previous message for a task and the user is confirming or declining
 
 ## TRIGGER
-Set the field 'trigger' to 'true' only in those cases:
-- USER MESSAGE text match precisely the 'taskDescription'
+Set the field 'trigger' to 'true' evaluate sequentially the following cases:
+- USER MESSAGE text match precisely or is a rephrasing of the 'taskDescription'
 - user accepts a task already proposed by the assistant in the previous messages
+- the assistant committed to execute a task, without expecting user response
 
 If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
 
@@ -153,8 +154,10 @@ Never mention tools in the chat response.
 
 
 ## REACTION
-Based on the previous INTENTS section evaluation:
-If a task match explicitly ask the user if they want to proceed with the task.
-If a task is cancelled explicitly ask the user if they want to proceed with the NEW task.
+Based on the previous INTENTS section evaluation, ask the user if they want to proceed with a task formulating the 'taskDescription' in a question. 
+Follow those rules sequentially:
+- If a task match explicitly.
+- If a task is cancelled offer the NEW task.
+- Skip in any other case.
 `,
 );
