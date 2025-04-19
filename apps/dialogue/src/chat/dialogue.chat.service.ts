@@ -99,7 +99,7 @@ export class DialogueChatService {
     this.emitter.emit('dialogue.chat.validation', validationEvent);
 
     // skip
-    this.logger.debug(`User message: ${message.text}`);
+    this.logger.debug(`USER MESSAGE: ${message.text}`);
 
     if (response?.filter?.explain) {
       this.logExplanation({

@@ -29,12 +29,12 @@ Never add Notes or Explanations.
 <filter>
 { "skip": boolean, "answer": string, "explain": string }
 </filter>
-<tools>
-{ "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
-</tools>
 <intents>
 { "taskId": string, "match": boolean, "trigger": boolean, "cancel": boolean, "explain": string }
 </intents>
+<tools>
+{ "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
+</tools>
 `,
   );
 
@@ -78,11 +78,11 @@ If a task 'match' and 'trigger' are true, skip all the next sections.
 <% if (data.activeTask) { %>
 ## CANCEL
 Evaluate the recent messages in CONVERSATION between user and agent to evaluate if the ongoing task '<%= data.activeTask %>' should be cancelled. 
-Set the field 'cancel' to true evaluating sequentially the following cases:
+Set the field 'cancel' to true evaluating each of the following cases:
 - user explicitly ask to cancel the task
 - there is no interest or the conditions to continue with the task
-- another task in TASKS has 'intents' or 'taskDescription' that matches better the converastion subject
-- another task in TASKS has 'taskDescription' that match USER MESSAGE
+- another task in TASKS has 'intents' or 'taskDescription' that matches with the subject of the conversation 
+- another task in TASKS has 'intents' or 'taskDescription' that match with the last USER MESSAGE
 <% } %>
 
 <% if (!data.activeTask) { %>
@@ -154,7 +154,7 @@ Never mention tools in the chat response.
 
 ## REACTION
 Based on the previous INTENTS section evaluation:
-If a task match explicitly propose with a question the task.
-If a task is cancelled propose with a question the NEW task.
+If a task match explicitly ask the user if they want to proceed with the task.
+If a task is cancelled explicitly ask the user if they want to proceed with the NEW task.
 `,
 );
