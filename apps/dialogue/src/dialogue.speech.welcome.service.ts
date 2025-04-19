@@ -24,6 +24,7 @@ import {
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
+import { sleep } from 'libs/test';
 
 @Injectable()
 export class DialogueWelcomeService {
@@ -132,6 +133,8 @@ export class DialogueWelcomeService {
 
       await this.speech.chat(msg);
     }
+
+    await sleep(100);
 
     if (response.labels) {
       let buttonsList = response.labels;
