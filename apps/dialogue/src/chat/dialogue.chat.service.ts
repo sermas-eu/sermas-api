@@ -342,7 +342,7 @@ export class DialogueChatService {
       message: message.text,
       tools: convertToolsToPrompt(activeTools.tools),
       intents: currentTask ? undefined : JSON.stringify(intents),
-      activeTask: currentTask?.name,
+      // activeTask: currentTask?.name,
     };
 
     const chatPromptParams: AvatarChatPromptParams = {

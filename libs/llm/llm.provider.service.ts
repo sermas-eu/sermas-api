@@ -562,6 +562,7 @@ export class LLMProviderService implements OnModuleInit {
 
     const perf = this.monitor.performance({
       label: 'llm.embeddings',
+      threshold: 5000,
     });
     const embeddings = await provider.generate(text);
 
