@@ -33,12 +33,11 @@ export class TTSProviderService {
     private readonly azuretts: AzureTextToSpeech,
     private readonly eleveniotts: ElevenIOTextToSpeech,
 
-    private readonly configService: ConfigService,
+    private readonly config: ConfigService,
     private readonly session: SessionService,
     private readonly emitter: EventEmitter2,
 
     private readonly ssmlService: SSMLService,
-    private readonly config: ConfigService,
 
     private readonly monitor: MonitorService,
 
@@ -133,7 +132,7 @@ export class TTSProviderService {
     // const [, raw] = await this.dataset.readRecord('tts', text || ssml);
     // if (raw) return raw;
 
-    let ttsProvider = this.configService.get('TTS_SERVICE');
+    let ttsProvider = this.config.get('TTS_SERVICE');
     let ttsModel = undefined;
 
     const avatar = await this.session.getAvatar(ev);

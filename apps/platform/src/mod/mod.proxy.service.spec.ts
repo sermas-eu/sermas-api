@@ -2,7 +2,7 @@ import { HttpServer, INestApplication, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
 import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import * as request from 'supertest';
 import { PlatformAppService } from '../app/platform.app.service';
 import { newApp } from '../app/tests/app';
@@ -75,7 +75,10 @@ describe('PlatformModuleService', () => {
       // 1. create admin user
       const platformAppService = app.get(PlatformAppService);
       const appId = `test-app-${uuidv4()}`;
-      const adminUsername = `test-user-${uuidv4()}`;
+      const adminUserId = uuidv4();
+      const adminUsername = `test-user-${adminUserId}`;
+      const adminFirstName = `name-${adminUserId}`;
+      const adminLasttName = `surname-${adminUserId}`;
 
       const keycloakService = app.get(KeycloakService);
       const adminUser = await platformAppService.saveUser({
@@ -83,6 +86,8 @@ describe('PlatformModuleService', () => {
         username: adminUsername,
         email: `${adminUsername}@sermas.local`,
         password: adminUsername,
+        firstName: adminFirstName,
+        lastName: adminLasttName,
       });
       await platformAppService.setAdminRole(adminUser.id);
 
@@ -105,18 +110,26 @@ describe('PlatformModuleService', () => {
       await requestModule(adminToken.access_token);
 
       // 4. create user & app
-      const username = `test-user-${uuidv4()}`;
+      const userId = uuidv4();
+      const username = `test-user-${userId}`;
+      const firstName = `name-${userId}`;
+      const lasttName = `surname-${userId}`;
       const user = await platformAppService.saveUser({
         appId,
         username,
         email: `${username}@sermas.local`,
         password: username,
+        firstName: firstName,
+        lastName: lasttName,
       });
 
       const userToken = await keycloakService.login(username, username);
 
       const platformApp = newApp(appId, user.id);
-      await platformAppService.createApp(platformApp, false);
+      await platformAppService.createApp({
+        data: platformApp,
+        skipClients: false,
+      });
 
       // 5. query platform module from app client
       await requestModule(userToken.access_token, {

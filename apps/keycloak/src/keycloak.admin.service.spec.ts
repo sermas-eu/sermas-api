@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import { KEYCLOACK_TEST_REALM } from 'libs/test';
 import { KeycloakAdminService } from './keycloak.admin.service';
 import { KeycloakModule } from './keycloak.module';

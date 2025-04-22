@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
 import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import { PlatformAppService } from './app/platform.app.service';
 import { newApp } from './app/tests/app';
 import { PlatformKeycloakService } from './platform.keycloack.service';
@@ -62,19 +62,24 @@ describe('PlatformKeycloakService', () => {
       const platformAppService = moduleRef.get(PlatformAppService);
       const keycloakService = moduleRef.get(KeycloakService);
 
-      const appId = `test-app-${uuidv4()}`;
-      const username = `test-user-${uuidv4()}`;
+      const userId = uuidv4();
+      const appId = `test-app-${userId}`;
+      const username = `test-user-${userId}`;
+      const firstName = `name-${userId}`;
+      const lasttName = `surname-${userId}`;
       const user = await platformAppService.saveUser({
         appId,
         username,
         email: `${username}@sermas.local`,
         password: username,
+        firstName: firstName,
+        lastName: lasttName,
       });
 
-      const app = await platformAppService.createApp(
-        newApp(appId, user.id),
-        false,
-      );
+      const app = await platformAppService.createApp({
+        data: newApp(appId, user.id),
+        skipClients: false,
+      });
 
       // create client with defaults
       let client = await platformKeycloakService.getAppClient(app.appId);

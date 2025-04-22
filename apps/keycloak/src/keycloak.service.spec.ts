@@ -4,7 +4,7 @@ import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
 import { APP_CLIENT_NAME } from 'apps/platform/src/platform.keycloack.service';
 import { PlatformModule } from 'apps/platform/src/platform.module';
 import { PlatformTopicsService } from 'apps/platform/src/topics/platform.topics.service';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import { KEYCLOACK_TEST_REALM } from 'libs/test';
 import { KeycloakUser } from './keycloak.admin.dto';
 import { KeycloakModule } from './keycloak.module';

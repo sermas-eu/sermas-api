@@ -2,7 +2,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from 'apps/api/src/app.module';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { waitEvents } from 'libs/util';
 import { AgentStatus } from '../session.dto';

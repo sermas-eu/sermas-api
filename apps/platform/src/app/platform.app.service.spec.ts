@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
 import { KeycloakModule } from 'apps/keycloak/src/keycloak.module';
 import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import { KEYCLOACK_TEST_REALM } from 'libs/test';
 import { PlatformModule } from '../platform.module';
 import { PlatformAppService } from './platform.app.service';
@@ -48,13 +48,18 @@ describe('PlatformAppService', () => {
 
   describe('manage apps', () => {
     it('should create a user', async () => {
-      const appId = `test-app-${uuidv4()}`;
-      const username = `test-user-${uuidv4()}`;
+      const userId = uuidv4();
+      const appId = `test-app-${userId}`;
+      const username = `test-user-${userId}`;
+      const firstName = `name-${userId}`;
+      const lasttName = `surname-${userId}`;
       const user = await platformAppService.saveUser({
         appId,
         username,
         email: `${username}@sermas.local`,
         password: username,
+        firstName: firstName,
+        lastName: lasttName,
       });
 
       const app = newApp(appId, user.id);
@@ -65,13 +70,18 @@ describe('PlatformAppService', () => {
     });
 
     it('should create a user with admin role', async () => {
-      const appId = `test-app-${uuidv4()}`;
-      const username = `test-user-${uuidv4()}`;
+      const userId = uuidv4();
+      const appId = `test-app-${userId}`;
+      const username = `test-user-${userId}`;
+      const firstName = `name-${userId}`;
+      const lasttName = `surname-${userId}`;
       const user = await platformAppService.saveUser({
         appId,
         username,
         email: `${username}@sermas.local`,
         password: username,
+        firstName: firstName,
+        lastName: lasttName,
       });
 
       await platformAppService.setAdminRole(user.id);
