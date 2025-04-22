@@ -3,9 +3,12 @@ import { Transform } from 'stream';
 export const MIN_SENTENCE_LENGTH = 15;
 
 export class SentenceTransformer extends Transform {
-  private buffer = '';
+  private buffer: string | undefined;
 
-  constructor() {
+  constructor(
+    private readonly onInit?: () => void,
+    private readonly onComplete?: () => void,
+  ) {
     super();
   }
 
@@ -17,10 +20,16 @@ export class SentenceTransformer extends Transform {
     chunk = chunk || '';
     chunk = chunk.toString();
 
+    if (this.buffer === undefined) {
+      if (this.onInit) this.onInit();
+      this.buffer = '';
+    }
+
     this.buffer += chunk.toString();
 
     if (this.buffer.length >= MIN_SENTENCE_LENGTH) {
-      const regex = /[^\d|.| ][.?!][\s|\n]?/i;
+      // const regex = /[^\d|.| ][.?!][^a-z]?[\s|\n]?/i;
+      const regex = /[^.?!]+[.!?]+[\])'"`’”]*|.+/gi;
       let match = this.buffer.match(regex);
       let phrase = '';
       while (match && match?.index !== undefined) {
@@ -46,15 +55,23 @@ export class SentenceTransformer extends Transform {
   }
 
   sendBuffer(buffer: string) {
+    if (!buffer) return;
     this.push(buffer.replace(/^\n+/gm, '').replace(/\n+$/gm, ''));
   }
 
   _flush(callback: CallableFunction) {
     // Flush the remaining incomplete phrase
-    if (this.buffer.trim().length > 0) {
+    if (this.buffer && this.buffer.trim().length > 0) {
       this.sendBuffer(this.buffer);
       this.buffer = '';
     }
+
+    // stream stopped before this transform
+    if (this.buffer === undefined) {
+      if (this.onInit) this.onInit();
+    }
+
+    if (this.onComplete) this.onComplete();
     callback();
   }
 }

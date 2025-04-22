@@ -7,5 +7,7 @@ export const createClient = (config: LLMProviderConfig) => {
   params.apiKey = params.apiKey || apiKey;
   if (baseURL) params.baseURL = baseURL;
 
+  if (config.timeout) params.timeout = config.timeout;
+
   return new OpenAI(params);
 };

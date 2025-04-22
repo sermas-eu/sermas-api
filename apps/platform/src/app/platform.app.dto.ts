@@ -19,7 +19,7 @@ import {
   ToolParamType,
   ToolRequestConfig,
   ToolSchemaTypeList,
-} from 'apps/dialogue/src/avatar/dialogue.chat.tools.dto';
+} from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
 import { SermasRecordChangedDto } from 'libs/sermas/sermas.dto';
 import * as sanitizeHtml from 'sanitize-html';
 import { PlatformModuleConfigDto } from '../mod/mod.dto';
@@ -253,6 +253,11 @@ export class AppSettingsDto implements Record<string, any> {
     description: 'Repository',
   })
   githubRepository?: string;
+  @ApiPropertyOptional({
+    description:
+      'Markdown formatted content with information about the app shown in navbar of the kiosk',
+  })
+  impressum?: string;
 }
 
 export class AppClientDto {

@@ -4,7 +4,7 @@ import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { mapMqttTopic } from 'libs/util';
 import { AsyncApi } from 'nestjs-asyncapi';
-import { DialogueToolNotMatchingEventDto } from '../dialogue.chat.dto';
+import { DialogueToolNotMatchingEventDto } from '../chat/dialogue.chat.dto';
 import {
   DialogueToolTriggeredEventDto,
   DialogueToolsRepositoryChanged,

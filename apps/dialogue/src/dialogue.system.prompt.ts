@@ -4,13 +4,15 @@ export type BaseSystemPromptParams = {
   language?: string;
   history?: string;
   intents?: string;
+  activeTask?: string;
   message?: string;
   emotion?: string;
   tools?: string;
   tasks?: string;
 };
 
-export const BaseSystemPrompt = `
+export const createBaseSystemPrompt = () => `
+Current date: ${new Date().toISOString()}
 <% if (data.app) { %>
   ## APPLICATION
   <%= data.app %>
@@ -20,8 +22,8 @@ export const BaseSystemPrompt = `
   <%= data.avatar %>
 <% } %>
 <% if (data.language) { %>
-  ## USE LANGUAGE
-  <%= data.language %>
+  ## LANGUAGE
+  Conversation response must always be in language <%= data.language %>
 <% } %>
 <% if (data.history) { %>
   ## CONVERSATION
@@ -30,6 +32,10 @@ export const BaseSystemPrompt = `
 <% if (data.intents) { %>
   ## INTENTS
   <%= data.intents %>
+<% } %>
+<% if (data.activeTask) { %>
+  ## ACTIVE TASK
+  <%= data.activeTask %>
 <% } %>
 <% if (data.tools) { %>
   ## TOOLS

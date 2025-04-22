@@ -4,6 +4,8 @@ const logger = new Logger('llm.util');
 
 export const parseJSON = <T = any>(response: string): T | null => {
   if (!response) return null;
+  // skip empty contents
+  if (!response.replace(/[\n\t ]*/gim, '').length) return null;
 
   try {
     // handle ```json

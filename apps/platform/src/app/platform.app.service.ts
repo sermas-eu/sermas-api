@@ -169,7 +169,8 @@ export class PlatformAppService implements OnModuleInit {
           `Imported "${savedApp.name}" with appId=${savedApp.appId}`,
         );
       } catch (e: any) {
-        this.logger.error(`Import failed appId=${importApp.appId}: ${e.stack}`);
+        this.logger.error(`Import failed appId=${importApp.appId}`);
+        this.logger.error(e);
       }
     }
     return imported;
