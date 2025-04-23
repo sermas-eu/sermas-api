@@ -2,12 +2,7 @@ import { Transform } from 'stream';
 
 export class StreamingMarkupParserTransformer extends Transform {
   private buffer = '';
-
-  private isTagContent: boolean | undefined = undefined;
-  private tagIsClosed = false;
-  private tagIsNotFound = false;
-
-  private callbackCalled = false;
+  private parsed = false;
 
   private readonly openTag: string;
   private readonly closeTag: string;
@@ -17,88 +12,60 @@ export class StreamingMarkupParserTransformer extends Transform {
     private readonly onContent: (raw: string | undefined) => void,
     options?: any,
   ) {
-    super({
-      ...options,
-      objectMode: true,
-    });
+    super({ ...options, objectMode: true });
+
     this.openTag = `<${tag}>`;
     this.closeTag = `</${tag}>`;
   }
 
   _transform(
     chunk: Buffer | string,
-    encoding: string,
+    _encoding: string,
     callback: CallableFunction,
   ) {
-    chunk = chunk || '';
-    chunk = chunk.toString();
-
-    this.buffer += chunk;
-
-    if (
-      this.tagIsNotFound !== true &&
-      this.isTagContent !== false &&
-      !this.tagIsClosed
-    ) {
-      const closeTagPos = this.buffer.indexOf(this.closeTag);
-      if (this.isTagContent === true && closeTagPos > -1) {
-        this.tagIsClosed = true;
-
-        const rawJson = this.buffer.slice(this.openTag.length, closeTagPos);
-
-        this.onContent(rawJson);
-        this.callbackCalled = true;
-
-        this.buffer = this.buffer.slice(
-          closeTagPos + this.closeTag.length, //+1 is carriage return
-        );
-        if (this.buffer.startsWith('\n')) {
-          this.buffer = this.buffer.slice(1);
-        }
-      } else {
-        // wait for buffer length, then check for tag
-        if (
-          this.isTagContent === undefined &&
-          this.buffer.length >= this.openTag.length
-        ) {
-          const isToolAnswer = this.buffer.startsWith(this.openTag);
-          this.isTagContent = isToolAnswer;
-        }
-      }
-    }
-
-    this.sendBuffer();
-
+    this.buffer += chunk.toString();
+    this.tryParse();
     callback();
-  }
-
-  sendBuffer() {
-    // tag not found at this point
-    if (
-      this.buffer.length > this.openTag.length &&
-      this.isTagContent === false
-    ) {
-      this.tagIsNotFound = true;
-    }
-
-    if (
-      this.tagIsNotFound === true ||
-      this.isTagContent === false ||
-      this.tagIsClosed === true
-    ) {
-      this.push(this.buffer);
-      this.buffer = '';
-    }
   }
 
   _flush(callback: CallableFunction) {
-    // Flush the remaining incomplete phrase
-    if (this.buffer.trim().length > 0) {
-      this.sendBuffer();
+    this.tryParse(true); // final attempt to parse
+    if (!this.parsed) {
+      this.onContent(undefined);
     }
-    if (!this.callbackCalled) {
-      this.onContent && this.onContent(undefined);
+
+    if (this.buffer.length > 0) {
+      this.push(this.buffer); // push leftovers
     }
+
     callback();
+  }
+
+  private tryParse(isFlush = false) {
+    if (this.parsed) return;
+
+    const start = this.buffer.indexOf(this.openTag);
+    const end = this.buffer.indexOf(this.closeTag);
+
+    if (start !== -1 && end !== -1 && end > start) {
+      const content = this.buffer.slice(start + this.openTag.length, end);
+      this.onContent(content.trim());
+      this.parsed = true;
+
+      // remove parsed segment, keep the rest
+      const before = this.buffer.slice(0, start);
+      const after = this.buffer.slice(end + this.closeTag.length);
+      this.buffer = (before + after).trimStart();
+    } else if (isFlush) {
+      // Couldn't find full tag block even after full input
+      this.onContent(undefined);
+      this.parsed = true;
+    }
+
+    // We push remaining buffer only after parsing or on flush
+    if (this.parsed && this.buffer.length > 0) {
+      this.push(this.buffer);
+      this.buffer = '';
+    }
   }
 }

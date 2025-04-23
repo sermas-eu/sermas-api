@@ -1,6 +1,6 @@
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import {
-  BaseSystemPrompt,
+  createBaseSystemPrompt,
   BaseSystemPromptParams,
 } from '../dialogue.system.prompt';
 import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto';
@@ -18,49 +18,86 @@ export type AvatarChatPromptParams = {
 export const avatarSystemChatPrompt =
   PromptTemplate.create<AvatarChatSystemPromptParams>(
     'chat-system',
-    `${BaseSystemPrompt}
+    `${createBaseSystemPrompt()}
 
 ## Response format
-Strictly follow the following Example structure in your answer. Provide correct and parsable JSON in markup tags.
+Strictly output the structure in Example in your answer, without markdown titles or other additions. Provide correct and parsable JSON in markup tags.
 Append then the CHAT response as plain text, do not use emoticons. 
 Never add Notes or Explanations.
 
-### Example:
+### Example
 <filter>
 { "skip": boolean, "answer": string, "explain": string }
 </filter>
-<tools>
-{ "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
-</tools>
 <intents>
 { "taskId": string, "match": boolean, "trigger": boolean, "cancel": boolean, "explain": string }
 </intents>
+<tools>
+{ "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
+</tools>
 `,
   );
 
 export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
   'chat',
-  `Execute sequentially the following tasks delimited by markdown titles.
+  `Execute sequentially the following sections delimited by markdown titles.
 
 # FILTER
-
 Identify if USER MESSAGE could be relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS.
 Populate the field 'filter' in response.
 
-Set 'skip' to true when message is clearly self-talking or an incomplete formulation (like from background noise), leave 'answer' empty.
+Set 'skip' to true when messagean incomplete formulation (like from background noise), leave 'answer' empty.
+Set 'skip' to true when message is clearly self-talking or possibly chattering with someone else.
 Set 'skip' to false when message is a well formatted and correct message, even if not relevant.
 
 Set the field 'explain' describing your decision.
 Set the field 'answer' to provide feedback to the user.
-If message is skipped, do not continue to next steps. 
+If message is skipped, do not continue with other sections. 
+
+# INTENTS
+Analyze CONVERSATION and match one of TASKS based on user intention.
+Populate the field 'intent' in response. 
+
+## MATCH
+Set the field 'match' to 'true' evaluating sequqentially the following cases:
+- there is a match with one of 'intents' or 'taskDescription'
+- the assistant asked explicitly in the previous message for a task and the user is confirming or declining
+
+## TRIGGER
+Set the field 'trigger' to 'true' evaluate sequentially the following cases:
+- USER MESSAGE text match precisely or is a rephrasing of the 'taskDescription'
+- user accepts a task already proposed by the assistant in the previous messages
+- the assistant committed to execute a task, without expecting user response
+
+If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
+
+Set 'taskId' only with one from TASKS that has 'match' true.
+
+Set the field 'explain' describing why you set match, trigger and cancel values. 
+If a task 'match' and 'trigger' are true, skip all the next sections.
+
+<% if (data.activeTask) { %>
+## CANCEL
+Evaluate the recent messages in CONVERSATION between user and agent to evaluate if the ongoing task '<%= data.activeTask %>' should be cancelled. 
+Set the field 'cancel' to true evaluating each of the following cases:
+- user explicitly ask to cancel the task
+- there is no interest or the conditions to continue with the task
+- another task in TASKS has 'intents' or 'taskDescription' that matches with the subject of the conversation 
+- another task in TASKS has 'intents' or 'taskDescription' that match with the last USER MESSAGE
+<% } %>
+
+<% if (!data.activeTask) { %>
+  If a task 'match', skip the next section.
+<% } %>
 
 # TOOLS
 Find matches of provided TOOLS list with USER MESSAGE. 
 
 Follow those rules sequentially, when one matches skip the following.
-- If a tool with name '${TOOL_CATCH_ALL}' is available, match it directly. Exception if there is an ACTIVE TASK and user want to cancel or abort it.
-- match strictly the USER REQUEST to be equal or part of TOOLS 'description'.
-- the USER MESSAGE should have a match by meaning or partial overlap with the description of one TOOLS.
+- if USER MESSAGE is a request for information or a question, skip all tools.
+- If a tool with name '${TOOL_CATCH_ALL}' is available, match it directly.
+- the text of USER REQUEST matches completely or in part the TOOLS 'description' text.
+- the USER MESSAGE is a rephrasing of the description of a TOOLS.
 
 Populate the 'matches' field with an object using the tool 'name' field as key and an object as value 
 with the key-value of tool param 'name' and value extracted from user message.
@@ -68,29 +105,6 @@ Set 'matches' to an empty object if there is no match or no TOOLS are available.
 Set the field 'explain' describing why you set those values, omit if 'tools' is empty.
 
 Never mention tools in the chat response. Skip the next section if a tool is found. 
-
-# INTENTS
-
-Analyze CONVERSATION and match one of TASKS based on the USER MESSAGE intention.
-Populate the field 'intent' in response. 
-
-Set the field 'match' to 'true' only in those cases:
-- if there is an explicit match with an intent
-- if the assistant asked explicitly in the previous message for a task and the user is confirming or declining
-
-Set the field 'trigger' to 'true' only in those cases:
-- if USER MESSAGE equals or has partial overlap to TASKS 'description', ignore intents.
-- if user accepts a task proposed by the assistant in the previous message
-
-If an ACTIVE TASK is available, set 'trigger' to false.
-
-Set 'taskId' only with one from TASKS that has 'match' true.
-
-<% if (data.activeTask) { %>
-  If the interaction indicates the user want to cancel or not continue or switch to another task, set the field "cancel" to true
-<% } %>
-
-Set the field 'explain' describing why you set match,trigger and cancel values. If a task 'match' and 'trigger' are true, skip the next section.
 
 # CHAT RESPONSE
 You are an AVATAR (also assistant or agent) discussing with USER in the APPLICATION context. The conversation is speech-based and must be fast and coincise, avoid repetitions.
@@ -116,27 +130,34 @@ Never mention tools in the chat response.
     Use KNOWLEDGE when relevant to the user message.
   <% } %>
 
-  Propose one of TASKS that has been set to 'match' true in the INTENTS section.
-
 <% } %>
 
 <% if (data.field || data.task) { %>
   <% if (data.task) { %>
-    ## CURRENT TASK:
+    ## CURRENT TASK
     <%= data.task %>
   <% } %>
 
   <% if (data.field) { %>
-    ## CURRENT FIELD:
+    ## CURRENT FIELD 
     <%= data.field %>
   <% } %>
 
 <% } else { %>
 
   <% if (data.knowledge) { %>
-    ## KNOWLEDGE:
+    ## KNOWLEDGE
     <%= data.knowledge %>
   <% } %>
 
-<% } %>`,
+<% } %>
+
+
+## REACTION
+Based on the previous INTENTS section evaluation, ask the user if they want to proceed with a task formulating the 'taskDescription' in a question. 
+Follow those rules sequentially:
+- If a task match explicitly.
+- If a task is cancelled offer the NEW task.
+- Skip in any other case.
+`,
 );

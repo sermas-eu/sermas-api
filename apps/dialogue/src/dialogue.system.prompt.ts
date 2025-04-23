@@ -11,7 +11,8 @@ export type BaseSystemPromptParams = {
   tasks?: string;
 };
 
-export const BaseSystemPrompt = `
+export const createBaseSystemPrompt = () => `
+Current date: ${new Date().toISOString()}
 <% if (data.app) { %>
   ## APPLICATION
   <%= data.app %>
@@ -21,8 +22,8 @@ export const BaseSystemPrompt = `
   <%= data.avatar %>
 <% } %>
 <% if (data.language) { %>
-  ## USE LANGUAGE
-  <%= data.language %>
+  ## LANGUAGE
+  Conversation response must always be in language <%= data.language %>
 <% } %>
 <% if (data.history) { %>
   ## CONVERSATION

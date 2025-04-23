@@ -99,7 +99,7 @@ export class DialogueChatService {
     this.emitter.emit('dialogue.chat.validation', validationEvent);
 
     // skip
-    this.logger.debug(`User message: ${message.text}`);
+    this.logger.debug(`USER MESSAGE: ${message.text}`);
 
     if (response?.filter?.explain) {
       this.logExplanation({
@@ -124,6 +124,14 @@ export class DialogueChatService {
       return;
     }
 
+    if (response?.intent?.explain) {
+      this.logExplanation({
+        ...message,
+        context: 'intent',
+        explain: response?.intent?.explain,
+      });
+    }
+
     if (response?.tools?.explain) {
       this.logExplanation({
         ...message,
@@ -134,14 +142,6 @@ export class DialogueChatService {
 
     // intents
     if (response?.intent) {
-      if (response.intent.explain) {
-        this.logExplanation({
-          ...message,
-          context: 'intent',
-          explain: response?.intent?.explain,
-        });
-      }
-
       const taskResult = await this.intent.handleTaskIntent({
         message,
         taskIntent: response.intent,
@@ -342,7 +342,7 @@ export class DialogueChatService {
       message: message.text,
       tools: convertToolsToPrompt(activeTools.tools),
       intents: currentTask ? undefined : JSON.stringify(intents),
-      activeTask: currentTask?.name,
+      // activeTask: currentTask?.name,
     };
 
     const chatPromptParams: AvatarChatPromptParams = {
@@ -352,7 +352,7 @@ export class DialogueChatService {
       activeTask: currentTask?.name,
       task:
         currentTask && (currentTask.hint || currentTask.description)
-          ? `${currentTask.name}: ${currentTask.hint || currentTask.description}`
+          ? `${currentTask.name}\n${currentTask.hint || currentTask.description}`
           : undefined,
       field:
         currentField && currentField?.hint
@@ -394,20 +394,20 @@ export class DialogueChatService {
             },
           ),
           new StreamingMarkupParserTransformer(
+            'intents',
+            (res: string | undefined) => {
+              if (res) {
+                llmParsedResult.intent = parseJSON(res) || undefined;
+              }
+            },
+          ),
+          new StreamingMarkupParserTransformer(
             'tools',
             (res: string | undefined) => {
               llmParsedResult.tools = this.parseMatchingTools(
                 res,
                 activeTools.tools,
               );
-            },
-          ),
-          new StreamingMarkupParserTransformer(
-            'intents',
-            (res: string | undefined) => {
-              if (res) {
-                llmParsedResult.intent = parseJSON(res) || undefined;
-              }
             },
           ),
           new SentenceTransformer(() => {

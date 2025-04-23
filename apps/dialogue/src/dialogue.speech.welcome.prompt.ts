@@ -1,13 +1,13 @@
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import {
-  BaseSystemPrompt,
+  createBaseSystemPrompt,
   BaseSystemPromptParams,
 } from './dialogue.system.prompt';
 
 export const welcomeMessageSystemPrompt =
   PromptTemplate.create<BaseSystemPromptParams>(
     'welcome-message-system',
-    `${BaseSystemPrompt}
+    `${createBaseSystemPrompt()}
 ## Response format
 Answer in parsable JSON format as follow. Do not add notes or explanations.
 {

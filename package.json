@@ -1,6 +1,6 @@
 {
   "name": "@sermas/api",
-  "version": "1.0.58",
+  "version": "1.0.59",
   "private": true,
   "description": "SERMAS Toolkit API",
   "author": "SpindoxLabs",
@@ -61,6 +61,7 @@
     "cache-manager-redis-yet": "^5.0.0",
     "cheerio": "^1.0.0-rc.12",
     "chromadb": "^1.8.1",
+    "chromadb-default-embed": "^2.14.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "crawlee": "^3.10.2",

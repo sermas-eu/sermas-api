@@ -66,7 +66,7 @@ export class DialogueIntentService {
     const intents: TaskIntentsList[] = tasks.map(
       (t): TaskIntentsList => ({
         taskId: t.taskId,
-        description: t.description,
+        taskDescription: t.description,
         intents: t.intents.filter((i) => i.name && i.description),
       }),
     );
@@ -140,12 +140,7 @@ export class DialogueIntentService {
 
     // a task matches and user confirmed for it.
     // NOTE: Cannot start if another task is ongoing, is it ok ?
-    if (
-      taskIntent?.match &&
-      taskIntent?.trigger &&
-      !activeTask.task &&
-      !cancelledTaskId
-    ) {
+    if (taskIntent?.match && taskIntent?.trigger && !currentTask) {
       if (matchingTask) {
         selectedTask = matchingTask;
       } else {
