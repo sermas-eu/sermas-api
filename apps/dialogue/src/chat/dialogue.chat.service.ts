@@ -259,8 +259,10 @@ export class DialogueChatService {
             'USER:',
             'UTENTE:',
             'CHAT RESPONSE:',
+            response.data.avatar?.name ? `${response.data.avatar?.name}:` : '',
           ];
           trimPrefixes.forEach((trimPrefix) => {
+            if (trimPrefix.length === 0) return;
             if (text.startsWith(trimPrefix)) {
               text = text.substring(trimPrefix.length);
             }
@@ -372,6 +374,7 @@ export class DialogueChatService {
         activeTask,
         tasks,
         activeTools: activeTools,
+        avatar,
       },
     };
     const llmParsedResult: LLMParsedResult = {};
