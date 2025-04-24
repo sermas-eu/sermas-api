@@ -195,7 +195,10 @@ export class DialogueChatService {
 
     const isChatModeDisabled = settings?.chatModeEnabled === false;
 
-    const skipChatResponse = isChatModeDisabled || skipResponse;
+    const skipChatResponse =
+      isChatModeDisabled || // skip if set by app.settings.chatModeEnabled
+      skipResponse || // skip if a tool triggered
+      response?.data?.currentField?.skipResponse; // skip if indicated by the current field
 
     if (skipChatResponse) {
       if (!hasToolsMatches && response.data.activeTools?.tools?.length) {

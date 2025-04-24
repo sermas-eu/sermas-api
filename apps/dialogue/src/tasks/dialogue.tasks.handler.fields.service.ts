@@ -473,7 +473,9 @@ Return the 'value' field value`;
               description:
                 o.description ||
                 `Expect a boolean anwser from the user (such as yes, ok or no, cancel). Match ${o.label || o.value}`,
-              options: { ttsEnabled: false },
+              options: {
+                ttsEnabled: false,
+              },
             })),
           }),
         );
@@ -538,7 +540,9 @@ Return the 'value' field value`;
               label: o.label || o.value,
               value: o.value,
               description: o.description,
-              options: { ttsEnabled: false },
+              options: {
+                ttsEnabled: false,
+              },
             })),
           }),
         );
@@ -584,6 +588,7 @@ Return the 'value' field value`;
       contentType,
       content,
       metadata: this.createMetadata(context),
+      options: context.field?.uiOptions || {},
     } as UIContentDto<T>;
   }
 
