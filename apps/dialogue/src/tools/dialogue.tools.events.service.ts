@@ -195,20 +195,28 @@ export class DialogueToolsEventsService {
         const buttons = ev.content as ButtonsContentDto;
 
         await addTools(
-          buttons.list.map(
-            (button): UiToolParam => ({
-              description: `${button.description ? `${button.description} : ` : `${button.label || button.value}`}`,
-              schema: [
-                {
-                  description: 'Ignore: btn value',
-                  parameter: 'value',
-                  type: 'string',
-                  value: button.value,
-                  ignore: true,
-                },
-              ],
+          buttons.list
+            .filter((b) => b.description || b.value || b.label)
+            .map((button): UiToolParam => {
+              const toolDescription =
+                `${button.description || ''} ${button.label || button.value ? `: ${button.label || button.value}` : ''}`
+                  .replace(/\n/gim, ' ')
+                  .replace(/ +/gim, ' ')
+                  .trim();
+
+              return {
+                description: toolDescription,
+                schema: [
+                  {
+                    description: 'Ignore: btn value',
+                    parameter: 'value',
+                    type: 'string',
+                    value: button.value,
+                    ignore: true,
+                  },
+                ],
+              };
             }),
-          ),
         );
         break;
       case 'quiz':

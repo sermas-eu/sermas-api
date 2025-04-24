@@ -49,6 +49,7 @@ Populate the field 'filter' in response.
 Set 'skip' to true when messagean incomplete formulation (like from background noise), leave 'answer' empty.
 Set 'skip' to true when message is clearly self-talking or possibly chattering with someone else.
 Set 'skip' to false when message is a well formatted and correct message, even if not relevant.
+Set 'skip' to false when message matches one of in TOOLS.
 
 Set the field 'explain' describing your decision.
 Set the field 'answer' to provide feedback to the user.
@@ -69,14 +70,19 @@ Set the field 'trigger' to 'true' evaluate sequentially the following cases:
 - user accepts a task already proposed by the assistant in the previous messages
 - the assistant committed to execute a task, without expecting user response
 
+<% if (data.activeTask) { %>
+  If the matching taskId is '<%= data.activeTask %>' set 'trigger' to false
+<% } %>
+
 If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
 
 Set 'taskId' only with one from TASKS that has 'match' true.
 
 Set the field 'explain' describing why you set match, trigger and cancel values. 
-If a task 'match' and 'trigger' are true, skip all the next sections.
 
 <% if (data.activeTask) { %>
+If identified taskId equals to '<%= data.activeTask %>', set 'trigger' to false
+
 ## CANCEL
 Evaluate the recent messages in CONVERSATION between user and agent to evaluate if the ongoing task '<%= data.activeTask %>' should be cancelled. 
 Set the field 'cancel' to true evaluating each of the following cases:
@@ -86,12 +92,15 @@ Set the field 'cancel' to true evaluating each of the following cases:
 - another task in TASKS has 'intents' or 'taskDescription' that match with the last USER MESSAGE
 <% } %>
 
+
+If both 'match' and 'trigger' are true, skip all the next sections.
+
 <% if (!data.activeTask) { %>
   If a task 'match', skip the next section.
 <% } %>
 
 # TOOLS
-Find matches of provided TOOLS list with USER MESSAGE. 
+Find matches of provided TOOLS list with USER MESSAGE, ignore TASKS.
 
 Follow those rules sequentially, when one matches skip the following.
 - if USER MESSAGE is a request for information or a question, skip all tools.
@@ -121,7 +130,7 @@ Never mention tools in the chat response.
     CURRENT FIELD provide details during an ongoing task. You must follow the field specification.
     Use the last assistant messages to answer the user. Only offer options already proposed. 
     You must never propose options different from those already proposed.
-    Avoid user deviations and help the user in the completion of the task.
+    Avoid user deviations in the completion of the task.
   <% } %>
 
 <% } else { %>
