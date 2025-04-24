@@ -199,7 +199,7 @@ export class DialogueToolsEventsService {
             .filter((b) => b.description || b.value || b.label)
             .map((button): UiToolParam => {
               const toolDescription =
-                `${button.description || ''} ${button.label || button.value ? `: ${button.label || button.value}` : ''}`
+                `${button.label || button.value ? `${button.label || button.value} : ` : ''}${button.description || ''}`
                   .replace(/\n/gim, ' ')
                   .replace(/ +/gim, ' ')
                   .trim();
