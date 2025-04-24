@@ -92,7 +92,6 @@ Set the field 'cancel' to true evaluating each of the following cases:
 - another task in TASKS has 'intents' or 'taskDescription' that match with the last USER MESSAGE
 <% } %>
 
-
 If both 'match' and 'trigger' are true, skip all the next sections.
 
 <% if (!data.activeTask) { %>
@@ -100,7 +99,7 @@ If both 'match' and 'trigger' are true, skip all the next sections.
 <% } %>
 
 # TOOLS
-Find matches of provided TOOLS list with USER MESSAGE, ignore TASKS.
+Find matches of provided TOOLS list with USER MESSAGE, ignore TASKS. A tool has always priority over a task.
 
 Follow those rules sequentially, when one matches skip the following.
 - if USER MESSAGE is a request for information or a question, skip all tools.
