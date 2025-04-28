@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.decorator';
 import { DialogueToolsRepositoryOptionsDto } from '../../tools/repository/dialogue.tools.repository.dto';
+import { UIContentOptionsDto } from 'apps/ui/src/ui.content.dto';
 
 export const TaskFieldDataTypeList = [
   'text',
@@ -28,6 +29,11 @@ export class OptionSelection {
     description: 'Description for an option',
   })
   description?: string;
+
+  @ApiPropertyOptional({
+    description: 'Addtional settings for this field',
+  })
+  options?: string;
 }
 
 export class TaskIntentDto {
@@ -63,6 +69,16 @@ export class TaskFieldDto {
     description: 'Priority order (lower first)',
   })
   order?: number;
+
+  @ApiPropertyOptional({
+    description: 'UI content options',
+  })
+  uiOptions?: UIContentOptionsDto;
+
+  @ApiPropertyOptional({
+    description: 'Skip chat response',
+  })
+  skipResponse?: boolean;
 
   @ApiProperty({
     description: 'Data type',

@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   AppSettingsDto,
   AppToolsDTO,
+  RepositoryAvatarDto,
 } from 'apps/platform/src/app/platform.app.dto';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { LLMCallResult } from 'libs/llm/providers/provider.dto';
@@ -43,6 +44,7 @@ export type LLMChatData = {
     currentField?: TaskFieldDto;
     activeTask?: ActiveTaskRecord;
     tasks?: DialogueTaskDto[];
+    avatar?: RepositoryAvatarDto;
   };
 };
 
