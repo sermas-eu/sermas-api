@@ -128,74 +128,92 @@ export class DialogueVectorStoreService implements OnModuleInit {
     await collection.delete({ ids });
   }
 
-  extractChunks(raw: string, parserMode?: DocumentParseMode) {
+  extractChunks(
+    raw: string,
+    parserMode?: DocumentParseMode,
+    parserWindowSize?: number,
+  ): string[] {
+    let chunks: string[];
     switch (parserMode) {
       case 'single-line':
-        return parseByBlock(raw, '\n');
+        chunks = parseByBlock(raw, '\n');
       case 'double-line':
-        return parseByBlock(raw, '\n\n');
+        chunks = parseByBlock(raw, '\n\n');
       case 'sentence':
       default:
-        return parseBySentence(raw);
+        chunks = parseBySentence(raw);
     }
+    if (parserWindowSize) {
+      chunks = Array.from(
+        { length: chunks.length - (parserWindowSize - 1) },
+        (_, index) => chunks.slice(index, index + parserWindowSize).join('\n'),
+      );
+    }
+    return chunks;
   }
 
   async saveDocuments(appId: string, documents: DialogueDocumentDto[]) {
-    const ids: string[] = [];
-    const docs: string[] = [];
-    const metadata: Record<string, any>[] = [];
+    const collection = await this.getCollection(appId);
+    if (!collection) {
+      this.logger.error(
+        `Import error: failed to get collection appId=${appId}`,
+      );
+      return;
+    }
 
+    for (const document of documents) {
+      await this.saveDocument(appId, document, collection);
+    }
+  }
+
+  private async saveDocument(
+    appId: string,
+    document: DialogueDocumentDto,
+    collection: Collection,
+  ) {
     const perf = this.monitor.performance({
       appId,
       label: 'document.save',
       threshold: 10 * 1000,
     });
+    const ids: string[] = [];
+    const docs: string[] = [];
+    const metadata: Record<string, any>[] = [];
+    const chunks = this.extractChunks(
+      document.content,
+      document.metadata?.options?.parser,
+    );
 
-    for (const document of documents) {
-      const chunks = this.extractChunks(
-        document.content,
-        document.metadata?.options?.parser,
-      );
-
-      let i = 0;
-      for (const chunk of chunks) {
-        if (!chunk.length) continue;
-        ids.push(document.documentId + '-' + i);
-        docs.push(chunk);
-        metadata.push(document.metadata);
-        i++;
-      }
-
-      if (!docs.length) {
-        this.logger.debug(
-          `Skip empty document ${document.documentId} appId=${appId}`,
-        );
-        return;
-      }
-
-      const embds: number[][] = await this.llmProvider.embeddings(docs);
-      // this.logger.debug(`embds: ${embds}`);
-      const collection = await this.getCollection(appId);
-      if (!collection) {
-        this.logger.warn(
-          `Import error, failed to get collection appId=${appId} docId=${document.documentId} with ${docs.length} chunks`,
-        );
-        continue;
-      }
-
-      await collection.add({
-        ids: ids,
-        documents: docs,
-        embeddings: embds,
-        metadatas: metadata,
-      });
-
-      perf();
-
-      this.logger.debug(
-        `Imported appId=${appId} docId=${document.documentId} with ${docs.length} chunks`,
-      );
+    for (const chunk of chunks) {
+      if (!chunk.length) continue;
+      const chunkHash: string = hash(chunk);
+      ids.push(document.documentId + '-' + chunkHash);
+      docs.push(chunk);
+      const meta = { ...(document.metadata || {}), chunkHash: chunkHash };
+      metadata.push(meta);
     }
+
+    if (!docs.length) {
+      this.logger.debug(
+        `Skip empty document ${document.documentId} appId=${appId}`,
+      );
+      return;
+    }
+
+    const embds: number[][] = await this.llmProvider.embeddings(docs);
+
+    await collection.upsert({
+      ids: ids,
+      documents: docs,
+      embeddings: embds,
+      metadatas: metadata,
+    });
+
+    perf();
+
+    this.logger.debug(
+      `Imported appId=${appId} docId=${document.documentId} with ${docs.length} chunks`,
+    );
   }
 
   async getCollection(
@@ -226,7 +244,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     return this.collections[name];
   }
 
-  async search(appId: string, qs: string, limit = 1) {
+  async search(appId: string, qs: string, limit = 4) {
     const collection = await this.getCollection(appId);
     if (!collection) return '';
 
