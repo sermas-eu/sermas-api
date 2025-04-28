@@ -78,10 +78,24 @@ export class DialogueVectorStoreService implements OnModuleInit {
 
   async recreateCollection(appId: string) {
     const appIdHash = hash(appId);
-
+    let collection: Collection;
     try {
-      await this.client.deleteCollection({ name: appIdHash });
-      this.logger.log(`Removed collection appId=${appId} hash=${appIdHash}`);
+      collection = await this.client.getCollection({
+        name: appIdHash,
+        embeddingFunction: this.embeddingFunction,
+      });
+      if (collection) {
+        // See https://github.com/langchain-ai/langchain/issues/24650
+        const idsToDelete = collection.get()['ids'];
+        if (idsToDelete.length) await collection.delete(idsToDelete);
+        const result = (await this.client.deleteCollection({
+          name: appIdHash,
+        })) as any;
+        if (result && result.error) throw result;
+        this.logger.log(
+          `Removed collection appId=${appId} hash=${appIdHash}, result=${result}`,
+        );
+      }
     } catch (e) {
       this.logger.warn(
         `Failed to remove collection appId=${appId}: ${e.stack}`,
@@ -89,7 +103,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     }
 
     try {
-      await this.client.getOrCreateCollection({
+      collection = await this.client.createCollection({
         name: appIdHash,
         embeddingFunction: this.embeddingFunction,
       });
@@ -105,8 +119,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
       `Recreated collection for appId=${appId} (name=${appIdHash})`,
     );
 
-    if (this.collections[appIdHash]) delete this.collections[appIdHash];
-    await this.getCollection(appId);
+    this.collections[appIdHash] = collection;
   }
 
   async heartbeat() {
