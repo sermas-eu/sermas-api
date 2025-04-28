@@ -131,7 +131,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
   extractChunks(
     raw: string,
     parserMode?: DocumentParseMode,
-    parserWindowSize?: number,
+    parserWindowSize: number = 3,
   ): string[] {
     let chunks: string[];
     switch (parserMode) {
@@ -182,6 +182,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     const chunks = this.extractChunks(
       document.content,
       document.metadata?.options?.parser,
+      document.metadata?.options?.parserWindowSize,
     );
 
     for (const chunk of chunks) {

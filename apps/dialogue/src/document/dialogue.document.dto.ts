@@ -14,6 +14,11 @@ export class DialogueDocumentOptionsDto {
       'Define the document splitting strategy. "phrase" split by sentence, "single-line" use each line as document, "double-line" use double break-line as document',
   })
   parser?: DocumentParseMode;
+  @ApiPropertyOptional({
+    description:
+      'If present, joins together consecutive splits as a rolling window',
+  })
+  parserWindowSize?: number;
 }
 
 export class DialogueDocumentMetadataDto {
