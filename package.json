@@ -60,7 +60,7 @@
     "cache-manager": "^5.5.1",
     "cache-manager-redis-yet": "^5.0.0",
     "cheerio": "^1.0.0-rc.12",
-    "chromadb": "^1.8.1",
+    "chromadb": "^1.10.5",
     "chromadb-default-embed": "^2.14.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",

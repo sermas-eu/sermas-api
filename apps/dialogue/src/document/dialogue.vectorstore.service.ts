@@ -86,8 +86,8 @@ export class DialogueVectorStoreService implements OnModuleInit {
       });
       if (collection) {
         // See https://github.com/langchain-ai/langchain/issues/24650
-        const idsToDelete = collection.get()['ids'];
-        if (idsToDelete.length) await collection.delete(idsToDelete);
+        const idsToDelete = (await collection.get())['ids'];
+        if (idsToDelete.length) await collection.delete({ ids: idsToDelete });
         const result = (await this.client.deleteCollection({
           name: appIdHash,
         })) as any;
@@ -97,29 +97,21 @@ export class DialogueVectorStoreService implements OnModuleInit {
         );
       }
     } catch (e) {
-      this.logger.warn(
+      this.logger.error(
         `Failed to remove collection appId=${appId}: ${e.stack}`,
       );
+      return;
     }
 
-    try {
-      collection = await this.client.createCollection({
-        name: appIdHash,
-        embeddingFunction: this.embeddingFunction,
-      });
-      this.logger.log(`Created collection appId=${appId} hash=${appIdHash}`);
-    } catch (e) {
-      this.logger.error(
-        `Failed to create collection appId=${appId}: ${e.stack}`,
-      );
+    collection = await this.getOrCreateCollection(appId);
+    if (!collection) {
+      this.logger.error(`Failed to create collection appId=${appId}`);
       return;
     }
 
     this.logger.debug(
       `Recreated collection for appId=${appId} (name=${appIdHash})`,
     );
-
-    this.collections[appIdHash] = collection;
   }
 
   async heartbeat() {
@@ -133,7 +125,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
   async removeDocuments(appId: string, ids: string | string[]) {
     ids = ids instanceof Array ? ids : [ids];
     this.logger.debug(`Remove appId=${appId} documentId=${ids.join(',')}`);
-    const collection = await this.getCollection(appId);
+    const collection = await this.getOrCreateCollection(appId);
     if (!collection) {
       this.logger.warn('Collection not found');
       return;
@@ -166,7 +158,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
   }
 
   async saveDocuments(appId: string, documents: DialogueDocumentDto[]) {
-    const collection = await this.getCollection(appId);
+    const collection = await this.getOrCreateCollection(appId);
     if (!collection) {
       this.logger.error(
         `Import error: failed to get collection appId=${appId}`,
@@ -214,7 +206,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
       return;
     }
 
-    const embds: number[][] = await this.llmProvider.embeddings(docs);
+    const embds: number[][] = await this.embeddingFunction.generate(docs);
 
     await collection.upsert({
       ids: ids,
@@ -230,10 +222,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     );
   }
 
-  async getCollection(
-    appId: string,
-    embeddingFunction?: IEmbeddingFunction | null,
-  ) {
+  async getOrCreateCollection(appId: string): Promise<Collection | null> {
     if (!appId) return null;
     const name = hash(appId);
 
@@ -241,11 +230,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
       try {
         this.collections[name] = await this.client.getOrCreateCollection({
           name,
-          // use default embedding function if param is set to null
-          embeddingFunction:
-            embeddingFunction === null
-              ? undefined
-              : embeddingFunction || this.embeddingFunction,
+          embeddingFunction: this.embeddingFunction,
         });
         this.logger.debug(`Loaded collection ${appId} (name=${name})`);
       } catch (e) {
@@ -259,13 +244,12 @@ export class DialogueVectorStoreService implements OnModuleInit {
   }
 
   async search(appId: string, qs: string, limit = 4) {
-    const collection = await this.getCollection(appId);
+    const collection = await this.getOrCreateCollection(appId);
     if (!collection) return '';
 
     const perf = this.monitor.performance({
       appId,
       label: 'embeddings.search',
-      threshold: 1000,
     });
 
     const response = await collection.query({
