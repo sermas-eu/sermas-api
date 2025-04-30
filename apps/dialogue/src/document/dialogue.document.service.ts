@@ -244,10 +244,10 @@ export class DialogueDocumentService implements OnModuleInit {
 
   async importWebsite(appId: string, website: RagWebsiteDto) {
     this.logger.debug(`Import content from ${website.url}`);
-    await this.scrap(appId, website);
+    await this.scrape(appId, website);
   }
 
-  async scrap(appId: string, website: RagWebsiteDto): Promise<void> {
+  async scrape(appId: string, website: RagWebsiteDto): Promise<void> {
     // trigger collection recreate
     this.emitter.emit('dialogue.document.import', appId);
     // use sitemap.xml
