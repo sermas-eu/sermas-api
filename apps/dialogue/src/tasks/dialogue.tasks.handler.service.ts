@@ -470,6 +470,7 @@ export class DialogueTasksHandlerService {
   }
 
   async nextStep(record: DialogueTaskRecordDto, task: DialogueTaskDto) {
+    // TODO: This method may need a full refactor
     let currentField: TaskFieldDto | undefined;
 
     const perf = this.monitoring.performance({
@@ -505,8 +506,10 @@ export class DialogueTasksHandlerService {
         perf('condition.completed');
         if (!conditionMet) {
           this.logger.debug(`Skipping field ${currentField.name}`);
-          record.values[currentField.name] = null;
-          record = await this.record.save(record);
+          // Reason: If the condition is NOT met, the field will be "undefined"
+          // and it will be checked at the next iteration
+          // record.values[currentField.name] = null;
+          // record = await this.record.save(record);
           currentField = undefined;
           continue;
         }
@@ -530,20 +533,21 @@ export class DialogueTasksHandlerService {
           },
         });
 
-        // store value and emit
-        record.values[currentField.name] = value;
-        record = await this.record.save(record);
-        this.logger.debug(
-          `Saved evaluated record ${currentField.name}=${value}`,
-        );
-
         perf('eval.completed');
+
+        if (value !== null) {
+          // store value and emit
+          record.values[currentField.name] = value;
+          record = await this.record.save(record);
+          this.logger.debug(
+            `Saved evaluated record ${currentField.name}=${value}`,
+          );
+        }
 
         // reset current field
         currentField = undefined;
         continue;
       }
-
       break;
     }
 

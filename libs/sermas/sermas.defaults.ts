@@ -233,7 +233,7 @@ export const SermasDefaultConfig = {
   // VERTEXAI_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
   VERTEXAI_API_KEY: '',
   // VERTEXAI_CHAT_MODELS Supported Google chat models under Vertex AI. Leave empty to allow any.
-  VERTEXAI_CHAT_MODELS: 'mistral-small-2503',
+  VERTEXAI_CHAT_MODELS: 'gemini-2.5-pro-preview-03-25',
   // VERTEXAI_REGION Google Cloud Processing region for Vertex AI
   VERTEXAI_REGION: '',
   // VERTEXAI_PROJECT Google Cloud project ID for Vertex AI

@@ -335,11 +335,9 @@ export class DialogueTasksHandlerFieldsService {
         break;
       case 'select':
         if (field.options?.length) {
-          const options = (field.options || [])
-            .map((o) => '- ' + JSON.stringify(o))
-            .join('\n');
+          const options = JSON.stringify(field.options || []);
           rules = `
-Should match with one of the following JSON items:
+Should match with one of the following options value:
 ${options}
 Return the 'value' field value`;
         }
@@ -473,7 +471,9 @@ Return the 'value' field value`;
               description:
                 o.description ||
                 `Expect a boolean anwser from the user (such as yes, ok or no, cancel). Match ${o.label || o.value}`,
-              options: { ttsEnabled: false },
+              options: {
+                ttsEnabled: false,
+              },
             })),
           }),
         );
@@ -538,7 +538,9 @@ Return the 'value' field value`;
               label: o.label || o.value,
               value: o.value,
               description: o.description,
-              options: { ttsEnabled: false },
+              options: {
+                ttsEnabled: false,
+              },
             })),
           }),
         );
@@ -584,6 +586,7 @@ Return the 'value' field value`;
       contentType,
       content,
       metadata: this.createMetadata(context),
+      options: context.field?.uiOptions || {},
     } as UIContentDto<T>;
   }
 

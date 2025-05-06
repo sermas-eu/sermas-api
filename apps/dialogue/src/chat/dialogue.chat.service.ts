@@ -195,7 +195,10 @@ export class DialogueChatService {
 
     const isChatModeDisabled = settings?.chatModeEnabled === false;
 
-    const skipChatResponse = isChatModeDisabled || skipResponse;
+    const skipChatResponse =
+      isChatModeDisabled || // skip if set by app.settings.chatModeEnabled
+      skipResponse || // skip if a tool triggered
+      response?.data?.currentField?.skipResponse; // skip if indicated by the current field
 
     if (skipChatResponse) {
       if (!hasToolsMatches && response.data.activeTools?.tools?.length) {
@@ -256,8 +259,10 @@ export class DialogueChatService {
             'USER:',
             'UTENTE:',
             'CHAT RESPONSE:',
+            response.data.avatar?.name ? `${response.data.avatar?.name}:` : '',
           ];
           trimPrefixes.forEach((trimPrefix) => {
+            if (trimPrefix.length === 0) return;
             if (text.startsWith(trimPrefix)) {
               text = text.substring(trimPrefix.length);
             }
@@ -369,6 +374,7 @@ export class DialogueChatService {
         activeTask,
         tasks,
         activeTools: activeTools,
+        avatar,
       },
     };
     const llmParsedResult: LLMParsedResult = {};
