@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
@@ -43,7 +43,7 @@ import { DialogueMemoryService } from './memory/dialogue.memory.service';
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
 @Injectable()
-export class DialogueSpeechService {
+export class DialogueSpeechService implements OnModuleInit {
   private readonly logger = new Logger(DialogueSpeechService.name);
 
   private sttMessagesCache: Record<string, Date> = {};
@@ -76,6 +76,19 @@ export class DialogueSpeechService {
     private readonly monitor: MonitorService,
     private readonly requestMonitor: DialogueRequestMonitorService,
   ) {}
+
+  onModuleInit() {
+    if (this.configService.get('SPEAKER_VERIFICATION') == '0') {
+      this.logger.warn(
+        `Speaker verification disabled. To enable set SPEAKER_VERIFICATION env to 1`,
+      );
+    }
+    if (this.configService.get('SPEAKER_COUNTER') == '0') {
+      this.logger.warn(
+        `Speaker counter disabled. To enable set SPEAKER_COUNTER env to 1`,
+      );
+    }
+  }
 
   private async replyToUser(
     messageInEnglish: string,
@@ -153,6 +166,9 @@ export class DialogueSpeechService {
   }
 
   async hasMultipleSpeakers(ev: DialogueSpeechToTextDto) {
+    if (this.configService.get('SPEAKER_COUNTER') == '0') {
+      return true;
+    }
     const counter = await this.speechbrainProvider.countSpeakers(ev.buffer);
     if (
       counter &&
@@ -248,9 +264,6 @@ export class DialogueSpeechService {
 
   async isExpectedSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
     if (this.configService.get('SPEAKER_VERIFICATION') == '0') {
-      this.logger.warn(
-        `Speaker verification disabled. To enable set SPEAKER_VERIFICATION env to 1`,
-      );
       return true;
     }
     const embeddings = [
