@@ -28,7 +28,7 @@ export class OpenAITextToSpeech implements ITextToSpeech {
   ) {}
 
   public async speak(params: SpeakParam): Promise<Buffer> {
-    const gender = params.gender.toUpperCase() === 'M' ? 'M' : 'F';
+    const gender = params.gender?.toUpperCase() === 'M' ? 'M' : 'F';
     const models = this.models[gender];
 
     const openaiVoiceModel =
