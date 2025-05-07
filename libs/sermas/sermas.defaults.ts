@@ -276,6 +276,9 @@ export const SermasDefaultConfig = {
   // SPEECH_SIMILARITY_THRESHOLD value used for comparing embedding, same speaker if above threshold
   SPEECH_SIMILARITY_THRESHOLD: '0.25',
 
+  // SPEAKER_COUNTER enable or disable the speaker counter over audio
+  SPEAKER_COUNTER: '1',
+
   // SPEECH_VERIFY_TIMEOUT_MSEC timeout for speaker verification request
   SPEECH_VERIFY_TIMEOUT_MSEC: 1000,
 };
