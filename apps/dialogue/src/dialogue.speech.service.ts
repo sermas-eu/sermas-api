@@ -167,7 +167,7 @@ export class DialogueSpeechService implements OnModuleInit {
 
   async hasMultipleSpeakers(ev: DialogueSpeechToTextDto) {
     if (this.configService.get('SPEAKER_COUNTER') == '0') {
-      return true;
+      return false;
     }
     const counter = await this.speechbrainProvider.countSpeakers(ev.buffer);
     if (
