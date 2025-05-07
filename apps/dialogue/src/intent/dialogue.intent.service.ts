@@ -106,6 +106,9 @@ export class DialogueIntentService {
     let skipResponse = false;
 
     if (taskIntent.taskId) {
+      this.logger.debug(
+        `Trying to match taskId=${taskIntent.taskId} with the following options [${tasks.map((t) => t.taskId + ':' + t.name).join(', ')}]`,
+      );
       // match by taskId or name, LLM takes it sometimes
       const matches = tasks.filter(
         (t) => t.taskId === taskIntent.taskId || t.name === taskIntent.taskId,
