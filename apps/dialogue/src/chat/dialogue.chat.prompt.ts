@@ -57,10 +57,10 @@ If message is skipped, do not continue with other sections.
 
 # INTENTS
 Analyze CONVERSATION and match one of TASKS based on user intention.
-Populate the field 'intent' in response. 
+Populate the field 'intent' in response. Prioritize TOOLS if there is a precise match with.
 
 ## MATCH
-Set the field 'match' to 'true' evaluating sequqentially the following cases:
+Set the field 'match' to 'true' evaluating sequentially the following cases:
 - there is a match with one of 'intents' or 'taskDescription'
 - the assistant asked explicitly in the previous message for a task and the user is confirming or declining
 
