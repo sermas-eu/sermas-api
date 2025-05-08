@@ -95,6 +95,10 @@ export class SpeechBrainService implements OnModuleInit {
   }
 
   async classify(audio: Buffer): Promise<SpeechBrainClassification | null> {
+    if (this.config.get('SENTIMENT_ANALYSIS') === '0') {
+      return null;
+    }
+
     try {
       const form = this.buildFormData(audio);
 

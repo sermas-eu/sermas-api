@@ -2,7 +2,7 @@ import { Transform } from 'stream';
 
 export class StreamingMarkupParserTransformer extends Transform {
   private buffer = '';
-  private parsed = false;
+  private hasEmitted = false; // replaces `parsed` to track onContent call during flush
 
   private readonly openTag: string;
   private readonly closeTag: string;
@@ -29,43 +29,67 @@ export class StreamingMarkupParserTransformer extends Transform {
   }
 
   _flush(callback: CallableFunction) {
-    this.tryParse(true); // final attempt to parse
-    if (!this.parsed) {
+    this.tryParse(true);
+    if (!this.hasEmitted) {
       this.onContent(undefined);
     }
 
     if (this.buffer.length > 0) {
-      this.push(this.buffer); // push leftovers
+      this.push(this.buffer);
     }
 
     callback();
   }
 
   private tryParse(isFlush = false) {
-    if (this.parsed) return;
+    // Strip leading ```json if present
+    // Strip leading whitespace and ```json block if present
+    const jsonBlockMatch = this.buffer.match(/^\s*```json\s*\r?\n/);
+    if (jsonBlockMatch) {
+      this.buffer = this.buffer.slice(jsonBlockMatch[0].length);
+    }
 
     const start = this.buffer.indexOf(this.openTag);
-    const end = this.buffer.indexOf(this.closeTag);
+    const end = this.buffer.indexOf(this.closeTag, start);
 
-    if (start !== -1 && end !== -1 && end > start) {
-      const content = this.buffer.slice(start + this.openTag.length, end);
-      this.onContent(content.trim());
-      this.parsed = true;
-
-      // remove parsed segment, keep the rest
-      const before = this.buffer.slice(0, start);
-      const after = this.buffer.slice(end + this.closeTag.length);
-      this.buffer = (before + after).trimStart();
-    } else if (isFlush) {
-      // Couldn't find full tag block even after full input
-      this.onContent(undefined);
-      this.parsed = true;
+    if (start === -1) {
+      // Keep trailing potential open tag
+      if (!isFlush) {
+        const keep = this.buffer.slice(-this.openTag.length);
+        const toPush = this.buffer.slice(0, -this.openTag.length);
+        if (toPush.length > 0) this.push(toPush);
+        this.buffer = keep;
+      } else {
+        // No tag found, flush remaining
+        this.onContent(undefined);
+        this.hasEmitted = true;
+        this.push(this.buffer);
+        this.buffer = '';
+      }
+      return;
     }
 
-    // We push remaining buffer only after parsing or on flush
-    if (this.parsed && this.buffer.length > 0) {
-      this.push(this.buffer);
-      this.buffer = '';
+    if (end === -1) {
+      // <tag> found but </tag> not yet — wait for more chunks
+      if (isFlush) {
+        this.onContent(undefined);
+        this.hasEmitted = true;
+        this.push(this.buffer);
+        this.buffer = '';
+      }
+      return;
     }
+
+    // Full tag found
+    const content = this.buffer.slice(start + this.openTag.length, end);
+    this.onContent(content.trim());
+    this.hasEmitted = true;
+
+    const before = this.buffer.slice(0, start);
+    const after = this.buffer.slice(end + this.closeTag.length);
+    if (before.length > 0) this.push(before);
+
+    this.push(after);
+    this.buffer = '';
   }
 }
