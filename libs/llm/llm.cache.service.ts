@@ -86,7 +86,11 @@ export class SaveToCacheTransformer extends Transform {
 
   _flush(callback: CallableFunction) {
     if (this.buffer.trim().length > 0) {
-      this.logger.verbose(`caching response=${this.buffer.toString()}`);
+      const content = this.buffer.toString() || '';
+      content
+        .split('\n')
+        .forEach((c) => this.logger.verbose(`CACHING RESPONSE ${c}`));
+
       this.addToCache();
       this.buffer = '';
     }
