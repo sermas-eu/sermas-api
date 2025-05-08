@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SessionContext } from 'apps/session/src/session.context';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { Emotion, EmotionTypes } from 'libs/sermas/sermas.dto';
@@ -6,16 +7,31 @@ import { SentimentAnalysisResult } from './sentiment-analysis.dto';
 import { sentimentAnalysisPrompt } from './sentiment-analysis.prompt';
 
 @Injectable()
-export class ChatGPTSentimentAnalysisService {
+export class ChatGPTSentimentAnalysisService implements OnModuleInit {
   private readonly logger = new Logger(ChatGPTSentimentAnalysisService.name);
   private readonly apiToken;
 
-  constructor(private readonly llmProvider: LLMProviderService) {}
+  constructor(
+    private readonly llmProvider: LLMProviderService,
+    private readonly config: ConfigService,
+  ) {}
+
+  onModuleInit() {
+    if (this.config.get('SENTIMENT_ANALYSIS') === '0') {
+      this.logger.warn(
+        'Sentiment analysis disabled, enable with SENTIMENT_ANALYSIS',
+      );
+    }
+  }
 
   async analyse(
     message: string,
     sessionContext?: SessionContext,
   ): Promise<SentimentAnalysisResult | null> {
+    if (this.config.get('SENTIMENT_ANALYSIS') === '0') {
+      return null;
+    }
+
     const emotions = EmotionTypes.join(', ');
     const defaultEmotion: Emotion = 'neutral';
 

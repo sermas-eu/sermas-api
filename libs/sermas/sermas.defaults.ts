@@ -266,9 +266,6 @@ export const SermasDefaultConfig = {
   // LLM_CACHE_ENABLED Enable or disable LLM caching features
   LLM_CACHE_ENABLED: '1',
 
-  // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
-  ENABLE_EMOTION_RECOGNITION: '0',
-
   // SPEAKER_VERIFICATION enables speaker verifiaction by comparing audio embeddings
   SPEAKER_VERIFICATION: '1',
   // MIN_EMBEDDINGS_NUMBER set the minimum number of audio samples to use for creating speaker embedding
@@ -281,6 +278,12 @@ export const SermasDefaultConfig = {
 
   // SPEECH_VERIFY_TIMEOUT_MSEC timeout for speaker verification request
   SPEECH_VERIFY_TIMEOUT_MSEC: 1000,
+
+  // SENTIMENT_ANALYSIS enable or disable sentiment analysis over text and audio input
+  SENTIMENT_ANALYSIS: '0',
+
+  // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
+  ENABLE_EMOTION_RECOGNITION: '0',
 };
 
 export type SermasApiConfig = typeof SermasDefaultConfig;
