@@ -217,10 +217,14 @@ export class DialogueSpeechService implements OnModuleInit {
     });
   }
 
-  async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
-    // track request
-    this.trackRequest('started', ev);
-
+  async convert(ev: DialogueSpeechToTextDto): Promise<Buffer> {
+    if (this.configService.get('SKIP_AUDIO_CONVERSION') == '1') {
+      this.logger.warn(
+        `Skipping audio conversion, remove SKIP_AUDIO_CONVERSION env`,
+      );
+      return ev.buffer;
+    }
+    let buffer: Buffer;
     const isWav = ev.mimetype === 'audio/wav';
     const perf = this.monitor.performance({
       ...ev,
@@ -233,9 +237,9 @@ export class DialogueSpeechService implements OnModuleInit {
       // }
 
       if (isWav) {
-        ev.buffer = await convertWav(ev.buffer);
+        buffer = await convertWav(ev.buffer);
       } else {
-        ev.buffer = await convertRawToWav(ev.buffer, ev.sampleRate);
+        buffer = await convertRawToWav(ev.buffer, ev.sampleRate);
       }
 
       // if (isNodeEnv('development')) {
@@ -246,6 +250,14 @@ export class DialogueSpeechService implements OnModuleInit {
     } finally {
       perf();
     }
+    return buffer;
+  }
+
+  async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
+    // track request
+    this.trackRequest('started', ev);
+
+    ev.buffer = await this.convert(ev);
 
     const promise = Promise.all([
       await this.isExpectedSpeaker(ev.sessionId, ev.buffer),
