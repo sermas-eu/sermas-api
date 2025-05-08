@@ -50,8 +50,10 @@ export class SentenceTransformer extends Transform {
         phrase += fullMatch;
 
         // console.log(`**** phrase ${phrase}`);
-
-        if (phrase.trim().length >= MIN_SENTENCE_LENGTH) {
+        if (
+          phrase.trim().length >= MIN_SENTENCE_LENGTH &&
+          /[.?!;:][\])'"`’”]*\s*$/.test(fullMatch) // ensure sentence ending
+        ) {
           this.sendBuffer(phrase);
           phrase = '';
           lastIndex = index + fullMatch.length;
@@ -60,9 +62,6 @@ export class SentenceTransformer extends Transform {
 
       // Retain remaining text in the buffer
       this.buffer = this.buffer.slice(lastIndex);
-      if (phrase.length > 0) {
-        this.buffer = phrase + this.buffer;
-      }
     }
 
     callback();
