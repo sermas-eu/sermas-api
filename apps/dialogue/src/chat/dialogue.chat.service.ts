@@ -271,7 +271,7 @@ export class DialogueChatService {
             }
           });
 
-          const removeParts = [/<\/chat response>/gi];
+          const removeParts = [/<\/chat response>/gi, /\`\`\`$/];
 
           removeParts.forEach((regex) => {
             text = text.replace(regex, '');

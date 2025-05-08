@@ -42,6 +42,13 @@ export class StreamingMarkupParserTransformer extends Transform {
   }
 
   private tryParse(isFlush = false) {
+    // Strip leading ```json if present
+    // Strip leading whitespace and ```json block if present
+    const jsonBlockMatch = this.buffer.match(/^\s*```json\s*\r?\n/);
+    if (jsonBlockMatch) {
+      this.buffer = this.buffer.slice(jsonBlockMatch[0].length);
+    }
+
     const start = this.buffer.indexOf(this.openTag);
     const end = this.buffer.indexOf(this.closeTag, start);
 
@@ -81,7 +88,8 @@ export class StreamingMarkupParserTransformer extends Transform {
     const before = this.buffer.slice(0, start);
     const after = this.buffer.slice(end + this.closeTag.length);
     if (before.length > 0) this.push(before);
-    if (after.length > 0) this.push(after);
+
+    this.push(after);
     this.buffer = '';
   }
 }
