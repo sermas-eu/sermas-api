@@ -22,7 +22,7 @@ export const avatarSystemChatPrompt =
 
 ## Response format
 Strictly output the structure in Example in your answer, without markdown titles or other additions. Provide correct and parsable JSON in markup tags.
-Append then the CHAT response as plain text, do not use emoticons. 
+Append CHAT RESPONSE as plain text, with short sentences and no emoticons. 
 Never add Notes or Explanations.
 
 ### Example
@@ -52,7 +52,7 @@ Set 'skip' to false when message is a well formatted and correct message, even i
 Set 'skip' to false when message matches one of in TOOLS.
 
 Set the field 'explain' describing your decision.
-Set the field 'answer' to provide feedback to the user.
+If skip is true, set the field 'answer' to provide feedback to the user.
 If message is skipped, do not continue with other sections. 
 
 # INTENTS

@@ -45,27 +45,44 @@ export class StreamingMarkupParserTransformer extends Transform {
     if (this.parsed) return;
 
     const start = this.buffer.indexOf(this.openTag);
-    const end = this.buffer.indexOf(this.closeTag);
+    const end = this.buffer.indexOf(this.closeTag, start);
 
+    // Case: <tag> not found at all yet
+    if (start === -1) {
+      // Push early content downstream and retain only last few chars (in case <tag> spans chunks)
+      if (!isFlush) {
+        const keep = this.buffer.slice(-this.openTag.length); // retain possible partial openTag
+        const toPush = this.buffer.slice(0, -this.openTag.length);
+        if (toPush.length > 0) this.push(toPush);
+        this.buffer = keep;
+      } else {
+        // Flush: no tag found
+        this.onContent(undefined);
+        this.push(this.buffer);
+        this.buffer = '';
+        this.parsed = true;
+      }
+      return;
+    }
+
+    // Case: found complete <tag>...</tag>
     if (start !== -1 && end !== -1 && end > start) {
       const content = this.buffer.slice(start + this.openTag.length, end);
       this.onContent(content.trim());
       this.parsed = true;
 
-      // remove parsed segment, keep the rest
+      // Push everything before and after the tag
       const before = this.buffer.slice(0, start);
       const after = this.buffer.slice(end + this.closeTag.length);
-      this.buffer = (before + after).trimStart();
+      if (before.length > 0) this.push(before);
+      if (after.length > 0) this.push(after);
+      this.buffer = '';
     } else if (isFlush) {
-      // Couldn't find full tag block even after full input
+      // Flush: incomplete tag
       this.onContent(undefined);
-      this.parsed = true;
-    }
-
-    // We push remaining buffer only after parsing or on flush
-    if (this.parsed && this.buffer.length > 0) {
       this.push(this.buffer);
       this.buffer = '';
+      this.parsed = true;
     }
   }
 }

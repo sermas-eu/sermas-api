@@ -259,13 +259,22 @@ export class DialogueChatService {
             'USER:',
             'UTENTE:',
             'CHAT RESPONSE:',
+            '<chat response>',
             response.data.avatar?.name ? `${response.data.avatar?.name}:` : '',
           ];
+
+          text = text.trimStart();
           trimPrefixes.forEach((trimPrefix) => {
             if (trimPrefix.length === 0) return;
-            if (text.startsWith(trimPrefix)) {
+            if (text.toLowerCase().startsWith(trimPrefix.toLowerCase())) {
               text = text.substring(trimPrefix.length);
             }
+          });
+
+          const removeParts = [/<\/chat response>/gi];
+
+          removeParts.forEach((regex) => {
+            text = text.replace(regex, '');
           });
 
           const chunkId = getChunkId();
