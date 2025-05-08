@@ -57,7 +57,7 @@ If message is skipped, do not continue with other sections.
 
 # INTENTS
 Analyze CONVERSATION and match one of TASKS based on user intention.
-Populate the field 'intent' in response. Prioritize TOOLS if there is a precise match with.
+Populate the field 'intent' in response only with information related to TASKS. 
 
 ## MATCH
 Set the field 'match' to 'true' evaluating sequentially the following cases:
