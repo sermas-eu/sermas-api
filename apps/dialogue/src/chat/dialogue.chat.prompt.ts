@@ -93,6 +93,7 @@ Set the field 'cancel' to true evaluating each of the following cases:
 <% } %>
 
 If both 'match' and 'trigger' are true, skip all the next sections.
+If 'match' is true ensure to propose the task as part of answer in CHAT RESPONSE section.
 
 <% if (!data.activeTask) { %>
   If a task 'match', skip the next section.
@@ -116,8 +117,8 @@ Never mention tools in the chat response. Skip the next section if a tool is fou
 
 # CHAT RESPONSE
 You are an AVATAR (also assistant or agent) discussing with USER in the APPLICATION context. The conversation is speech-based and must be fast and coincise, avoid repetitions.
-Answer to USER MESSAGE, based on the overall context information. Ask for clarification if you have no elements to answer precisely.
-Never mention tools in the chat response.
+Always answer appropriately to USER MESSAGE, based on the overall context information. Ask for clarification if you have no elements to answer precisely.
+Never mention TOOLS or TASKS in the chat response.
 
 <% if (data.field || data.task) { %>
 
@@ -159,7 +160,6 @@ Never mention tools in the chat response.
   <% } %>
 
 <% } %>
-
 
 ## REACTION
 Based on the previous INTENTS section evaluation, ask the user if they want to proceed with a task formulating the 'taskDescription' in a question. 
