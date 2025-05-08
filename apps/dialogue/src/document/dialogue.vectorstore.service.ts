@@ -80,6 +80,23 @@ export class DialogueVectorStoreService implements OnModuleInit {
     const appIdHash = hash(appId);
 
     try {
+      this.logger.debug(`Removing documents for appId=${appId}`);
+      const coll = await this.getCollection(appId);
+      while (true) {
+        const res = await coll.peek({ limit: 100 });
+        if (!res || res.error || !res.ids.length) break;
+        this.logger.debug(
+          `Removing ${res.ids.length} documents for appId=${appId}`,
+        );
+        coll.delete({ ids: res.ids });
+      }
+    } catch (e) {
+      this.logger.error(
+        `Failed to remove records from collection=${appId}: ${e.stack}`,
+      );
+    }
+
+    try {
       await this.client.deleteCollection({ name: appIdHash });
       this.logger.log(`Removed collection appId=${appId} hash=${appIdHash}`);
     } catch (e) {
