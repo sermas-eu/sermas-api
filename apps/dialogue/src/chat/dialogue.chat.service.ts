@@ -42,6 +42,8 @@ const TrimmablePrefixes = [
   'UTENTE',
   'CHAT RESPONSE',
   '<chat response>',
+  '<chatresponse>',
+  '<chat-response>',
 ];
 
 @Injectable()
