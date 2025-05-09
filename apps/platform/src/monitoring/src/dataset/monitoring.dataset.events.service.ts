@@ -22,15 +22,28 @@ export class MonitoringDatasetEventsService {
 
   @OnEvent('monitor')
   async onMonitor(ev: MonitorRecordDto) {
-    await this.dataset.save(
-      `Performing ${ev.label} took ${Math.floor(ev.value)}ms`,
-      {
-        ...ev,
-        sessionId: ev.sessionId,
-        appId: ev.appId,
-      },
-      'performance',
-    );
+    if (ev.type === 'performance') {
+      await this.dataset.save(
+        `Performing ${ev.label} took ${Math.floor(ev.value)}ms`,
+        {
+          ...ev,
+          sessionId: ev.sessionId,
+          appId: ev.appId,
+        },
+        'performance',
+      );
+    }
+    if (ev.type === 'log') {
+      await this.dataset.save(
+        ev.label,
+        {
+          ...ev,
+          sessionId: ev.sessionId,
+          appId: ev.appId,
+        },
+        'log',
+      );
+    }
   }
 
   @OnEvent('monitor.error')
