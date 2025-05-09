@@ -24,7 +24,7 @@ export type MonitorRecordType = (typeof MonitorRecordTypeList)[number];
 
 export class MonitorRecordDto extends MonitorContextDto {
   type: MonitorRecordType;
-  value: number;
+  value: number | string;
   unitCost?: number;
   context?: { [key: string]: any };
   ts: Date;
