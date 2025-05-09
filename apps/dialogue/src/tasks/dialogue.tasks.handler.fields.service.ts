@@ -337,9 +337,11 @@ export class DialogueTasksHandlerFieldsService {
         if (field.options?.length) {
           const options = JSON.stringify(field.options || []);
           rules = `
-Should match with one of the following options value:
+Find a match of 'value' with one of the following options:
+
 ${options}
-Return the 'value' field value`;
+
+Return the matching 'value' field from options`;
         }
         break;
       default:
