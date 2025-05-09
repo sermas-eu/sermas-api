@@ -24,7 +24,7 @@ export class MonitoringDatasetEventsService {
   async onMonitor(ev: MonitorRecordDto) {
     if (ev.type === 'performance') {
       await this.dataset.save(
-        `Performing ${ev.label} took ${Math.floor(ev.value)}ms`,
+        `Performing ${ev.label} took ${Math.floor(+ev.value)}ms`,
         {
           ...ev,
           sessionId: ev.sessionId,
@@ -35,7 +35,7 @@ export class MonitoringDatasetEventsService {
     }
     if (ev.type === 'log') {
       await this.dataset.save(
-        ev.label,
+        ev.value.toString(),
         {
           ...ev,
           sessionId: ev.sessionId,
