@@ -4,7 +4,7 @@ import { DialogueTaskProgressDto } from 'apps/dialogue/src/tasks/dialogue.tasks.
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { ClearScreenDto, UIContentDto } from './ui.content.dto';
+import { UIContentDto } from './ui.content.dto';
 import { UIService } from './ui.service';
 
 @Injectable()
