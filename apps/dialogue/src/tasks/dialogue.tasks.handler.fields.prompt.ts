@@ -42,10 +42,10 @@ export const taskFieldValidationPrompt = PromptTemplate.create<{
   `
 Validate and convert the USER value to type <%= data.field.type %> following RULES.
 Provide a reason if the USER value cannot be validated or converted and set value to null
-Answer in parsable JSON format with structure { value: "converted value", reason: "non-technical motivation in case of failure" }
+Always answer in parsable JSON format with structure { value: "converted value", reason: "non-technical motivation in case of failure" }
 Do not add additional notes or explanation.
 <% if (data.language) { %>
-Use language <%= data.language %> in your answers
+  Use language <%= data.language %> in your answers
 <% } %>
 
 USER:
@@ -54,7 +54,10 @@ USER:
 RULES:
 <%= data.rules %>
 
-<%= data.field.validation %>`,
+<% if (data.field?.validation) { %>
+  <%= data.field?.validation %>
+<% } %>
+`,
 );
 
 export const taskFieldRephrasePrompt = PromptTemplate.create<{

@@ -36,6 +36,14 @@ import { SelectedTool } from './dialogue.chat.tools.dto';
 import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer';
 import { SentenceTransformer } from './transformer/sentence.transformer';
 
+const TrimmablePrefixes = [
+  'ASSISTANT',
+  'USER',
+  'UTENTE',
+  'CHAT RESPONSE',
+  '<chat response>',
+];
+
 @Injectable()
 export class DialogueChatService {
   private readonly logger = new Logger(DialogueChatService.name);
@@ -253,23 +261,7 @@ export class DialogueChatService {
         if (text) {
           // chunkBuffer = chunkBuffer.substring(toSend.length);
 
-          // sometimes, somehow it starts the answer like this
-          const trimPrefixes = [
-            'ASSISTANT:',
-            'USER:',
-            'UTENTE:',
-            'CHAT RESPONSE:',
-            '<chat response>',
-            response.data.avatar?.name ? `${response.data.avatar?.name}:` : '',
-          ];
-
-          text = text.trimStart();
-          trimPrefixes.forEach((trimPrefix) => {
-            if (trimPrefix.length === 0) return;
-            if (text.toLowerCase().startsWith(trimPrefix.toLowerCase())) {
-              text = text.substring(trimPrefix.length);
-            }
-          });
+          text = this.trimPrefixes(text, [response.data.avatar?.name]);
 
           const removeParts = [/<\/chat response>/gi, /\`\`\`$/];
 
@@ -437,6 +429,28 @@ export class DialogueChatService {
     });
 
     return await promise;
+  }
+
+  trimPrefixes(text: string, customPrefixes?: string[]): string {
+    const allPrefixes = [
+      ...TrimmablePrefixes,
+      ...(customPrefixes || []),
+    ].filter(Boolean);
+
+    // Remove leading whitespace and line breaks
+    text = text.replace(/^[\s\r\n]+/, '');
+
+    for (const prefix of allPrefixes) {
+      const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(`^${escapedPrefix}:?\\s*`, 'i'); // optional colon and trailing space/newlines
+
+      if (pattern.test(text)) {
+        text = text.replace(pattern, '');
+        break;
+      }
+    }
+
+    return text.trimStart();
   }
 
   parseMatchingTools(rawJson: string, tools: AppToolsDTO[]): ToolsWrapper {
