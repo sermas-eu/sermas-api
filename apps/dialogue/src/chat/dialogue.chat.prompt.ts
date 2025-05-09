@@ -92,7 +92,6 @@ Set the field 'cancel' to true evaluating each of the following cases:
 - another task in TASKS has 'intents' or 'taskDescription' that match with the last USER MESSAGE
 <% } %>
 
-If both 'match' and 'trigger' are true, skip all the next sections.
 If 'match' is true ensure to propose the task as part of answer in CHAT RESPONSE section.
 
 <% if (!data.activeTask) { %>
