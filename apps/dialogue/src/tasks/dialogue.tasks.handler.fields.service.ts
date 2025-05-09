@@ -359,7 +359,7 @@ Return the matching 'value' field from options`;
       field,
       rules,
       language,
-      value: values.value,
+      value: values.selection || values.value,
     });
 
     type ValidationResponse = { value: any | null; reason?: string };
