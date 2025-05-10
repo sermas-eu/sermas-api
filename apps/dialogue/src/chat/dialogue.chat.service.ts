@@ -111,6 +111,13 @@ export class DialogueChatService {
     // skip
     this.logger.debug(`USER MESSAGE: ${message.text}`);
 
+    if (!response?.filter) {
+      this.logger.debug('FILTER: Missing section');
+    }
+    if (!response?.intent) {
+      this.logger.debug('INTENT: Missing section');
+    }
+
     if (response?.filter?.explain) {
       this.logExplanation({
         ...message,
@@ -123,6 +130,9 @@ export class DialogueChatService {
       this.logger.debug(`Skipping user request message=${message.text}`);
 
       if (response?.filter?.answer) {
+        this.logger.debug(
+          `Sending generated answer ${response?.filter?.answer}`,
+        );
         this.sendMessage(
           message,
           getMessageId(),

@@ -36,9 +36,16 @@ export class UIService {
     }
 
     this.logger.verbose(`Send clear screen sessionId=${ev.record.sessionId}`);
-    this.showContent({
+    await this.sendClearScreen({
       appId: ev.appId,
       sessionId: ev.record.sessionId,
+    });
+  }
+
+  sendClearScreen(ev: { appId: string; sessionId: string }) {
+    return this.showContent({
+      appId: ev.appId,
+      sessionId: ev.sessionId,
       contentType: 'clear-screen',
       content: {},
     });
