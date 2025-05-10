@@ -52,7 +52,7 @@ Set 'skip' to false when message is a well formatted and correct message, even i
 Set 'skip' to false when message matches one of in TOOLS.
 
 Set the field 'explain' describing your decision.
-If skip is true, set the field 'answer' to provide feedback to the user.
+If skip is true and the last CONVERSATION messagge was not from the avatar, set the field 'answer' to provide feedback to the user.
 If message is skipped, do not continue with other sections. 
 
 # INTENTS
@@ -91,6 +91,9 @@ Set the field 'cancel' to true evaluating each of the following cases:
 - there is no interest or the conditions to continue with the task
 - another task in TASKS has 'intents' or 'taskDescription' that matches with the subject of the conversation 
 - another task in TASKS has 'intents' or 'taskDescription' that match with the last USER MESSAGE
+
+If another task match the user request, set the 'name' and 'match' to true for the new task. Set also 'cancel' to true.
+
 <% } %>
 
 If 'match' is true ensure to propose the task as part of answer in CHAT RESPONSE section.
