@@ -39,6 +39,8 @@ import {
   OutgoingQueueMessage,
 } from './dialogue.speech.dto';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
+import { MqttService } from 'libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from 'libs/sermas/sermas.topic';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -75,6 +77,8 @@ export class DialogueSpeechService implements OnModuleInit {
 
     private readonly monitor: MonitorService,
     private readonly requestMonitor: DialogueRequestMonitorService,
+
+    private readonly broker: MqttService,
   ) {}
 
   onModuleInit() {
@@ -417,6 +421,8 @@ export class DialogueSpeechService implements OnModuleInit {
         emotion,
         text,
       };
+
+      await this.broker.publish(SermasTopics.dialogue.stt, sttEvent);
 
       this.emitter.emit('dialogue.chat.message', sttEvent);
       return true;

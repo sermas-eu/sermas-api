@@ -33,6 +33,7 @@ export const SermasTopics = {
   dialogue: {
     languageManagement: 'app/:appId/dialogue/language',
     messages: 'app/:appId/dialogue/messages/:sessionId',
+    stt: 'app/:appId/dialogue/stt/:sessionId',
     userSpeech: 'app/:appId/dialogue/user-speech/:sessionId/:chunkId',
     agentSpeech: 'app/:appId/dialogue/speech/:sessionId/:messageId/:chunkId',
     agentStopSpeech: 'app/:appId/dialogue/stop/:sessionId',
