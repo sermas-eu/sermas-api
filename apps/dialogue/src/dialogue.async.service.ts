@@ -76,10 +76,22 @@ export class DialogueAsyncApiService {
     message: {
       payload: DialogueSpeechToTextDto,
     },
-    description: 'Publish a stop speaking command for the agent',
+    description: 'Publish user speech audio buffer',
   })
   async userSpeech(payload: DialogueSpeechToTextDto) {
-    this.broker.publish(SermasTopics.dialogue.agentStopSpeech, payload);
+    this.broker.publish(SermasTopics.dialogue.userSpeech, payload);
+  }
+
+  @AsyncApiOperationName({
+    channel: SermasTopics.dialogue.userSpeechStream,
+    message: {
+      payload: Buffer,
+    },
+    description:
+      'Publish user speech audio frames. Last frame must be a JSON indicating the stream is completed.',
+  })
+  async userSpeechStream(payload: Buffer) {
+    this.broker.publish(SermasTopics.dialogue.userSpeechStream, payload);
   }
 
   @AsyncApiOperationName({
@@ -87,7 +99,7 @@ export class DialogueAsyncApiService {
     message: {
       payload: DialogueSessionRequestDto,
     },
-    description: 'Publish a stop speaking command for the agent',
+    description: 'Publish a request update',
   })
   async request(payload: DialogueSessionRequestDto) {
     this.broker.publish(SermasTopics.dialogue.request, payload);

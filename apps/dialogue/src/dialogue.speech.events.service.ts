@@ -9,22 +9,20 @@ import {
   UiInteractionQuizDto,
 } from 'apps/ui/src/ui.interaction.dto';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
 import { Payload, Subscribe, Topic } from 'libs/mqtt-handler/mqtt.decorator';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId } from 'libs/sermas/sermas.utils';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { ulid } from 'ulidx';
-import { DialogueAsyncApiService } from './dialogue.async.service';
 import {
   DialogueChatProgressEvent,
   DialogueChatValidationEvent,
 } from './chat/dialogue.chat.dto';
+import { DialogueAsyncApiService } from './dialogue.async.service';
 import { DialogueSessionRequestEvent } from './dialogue.request-monitor.dto';
 import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
 import { DialogueSpeechService } from './dialogue.speech.service';
 import { DialogueWelcomeService } from './dialogue.speech.welcome.service';
+import { DialogueSpeechStreamService } from './speech-stream/dialogue.speech.stream.service';
 
 @Injectable()
 export class DialogueSpeechEventService {
@@ -37,61 +35,25 @@ export class DialogueSpeechEventService {
     private welcome: DialogueWelcomeService,
     private async: DialogueAsyncApiService,
     private readonly requestMonitor: DialogueRequestMonitorService,
+    private readonly speechStream: DialogueSpeechStreamService,
   ) {}
+
+  @Subscribe({
+    topic: SermasTopics.dialogue.userSpeechStream,
+    transform: (raw) => raw,
+  })
+  // Collect user speech as streaming frames
+  async collectAudioFrames(@Topic() topic: string, @Payload() buffer: Buffer) {
+    await this.speechStream.processStreamFrame(topic, buffer);
+  }
 
   @Subscribe({
     topic: SermasTopics.dialogue.userSpeech,
     transform: (raw) => raw,
   })
-  // Add content to chat after user interact with UI
+  // Collect user speech as complete message
   async collectAudio(@Topic() topic: string, @Payload() buffer: Buffer) {
-    try {
-      const parts = topic.split('/');
-      const chunkId = parts.pop();
-      const sessionId = parts.pop();
-
-      if (!sessionId) return;
-
-      const session = await this.session.read(sessionId, false);
-      if (!session) {
-        this.logger.debug(`sessionId=${sessionId} not found`);
-        return;
-      }
-
-      const settings = session.settings || {};
-
-      const ev: DialogueSpeechToTextDto = {
-        appId: session.appId,
-        sessionId,
-
-        requestId: ulid(),
-
-        buffer,
-        mimetype: 'audio/wav',
-        sampleRate: undefined,
-
-        clientId: null,
-        userId: null,
-
-        actor: 'user',
-        text: '',
-
-        llm: settings.llm || undefined,
-        avatar: settings.avatar || undefined,
-        language: settings.language || DefaultLanguage,
-
-        ts: new Date(),
-        chunkId: chunkId,
-        ttsEnabled: settings.ttsEnabled === false ? false : true,
-      };
-
-      this.logger.debug(`Got user speech sessionId=${sessionId}`);
-      await this.speech.speechToText(ev);
-    } catch (e) {
-      this.logger.error(
-        `Failed to process user audio for topic=${topic}: ${e.stack}`,
-      );
-    }
+    await this.speechStream.processChunk(topic, buffer);
   }
 
   @Subscribe({
