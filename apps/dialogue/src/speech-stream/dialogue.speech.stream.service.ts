@@ -111,10 +111,10 @@ export class DialogueSpeechStreamService {
     if (!completion) {
       this.cache[sessionId][chunkId].frames.push(buffer);
 
-      const size = this.cache[sessionId][chunkId].frames.length / 1000;
-      this.logger.verbose(
-        `Cached frame len=${buffer.length} total=${size}kb chunkId=${chunkId} sessionId=${sessionId}`,
-      );
+      // const size = this.cache[sessionId][chunkId].frames.length / 1000;
+      // this.logger.verbose(
+      //   `Cached frame len=${buffer.length} total=${size}kb chunkId=${chunkId} sessionId=${sessionId}`,
+      // );
       return;
     }
 
