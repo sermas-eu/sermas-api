@@ -35,6 +35,7 @@ import {
 import { SelectedTool } from './dialogue.chat.tools.dto';
 import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer';
 import { SentenceTransformer } from './transformer/sentence.transformer';
+import { DialogueProgressAsyncService } from '../progress/dialogue.progress.async.service';
 
 const TrimmablePrefixes = [
   'ASSISTANT',
@@ -58,6 +59,7 @@ export class DialogueChatService {
     private readonly memory: DialogueMemoryService,
     private readonly vectorStore: DialogueVectorStoreService,
     private readonly monitor: MonitorService,
+    private readonly progressService: DialogueProgressAsyncService,
   ) {}
 
   logExplanation(
@@ -95,6 +97,8 @@ export class DialogueChatService {
       label: 'avatar',
       threshold: 3000,
     });
+
+    this.progressService.dialogueProgress({ event: 'llm' });
 
     const response = await this.send(message, llmArgs);
     perf('request');

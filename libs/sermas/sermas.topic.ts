@@ -49,6 +49,7 @@ export const SermasTopics = {
     taskRecordChanged: 'app/:appId/dialogue/task/record/:taskId',
     taskFieldHandler: 'app/:appId/dialogue/task/handler',
     request: 'app/:appId/dialogue/request/:sessionId',
+    progress: 'app/:appId/dialogue/progress/:sessionId',
   },
   xr: {
     occlusion: 'app/:appId/xr/occlusion',

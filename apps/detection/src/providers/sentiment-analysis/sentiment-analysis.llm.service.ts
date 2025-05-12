@@ -5,6 +5,7 @@ import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { Emotion, EmotionTypes } from 'libs/sermas/sermas.dto';
 import { SentimentAnalysisResult } from './sentiment-analysis.dto';
 import { sentimentAnalysisPrompt } from './sentiment-analysis.prompt';
+import { DialogueProgressAsyncService } from 'apps/dialogue/src/progress/dialogue.progress.async.service';
 
 @Injectable()
 export class ChatGPTSentimentAnalysisService implements OnModuleInit {
@@ -14,6 +15,7 @@ export class ChatGPTSentimentAnalysisService implements OnModuleInit {
   constructor(
     private readonly llmProvider: LLMProviderService,
     private readonly config: ConfigService,
+    private readonly progressService: DialogueProgressAsyncService,
   ) {}
 
   onModuleInit() {
@@ -31,6 +33,7 @@ export class ChatGPTSentimentAnalysisService implements OnModuleInit {
     if (this.config.get('SENTIMENT_ANALYSIS') === '0') {
       return null;
     }
+    this.progressService.dialogueProgress({ event: 'analyze' });
 
     const emotions = EmotionTypes.join(', ');
     const defaultEmotion: Emotion = 'neutral';

@@ -22,6 +22,8 @@ import {
 import { DialogueIntentModule } from './intent/dialogue.intent.module';
 import { DialogueMemoryModule } from './memory/dialogue.memory.module';
 import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
+import { DialogueProgressAsyncService } from './progress/dialogue.progress.async.service';
+import { DialogueProgressModule } from './progress/dialogue.progress.module';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
     DialogueTaskModule,
     DialogueDocumentModule,
     DialogueIntentModule,
+    DialogueProgressModule,
   ],
   controllers: [DialogueDocumentController, DialogueSpeechController],
   providers: [
@@ -47,6 +50,7 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
     SpeechBrainService,
     IdentityTrackerService,
     DialogueRequestMonitorService,
+    DialogueProgressAsyncService,
   ],
   exports: [DialogueSpeechService],
 })

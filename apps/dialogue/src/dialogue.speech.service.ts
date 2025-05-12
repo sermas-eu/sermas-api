@@ -41,6 +41,7 @@ import {
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
+import { DialogueProgressAsyncService } from './progress/dialogue.progress.async.service';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -79,6 +80,8 @@ export class DialogueSpeechService implements OnModuleInit {
     private readonly requestMonitor: DialogueRequestMonitorService,
 
     private readonly broker: MqttService,
+
+    private readonly progressService: DialogueProgressAsyncService,
   ) {}
 
   onModuleInit() {
@@ -260,6 +263,7 @@ export class DialogueSpeechService implements OnModuleInit {
   async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
     // track request
     this.trackRequest('started', ev);
+    this.progressService.dialogueProgress({ event: 'stt' });
 
     ev.buffer = await this.convert(ev);
 
@@ -471,6 +475,7 @@ export class DialogueSpeechService implements OnModuleInit {
 
   async handleAgentMessage(ev: DialogueMessageDto) {
     const sessionLanguage = await this.session.getLanguage(ev);
+    this.progressService.dialogueProgress({ event: 'translate' });
 
     // agent message
     let translation = ev.text;
@@ -498,6 +503,8 @@ export class DialogueSpeechService implements OnModuleInit {
   protected async processAgentSpeech(
     agentResponseEvent: DialogueMessageDto,
   ): Promise<Buffer | undefined> {
+    this.progressService.dialogueProgress({ event: 'tts' });
+
     let buffer: Buffer;
     try {
       buffer = await this.ttsProvider.generateTTS(agentResponseEvent);
