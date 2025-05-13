@@ -401,6 +401,12 @@ export class DialogueSpeechService implements OnModuleInit {
       if (!validSpeaker || !text) {
         this.logger.debug(`STT: cannot detect text from audio clip.`);
         await this.continueAgentSpeech(payload.appId, payload.sessionId);
+        await this.asyncApi.dialogueProgress({
+          event: 'stt',
+          sessionId: payload.sessionId,
+          appId: payload.appId,
+          status: 'ended',
+        });
         return false;
       }
 
@@ -508,12 +514,6 @@ export class DialogueSpeechService implements OnModuleInit {
   protected async processAgentSpeech(
     agentResponseEvent: DialogueMessageDto,
   ): Promise<Buffer | undefined> {
-    await this.asyncApi.dialogueProgress({
-      event: 'tts',
-      sessionId: agentResponseEvent.sessionId,
-      appId: agentResponseEvent.appId,
-    });
-
     let buffer: Buffer;
     try {
       buffer = await this.ttsProvider.generateTTS(agentResponseEvent);
@@ -548,6 +548,14 @@ export class DialogueSpeechService implements OnModuleInit {
         .forEach((t) => this.logger.verbose(`TTS | ${t}`));
     }
 
+    if (message.text) {
+      await this.asyncApi.dialogueProgress({
+        event: 'tts',
+        sessionId: message.sessionId,
+        appId: message.appId,
+      });
+    }
+
     const promise = this.processAgentSpeech(message)
       .then((data) => Promise.resolve({ data, message }))
       .catch(() => Promise.resolve({ data: null, message }));
@@ -564,6 +572,12 @@ export class DialogueSpeechService implements OnModuleInit {
   ) {
     if (!dialogueMessage.requestId) {
       this.logger.debug(`Missing requestId, skipping TTS`);
+      await this.asyncApi.dialogueProgress({
+        event: 'tts',
+        sessionId: dialogueMessage.sessionId,
+        appId: dialogueMessage.appId,
+        status: 'ended',
+      });
       return;
     }
 
@@ -586,6 +600,13 @@ export class DialogueSpeechService implements OnModuleInit {
     };
 
     await this.processOutgoingQueue(dialogueMessage.requestId);
+
+    await this.asyncApi.dialogueProgress({
+      event: 'tts',
+      sessionId: dialogueMessage.sessionId,
+      appId: dialogueMessage.appId,
+      status: 'ended',
+    });
   }
 
   async processOutgoingQueue(requestId: string) {

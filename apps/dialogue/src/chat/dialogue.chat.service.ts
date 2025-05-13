@@ -107,6 +107,13 @@ export class DialogueChatService {
     const response = await this.send(message, llmArgs);
     perf('request');
 
+    await this.asynApi.dialogueProgress({
+      event: 'llm',
+      sessionId: message.sessionId,
+      appId: message.appId,
+      status: 'ended',
+    });
+
     // handle skip case
     const validationEvent: DialogueChatValidationEvent = {
       appId: message.appId,
