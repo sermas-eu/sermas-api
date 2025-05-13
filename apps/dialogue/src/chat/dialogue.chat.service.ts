@@ -251,7 +251,7 @@ export class DialogueChatService {
       .on('data', (chunk: Buffer | string) => {
         perf('stream');
 
-        let text = chunk.toString();
+        let text = (chunk || '').toString();
 
         (text || '')
           .split('\n')

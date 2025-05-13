@@ -23,7 +23,7 @@ export class StreamingMarkupParserTransformer extends Transform {
     _encoding: string,
     callback: CallableFunction,
   ) {
-    this.buffer += chunk.toString();
+    this.buffer += (chunk || '').toString();
     this.tryParse();
     callback();
   }

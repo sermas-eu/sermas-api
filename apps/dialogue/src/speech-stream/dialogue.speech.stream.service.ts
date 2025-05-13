@@ -69,7 +69,7 @@ export class DialogueSpeechStreamService {
 
   parseJSON<T = any>(buffer: Buffer) {
     try {
-      return JSON.parse(buffer.toString()) as T;
+      return JSON.parse((buffer || '').toString()) as T;
     } catch {}
     return null;
   }
