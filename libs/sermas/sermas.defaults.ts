@@ -146,10 +146,10 @@ export const SermasDefaultConfig = {
   LLM_EMBEDDINGS_BINARY_QUANTIZATION: '0',
 
   // LLM_TEMPERATURE determines how "creative" the model is. Min is 0
-  LLM_TEMPERATURE: 1.0,
+  LLM_TEMPERATURE: 0.3,
 
   // LLM_TOP_P only the most probable tokens which cumulative probability reaches top_p are used for next token sampling
-  LLM_TOP_P: 1.0,
+  LLM_TOP_P: 0.3,
 
   // OPENAI_API_KEY OpenAI api key
   OPENAI_API_KEY: '',

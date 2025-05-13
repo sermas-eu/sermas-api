@@ -24,6 +24,7 @@ export class SentenceTransformer extends Transform {
     chunk = chunk.toString();
 
     if (this.buffer === undefined) {
+      this.logger.verbose('init');
       if (this.onInit) this.onInit();
       this.buffer = '';
     }

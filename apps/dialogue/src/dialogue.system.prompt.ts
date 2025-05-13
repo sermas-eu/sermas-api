@@ -12,7 +12,10 @@ export type BaseSystemPromptParams = {
 };
 
 export const createBaseSystemPrompt = () => `
-Current date: ${new Date().toISOString()}
+## GENERAL RULES
+Current date is ${new Date().toISOString()}
+TASKS and TOOLS are managed via external software, never pretend to handle the task yourself.
+
 <% if (data.app) { %>
   ## APPLICATION
   <%= data.app %>

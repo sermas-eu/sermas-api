@@ -22,6 +22,7 @@ import {
 import { DialogueIntentModule } from './intent/dialogue.intent.module';
 import { DialogueMemoryModule } from './memory/dialogue.memory.module';
 import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
+import { DialogueSpeechStreamService } from './speech-stream/dialogue.speech.stream.service';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module';
     SpeechBrainService,
     IdentityTrackerService,
     DialogueRequestMonitorService,
+    DialogueSpeechStreamService,
   ],
   exports: [DialogueSpeechService],
 })

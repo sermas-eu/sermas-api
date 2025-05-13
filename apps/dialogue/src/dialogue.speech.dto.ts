@@ -32,3 +32,21 @@ export class DialogueAvatarSpeechControlDto extends SermasSessionDto {
   @ApiPropertyOptional()
   chunkId?: string;
 }
+
+const DialogueProgressEventList = [
+  'stt',
+  'analyze',
+  'llm',
+  'translate',
+  'tts',
+] as const;
+
+export type DialogueProgressEvent = (typeof DialogueProgressEventList)[number];
+
+export class DialogueProgressEventDto extends SermasSessionDto {
+  @ApiProperty()
+  event: DialogueProgressEvent;
+  @ApiPropertyOptional({ default: 'started' })
+  status?: 'started' | 'ended' | 'error';
+  error?: string;
+}

@@ -23,7 +23,7 @@ export class StreamingMarkupParserTransformer extends Transform {
     _encoding: string,
     callback: CallableFunction,
   ) {
-    this.buffer += chunk.toString();
+    this.buffer += (chunk || '').toString();
     this.tryParse();
     callback();
   }
@@ -42,54 +42,51 @@ export class StreamingMarkupParserTransformer extends Transform {
   }
 
   private tryParse(isFlush = false) {
-    // Strip leading ```json if present
-    // Strip leading whitespace and ```json block if present
     const jsonBlockMatch = this.buffer.match(/^\s*```json\s*\r?\n/);
     if (jsonBlockMatch) {
       this.buffer = this.buffer.slice(jsonBlockMatch[0].length);
     }
 
-    const start = this.buffer.indexOf(this.openTag);
-    const end = this.buffer.indexOf(this.closeTag, start);
-
-    if (start === -1) {
-      // Keep trailing potential open tag
-      if (!isFlush) {
-        const keep = this.buffer.slice(-this.openTag.length);
-        const toPush = this.buffer.slice(0, -this.openTag.length);
-        if (toPush.length > 0) this.push(toPush);
-        this.buffer = keep;
-      } else {
-        // No tag found, flush remaining
-        this.onContent(undefined);
-        this.hasEmitted = true;
-        this.push(this.buffer);
-        this.buffer = '';
+    while (true) {
+      const start = this.buffer.indexOf(this.openTag);
+      if (start === -1) {
+        // No tag start found
+        if (!isFlush) {
+          // Push everything *except* last few characters that might be part of a start tag
+          const minTagLength = this.openTag.length;
+          const safe = this.buffer.slice(0, -minTagLength);
+          const remain = this.buffer.slice(-minTagLength);
+          if (safe.length > 0) this.push(safe);
+          this.buffer = remain;
+        } else {
+          if (this.buffer.length > 0) {
+            this.push(this.buffer);
+          }
+          this.buffer = '';
+        }
+        return;
       }
-      return;
-    }
 
-    if (end === -1) {
-      // <tag> found but </tag> not yet — wait for more chunks
-      if (isFlush) {
-        this.onContent(undefined);
-        this.hasEmitted = true;
-        this.push(this.buffer);
-        this.buffer = '';
+      const end = this.buffer.indexOf(this.closeTag, start);
+      if (end === -1) {
+        // Incomplete tag — wait for more data
+        if (isFlush) {
+          this.onContent(undefined);
+          this.hasEmitted = true;
+          this.push(this.buffer);
+          this.buffer = '';
+        }
+        return;
       }
-      return;
+
+      const content = this.buffer.slice(start + this.openTag.length, end);
+      this.onContent(content.trim());
+      this.hasEmitted = true;
+
+      const before = this.buffer.slice(0, start);
+      if (before.length > 0) this.push(before);
+
+      this.buffer = this.buffer.slice(end + this.closeTag.length);
     }
-
-    // Full tag found
-    const content = this.buffer.slice(start + this.openTag.length, end);
-    this.onContent(content.trim());
-    this.hasEmitted = true;
-
-    const before = this.buffer.slice(0, start);
-    const after = this.buffer.slice(end + this.closeTag.length);
-    if (before.length > 0) this.push(before);
-
-    this.push(after);
-    this.buffer = '';
   }
 }

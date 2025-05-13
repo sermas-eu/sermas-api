@@ -39,6 +39,8 @@ import {
   OutgoingQueueMessage,
 } from './dialogue.speech.dto';
 import { DialogueMemoryService } from './memory/dialogue.memory.service';
+import { MqttService } from 'libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from 'libs/sermas/sermas.topic';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 
@@ -75,6 +77,8 @@ export class DialogueSpeechService implements OnModuleInit {
 
     private readonly monitor: MonitorService,
     private readonly requestMonitor: DialogueRequestMonitorService,
+
+    private readonly broker: MqttService,
   ) {}
 
   onModuleInit() {
@@ -256,6 +260,11 @@ export class DialogueSpeechService implements OnModuleInit {
   async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
     // track request
     this.trackRequest('started', ev);
+    await this.asyncApi.dialogueProgress({
+      event: 'stt',
+      sessionId: ev.sessionId,
+      appId: ev.appId,
+    });
 
     ev.buffer = await this.convert(ev);
 
@@ -392,6 +401,12 @@ export class DialogueSpeechService implements OnModuleInit {
       if (!validSpeaker || !text) {
         this.logger.debug(`STT: cannot detect text from audio clip.`);
         await this.continueAgentSpeech(payload.appId, payload.sessionId);
+        await this.asyncApi.dialogueProgress({
+          event: 'stt',
+          sessionId: payload.sessionId,
+          appId: payload.appId,
+          status: 'ended',
+        });
         return false;
       }
 
@@ -417,6 +432,8 @@ export class DialogueSpeechService implements OnModuleInit {
         emotion,
         text,
       };
+
+      await this.broker.publish(SermasTopics.dialogue.stt, sttEvent);
 
       this.emitter.emit('dialogue.chat.message', sttEvent);
       return true;
@@ -465,6 +482,11 @@ export class DialogueSpeechService implements OnModuleInit {
 
   async handleAgentMessage(ev: DialogueMessageDto) {
     const sessionLanguage = await this.session.getLanguage(ev);
+    await this.asyncApi.dialogueProgress({
+      event: 'translate',
+      sessionId: ev.sessionId,
+      appId: ev.appId,
+    });
 
     // agent message
     let translation = ev.text;
@@ -526,6 +548,14 @@ export class DialogueSpeechService implements OnModuleInit {
         .forEach((t) => this.logger.verbose(`TTS | ${t}`));
     }
 
+    if (message.text) {
+      await this.asyncApi.dialogueProgress({
+        event: 'tts',
+        sessionId: message.sessionId,
+        appId: message.appId,
+      });
+    }
+
     const promise = this.processAgentSpeech(message)
       .then((data) => Promise.resolve({ data, message }))
       .catch(() => Promise.resolve({ data: null, message }));
@@ -542,6 +572,12 @@ export class DialogueSpeechService implements OnModuleInit {
   ) {
     if (!dialogueMessage.requestId) {
       this.logger.debug(`Missing requestId, skipping TTS`);
+      await this.asyncApi.dialogueProgress({
+        event: 'tts',
+        sessionId: dialogueMessage.sessionId,
+        appId: dialogueMessage.appId,
+        status: 'ended',
+      });
       return;
     }
 
@@ -564,6 +600,13 @@ export class DialogueSpeechService implements OnModuleInit {
     };
 
     await this.processOutgoingQueue(dialogueMessage.requestId);
+
+    await this.asyncApi.dialogueProgress({
+      event: 'tts',
+      sessionId: dialogueMessage.sessionId,
+      appId: dialogueMessage.appId,
+      status: 'ended',
+    });
   }
 
   async processOutgoingQueue(requestId: string) {

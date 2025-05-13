@@ -33,7 +33,10 @@ export const SermasTopics = {
   dialogue: {
     languageManagement: 'app/:appId/dialogue/language',
     messages: 'app/:appId/dialogue/messages/:sessionId',
+    stt: 'app/:appId/dialogue/stt/:sessionId',
     userSpeech: 'app/:appId/dialogue/user-speech/:sessionId/:chunkId',
+    userSpeechStream:
+      'app/:appId/dialogue/user-speech/stream/:sessionId/:chunkId',
     agentSpeech: 'app/:appId/dialogue/speech/:sessionId/:messageId/:chunkId',
     agentStopSpeech: 'app/:appId/dialogue/stop/:sessionId',
     agentPauseSpeech: 'app/:appId/dialogue/pause/:sessionId',
@@ -48,6 +51,7 @@ export const SermasTopics = {
     taskRecordChanged: 'app/:appId/dialogue/task/record/:taskId',
     taskFieldHandler: 'app/:appId/dialogue/task/handler',
     request: 'app/:appId/dialogue/request/:sessionId',
+    progress: 'app/:appId/dialogue/progress/:sessionId',
   },
   xr: {
     occlusion: 'app/:appId/xr/occlusion',

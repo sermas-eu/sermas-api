@@ -153,7 +153,9 @@ export class DialogueToolsEventsService {
           }
 
           for (const key in ev.metadata || {}) {
-            const type = (typeof ev.metadata[key]).toString();
+            const type = ev.metadata[key]
+              ? (typeof ev.metadata[key]).toString()
+              : 'undefined';
             if (!(ToolSchemaTypeList as unknown as string[]).includes(type)) {
               this.logger.debug(
                 `Skip metadata key=${key} of type=${type}. Must be one of ${ToolSchemaTypeList}`,

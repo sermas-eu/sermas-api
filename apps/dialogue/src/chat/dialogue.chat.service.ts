@@ -35,11 +35,18 @@ import {
 import { SelectedTool } from './dialogue.chat.tools.dto';
 import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer';
 import { SentenceTransformer } from './transformer/sentence.transformer';
+import { DialogueAsyncApiService } from '../dialogue.async.service';
 
 const TrimmablePrefixes = [
   'ASSISTANT',
   'USER',
   'UTENTE',
+  '<filter>',
+  '<intents>',
+  '<tools>',
+  'FILTER',
+  'INTENTS',
+  'TOOLS',
   'CHAT RESPONSE',
   '<chat response>',
   '<chatresponse>',
@@ -58,6 +65,7 @@ export class DialogueChatService {
     private readonly memory: DialogueMemoryService,
     private readonly vectorStore: DialogueVectorStoreService,
     private readonly monitor: MonitorService,
+    private readonly asynApi: DialogueAsyncApiService,
   ) {}
 
   logExplanation(
@@ -96,8 +104,21 @@ export class DialogueChatService {
       threshold: 3000,
     });
 
+    await this.asynApi.dialogueProgress({
+      event: 'llm',
+      sessionId: message.sessionId,
+      appId: message.appId,
+    });
+
     const response = await this.send(message, llmArgs);
     perf('request');
+
+    await this.asynApi.dialogueProgress({
+      event: 'llm',
+      sessionId: message.sessionId,
+      appId: message.appId,
+      status: 'ended',
+    });
 
     // handle skip case
     const validationEvent: DialogueChatValidationEvent = {
@@ -111,6 +132,13 @@ export class DialogueChatService {
     // skip
     this.logger.debug(`USER MESSAGE: ${message.text}`);
 
+    if (!response?.filter) {
+      this.logger.debug('FILTER: Missing section');
+    }
+    if (!response?.intent) {
+      this.logger.debug('INTENT: Missing section');
+    }
+
     if (response?.filter?.explain) {
       this.logExplanation({
         ...message,
@@ -123,12 +151,28 @@ export class DialogueChatService {
       this.logger.debug(`Skipping user request message=${message.text}`);
 
       if (response?.filter?.answer) {
-        this.sendMessage(
-          message,
-          getMessageId(),
-          getChunkId(),
-          response?.filter?.answer,
+        this.logger.debug(
+          `Sending generated answer ${response?.filter?.answer}`,
         );
+        const mId = getMessageId();
+        const cId = getChunkId();
+        this.sendMessage(message, mId, cId, response?.filter?.answer);
+        this.emitChatProgress({
+          completed: false,
+          messageId: mId,
+          chunkId: cId,
+          sessionId: message.sessionId,
+          appId: message.appId,
+          requestId: message.requestId,
+        });
+      } else {
+        await this.asynApi.dialogueProgress({
+          event: 'llm',
+          sessionId: message.sessionId,
+          appId: message.appId,
+          status: 'error',
+          error: `${message.text}`,
+        });
       }
 
       return;
@@ -237,7 +281,7 @@ export class DialogueChatService {
       .on('data', (chunk: Buffer | string) => {
         perf('stream');
 
-        let text = chunk.toString();
+        let text = (chunk || '').toString();
 
         (text || '')
           .split('\n')
