@@ -31,7 +31,6 @@ export class ChatGPTSentimentAnalysisService implements OnModuleInit {
     if (this.config.get('SENTIMENT_ANALYSIS') === '0') {
       return null;
     }
-    // await this.progressService.dialogueProgress({ event: 'analyze' });
 
     const emotions = EmotionTypes.join(', ');
     const defaultEmotion: Emotion = 'neutral';

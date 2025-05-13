@@ -260,7 +260,11 @@ export class DialogueSpeechService implements OnModuleInit {
   async speechToText(ev: DialogueSpeechToTextDto): Promise<void> {
     // track request
     this.trackRequest('started', ev);
-    await this.asyncApi.dialogueProgress({ event: 'stt' });
+    await this.asyncApi.dialogueProgress({
+      event: 'stt',
+      sessionId: ev.sessionId,
+      appId: ev.appId,
+    });
 
     ev.buffer = await this.convert(ev);
 
@@ -472,7 +476,11 @@ export class DialogueSpeechService implements OnModuleInit {
 
   async handleAgentMessage(ev: DialogueMessageDto) {
     const sessionLanguage = await this.session.getLanguage(ev);
-    await this.asyncApi.dialogueProgress({ event: 'translate' });
+    await this.asyncApi.dialogueProgress({
+      event: 'translate',
+      sessionId: ev.sessionId,
+      appId: ev.appId,
+    });
 
     // agent message
     let translation = ev.text;
@@ -500,7 +508,11 @@ export class DialogueSpeechService implements OnModuleInit {
   protected async processAgentSpeech(
     agentResponseEvent: DialogueMessageDto,
   ): Promise<Buffer | undefined> {
-    await this.asyncApi.dialogueProgress({ event: 'tts' });
+    await this.asyncApi.dialogueProgress({
+      event: 'tts',
+      sessionId: agentResponseEvent.sessionId,
+      appId: agentResponseEvent.appId,
+    });
 
     let buffer: Buffer;
     try {

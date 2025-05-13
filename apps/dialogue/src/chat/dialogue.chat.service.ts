@@ -98,7 +98,11 @@ export class DialogueChatService {
       threshold: 3000,
     });
 
-    await this.asynApi.dialogueProgress({ event: 'llm' });
+    await this.asynApi.dialogueProgress({
+      event: 'llm',
+      sessionId: message.sessionId,
+      appId: message.appId,
+    });
 
     const response = await this.send(message, llmArgs);
     perf('request');

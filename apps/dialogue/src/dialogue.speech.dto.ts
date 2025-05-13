@@ -43,7 +43,7 @@ const DialogueProgressEventList = [
 
 export type DialogueProgressEvent = (typeof DialogueProgressEventList)[number];
 
-export class DialogueProgressEventDto {
+export class DialogueProgressEventDto extends SermasSessionDto {
   @ApiProperty()
   event: DialogueProgressEvent;
   @ApiPropertyOptional({ default: 'started' })
