@@ -13,7 +13,6 @@ import { WakeWordService } from './providers/wake-word/wake-word.service';
 import { DetectionController } from './detection.controller';
 import { EmotionTrackerService } from './providers/emotion-tracker/emotion-tracker.service';
 import { ChatGPTObjectDetectionService } from './providers/object-detection/object-detection.chatgpt.service';
-import { DialogueProgressAsyncService } from 'apps/dialogue/src/progress/dialogue.progress.async.service';
 
 @Module({
   imports: [AuthModule, EventEmitterModule.forRoot()],
@@ -30,7 +29,6 @@ import { DialogueProgressAsyncService } from 'apps/dialogue/src/progress/dialogu
     DetectionAsyncApiService,
     EmotionTrackerService,
     ChatGPTObjectDetectionService,
-    DialogueProgressAsyncService,
   ],
   exports: [DetectionService, DetectionStreamingService],
 })

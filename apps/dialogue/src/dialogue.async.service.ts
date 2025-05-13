@@ -7,13 +7,27 @@ import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { mapMqttTopic } from 'libs/util';
 import { AsyncApi } from 'nestjs-asyncapi';
 import { DialogueSessionRequestDto } from './dialogue.request-monitor.dto';
-import { DialogueAvatarSpeechControlDto } from './dialogue.speech.dto';
+import {
+  DialogueAvatarSpeechControlDto,
+  DialogueProgressEventDto,
+} from './dialogue.speech.dto';
 
 @AsyncApi()
 @Injectable()
 export class DialogueAsyncApiService {
   private readonly logger = new Logger(DialogueAsyncApiService.name);
   constructor(private readonly broker: MqttService) {}
+
+  @AsyncApiOperationName({
+    channel: SermasTopics.dialogue.progress,
+    message: {
+      payload: DialogueProgressEventDto,
+    },
+    description: 'Publish dialogue progress event',
+  })
+  async dialogueProgress(payload: DialogueProgressEventDto) {
+    this.broker.publish(SermasTopics.dialogue.progress, payload);
+  }
 
   @AsyncApiOperationName({
     channel: SermasTopics.dialogue.messages,
