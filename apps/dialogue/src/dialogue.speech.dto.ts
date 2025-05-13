@@ -47,5 +47,6 @@ export class DialogueProgressEventDto extends SermasSessionDto {
   @ApiProperty()
   event: DialogueProgressEvent;
   @ApiPropertyOptional({ default: 'started' })
-  status?: 'started' | 'ended';
+  status?: 'started' | 'ended' | 'error';
+  error?: string;
 }

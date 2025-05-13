@@ -148,12 +148,25 @@ export class DialogueChatService {
         this.logger.debug(
           `Sending generated answer ${response?.filter?.answer}`,
         );
-        this.sendMessage(
-          message,
-          getMessageId(),
-          getChunkId(),
-          response?.filter?.answer,
-        );
+        const mId = getMessageId();
+        const cId = getChunkId();
+        this.sendMessage(message, mId, cId, response?.filter?.answer);
+        this.emitChatProgress({
+          completed: false,
+          messageId: mId,
+          chunkId: cId,
+          sessionId: message.sessionId,
+          appId: message.appId,
+          requestId: message.requestId,
+        });
+      } else {
+        await this.asynApi.dialogueProgress({
+          event: 'llm',
+          sessionId: message.sessionId,
+          appId: message.appId,
+          status: 'error',
+          error: `${message.text}`,
+        });
       }
 
       return;
