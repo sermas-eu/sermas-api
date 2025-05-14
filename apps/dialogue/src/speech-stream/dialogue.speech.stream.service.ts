@@ -49,12 +49,14 @@ export class DialogueSpeechStreamService {
           Date.now() - streamMessage.created.getTime() >
           MESSAGE_FRAME_CLEANUP_MS
         ) {
-          if (!this.cache[sessionId][chunkId]) return;
+          if (!this.cache[sessionId] || !this.cache[sessionId][chunkId]) return;
 
           this.logger.verbose(
             `Remove message frames buffer for chunkId=${streamMessage.chunkId} sessionId=${streamMessage.session.sessionId}`,
           );
-          delete this.cache[sessionId][chunkId];
+          try {
+            delete this.cache[sessionId][chunkId];
+          } catch {}
         }
       }
       // release sessions
@@ -62,7 +64,9 @@ export class DialogueSpeechStreamService {
         this.cache[sessionId] &&
         Object.keys(this.cache[sessionId]).length === 0
       ) {
-        delete this.cache[sessionId];
+        try {
+          delete this.cache[sessionId];
+        } catch {}
       }
     }
   }
