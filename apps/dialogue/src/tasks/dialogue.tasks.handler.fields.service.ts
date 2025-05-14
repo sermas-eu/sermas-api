@@ -265,11 +265,18 @@ export class DialogueTasksHandlerFieldsService {
   }
 
   async evaluateExpression(context: TaskFieldContext) {
-    let fieldPrompt = context.field.prompt;
-    if (context.context) {
+    let fieldPrompt = context.field.prompt || '';
+    if (context.context && fieldPrompt) {
       for (const key in context.context) {
         fieldPrompt = fieldPrompt.replace(`{${key}}`, context.context[key]);
       }
+    }
+
+    if (!fieldPrompt) {
+      this.logger.warn(
+        `Field ${context.field.name} prompt is empty, value left empty task=${context.task?.name}`,
+      );
+      return null;
     }
 
     try {
@@ -322,7 +329,7 @@ export class DialogueTasksHandlerFieldsService {
 
     const language = await this.session.getLanguage(context.record);
 
-    let rules = '';
+    let rules = `${field.validation || ''}`;
     switch (field.type) {
       case 'boolean':
         rules = `Convert to true or false.`;
@@ -347,6 +354,7 @@ Return the matching 'value' field from options`;
       default:
         // skip validation for unknown fields
         if (!field.validation) return { error: false, value: values.value };
+
         break;
     }
 
