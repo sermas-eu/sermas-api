@@ -80,8 +80,6 @@ If the assistant already completed the same task or tool in the last interaction
 The 'taskId' value must be on of those listed in TASKS.
 Set 'taskId' only with one from TASKS that has 'match' true.
 
-Set the field 'explain' describing why you set match, trigger and cancel values. 
-
 <% if (data.activeTask) { %>
 If identified taskId equals to '<%= data.activeTask %>', set 'trigger' to false
 
@@ -97,11 +95,13 @@ If another task match the user request, set the 'name' and 'match' to true for t
 
 <% } %>
 
-If 'match' is true ensure to propose the task as part of answer in CHAT RESPONSE section.
+If 'match' is true ensure to propose the task as part of answer in CHAT RESPONSE - REACTION section.
 
 <% if (!data.activeTask) { %>
   If a task 'match', skip the next section.
 <% } %>
+
+Set the field 'explain' describing why you set the values of match, trigger and cancel.
 
 # TOOLS
 Find matches of provided TOOLS list with USER MESSAGE, ignore TASKS. A tool has always priority over a task.
@@ -166,10 +166,10 @@ Never mention TOOLS or TASKS in the chat response.
 <% } %>
 
 ## REACTION
-Based on the previous INTENTS section evaluation, ask the user if they want to proceed with a task formulating the 'taskDescription' in a question. 
-Follow those rules sequentially:
-- If a task match explicitly.
-- If a task is cancelled offer the NEW task.
-- Skip in any other case.
+Based on the INTENTS evaluation, propose the matching task adapting 'taskDescription' as a question in those cases:
+- If task 'match' is true
+- If previous task is being cancelled but a NEW task matches.
+- Skip any other case
+If a task matches, do not make up an answer.
 `,
 );
