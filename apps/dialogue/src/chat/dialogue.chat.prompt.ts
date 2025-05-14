@@ -77,6 +77,7 @@ Set the field 'trigger' to 'true' evaluate sequentially the following cases:
 If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
 If the assistant already completed the same task or tool in the last interaction and user request is not asking to repeat the operation, set 'trigger' to false.
 
+The 'taskId' value must be on of those listed in TASKS.
 Set 'taskId' only with one from TASKS that has 'match' true.
 
 Set the field 'explain' describing why you set match, trigger and cancel values. 
