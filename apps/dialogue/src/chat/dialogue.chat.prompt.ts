@@ -95,7 +95,7 @@ If another task match the user request, set the 'name' and 'match' to true for t
 
 <% } %>
 
-If 'match' is true ensure to propose the task as part of answer in CHAT RESPONSE - REACTION section.
+If 'match' is true ensure to propose the task as part of answer in CHAT RESPONSE section.
 
 <% if (!data.activeTask) { %>
   If a task 'match', skip the next section.
@@ -120,8 +120,9 @@ Set the field 'explain' describing why you set those values, omit if 'tools' is 
 Never mention tools in the chat response. Skip the next section if a tool is found. 
 
 # CHAT RESPONSE
+## GENERAL RULES
 You are an AVATAR (also assistant or agent) discussing with USER in the APPLICATION context. The conversation is speech-based and must be fast and coincise, avoid repetitions.
-Always answer appropriately to USER MESSAGE, based on the overall context information. Ask for clarification if you have no elements to answer precisely.
+Always answer to USER MESSAGE based on the overall context information. Ask for clarification if you have no elements to answer precisely.
 Never mention TOOLS or TASKS in the chat response.
 
 <% if (data.field || data.task) { %>
@@ -165,11 +166,11 @@ Never mention TOOLS or TASKS in the chat response.
 
 <% } %>
 
-## REACTION
-Based on the INTENTS evaluation, propose the matching task adapting 'taskDescription' as a question in those cases:
-- If task 'match' is true
+
+## INTENT
+Your answer must conclude with one single question that proposes the 'taskDescription' of the selected task in those cases:
+- If a task has a match.
 - If previous task is being cancelled but a NEW task matches.
-- Skip any other case
-If a task matches, do not make up an answer.
+- Skip in other cases.
 `,
 );

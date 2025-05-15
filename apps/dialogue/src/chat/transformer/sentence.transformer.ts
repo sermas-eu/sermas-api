@@ -1,12 +1,14 @@
 import { Logger } from '@nestjs/common';
-import { Transform } from 'stream';
+import { Transform, TransformCallback } from 'stream';
 
 export const MIN_SENTENCE_LENGTH = 10;
 
+type PlaceholderMap = { [key: string]: string };
+
 export class SentenceTransformer extends Transform {
   private buffer: string | undefined;
-
   private logger = new Logger(SentenceTransformer.name);
+  private idCounter = 0;
 
   constructor(
     private readonly onInit?: () => void,
@@ -17,11 +19,10 @@ export class SentenceTransformer extends Transform {
 
   _transform(
     chunk: Buffer | string,
-    encoding: string,
-    callback: CallableFunction,
+    encoding: BufferEncoding,
+    callback: TransformCallback,
   ) {
-    chunk = chunk || '';
-    chunk = chunk.toString();
+    const data = chunk?.toString?.() || '';
 
     if (this.buffer === undefined) {
       this.logger.verbose('init');
@@ -29,60 +30,52 @@ export class SentenceTransformer extends Transform {
       this.buffer = '';
     }
 
-    this.buffer += chunk.toString();
-
-    // console.log(`buffer --- ${this.buffer}`);
+    this.buffer += data;
 
     if (this.buffer.length >= MIN_SENTENCE_LENGTH) {
-      const regex =
-        /\b(?:[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\d{1,2}:\d{2}(?:[ap]m)?|\d{1,3}(?:,\d{3})*|\d+(?:\.\d+)?)(?!\S)|[^.?!;:]+[.?!;:]+[\])'"`’”]*|[^.?!;:]+$/gi;
+      const { text, placeholders } = this.protectTokens(this.buffer);
 
-      const matches = [...this.buffer.matchAll(regex)];
-
-      // console.warn(matches);
+      const sentenceSplitRegex = /[^.?!;:]+[.?!;:]+[\])'"`’”]*|[^.?!;:]+$/g;
+      const matches = text.match(sentenceSplitRegex) || [];
 
       let phrase = '';
       let lastIndex = 0;
 
       for (const match of matches) {
-        const fullMatch = match[0];
-        const index = match.index ?? 0;
+        phrase += match;
 
-        phrase += fullMatch;
-
-        // console.log(`**** phrase ${phrase}`);
         if (
           phrase.trim().length >= MIN_SENTENCE_LENGTH &&
-          /[.?!;:][\])'"`’”]*\s*$/.test(fullMatch) // ensure sentence ending
+          /[.?!;:][\])'"`’”]*\s*$/.test(match)
         ) {
-          this.sendBuffer(phrase);
+          const restored = this.restoreTokens(phrase, placeholders);
+          this.sendBuffer(restored);
           phrase = '';
-          lastIndex = index + fullMatch.length;
+          lastIndex += match.length;
         }
       }
 
-      // Retain remaining text in the buffer
-      this.buffer = this.buffer.slice(lastIndex);
+      this.buffer = this.restoreTokens(text.slice(lastIndex), placeholders);
     }
 
     callback();
   }
 
   sendBuffer(buffer: string) {
-    if (!buffer) return;
-    const sentence = buffer.replace(/^\n+/gm, '').replace(/\n+$/gm, '');
-    this.logger.verbose(`send: ${sentence}`);
-    this.push(sentence);
+    const sentence = buffer.trim();
+    if (!sentence) return;
+
+    const cleaned = sentence.replace(/^\n+|\n+$/g, '');
+    this.logger.verbose(`send: ${cleaned}`);
+    this.push(cleaned);
   }
 
-  _flush(callback: CallableFunction) {
-    // Flush the remaining incomplete phrase
+  _flush(callback: TransformCallback) {
     if (this.buffer && this.buffer.trim().length > 0) {
       this.sendBuffer(this.buffer);
       this.buffer = '';
     }
 
-    // stream stopped before this transform
     if (this.buffer === undefined) {
       this.logger.verbose(`init`);
       if (this.onInit) this.onInit();
@@ -91,7 +84,42 @@ export class SentenceTransformer extends Transform {
     if (this.onComplete) {
       this.onComplete();
     }
-    callback();
+
     this.logger.verbose(`completed`);
+    callback();
+  }
+
+  private protectTokens(text: string): {
+    text: string;
+    placeholders: PlaceholderMap;
+  } {
+    const patterns = [
+      /[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, // emails
+      /\b\d{1,3}(?:[.,]\d{3})*(?:\.\d+)?\b/g, // numbers with . or ,
+      /\b\d{1,2}:\d{2}(?:[ap]m)?\b/gi, // time
+    ];
+
+    const placeholders: PlaceholderMap = {};
+
+    for (const pattern of patterns) {
+      text = text.replace(pattern, (match) => {
+        const token = `{{__P${this.idCounter++}__}}`;
+        placeholders[token] = match;
+        return token;
+      });
+    }
+
+    return { text, placeholders };
+  }
+
+  private restoreTokens(text: string, placeholders: PlaceholderMap): string {
+    for (const [token, original] of Object.entries(placeholders)) {
+      const tokenRegex = new RegExp(
+        token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'g',
+      );
+      text = text.replace(tokenRegex, original);
+    }
+    return text;
   }
 }
