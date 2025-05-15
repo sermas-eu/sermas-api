@@ -168,11 +168,9 @@ Never mention TOOLS or TASKS in the chat response.
 
 
 ## INTENT
-When a task in INTENTS matches, your answer must conclude with one single question that proposes the 'taskDescription' of the selected task.
-Decide by evaluating those conditions:
+Your answer must conclude with one single question that proposes the 'taskDescription' of the selected task in those cases:
 - If a task has a match.
 - If previous task is being cancelled but a NEW task matches.
 - Skip in other cases.
-
 `,
 );
