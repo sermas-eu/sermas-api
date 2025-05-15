@@ -64,8 +64,11 @@ export class GoogleSpeechToText implements ISpeechToText {
       config: {
         encoding: 'LINEAR16',
         sampleRateHertz: 16000,
-        // model: 'latest_short',
-        // useEnhanced: true,
+        audioChannelCount: 1,
+        useEnhanced: true,
+        model: 'command_and_search', // Better for short, clean commands
+        enableAutomaticPunctuation: true,
+        enableWordTimeOffsets: false, // Set to true if you need timestamps
         languageCode,
         speechContexts: [
           {
