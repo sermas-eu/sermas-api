@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SessionDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { DefaultLanguage } from 'libs/language/lang-codes';
@@ -8,14 +8,9 @@ import { ulid } from 'ulidx';
 import { DialogueSpeechService } from '../dialogue.speech.service';
 import { convertRawPCMToWav } from './convert-wav';
 
-const MESSAGE_FRAME_CLEANUP_MS = 15 * 1000;
+const MESSAGE_FRAME_CLEANUP_MS = 20 * 1000;
 
-type SpeechStreamMessage = {
-  session: SessionDto;
-  chunkId: string;
-  frames: Buffer[];
-  created: Date;
-};
+type SpeechStreamMessage = Buffer;
 
 type SessionMessageDto = {
   session: SessionDto;
@@ -31,45 +26,14 @@ type CompletionMessageDto = {
 export class DialogueSpeechStreamService {
   private readonly logger = new Logger(DialogueSpeechStreamService.name);
 
-  private readonly cache: Record<string, Record<string, SpeechStreamMessage>> =
-    {};
+  // private readonly cache: Record<string, Record<string, SpeechStreamMessage>> =
+  //   {};
 
   constructor(
     private session: SessionService,
     private speech: DialogueSpeechService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
-
-  @Interval(MESSAGE_FRAME_CLEANUP_MS / 2)
-  cleanup() {
-    for (const sessionId in this.cache) {
-      for (const chunkId in this.cache[sessionId]) {
-        const streamMessage = this.cache[sessionId][chunkId];
-
-        if (
-          Date.now() - streamMessage.created.getTime() >
-          MESSAGE_FRAME_CLEANUP_MS
-        ) {
-          if (!this.cache[sessionId] || !this.cache[sessionId][chunkId]) return;
-
-          this.logger.verbose(
-            `Remove message frames buffer for chunkId=${streamMessage.chunkId} sessionId=${streamMessage.session.sessionId}`,
-          );
-          try {
-            delete this.cache[sessionId][chunkId];
-          } catch {}
-        }
-      }
-      // release sessions
-      if (
-        this.cache[sessionId] &&
-        Object.keys(this.cache[sessionId]).length === 0
-      ) {
-        try {
-          delete this.cache[sessionId];
-        } catch {}
-      }
-    }
-  }
 
   parseJSON<T = any>(buffer: Buffer) {
     try {
@@ -87,11 +51,15 @@ export class DialogueSpeechStreamService {
 
     const session = await this.session.read(sessionId, false);
     if (!session) {
-      this.logger.debug(`sessionId=${sessionId} not found`);
+      this.logger.verbose(`skip frames sessionId=${sessionId} not found`);
       return null;
     }
 
     return { session, sessionId, chunkId };
+  }
+
+  getCacheId(ev: { sessionId: string; chunkId: string }) {
+    return `frames_${ev.sessionId}_${ev.chunkId}`;
   }
 
   async processStreamFrame(topic: string, buffer: Buffer) {
@@ -100,25 +68,34 @@ export class DialogueSpeechStreamService {
 
     const { sessionId, chunkId, session } = context;
 
-    this.cache[sessionId] = this.cache[sessionId] || {};
+    const cacheId = this.getCacheId({ sessionId, chunkId });
 
-    this.cache[sessionId][chunkId] = this.cache[sessionId][chunkId] || {
-      created: new Date(),
-      session,
-      chunkId,
-      frames: [],
-    };
+    let sessionMessage =
+      await this.cacheManager.get<SpeechStreamMessage>(cacheId);
+
+    if (!sessionMessage) {
+      sessionMessage = Buffer.from([]);
+    }
 
     const completion = this.parseJSON<CompletionMessageDto>(buffer);
 
     // cache raw frames
     if (!completion) {
-      this.cache[sessionId][chunkId].frames.push(buffer);
-
-      // const size = this.cache[sessionId][chunkId].frames.length / 1000;
-      // this.logger.verbose(
-      //   `Cached frame len=${buffer.length} total=${size}kb chunkId=${chunkId} sessionId=${sessionId}`,
-      // );
+      try {
+        sessionMessage = Buffer.concat([Buffer.from(sessionMessage), buffer]);
+        await this.cacheManager.set(
+          cacheId,
+          sessionMessage,
+          MESSAGE_FRAME_CLEANUP_MS,
+        );
+        const size = sessionMessage.length / 1000;
+        this.logger.verbose(
+          `Cached frame len=${buffer.length} total=${size}kb chunkId=${chunkId} sessionId=${sessionId}`,
+        );
+      } catch (e) {
+        this.logger.warn(`Failed to cache frame ${e.message}`);
+        this.logger.debug(e.stack);
+      }
       return;
     }
 
@@ -131,22 +108,18 @@ export class DialogueSpeechStreamService {
     }
 
     // message is completed, pass to STT
-    const sessionMessage = this.cache[sessionId][chunkId];
     try {
       this.logger.verbose(
-        `Processing ${sessionMessage.frames.length} frames size=${sessionMessage.frames.reduce((size, frame) => size + frame.length, 0)} chunkId=${chunkId} sessionId=${sessionId}`,
+        `Processing frames size=${sessionMessage.length * 1024} chunkId=${chunkId} sessionId=${sessionId}`,
       );
 
-      const buffer = convertRawPCMToWav(
-        Buffer.concat(sessionMessage.frames),
-        16000,
-      );
+      const buffer = convertRawPCMToWav(sessionMessage, 16000);
 
       this.logger.verbose(`WAV has len=${buffer.length}`);
 
       await this.processMessage({
-        chunkId: sessionMessage.chunkId,
-        session: sessionMessage.session,
+        chunkId: chunkId,
+        session: session,
         buffer,
       });
     } finally {
@@ -154,9 +127,10 @@ export class DialogueSpeechStreamService {
     }
   }
 
-  releaseCache(sessionId: string, chunkId: string) {
-    if (!this.cache[sessionId][chunkId]) return;
-    delete this.cache[sessionId][chunkId];
+  async releaseCache(sessionId: string, chunkId: string) {
+    try {
+      await this.cacheManager.del(this.getCacheId({ sessionId, chunkId }));
+    } catch {}
   }
 
   async processChunk(topic: string, buffer: Buffer) {
