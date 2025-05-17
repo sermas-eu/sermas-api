@@ -33,34 +33,67 @@ export class SentenceTransformer extends Transform {
     this.buffer += data;
 
     if (this.buffer.length >= MIN_SENTENCE_LENGTH) {
-      const { text, placeholders } = this.protectTokens(this.buffer);
+      const { text: protectedText, placeholders } = this.protectTokens(
+        this.buffer,
+      );
 
       const sentenceSplitRegex = /[^.?!;:]+[.?!;:]+[\])'"`’”]*|[^.?!;:]+$/g;
-      const matches = text.match(sentenceSplitRegex) || [];
+      const matches = protectedText.matchAll(sentenceSplitRegex);
 
       let phrase = '';
-      let lastIndex = 0;
+      let lastIndexInProtected = 0;
 
       for (const match of matches) {
-        phrase += match;
+        const matchText = match[0];
+        phrase += matchText;
 
         if (
           phrase.trim().length >= MIN_SENTENCE_LENGTH &&
-          /[.?!;:][\])'"`’”]*\s*$/.test(match)
+          /[.?!;:][\])'"`’”]*\s*$/.test(matchText)
         ) {
           const restored = this.restoreTokens(phrase, placeholders);
           this.sendBuffer(restored);
+          lastIndexInProtected = match.index! + matchText.length;
           phrase = '';
-          lastIndex += match.length;
         }
       }
 
-      this.buffer = this.restoreTokens(text.slice(lastIndex), placeholders);
+      // Now compute the correct slice index in the original string
+      const processedProtected = protectedText.slice(0, lastIndexInProtected);
+      const restoredUpToLastIndex = this.restoreTokens(
+        processedProtected,
+        placeholders,
+      );
+
+      // Slice the original buffer using the length of the restored segment
+      this.buffer = this.buffer.slice(restoredUpToLastIndex.length);
     }
 
     callback();
   }
+  private getOriginalIndex(
+    original: string,
+    protectedText: string,
+    protectedIndex: number,
+  ): number {
+    // Find the protected substring up to protectedIndex
+    const protectedPrefix = protectedText.slice(0, protectedIndex);
 
+    // Re-encode the original with the same protectTokens() logic,
+    // but only return the length of the original substring that
+    // corresponds to the protectedPrefix
+    const { text: newProtectedText } = this.protectTokens(original);
+
+    let i = 0;
+    while (
+      i < original.length &&
+      newProtectedText.slice(0, i) !== protectedPrefix
+    ) {
+      i++;
+    }
+
+    return i;
+  }
   sendBuffer(buffer: string) {
     const sentence = buffer.trim();
     if (!sentence) return;
