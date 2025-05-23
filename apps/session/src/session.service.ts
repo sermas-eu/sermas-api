@@ -29,7 +29,7 @@ import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { isDate, isNodeEnv, toDTO } from 'libs/util';
 import { FilterQuery, Model } from 'mongoose';
 
-import { Cache, CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { v4 as uuidv4 } from 'uuid';
 import { AgentChangedDto } from './agent/session.agent.dto';
 import { SessionAgentService } from './agent/session.agent.service';
@@ -41,6 +41,7 @@ import {
   UserReferenceDto,
 } from './session.dto';
 import { Session, SessionDocument } from './session.schema';
+import { ConfigService } from '@nestjs/config';
 
 type SessionEventHandlerPayload = {
   appId: string;
@@ -50,15 +51,12 @@ type SessionEventHandlerPayload = {
   settings?: Partial<AppSettingsDto>;
 };
 
-const SESSION_EXPIRATION = 5 * 60 * 1000; // 5 min
-
 type SessionContext = { appId: string; sessionId?: string };
 
 @Injectable()
-@CacheTTL(SESSION_EXPIRATION)
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
-  private sessionExpirationThreshold = SESSION_EXPIRATION;
+  private sessionExpirationThreshold: number = 30000;
 
   private sessionLock: { [sessionId: string]: Promise<void> | undefined } = {};
 
@@ -77,21 +75,23 @@ export class SessionService {
     private readonly platformApp: PlatformAppService,
     private readonly emitter: EventEmitter2,
     private readonly broker: MqttService,
+    private readonly config: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  ) {
+    this.sessionExpirationThreshold =
+      1000 * +this.config.get('SESSION_EXPIRATION_SEC');
+  }
 
   @Interval(10 * 1000)
   async checkSessionExpiration(): Promise<void> {
     if (isNodeEnv('test')) return;
 
-    const fiveMinutesAgo = new Date(
-      Date.now() - this.sessionExpirationThreshold,
-    );
+    const expiredOn = new Date(Date.now() - this.sessionExpirationThreshold);
 
     const sessions: SessionDocument[] = await this.sessionModel.aggregate([
       {
         $match: {
-          modifiedAt: { $lt: fiveMinutesAgo },
+          modifiedAt: { $lt: expiredOn },
           closedAt: null,
         },
       },
@@ -290,7 +290,11 @@ export class SessionService {
     }
     const sessionDto = toDTO<SessionDto>(session);
 
-    this.cacheManager.set(cacheKey, sessionDto);
+    this.cacheManager.set(
+      cacheKey,
+      sessionDto,
+      this.sessionExpirationThreshold,
+    );
 
     return sessionDto;
   }
