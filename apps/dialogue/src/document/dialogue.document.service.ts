@@ -165,10 +165,6 @@ export class DialogueDocumentService implements OnModuleInit {
       appIds.push(doc.appId);
     }
 
-    for (const appId of [...new Set(appIds)]) {
-      this.emitter.emit('dialogue.document.import', appId);
-    }
-
     const documents: DialogueDocumentDto[] = [];
 
     for (const doc of files) {
@@ -262,8 +258,6 @@ export class DialogueDocumentService implements OnModuleInit {
   }
 
   async scrap(appId: string, website: RagWebsiteDto): Promise<void> {
-    // trigger collection recreate
-    this.emitter.emit('dialogue.document.import', appId);
     // use sitemap.xml
     const urls = [
       'sitemap.xml',
@@ -403,7 +397,5 @@ export class DialogueDocumentService implements OnModuleInit {
     const documentId: string[] = documents.map((d) => d.documentId);
     this.logger.log(`Removing ${documentId.length} documents`);
     await this.documentModel.deleteMany({ appId, documentId: documentId });
-    // trigger collection recreate
-    this.emitter.emit('dialogue.document.import', appId);
   }
 }
