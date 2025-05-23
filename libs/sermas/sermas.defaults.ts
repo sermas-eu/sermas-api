@@ -284,6 +284,9 @@ export const SermasDefaultConfig = {
 
   // ENABLE_EMOTION_RECOGNITION Enables the emotion recognition tracker, for research purposes
   ENABLE_EMOTION_RECOGNITION: '0',
+
+  // SESSION_EXPIRATION_SEC session expiration time in seconds
+  SESSION_EXPIRATION_SEC: 5 * 60, // 5 min
 };
 
 export type SermasApiConfig = typeof SermasDefaultConfig;
