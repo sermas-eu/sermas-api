@@ -130,6 +130,19 @@ export class DialogueDocumentService implements OnModuleInit {
     return docs;
   }
 
+  private async deleteMinioDocuments(appId: string) {
+    const minio = this.minioService.client;
+    const prefix: string = `${appId}/documents`;
+    const minioObjects = await minioListFiles(
+      minio,
+      this.repository,
+      (f) => f,
+      prefix,
+    );
+    const minioNames = minioObjects.map((o) => o.name) as string[];
+    await minio.removeObjects(this.repository, minioNames);
+  }
+
   async loadFromJSON(document: DialogueDocumentDto, filepath: string) {
     const raw = await this.readFile<DialogueDocumentDto>(filepath, true);
     if (raw.content) {
@@ -224,6 +237,7 @@ export class DialogueDocumentService implements OnModuleInit {
     );
 
     if (ev.operation === 'deleted') {
+      await this.deleteMinioDocuments(ev.record.appId);
       await this.removeAll(ev.record.appId);
       return;
     }
