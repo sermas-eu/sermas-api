@@ -7,6 +7,7 @@ import {
 } from 'apps/dialogue/src/document/dialogue.document.dto';
 import { ChromaClient, Collection, IEmbeddingFunction } from 'chromadb';
 
+import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
 import { createHash } from 'crypto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
@@ -65,9 +66,17 @@ export class DialogueVectorStoreService implements OnModuleInit {
     await this.removeDocuments(appId, documentId);
   }
 
-  @OnEvent('dialogue.document.import')
-  async onDocumentImport(appId: string) {
-    await this.recreateCollection(appId);
+  @OnEvent('platform.app')
+  async onAppChange(ev: PlatformAppChangedDto) {
+    this.logger.debug(
+      `Received app change operation=${ev.operation} appId=${ev.record.appId}`,
+    );
+    if (ev.operation === 'deleted') {
+      await this.deleteCollection(ev.appId);
+    }
+    if (ev.operation === 'created') {
+      await this.recreateCollection(ev.appId);
+    }
   }
 
   async onModuleInit() {
@@ -76,7 +85,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     // await this.import('mimex', this.data)
   }
 
-  async recreateCollection(appId: string) {
+  private async deleteCollection(appId: string) {
     const appIdHash = hash(appId);
 
     try {
@@ -104,7 +113,11 @@ export class DialogueVectorStoreService implements OnModuleInit {
         `Failed to remove collection appId=${appId}: ${e.stack}`,
       );
     }
+  }
 
+  async recreateCollection(appId: string) {
+    await this.deleteCollection(appId);
+    const appIdHash = hash(appId);
     try {
       await this.client.getOrCreateCollection({
         name: appIdHash,
@@ -169,6 +182,9 @@ export class DialogueVectorStoreService implements OnModuleInit {
     });
 
     for (const document of documents) {
+      this.logger.debug(
+        `Saving document "${document.content.substring(0, 50).replace('\n', ' ')}..."`,
+      );
       const chunks = this.extractChunks(
         document.content,
         document.metadata?.options?.parser,

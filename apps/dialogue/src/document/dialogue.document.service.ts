@@ -130,6 +130,19 @@ export class DialogueDocumentService implements OnModuleInit {
     return docs;
   }
 
+  private async deleteMinioDocuments(appId: string) {
+    const minio = this.minioService.client;
+    const prefix: string = `${appId}/documents`;
+    const minioObjects = await minioListFiles(
+      minio,
+      this.repository,
+      (f) => f,
+      prefix,
+    );
+    const minioNames = minioObjects.map((o) => o.name) as string[];
+    await minio.removeObjects(this.repository, minioNames);
+  }
+
   async loadFromJSON(document: DialogueDocumentDto, filepath: string) {
     const raw = await this.readFile<DialogueDocumentDto>(filepath, true);
     if (raw.content) {
@@ -150,10 +163,6 @@ export class DialogueDocumentService implements OnModuleInit {
     const appIds: string[] = [];
     for (const doc of files) {
       appIds.push(doc.appId);
-    }
-
-    for (const appId of [...new Set(appIds)]) {
-      this.emitter.emit('dialogue.document.import', appId);
     }
 
     const documents: DialogueDocumentDto[] = [];
@@ -224,6 +233,7 @@ export class DialogueDocumentService implements OnModuleInit {
     );
 
     if (ev.operation === 'deleted') {
+      await this.deleteMinioDocuments(ev.record.appId);
       await this.removeAll(ev.record.appId);
       return;
     }
@@ -248,8 +258,6 @@ export class DialogueDocumentService implements OnModuleInit {
   }
 
   async scrap(appId: string, website: RagWebsiteDto): Promise<void> {
-    // trigger collection recreate
-    this.emitter.emit('dialogue.document.import', appId);
     // use sitemap.xml
     const urls = [
       'sitemap.xml',
@@ -389,7 +397,5 @@ export class DialogueDocumentService implements OnModuleInit {
     const documentId: string[] = documents.map((d) => d.documentId);
     this.logger.log(`Removing ${documentId.length} documents`);
     await this.documentModel.deleteMany({ appId, documentId: documentId });
-    // trigger collection recreate
-    this.emitter.emit('dialogue.document.import', appId);
   }
 }
