@@ -555,6 +555,12 @@ export class DialogueTasksHandlerService {
       break;
     }
 
+    // task is completed if:
+    // - status is completed
+    // - status is started and all fields are filled
+    // - status is ongoing and no current field is set
+    // - no fields are defined
+
     const completed =
       record.status === 'completed' ||
       (record.status === 'started' &&
