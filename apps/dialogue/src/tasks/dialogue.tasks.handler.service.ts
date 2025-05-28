@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { uuidv4 } from 'libs/util';
+import { FilterQuery } from 'mongoose';
 import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
 import { DialogueMemoryService } from '../memory/dialogue.memory.service';
 import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto';
@@ -11,6 +12,7 @@ import { ToolFieldValuesDto } from './dialogue.tasks.handler.dto';
 import { DialogueTasksHandlerFieldsService } from './dialogue.tasks.handler.fields.service';
 import { DialogueTasksService } from './dialogue.tasks.service';
 import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto';
+import { DialogueTaskRecord } from './record/dialogue.tasks.record.schema';
 import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service';
 import {
   DialogueTaskDto,
@@ -182,18 +184,24 @@ export class DialogueTasksHandlerService {
   }
 
   private async ensureRecord(sessionId: string, task: DialogueTaskDto) {
-    const recordQuery = {
+    const recordData = {
       appId: task.appId,
       sessionId,
       taskId: task.taskId,
     };
+
+    const recordQuery: FilterQuery<DialogueTaskRecord> = {
+      ...recordData,
+      status: { $in: ['ongoing', 'started'] },
+    };
+
     const records = await this.record.search(recordQuery);
 
     let record: DialogueTaskRecordDto = records.length ? records[0] : undefined;
     if (!record) {
       this.logger.debug(`Create new task record for sessionId=${sessionId}`);
       record = await this.record.save({
-        ...recordQuery,
+        ...recordData,
         recordId: uuidv4(),
         values: {},
         created: new Date(),

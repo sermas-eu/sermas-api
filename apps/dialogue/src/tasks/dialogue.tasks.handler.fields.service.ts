@@ -459,17 +459,14 @@ Return the matching 'value' field from options`;
 
     switch (context?.field?.type) {
       case 'external':
-        if (context.field.type === 'external') {
-          this.logger.debug(
-            `Using external handler field=${context.field.name} handler=${context.field.handler}`,
-          );
-          await this.invokeHandler({
-            field: context.field,
-            task: context.task,
-            record: context.record,
-          });
-          break;
-        }
+        this.logger.debug(
+          `Using external handler field=${context.field.name} handler=${context.field.handler}`,
+        );
+        await this.invokeHandler({
+          field: context.field,
+          task: context.task,
+          record: context.record,
+        });
         break;
       case 'boolean':
         this.sendUiContent(
