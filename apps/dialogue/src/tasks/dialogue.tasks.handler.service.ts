@@ -547,10 +547,21 @@ export class DialogueTasksHandlerService {
       break;
     }
 
+    const allFieldsCompleted =
+      fields.filter((f) => {
+        return (
+          !f.required ||
+          (f.required &&
+            record.values[f.name] !== undefined &&
+            record.values[f.name] !== null)
+        );
+      }).length === fields.length;
+
+    console.log('allFieldsCompleted', allFieldsCompleted);
+
     const completed =
       record.status === 'completed' ||
-      (record.status === 'started' &&
-        Object.keys(record.values).length === fields.length) ||
+      (record.status === 'started' && allFieldsCompleted) ||
       (record.status === 'ongoing' &&
         (currentField === undefined ||
           (!currentField?.name && !currentField?.type))) ||

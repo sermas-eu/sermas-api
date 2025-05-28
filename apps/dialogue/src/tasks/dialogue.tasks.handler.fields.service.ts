@@ -323,6 +323,8 @@ export class DialogueTasksHandlerFieldsService {
   ): Promise<ValidationResultDto> {
     const { field, values } = context;
 
+    console.log(`Validating field ${field.name} with value=${values.value}`);
+
     // allow empty values for non required field
     if (!field.required && values.value === null)
       return { error: false, value: null };
