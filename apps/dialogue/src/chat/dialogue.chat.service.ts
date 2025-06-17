@@ -36,6 +36,7 @@ import { SelectedTool } from './dialogue.chat.tools.dto';
 import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer';
 import { SentenceTransformer } from './transformer/sentence.transformer';
 import { DialogueAsyncApiService } from '../dialogue.async.service';
+import { ConfigService } from '@nestjs/config';
 
 const TrimmablePrefixes = [
   'ASSISTANT',
@@ -58,6 +59,7 @@ export class DialogueChatService {
   private readonly logger = new Logger(DialogueChatService.name);
 
   constructor(
+    private readonly config: ConfigService,
     private readonly emitter: EventEmitter2,
     private readonly session: SessionService,
     private readonly llmProvider: LLMProviderService,
@@ -365,7 +367,12 @@ export class DialogueChatService {
     const avatar = await this.session.getAvatar(message, message.avatar);
 
     const knowledge = await this.vectorStore.search(appId, message.text);
-    const summary = await this.memory.getSummary(sessionId);
+    let summaryOrHistory: string;
+    if (this.config.get('LLM_DISABLE_SUMMARY') === '1') {
+      summaryOrHistory = await this.memory.getConversation(sessionId);
+    } else {
+      summaryOrHistory = await this.memory.getSummary(sessionId);
+    }
 
     const activeTask = await this.intent.getActiveTaskRecord(message.sessionId);
     const currentTask = activeTask.task;
@@ -388,7 +395,7 @@ export class DialogueChatService {
     const systemPrompParams: AvatarChatSystemPromptParams = {
       app: settings?.prompt?.text,
       avatar: packAvatarObject(avatar),
-      history: summary,
+      history: summaryOrHistory,
       emotion: message.emotion,
       language: message.language,
       message: message.text,

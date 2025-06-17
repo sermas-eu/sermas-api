@@ -19,12 +19,14 @@ import {
   AgentEvaluatePromptParams,
   sessionPrompt,
 } from './session.prompt.service.prompt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SessionPromptService {
   private readonly logger = new Logger(SessionPromptService.name);
 
   constructor(
+    private readonly config: ConfigService,
     private readonly platformApp: PlatformAppService,
     private readonly session: SessionService,
     private readonly llm: LLMProviderService,
@@ -46,9 +48,13 @@ export class SessionPromptService {
     }
 
     const useHistory = payload.options?.history;
-    let history: string;
+    let summaryOrHistory: string;
     if (useHistory) {
-      history = await this.memory.getSummary(sessionId);
+      if (this.config.get('LLM_DISABLE_SUMMARY') === '1') {
+        summaryOrHistory = await this.memory.getConversation(sessionId);
+      } else {
+        summaryOrHistory = await this.memory.getSummary(sessionId);
+      }
     }
 
     let settings: Partial<AppSettingsDto>;
@@ -70,7 +76,7 @@ export class SessionPromptService {
       json,
       avatar: packAvatarObject(avatar),
       app: settings?.prompt?.text,
-      history,
+      history: summaryOrHistory,
       language,
       knowledge,
     };
