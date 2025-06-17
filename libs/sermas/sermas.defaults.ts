@@ -151,6 +151,9 @@ export const SermasDefaultConfig = {
   // LLM_TOP_P only the most probable tokens which cumulative probability reaches top_p are used for next token sampling
   LLM_TOP_P: 0.3,
 
+  // LLM_DISABLE_SUMMARY, when equals to '1', summarization is not used and the full conversation history is passed to the LLM instead
+  LLM_DISABLE_SUMMARY: '0',
+
   // OPENAI_API_KEY OpenAI api key
   OPENAI_API_KEY: '',
   // OPENAI_EMBEDDINGS_MODEL OpenAi Embedding model
