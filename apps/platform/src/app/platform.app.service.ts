@@ -359,7 +359,17 @@ export class PlatformAppService implements OnModuleInit {
       return app.repository || {};
     }
     if (!name) {
-      app.repository[type] || {};
+      return app.repository[type] || {};
+    }
+    if (!app.repository[type]) {
+      return {};
+    }
+    if (Array.isArray(app.repository[type])) {
+      const result = app.repository[type].find((o) => o.name === name);
+      if (!result) {
+        throw new NotFoundException(`${name} not found in ${type}`);
+      }
+      return result;
     }
     if (!app.repository[type][name]) {
       throw new NotFoundException(`${name} not found in ${type}`);
