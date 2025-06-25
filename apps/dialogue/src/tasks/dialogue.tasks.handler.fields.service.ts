@@ -413,13 +413,13 @@ Return the matching 'value' field from options`;
     const prompt = taskFieldRephrasePrompt({
       basePrompt: context.basePrompt || '',
       language,
+      label: context.label,
     });
 
     return await this.llm.chat({
       stream: false,
       json: false,
-      system: prompt,
-      user: context.label,
+      user: prompt,
       tag: 'translation',
       sessionContext: createSessionContext(context.record),
     });

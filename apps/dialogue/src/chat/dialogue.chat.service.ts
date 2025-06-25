@@ -577,6 +577,10 @@ export class DialogueChatService {
     // ensure links are sent as text
     text = this.convertMarkdownLinksToHtml(text);
 
+    if (!text || !text.trim()) {
+      return;
+    }
+
     const responseMessage: DialogueTextToSpeechDto = {
       ...message,
       actor: 'agent',

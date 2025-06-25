@@ -37,7 +37,7 @@ export class SentenceTransformer extends Transform {
         this.buffer,
       );
 
-      const sentenceSplitRegex = /[^.?!;:]+[.?!;:]+[\])'"`’”]*|[^.?!;:]+$/g;
+      const sentenceSplitRegex = /[^.?!;]+[.?!;]+[\])'"`’”]*|[^.?!;]+$/g;
       const matches = protectedText.matchAll(sentenceSplitRegex);
 
       let phrase = '';
@@ -49,7 +49,7 @@ export class SentenceTransformer extends Transform {
 
         if (
           phrase.trim().length >= MIN_SENTENCE_LENGTH &&
-          /[.?!;:][\])'"`’”]*\s*$/.test(matchText)
+          /[.?!;][\])'"`’”]*\s*$/.test(matchText)
         ) {
           const restored = this.restoreTokens(phrase, placeholders);
           this.sendBuffer(restored);
