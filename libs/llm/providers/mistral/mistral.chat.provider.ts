@@ -1,13 +1,15 @@
 import { Mistral } from '@mistralai/mistralai';
-import { ChatCompletionResponse } from '@mistralai/mistralai/models/components';
+import {
+  ChatCompletionResponse,
+  ContentChunk,
+} from '@mistralai/mistralai/models/components';
 import {
   LLMCallResult,
-  LLMMessage,
   LLMChatOptions,
+  LLMMessage,
   LLMProviderConfig,
 } from 'libs/llm/providers/provider.dto';
 import { ChatMessageStream } from 'libs/llm/stream/chat-message.stream';
-import { ChatCompletionStream } from 'openai/lib/ChatCompletionStream';
 import { LLMChatProvider } from '../chat.provider';
 
 export class MistralChatProvider extends LLMChatProvider {
@@ -50,8 +52,30 @@ export class MistralChatProvider extends LLMChatProvider {
     const isStream = options?.stream === true || false;
 
     const stream = new ChatMessageStream();
+    if (!isStream) {
+      const res = await this.getApiClient().chat.complete({
+        model: this.config.model,
+        messages,
+        topP: this.config.top_p,
+        temperature: this.config.temperature,
+      });
 
-    const res = await this.getApiClient().chat.complete({
+      const response = res as ChatCompletionResponse;
+      let chunk = response.choices[0].message.content;
+      if (typeof chunk !== 'string') {
+        const contentChunk = chunk.at(0) as ContentChunk;
+        chunk = (contentChunk as any).text as string;
+      }
+      if (chunk !== null) {
+        stream.add(chunk);
+      }
+      stream.close();
+      return {
+        stream,
+      };
+    }
+
+    const openaiStream = await this.getApiClient().chat.stream({
       model: this.config.model,
       messages,
       stream: isStream,
@@ -59,23 +83,15 @@ export class MistralChatProvider extends LLMChatProvider {
       temperature: this.config.temperature,
     });
 
-    if (!isStream) {
-      const response = res as ChatCompletionResponse;
-      const content = response.choices[0].message.content;
-      stream.add(content);
-      stream.close();
-      return {
-        stream,
-      };
-    }
-
-    const openaiStream = res as unknown as ChatCompletionStream;
-
     let aborted = false;
     (async () => {
       for await (const completionChunk of openaiStream) {
         if (aborted) break;
-        const chunk = completionChunk.choices[0].delta.content;
+        let chunk = completionChunk.data.choices[0].delta.content;
+        if (typeof chunk !== 'string') {
+          const contentChunk = chunk.at(0) as ContentChunk;
+          chunk = (contentChunk as any).text as string;
+        }
         stream.add(chunk);
       }
       stream.close();

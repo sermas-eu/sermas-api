@@ -72,7 +72,7 @@ export class GCPMistralChatProvider extends LLMChatProvider {
         let chunk = choice?.delta.content;
         if (typeof chunk !== 'string') {
           const contentChunk = chunk.at(0) as ContentChunk;
-          chunk = contentChunk.text;
+          chunk = (contentChunk as any).text as string;
         }
         stream.add(chunk);
       }
