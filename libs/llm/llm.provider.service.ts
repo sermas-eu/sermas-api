@@ -233,7 +233,7 @@ export class LLMProviderService implements OnModuleInit {
     const availableModels = this.getAllowedModels(config.provider);
 
     this.logger.debug(
-      `Using ${config.provider}/${config.model || model || 'unknown'}`,
+      `Using ${config.provider}/${config.model || model || 'unknown'} for tag=${config.tag || 'chat'}`,
     );
 
     switch (config.provider) {

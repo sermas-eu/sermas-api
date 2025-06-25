@@ -63,14 +63,18 @@ RULES:
 export const taskFieldRephrasePrompt = PromptTemplate.create<{
   basePrompt: string;
   language?: string;
+  label?: string;
 }>(
   'task-field-rephrase',
   `
 <%= data.basePrompt %>
 
-You have to rephrase the user message.
-Do not add notes or explanations.
+Rephrase USER message. Do not add notes or explanations.
 <% if (data.language) { %>
 Translate to language <%= data.language %> 
+<% } %>
+
+<% if (data.label) { %>
+USER: <%= data.label %>
 <% } %>`,
 );

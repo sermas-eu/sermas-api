@@ -28,7 +28,6 @@ export class MistralEmbeddingProvider extends LLMEmbeddingProvider {
       const res = await this.mistral.embeddings.create({
         model: this.config.model,
         inputs,
-        encodingFormat: 'float',
       });
       const embeddings = res.data.map((e) => e.embedding);
       return this.binaryQuantization(embeddings);
