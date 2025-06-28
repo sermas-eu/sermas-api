@@ -1,13 +1,11 @@
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import {
-  createBaseSystemPrompt,
   BaseSystemPromptParams,
+  createDataPrompt,
 } from '../dialogue.system.prompt';
 import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto';
 
-export type AvatarChatSystemPromptParams = BaseSystemPromptParams;
-
-export type AvatarChatPromptParams = {
+export type AvatarChatSystemPromptParams = {
   suggestedTasks?: string;
   task?: string;
   activeTask?: string;
@@ -15,10 +13,14 @@ export type AvatarChatPromptParams = {
   knowledge?: string;
 };
 
+export type AvatarChatUserPromptParams = BaseSystemPromptParams;
+
 export const avatarSystemChatPrompt =
   PromptTemplate.create<AvatarChatSystemPromptParams>(
     'chat-system',
-    `${createBaseSystemPrompt()}
+    `
+# GENERAL RULES
+TASKS and TOOLS are managed via external software, never pretend to handle the task yourself.
 
 ## Response format
 Strictly output the structure in Example in your answer, without markdown titles or other additions. Provide correct and parsable JSON in markup tags.
@@ -35,12 +37,8 @@ Never add Notes or Explanations.
 <tools>
 { "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
 </tools>
-`,
-  );
 
-export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
-  'chat',
-  `Execute sequentially the following sections delimited by markdown titles.
+Execute sequentially the following sections delimited by markdown titles.
 
 # FILTER
 Identify if USER MESSAGE could be relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS.
@@ -173,4 +171,10 @@ Your answer must conclude with one single question that proposes the 'taskDescri
 - If previous task is being cancelled but a NEW task matches.
 - Skip in other cases.
 `,
-);
+  );
+
+export const avatarChatPrompt =
+  PromptTemplate.create<AvatarChatUserPromptParams>(
+    'chat',
+    `${createDataPrompt()}`,
+  );
