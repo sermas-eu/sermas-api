@@ -259,7 +259,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
     return this.collections[name];
   }
 
-  async search(appId: string, qs: string, limit = 4) {
+  async search(appId: string, qs: string, limit = 5) {
     const collection = await this.getCollection(appId);
     if (!collection) return '';
 
@@ -276,7 +276,14 @@ export class DialogueVectorStoreService implements OnModuleInit {
 
     perf();
 
-    const knowledge = response.documents?.flat().join('\n') || '';
-    return knowledge;
+    const list = response.documents?.flat() || [];
+
+    // FIX: ensure content is unique when there are duplicates.
+    const knowledge: Record<string, undefined> = {};
+    list.forEach((doc) => {
+      knowledge[doc] = undefined;
+    });
+
+    return Object.keys(knowledge).join('\n') || '';
   }
 }
