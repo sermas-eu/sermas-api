@@ -128,23 +128,24 @@ export class SessionService {
     if (!appId) return [];
     const q: FilterQuery<SessionDocument> = {
       appId,
+      ...(filter.query || {}),
     };
 
-    if (filter.query) {
-      if (filter.query.from) {
-        if (!isDate(filter.query.from))
-          throw new BadRequestException(`query.from is not a valid date`);
-        q.createdAt = {
-          $gte: new Date(filter.query.from),
-        };
-      }
-      if (filter.query.to) {
-        if (!isDate(filter.query.to))
-          throw new BadRequestException(`query.to is not a valid date`);
-        q.closedAt = {
-          $lte: new Date(filter.query.to),
-        };
-      }
+    if (q.from) {
+      if (!isDate(q.from))
+        throw new BadRequestException(`query.from is not a valid date`);
+      q.createdAt = {
+        $gte: new Date(q.from),
+      };
+      delete q.from;
+    }
+    if (q.to) {
+      if (!isDate(q.to))
+        throw new BadRequestException(`query.to is not a valid date`);
+      q.closedAt = {
+        $lte: new Date(q.to),
+      };
+      delete q.to;
     }
 
     const query = this.sessionModel
