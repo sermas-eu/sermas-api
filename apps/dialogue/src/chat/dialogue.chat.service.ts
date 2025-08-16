@@ -28,7 +28,7 @@ import { DialogueMemoryService } from '../memory/dialogue.memory.service';
 import { convertTaskToPrompt } from '../tasks/util';
 import {
   avatarChatPrompt,
-  AvatarChatPromptParams,
+  AvatarChatUserPromptParams,
   AvatarChatSystemPromptParams,
   avatarSystemChatPrompt,
 } from './dialogue.chat.prompt';
@@ -392,19 +392,7 @@ export class DialogueChatService {
       message.sessionId,
     );
 
-    const systemPrompParams: AvatarChatSystemPromptParams = {
-      app: settings?.prompt?.text,
-      avatar: packAvatarObject(avatar),
-      history: summaryOrHistory,
-      emotion: message.emotion,
-      language: message.language,
-      message: message.text,
-      tools: convertToolsToPrompt(activeTools.tools),
-      intents: currentTask ? undefined : JSON.stringify(intents),
-      // activeTask: currentTask?.name,
-    };
-
-    const chatPromptParams: AvatarChatPromptParams = {
+    const systemPromptParams: AvatarChatSystemPromptParams = {
       knowledge,
       suggestedTasks: convertTaskToPrompt(suggestedTasks),
       // track current task progress
@@ -417,6 +405,18 @@ export class DialogueChatService {
         currentField && currentField?.hint
           ? `${currentField?.label || currentField?.name}: ${currentField?.hint}`
           : undefined,
+    };
+
+    const chatPromptParams: AvatarChatUserPromptParams = {
+      app: settings?.prompt?.text,
+      avatar: packAvatarObject(avatar),
+      history: summaryOrHistory,
+      emotion: message.emotion,
+      language: message.language,
+      message: message.text,
+      tools: convertToolsToPrompt(activeTools.tools),
+      intents: currentTask ? undefined : JSON.stringify(intents),
+      // activeTask: currentTask?.name,
     };
 
     const llmChatData: LLMChatData = {
@@ -443,7 +443,7 @@ export class DialogueChatService {
         model: chatModel,
         sessionContext: createSessionContext(message),
 
-        system: avatarSystemChatPrompt(systemPrompParams),
+        system: avatarSystemChatPrompt(systemPromptParams),
         user: avatarChatPrompt(chatPromptParams),
 
         transformers: [
