@@ -1,5 +1,5 @@
 networks:
-  sermas_dev:
+  vipp_dev:
     external: true
 
 services:
@@ -11,7 +11,7 @@ services:
         aliases:
           - api
           - sermas-toolkit-api-api-1
-      sermas_dev:
+      vipp_dev:
     image: ghcr.io/sermas-eu/api:dev
     build: .
     volumes:

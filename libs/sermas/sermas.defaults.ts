@@ -53,7 +53,7 @@ export const SermasDefaultConfig = {
   // MINIO_SECRETKEY Minio Secret key
   MINIO_SECRETKEY: 'minioadmin',
   // REPOSITORY_BUCKET Minio bucket
-  REPOSITORY_BUCKET: 'sermas-repository',
+  REPOSITORY_BUCKET: 'vippstar-repository',
   // REPOSITORY_BUCKET_REGION Minio region
   REPOSITORY_BUCKET_REGION: '',
 
