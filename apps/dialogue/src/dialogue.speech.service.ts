@@ -686,13 +686,15 @@ export class DialogueSpeechService implements OnModuleInit {
   }
 
   async continueAgentSpeech(appId: string, sessionId: string) {
-    this.logger.debug(`Send avatar speech CONTINUE sessionId=${sessionId}`);
-    this.emitter.emit('dialogue.chat.continue', { appId, sessionId });
-    this.asyncApi.agentContinueSpeech({
-      appId,
-      sessionId,
-      ts: new Date(),
-    });
+    this.logger.debug(
+      `Send avatar speech CONTINUE sessionId=${sessionId} (disabled)`,
+    );
+    // this.emitter.emit('dialogue.chat.continue', { appId, sessionId });
+    // this.asyncApi.agentContinueSpeech({
+    //   appId,
+    //   sessionId,
+    //   ts: new Date(),
+    // });
   }
 
   async stopAgentSpeech(ev: DialogueAvatarSpeechControlDto) {
