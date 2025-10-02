@@ -276,7 +276,11 @@ export class DialogueVectorStoreService implements OnModuleInit {
 
     perf();
 
-    const knowledge = response.documents?.flat().join('\n') || '';
+    // Using Set to filter out duplicates
+    const knowledgeSet = new Set<string>(response.documents?.flat() || []);
+
+    // Joining unique documents
+    const knowledge = Array.from(knowledgeSet).join('\n');
     return knowledge;
   }
 }
