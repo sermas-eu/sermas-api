@@ -25,7 +25,7 @@ export class EmotionTrackerService {
   private timer: NodeJS.Timeout;
 
   private threshold = 0.5;
-  private ttl = 2500;
+  private ttl = 5000;
   private cache: Record<string, CachedUserCharacterizationEventDto[]> = {};
 
   private records: Record<string, EmotionRecord> = {};
@@ -38,6 +38,11 @@ export class EmotionTrackerService {
     private readonly config: ConfigService,
   ) {
     this.enabled = this.config.get('ENABLE_EMOTION_RECOGNITION') === '1';
+    if (!this.enabled) {
+      this.logger.warn(
+        'Emotion tracker is disabled. Enable with ENABLE_EMOTION_RECOGNITION=1',
+      );
+    }
   }
 
   getEmotion(sessionId: string): EmotionRecord | null {
