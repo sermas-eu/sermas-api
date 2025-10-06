@@ -15,7 +15,7 @@ interface CachedUserCharacterizationEventDto
 }
 
 // Keep the detected emotion reference for EMOTION_LIFESPAN
-export const EMOTION_LIFESPAN = 30 * 1000;
+export const EMOTION_LIFESPAN = 10 * 1000;
 
 @Injectable()
 export class EmotionTrackerService {
