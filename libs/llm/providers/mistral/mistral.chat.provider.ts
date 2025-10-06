@@ -63,7 +63,7 @@ export class MistralChatProvider extends LLMChatProvider {
       const response = res as ChatCompletionResponse;
       let chunk = response.choices[0].message.content;
       if (typeof chunk !== 'string') {
-        const contentChunk = chunk as ContentChunk;
+        const contentChunk = chunk.at(0) as ContentChunk;
         chunk = (contentChunk as any).text as string;
       }
       if (chunk !== null) {
@@ -89,7 +89,7 @@ export class MistralChatProvider extends LLMChatProvider {
         if (aborted) break;
         let chunk = completionChunk.data.choices[0].delta.content;
         if (typeof chunk !== 'string') {
-          const contentChunk = chunk as ContentChunk;
+          const contentChunk = chunk.at(0) as ContentChunk;
           chunk = (contentChunk as any).text as string;
         }
         stream.add(chunk);
