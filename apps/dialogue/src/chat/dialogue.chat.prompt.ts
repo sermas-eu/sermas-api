@@ -1,28 +1,28 @@
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import {
-  createBaseSystemPrompt,
   BaseSystemPromptParams,
+  createDataPrompt,
 } from '../dialogue.system.prompt';
 import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto';
 
-export type AvatarChatSystemPromptParams = BaseSystemPromptParams;
-
-export type AvatarChatPromptParams = {
+export type AvatarChatSystemPromptParams = {
   suggestedTasks?: string;
   task?: string;
   activeTask?: string;
   field?: string;
   knowledge?: string;
 };
+export type AvatarChatUserPromptParams = BaseSystemPromptParams;
 
 export const avatarSystemChatPrompt =
   PromptTemplate.create<AvatarChatSystemPromptParams>(
     'chat-system',
-    `${createBaseSystemPrompt()}
+    `# GENERAL RULES
+TASKS and TOOLS are managed via external software, never pretend to handle the task yourself.
 
 ## Response format
 Strictly output the structure in Example in your answer, without markdown titles or other additions. Provide correct and parsable JSON in markup tags.
-Append CHAT RESPONSE as plain text, with short sentences and no emoticons. 
+Append CHAT RESPONSE as plain text using coincise phrases and no emoticons. 
 Never add Notes or Explanations.
 
 ### Example
@@ -35,12 +35,8 @@ Never add Notes or Explanations.
 <tools>
 { "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
 </tools>
-`,
-  );
 
-export const avatarChatPrompt = PromptTemplate.create<AvatarChatPromptParams>(
-  'chat',
-  `Execute sequentially the following sections delimited by markdown titles.
+Execute sequentially the following sections delimited by markdown titles.
 
 # FILTER
 Identify if USER MESSAGE could be relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS.
@@ -77,8 +73,7 @@ Set the field 'trigger' to 'true' evaluate sequentially the following cases:
 If the assistant has not proposed a task in the previous message, always set 'trigger' to false.
 If the assistant already completed the same task or tool in the last interaction and user request is not asking to repeat the operation, set 'trigger' to false.
 
-The 'taskId' value must be on of those listed in TASKS.
-Set 'taskId' only with one from TASKS that has 'match' true.
+The 'taskId' value must be taken from TASKS list. Set 'taskId' only when 'match' is true.
 
 <% if (data.activeTask) { %>
 If identified taskId equals to '<%= data.activeTask %>', set 'trigger' to false
@@ -173,4 +168,10 @@ Your answer must conclude with one single question that proposes the 'taskDescri
 - If previous task is being cancelled but a NEW task matches.
 - Skip in other cases.
 `,
-);
+  );
+
+export const avatarChatPrompt =
+  PromptTemplate.create<AvatarChatUserPromptParams>(
+    'chat',
+    `${createDataPrompt()}`,
+  );

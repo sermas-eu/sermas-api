@@ -11,11 +11,7 @@ export type BaseSystemPromptParams = {
   tasks?: string;
 };
 
-export const createBaseSystemPrompt = () => `
-## GENERAL RULES
-Current date is ${new Date().toISOString()}
-TASKS and TOOLS are managed via external software, never pretend to handle the task yourself.
-
+export const createDataPrompt = () => `
 <% if (data.app) { %>
   ## APPLICATION
   <%= data.app %>
@@ -55,4 +51,12 @@ TASKS and TOOLS are managed via external software, never pretend to handle the t
 <% if (data.message) { %>
   ## USER MESSAGE
   <%= data.message %>
-<% } %>`;
+<% } %>
+## Current data: ${new Date().toISOString()}
+`;
+
+export const createBaseSystemPrompt = () => `
+## GENERAL RULES
+TASKS and TOOLS are managed via external software, never pretend to handle the task yourself.
+${createDataPrompt()}
+`;
