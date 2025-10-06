@@ -19,9 +19,15 @@ import {
 } from './dialogue.chat.dto';
 import { convertToolsToPrompt, packAvatarObject } from './utils';
 
+import { ConfigService } from '@nestjs/config';
 import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { SermasSessionDto } from 'libs/sermas/sermas.dto';
+import { DialogueAsyncApiService } from '../dialogue.async.service';
+import {
+  DialogueSessionRequestDto,
+  DialogueSessionRequestStatus,
+} from '../dialogue.request-monitor.dto';
 import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service';
 import { DialogueIntentService } from '../intent/dialogue.intent.service';
 import { DialogueMemoryService } from '../memory/dialogue.memory.service';
@@ -35,8 +41,6 @@ import {
 import { SelectedTool } from './dialogue.chat.tools.dto';
 import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer';
 import { SentenceTransformer } from './transformer/sentence.transformer';
-import { DialogueAsyncApiService } from '../dialogue.async.service';
-import { ConfigService } from '@nestjs/config';
 
 const TrimmablePrefixes = [
   'ASSISTANT',
@@ -86,6 +90,17 @@ export class DialogueChatService {
       appId: data.appId,
       sessionId: data.sessionId,
     });
+  }
+
+  async emitRequestStatus(
+    message: DialogueMessageDto,
+    status: DialogueSessionRequestStatus,
+  ) {
+    const evSessionRequest: DialogueSessionRequestDto = {
+      ...message,
+      status,
+    };
+    this.emitter.emit('session.request', evSessionRequest);
   }
 
   async inference(
@@ -175,6 +190,8 @@ export class DialogueChatService {
           status: 'error',
           error: `${message.text}`,
         });
+
+        this.emitRequestStatus(message, 'cancelled');
       }
 
       return;
@@ -242,6 +259,7 @@ export class DialogueChatService {
       this.logger.warn(
         `LLM response is empty appId=${appId} sessionId=${sessionId}`,
       );
+      this.emitRequestStatus(message, 'ended');
       return;
     }
 
