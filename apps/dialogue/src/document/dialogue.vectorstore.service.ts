@@ -55,7 +55,13 @@ export class DialogueVectorStoreService implements OnModuleInit {
 
     await Promise.all(
       Object.entries(docs).map(([appId, documents]) => {
-        return this.saveDocuments(appId, documents);
+        return this.saveDocuments(appId, documents).catch((e) => {
+          this.logger.error(
+            `Failed to save docs for appId=${appId}: ${e.message}`,
+          );
+          this.logger.debug(e);
+          return Promise.resolve();
+        });
       }),
     );
   }
@@ -216,12 +222,19 @@ export class DialogueVectorStoreService implements OnModuleInit {
         continue;
       }
 
-      await collection.add({
-        ids: ids,
-        documents: docs,
-        embeddings: embds,
-        metadatas: metadata,
-      });
+      try {
+        await collection.add({
+          ids: ids,
+          documents: docs,
+          embeddings: embds,
+          metadatas: metadata,
+        });
+      } catch (e) {
+        this.logger.error(
+          `Failed to add collection for appId=${appId}: ${e.message}`,
+        );
+        this.logger.debug(e);
+      }
 
       perf();
 
