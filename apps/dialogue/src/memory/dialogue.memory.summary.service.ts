@@ -153,7 +153,7 @@ Do not add notes or explanation.
 ${history}`,
         stream: false,
         json: false,
-        tag: 'chat',
+        tag: 'summary',
         sessionContext: createSessionContext({ sessionId }),
       });
 

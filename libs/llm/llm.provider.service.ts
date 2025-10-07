@@ -136,9 +136,9 @@ export class LLMProviderService implements OnModuleInit {
           await this.sessionContextHandler.getChatServiceByTag(llmSendArgs);
         if (service) {
           const parts = service.split('/');
-          if (parts.length === 2) {
-            provider = parts[0];
-            model = parts[1];
+          if (parts.length >= 2) {
+            provider = parts.shift();
+            model = parts.join('/');
           }
         }
       } catch (e) {
