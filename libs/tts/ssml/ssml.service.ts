@@ -31,7 +31,7 @@ export class SSMLService {
         json: false,
         system: ssmlPrompt(params),
         user: params.text,
-        tag: 'tasks',
+        tag: 'chat',
         sessionContext,
       });
 

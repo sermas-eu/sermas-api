@@ -245,7 +245,7 @@ export class DialogueTasksHandlerFieldsService {
         condition,
         values: JSON.stringify(context.record.values),
       }),
-      tag: 'tools',
+      tag: 'tasks',
       sessionContext: createSessionContext(context.record),
     });
 
@@ -292,7 +292,7 @@ export class DialogueTasksHandlerFieldsService {
           fieldPrompt,
           values: JSON.stringify(context.record.values),
         }),
-        tag: 'tools',
+        tag: 'tasks',
         sessionContext: createSessionContext(context.record),
       });
 
@@ -377,7 +377,7 @@ Return the matching 'value' field from options`;
       system: this.replaceValues(prompt, {
         [values.field]: values.value,
       }),
-      tag: 'tools',
+      tag: 'tasks',
       sessionContext: createSessionContext(context.record),
     });
 

@@ -3,12 +3,16 @@ import { Readable } from 'stream';
 import { PromptTemplateOutput } from '../prompt/prompt.template';
 
 export const LLMPromptTagList = [
+  // main chat prompt
   'chat',
-  'tools',
+  // model for text based sentiment analysis
   'sentiment',
+  // model for tasks and fields analysis and execution
   'tasks',
+  // translations specific model
   'translation',
-  'intent',
+  // model for summarization tasks
+  'summary',
 ] as const;
 
 export type LLMPromptTag = (typeof LLMPromptTagList)[number];
