@@ -62,7 +62,7 @@ Set the field 'match' to 'true' evaluating sequentially the following cases:
 
 ## TRIGGER
 Set the field 'trigger' to 'true' evaluate sequentially the following cases:
-- USER MESSAGE text match precisely or is a rephrasing of the 'taskDescription'
+- USER MESSAGE text match precisely or is a rephrasing or part of the 'taskDescription'
 - user accepts a task already proposed by the assistant in the previous messages
 - the assistant committed to execute a task, without expecting user response
 
