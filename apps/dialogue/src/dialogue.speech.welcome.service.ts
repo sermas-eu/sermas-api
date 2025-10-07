@@ -14,6 +14,7 @@ import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
+import { sleep } from 'libs/test';
 import { ulid } from 'ulidx';
 import { packAvatarObject } from './chat/utils';
 import { DialogueSpeechService } from './dialogue.speech.service';
@@ -24,7 +25,6 @@ import {
 import { DialogueTasksService } from './tasks/dialogue.tasks.service';
 import { DialogueToolsService } from './tools/dialogue.tools.service';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
-import { sleep } from 'libs/test';
 
 @Injectable()
 export class DialogueWelcomeService {
@@ -145,33 +145,36 @@ export class DialogueWelcomeService {
         buttonsList = [];
       }
 
-      const buttons: ButtonsUIContentDto = {
-        appId: ev.appId,
-        sessionId: ev.record.sessionId,
-        ts: new Date(),
-        metadata: {
-          context: 'welcome-tools',
-        },
-        options: {
-          ttsEnabled: false,
-          clearScreen: true,
-        },
-        content: {
-          label: '',
-          list: toolsList.map((t, i) => ({
-            label: buttonsList[i] || t.label,
-            value: t.value,
-          })),
-        },
+      buttonsList.filter((b) => b && b.length);
+      if (buttonsList.length) {
+        const buttons: ButtonsUIContentDto = {
+          appId: ev.appId,
+          sessionId: ev.record.sessionId,
+          ts: new Date(),
+          metadata: {
+            context: 'welcome-tools',
+          },
+          options: {
+            ttsEnabled: false,
+            clearScreen: true,
+          },
+          content: {
+            label: '',
+            list: toolsList.map((t, i) => ({
+              label: buttonsList[i] || t.label,
+              value: t.value,
+            })),
+          },
 
-        contentType: 'buttons',
-        messageId: getMessageId(),
-        chunkId: getChunkId(),
+          contentType: 'buttons',
+          messageId: getMessageId(),
+          chunkId: getChunkId(),
 
-        requestId: ulid(),
-      };
+          requestId: ulid(),
+        };
 
-      await this.broker.publish(SermasTopics.ui.content, buttons);
+        await this.broker.publish(SermasTopics.ui.content, buttons);
+      }
     }
 
     perf();
