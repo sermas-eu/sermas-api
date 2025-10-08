@@ -14,13 +14,13 @@ export const translationPrompt = PromptTemplate.create<{
 }>(
   'translation',
   `
-Your task is to translate to language identified by code <%= data.toLanguage %>.
+Translate to language code <%= data.toLanguage %>.
 <% if (data.fromLanguage) { %>
 Original language code is <%= data.fromLanguage %>.
 <% } else { %>
-Please infer the original language of the text.
+If the text is the same language, skip the translation.
 <% } %>
 
-Answer only with the translated text, keep the original text formatting. Never add Notes or Explanations.
+Answer only with the translated text, keeping the original text formatting. Never add Notes or Explanations.
 If you cannot translate, return the exact original text.`,
 );

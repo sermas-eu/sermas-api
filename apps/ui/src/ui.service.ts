@@ -73,11 +73,18 @@ export class UIService {
 
     const fromLanguage = uiContent.options?.language;
 
-    const content1 = uiContent.content as any;
+    if (toLanguage === fromLanguage) {
+      this.logger.debug(
+        `UI content has same language=${fromLanguage} skip translation.`,
+      );
+      return uiContent;
+    }
+
+    const rawContent = uiContent.content as any;
 
     // buttons
-    if (uiContent.contentType === 'buttons' && content1.list) {
-      const buttonContent = content1 as ButtonsContentDto;
+    if (uiContent.contentType === 'buttons' && rawContent.list) {
+      const buttonContent = rawContent as ButtonsContentDto;
 
       const parts: string[] = [];
 
@@ -107,8 +114,8 @@ export class UIService {
     }
 
     // quiz
-    if (uiContent.contentType === 'quiz' && content1.answers) {
-      const quizContent = content1 as QuizContentDto;
+    if (uiContent.contentType === 'quiz' && rawContent.answers) {
+      const quizContent = rawContent as QuizContentDto;
 
       const parts = [
         quizContent.question || '',
