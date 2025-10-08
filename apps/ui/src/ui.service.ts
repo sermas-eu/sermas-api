@@ -61,74 +61,85 @@ export class UIService {
     uiContent.ts = uiContent.ts || new Date();
     uiContent.chunkId = uiContent.chunkId || getChunkId(uiContent.ts);
 
-    if (uiContent.options?.language) {
-      const toLanguage = await this.session.getLanguage(uiContent);
-      if (toLanguage) {
-        const fromLanguage = uiContent.options?.language;
-
-        const content1 = uiContent.content as any;
-
-        // buttons
-        if (content1.list) {
-          const buttonContent = content1 as ButtonsContentDto;
-
-          const parts: string[] = [];
-
-          if (buttonContent.label) parts.push(buttonContent.label);
-
-          parts.push(...buttonContent.list.map((b) => b.label || b.value));
-
-          const translations = await this.translateTexts(
-            parts,
-            fromLanguage,
-            toLanguage,
-            createSessionContext(uiContent),
-          );
-
-          if (buttonContent.label) {
-            const label = translations.shift();
-            if (label) {
-              buttonContent.label = label;
-            }
-          }
-
-          translations.forEach((t, i) => {
-            if (buttonContent.list[i]) buttonContent.list[i].label = t;
-          });
-
-          uiContent.content = buttonContent;
-        }
-
-        // quiz
-        if (content1.answers) {
-          const quizContent = content1 as QuizContentDto;
-
-          const parts = [
-            quizContent.question || '',
-            ...quizContent.answers.map((a) => a.answer),
-          ];
-
-          const translations = await this.translateTexts(
-            parts,
-            fromLanguage,
-            toLanguage,
-            createSessionContext(uiContent),
-          );
-
-          quizContent.question = translations.shift();
-
-          quizContent.answers = quizContent.answers.map((a, i) => {
-            a.answer = translations[i];
-            return a;
-          });
-
-          uiContent.content = quizContent;
-        }
-      }
-    }
+    uiContent = await this.handleTranslation(uiContent);
 
     // this.emitter.emit('ui.content', uiContent);
     await this.async.content(uiContent);
+  }
+
+  async handleTranslation(uiContent: UIContentDto) {
+    const toLanguage = await this.session.getLanguage(uiContent);
+    if (!toLanguage) return uiContent;
+
+    const fromLanguage = uiContent.options?.language;
+
+    if (toLanguage === fromLanguage) {
+      this.logger.debug(
+        `UI content has same language=${fromLanguage} skip translation.`,
+      );
+      return uiContent;
+    }
+
+    const rawContent = uiContent.content as any;
+
+    // buttons
+    if (uiContent.contentType === 'buttons' && rawContent.list) {
+      const buttonContent = rawContent as ButtonsContentDto;
+
+      const parts: string[] = [];
+
+      if (buttonContent.label) parts.push(buttonContent.label);
+
+      parts.push(...buttonContent.list.map((b) => b.label || b.value));
+
+      const translations = await this.translateTexts(
+        parts,
+        fromLanguage,
+        toLanguage,
+        createSessionContext(uiContent),
+      );
+
+      if (buttonContent.label) {
+        const label = translations.shift();
+        if (label) {
+          buttonContent.label = label;
+        }
+      }
+
+      translations.forEach((t, i) => {
+        if (buttonContent.list[i]) buttonContent.list[i].label = t;
+      });
+
+      uiContent.content = buttonContent;
+    }
+
+    // quiz
+    if (uiContent.contentType === 'quiz' && rawContent.answers) {
+      const quizContent = rawContent as QuizContentDto;
+
+      const parts = [
+        quizContent.question || '',
+        ...quizContent.answers.map((a) => a.answer),
+      ];
+
+      const translations = await this.translateTexts(
+        parts,
+        fromLanguage,
+        toLanguage,
+        createSessionContext(uiContent),
+      );
+
+      quizContent.question = translations.shift();
+
+      quizContent.answers = quizContent.answers.map((a, i) => {
+        a.answer = translations[i];
+        return a;
+      });
+
+      uiContent.content = quizContent;
+    }
+
+    return uiContent;
   }
 
   async translateTexts(

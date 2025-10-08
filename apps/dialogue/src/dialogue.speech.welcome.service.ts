@@ -8,11 +8,11 @@ import { createSessionContext } from 'apps/session/src/session.context';
 import { SessionChangedDto } from 'apps/session/src/session.dto';
 import { SessionService } from 'apps/session/src/session.service';
 import { ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
+import { UIService } from 'apps/ui/src/ui.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
 import { sleep } from 'libs/test';
 import { ulid } from 'ulidx';
@@ -40,14 +40,11 @@ export class DialogueWelcomeService {
     private readonly tasks: DialogueTasksService,
     private readonly monitor: MonitorService,
     private readonly broker: MqttService,
+    private readonly uiService: UIService,
   ) {}
 
   async handleWelcomeText(ev: SessionChangedDto) {
     if (ev.operation !== 'created') return;
-
-    this.logger.verbose(
-      `Sending welcome message appId=${ev.appId} sessionId=${ev.record.sessionId}`,
-    );
 
     const app = await this.app.readApp(ev.appId, false);
 
@@ -59,6 +56,10 @@ export class DialogueWelcomeService {
     const settings = await this.session.getSettings(ev);
 
     if (settings?.skipWelcomeMessage === true) return;
+
+    this.logger.verbose(
+      `Preparing welcome message language=${settings.language || app.settings?.language} appId=${ev.appId} sessionId=${ev.record.sessionId}`,
+    );
 
     const avatar = await this.session.getAvatar(ev);
     const tasks = await this.tasks.list(ev.appId);
@@ -110,7 +111,7 @@ export class DialogueWelcomeService {
       }),
       stream: false,
       json: true,
-      tag: 'chat',
+      tag: 'summary',
       sessionContext: createSessionContext(ev),
     });
 
@@ -157,6 +158,7 @@ export class DialogueWelcomeService {
           options: {
             ttsEnabled: false,
             clearScreen: true,
+            language: settings.language,
           },
           content: {
             label: '',
@@ -173,7 +175,9 @@ export class DialogueWelcomeService {
           requestId: ulid(),
         };
 
-        await this.broker.publish(SermasTopics.ui.content, buttons);
+        await this.uiService.showContent(buttons);
+      } else {
+        this.logger.debug('Welcome buttons are empty, skipping');
       }
     }
 
@@ -234,7 +238,7 @@ export class DialogueWelcomeService {
       //   contentType: 'clear-screen',
       //   content: {} as any,
       // };
-      // this.broker.publish(SermasTopics.ui.content, clearScreen);
+      // this.uiService.showContent(clearScreen);
     }
   }
 

@@ -9,11 +9,11 @@ import {
   SupportedContentTypes,
   UIContentDto,
 } from 'apps/ui/src/ui.content.dto';
+import { UIService } from 'apps/ui/src/ui.service';
 import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { MonitorService } from 'libs/monitor/monitor.service';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { getChunkId } from 'libs/sermas/sermas.utils';
 import { uuidv4 } from 'libs/util';
 import { ulid } from 'ulidx';
@@ -68,6 +68,7 @@ export class DialogueTasksHandlerFieldsService {
     private readonly asyncApi: DialogueTasksAsyncApiService,
 
     private readonly monitor: MonitorService,
+    private readonly uiService: UIService,
   ) {}
 
   async removeTaskTools(ev: DialogueTaskProgressDto) {
@@ -329,6 +330,7 @@ export class DialogueTasksHandlerFieldsService {
 
     const language = await this.session.getLanguage(context.record);
 
+    let value = values.selection || values.value;
     let rules = `${field.validation || ''}`;
     switch (field.type) {
       case 'boolean':
@@ -342,9 +344,10 @@ export class DialogueTasksHandlerFieldsService {
         break;
       case 'select':
         if (field.options?.length) {
+          value = values.value || values.selection;
           const options = JSON.stringify(field.options || []);
           rules = `
-Find a match of 'value' with one of the following options:
+Find a matching 'value' from one of the following options, adapt translated values:
 
 ${options}
 
@@ -367,7 +370,7 @@ Return the matching 'value' field from options`;
       field,
       rules,
       language,
-      value: values.selection || values.value,
+      value,
     });
 
     type ValidationResponse = { value: any | null; reason?: string };
@@ -416,13 +419,15 @@ Return the matching 'value' field from options`;
       label: context.label,
     });
 
-    return await this.llm.chat({
+    const result = await this.llm.chat({
       stream: false,
       json: false,
       user: prompt,
       tag: 'translation',
       sessionContext: createSessionContext(context.record),
     });
+
+    return result;
   }
 
   async handleField(context: TaskFieldContext) {
@@ -463,6 +468,7 @@ Return the matching 'value' field from options`;
           this.logger.debug(
             `Using external handler field=${context.field.name} handler=${context.field.handler}`,
           );
+          this.sendAgentMessage(context, label);
           await this.invokeHandler({
             field: context.field,
             task: context.task,
@@ -657,6 +663,7 @@ Return the matching 'value' field from options`;
     content.options = content.options || {};
     content.options.ttsEnabled = true;
 
-    return await this.broker.publish(SermasTopics.ui.content, content);
+    // return await this.broker.publish(SermasTopics.ui.content, content);
+    await this.uiService.showContent(content);
   }
 }
