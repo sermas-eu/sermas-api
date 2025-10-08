@@ -1,7 +1,7 @@
 import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
 import {
-  createBaseSystemPrompt,
   BaseSystemPromptParams,
+  createBaseSystemPrompt,
 } from './dialogue.system.prompt';
 
 export const welcomeMessageSystemPrompt =
@@ -22,19 +22,20 @@ export const welcomeMessagePrompt = PromptTemplate.create<{
   tools: string;
 }>(
   'welcome-message',
-  `## MESSAGE
-Produce a single phrase message, avoid details defined in context.
+  `
+  ## MESSAGE
+  Produce a single phrase message, avoid details defined in context.
 
-<% if (data.type === 'welcome') { %> 
-  Provide a brief welcome message to the user
-<% } else { %> 
-  Provide a brief goodbye message to the user
-<% } %>
+  <% if (data.type === 'welcome') { %> 
+    Provide a brief welcome message to the user
+  <% } else { %> 
+    Provide a brief goodbye message to the user
+  <% } %>
 
-## LABELS
+  ## LABELS
 
-Return a JSON array of strings with the value of 'label' field.
-If the field 'rephrase' is true, rephrase to be a button label otherwise return the same label.
+  Return a JSON array of strings with the value of 'label' field, translated in the indicated LANGUAGE.
+  If the field 'rephrase' is true, rephrase to be a button label.
 
-<%= data.tools %>`,
+  <%= data.tools %>`,
 );

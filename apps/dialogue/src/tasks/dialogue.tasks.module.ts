@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { UiModule } from 'apps/ui/src/ui.module';
 import { DialogueMemoryModule } from '../memory/dialogue.memory.module';
 import { DialogueToolsModule } from '../tools/dialogue.tools.module';
 import { DialogueTasksAsyncApiService } from './dialogue.tasks.async.service';
@@ -33,6 +34,7 @@ import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service';
     ]),
     DialogueToolsModule,
     DialogueMemoryModule,
+    UiModule,
   ],
   controllers: [DialogueTaskController],
   providers: [

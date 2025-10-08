@@ -41,17 +41,16 @@ export const taskFieldValidationPrompt = PromptTemplate.create<{
   'task-field-validation',
   `
 Validate and convert the USER value to type <%= data.field.type %> following RULES.
-Provide a reason if the USER value cannot be validated or converted and set value to null
+Provide a reason if the USER value cannot be validated or converted and set value to null.
 Always answer in parsable JSON format with structure { value: "converted value", reason: "non-technical motivation in case of failure" }
 Do not add additional notes or explanation.
 <% if (data.language) { %>
   Use language <%= data.language %> in your answers
 <% } %>
 
-USER:
-<%= data.value %>
+USER: <%= data.value %>
 
-RULES:
+RULES: 
 <%= data.rules %>
 
 <% if (data.field?.validation) { %>

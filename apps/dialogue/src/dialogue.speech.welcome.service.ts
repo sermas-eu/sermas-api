@@ -45,10 +45,6 @@ export class DialogueWelcomeService {
   async handleWelcomeText(ev: SessionChangedDto) {
     if (ev.operation !== 'created') return;
 
-    this.logger.verbose(
-      `Sending welcome message appId=${ev.appId} sessionId=${ev.record.sessionId}`,
-    );
-
     const app = await this.app.readApp(ev.appId, false);
 
     if (!app) {
@@ -59,6 +55,10 @@ export class DialogueWelcomeService {
     const settings = await this.session.getSettings(ev);
 
     if (settings?.skipWelcomeMessage === true) return;
+
+    this.logger.verbose(
+      `Preparing welcome message language=${settings.language || app.settings?.language} appId=${ev.appId} sessionId=${ev.record.sessionId}`,
+    );
 
     const avatar = await this.session.getAvatar(ev);
     const tasks = await this.tasks.list(ev.appId);
@@ -110,7 +110,7 @@ export class DialogueWelcomeService {
       }),
       stream: false,
       json: true,
-      tag: 'chat',
+      tag: 'summary',
       sessionContext: createSessionContext(ev),
     });
 
@@ -157,6 +157,7 @@ export class DialogueWelcomeService {
           options: {
             ttsEnabled: false,
             clearScreen: true,
+            language: settings.language,
           },
           content: {
             label: '',
@@ -174,6 +175,8 @@ export class DialogueWelcomeService {
         };
 
         await this.broker.publish(SermasTopics.ui.content, buttons);
+      } else {
+        this.logger.debug('Welcome buttons are empty, skipping');
       }
     }
 

@@ -61,71 +61,71 @@ export class UIService {
     uiContent.ts = uiContent.ts || new Date();
     uiContent.chunkId = uiContent.chunkId || getChunkId(uiContent.ts);
 
-    if (uiContent.options?.language) {
-      const toLanguage = await this.session.getLanguage(uiContent);
-      if (toLanguage) {
-        const fromLanguage = uiContent.options?.language;
+    // if (uiContent.options?.language) {
+    const toLanguage = await this.session.getLanguage(uiContent);
+    if (toLanguage) {
+      const fromLanguage = uiContent.options?.language;
 
-        const content1 = uiContent.content as any;
+      const content1 = uiContent.content as any;
 
-        // buttons
-        if (content1.list) {
-          const buttonContent = content1 as ButtonsContentDto;
+      // buttons
+      if (content1.list) {
+        const buttonContent = content1 as ButtonsContentDto;
 
-          const parts: string[] = [];
+        const parts: string[] = [];
 
-          if (buttonContent.label) parts.push(buttonContent.label);
+        if (buttonContent.label) parts.push(buttonContent.label);
 
-          parts.push(...buttonContent.list.map((b) => b.label || b.value));
+        parts.push(...buttonContent.list.map((b) => b.label || b.value));
 
-          const translations = await this.translateTexts(
-            parts,
-            fromLanguage,
-            toLanguage,
-            createSessionContext(uiContent),
-          );
+        const translations = await this.translateTexts(
+          parts,
+          fromLanguage,
+          toLanguage,
+          createSessionContext(uiContent),
+        );
 
-          if (buttonContent.label) {
-            const label = translations.shift();
-            if (label) {
-              buttonContent.label = label;
-            }
+        if (buttonContent.label) {
+          const label = translations.shift();
+          if (label) {
+            buttonContent.label = label;
           }
-
-          translations.forEach((t, i) => {
-            if (buttonContent.list[i]) buttonContent.list[i].label = t;
-          });
-
-          uiContent.content = buttonContent;
         }
 
-        // quiz
-        if (content1.answers) {
-          const quizContent = content1 as QuizContentDto;
+        translations.forEach((t, i) => {
+          if (buttonContent.list[i]) buttonContent.list[i].label = t;
+        });
 
-          const parts = [
-            quizContent.question || '',
-            ...quizContent.answers.map((a) => a.answer),
-          ];
+        uiContent.content = buttonContent;
+      }
 
-          const translations = await this.translateTexts(
-            parts,
-            fromLanguage,
-            toLanguage,
-            createSessionContext(uiContent),
-          );
+      // quiz
+      if (content1.answers) {
+        const quizContent = content1 as QuizContentDto;
 
-          quizContent.question = translations.shift();
+        const parts = [
+          quizContent.question || '',
+          ...quizContent.answers.map((a) => a.answer),
+        ];
 
-          quizContent.answers = quizContent.answers.map((a, i) => {
-            a.answer = translations[i];
-            return a;
-          });
+        const translations = await this.translateTexts(
+          parts,
+          fromLanguage,
+          toLanguage,
+          createSessionContext(uiContent),
+        );
 
-          uiContent.content = quizContent;
-        }
+        quizContent.question = translations.shift();
+
+        quizContent.answers = quizContent.answers.map((a, i) => {
+          a.answer = translations[i];
+          return a;
+        });
+
+        uiContent.content = quizContent;
       }
     }
+    // }
 
     // this.emitter.emit('ui.content', uiContent);
     await this.async.content(uiContent);
