@@ -56,6 +56,7 @@ const TrimmablePrefixes = [
   '<chat response>',
   '<chatresponse>',
   '<chat-response>',
+  '<chat_response>',
 ];
 
 @Injectable()
@@ -329,7 +330,7 @@ export class DialogueChatService {
 
           text = this.trimPrefixes(text, [response.data.avatar?.name]);
 
-          const removeParts = [/<\/chat response>/gi, /\`\`\`$/];
+          const removeParts = [/<\/chat.response>/gi, /\`\`\`$/];
 
           removeParts.forEach((regex) => {
             text = text.replace(regex, '');
