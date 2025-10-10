@@ -53,10 +53,14 @@ const TrimmablePrefixes = [
   'INTENTS',
   'TOOLS',
   'CHAT RESPONSE',
-  '<chat response>',
-  '<chatresponse>',
-  '<chat-response>',
-  '<chat_response>',
+];
+
+const RemoveTagsParts = [
+  /<\/?chat.?response>/gim,
+  /<\/?filter>/gim,
+  /<\/?intents>/gim,
+  /<\/?tools>/gim,
+  /\`\`\`/,
 ];
 
 @Injectable()
@@ -328,13 +332,7 @@ export class DialogueChatService {
         if (text) {
           // chunkBuffer = chunkBuffer.substring(toSend.length);
 
-          text = this.trimPrefixes(text, [response.data.avatar?.name]);
-
-          const removeParts = [/<\/chat.response>/gi, /\`\`\`$/];
-
-          removeParts.forEach((regex) => {
-            text = text.replace(regex, '');
-          });
+          text = this.cleanTextWrappers(text, [response.data.avatar?.name]);
 
           const chunkId = getChunkId();
           // this.sendMessage(message, messageId, chunkId, toSend);
@@ -503,7 +501,7 @@ export class DialogueChatService {
     return await promise;
   }
 
-  trimPrefixes(text: string, customPrefixes?: string[]): string {
+  cleanTextWrappers(text: string, customPrefixes?: string[]): string {
     const allPrefixes = [
       ...TrimmablePrefixes,
       ...(customPrefixes || []),
@@ -514,15 +512,20 @@ export class DialogueChatService {
 
     for (const prefix of allPrefixes) {
       const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const pattern = new RegExp(`^${escapedPrefix}:?\\s*`, 'i'); // optional colon and trailing space/newlines
+      const pattern = new RegExp(`^\s*#*?${escapedPrefix}[:|\n]?\\s*`, 'igm'); // optional colon and trailing space/newlines
 
       if (pattern.test(text)) {
         text = text.replace(pattern, '');
-        break;
       }
     }
 
-    return text.trimStart();
+    text = text.trimStart();
+
+    RemoveTagsParts.forEach((regex) => {
+      text = text.replace(regex, '');
+    });
+
+    return text;
   }
 
   parseMatchingTools(rawJson: string, tools: AppToolsDTO[]): ToolsWrapper {
