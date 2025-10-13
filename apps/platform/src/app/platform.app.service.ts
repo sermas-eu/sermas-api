@@ -569,7 +569,10 @@ export class PlatformAppService implements OnModuleInit {
         for (const client of data.clients) {
           try {
             client.appId = app.appId;
-            await this.keycloack.saveAppModuleClient(client);
+            const c = await this.keycloack.saveAppModuleClient(client);
+            if (!client.secret) {
+              client.secret = c.secret;
+            }
             this.logger.debug(
               `Saved client=${client.clientId} for appId=${app.appId}`,
             );

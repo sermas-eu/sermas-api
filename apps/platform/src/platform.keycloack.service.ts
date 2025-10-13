@@ -302,6 +302,11 @@ export class PlatformKeycloakService implements OnModuleInit {
       },
     });
 
+    if (!secret) {
+      // retrieve the generated secret
+      secret = await this.getClientSecret(data.appId, data.clientId);
+    }
+
     await this.addServiceAccountApp(keycloakClientId, data.appId);
 
     const client = { ...data, secret };
