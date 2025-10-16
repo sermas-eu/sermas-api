@@ -181,16 +181,24 @@ export class DialogueTasksHandlerService {
     await this.handleTask(ev);
   }
 
-  private async ensureRecord(sessionId: string, task: DialogueTaskDto) {
+  private async ensureRecord(
+    sessionId: string,
+    task: DialogueTaskDto,
+    forceNew = false,
+  ) {
     const recordQuery = {
       appId: task.appId,
       sessionId,
       taskId: task.taskId,
     };
-    const records = await this.record.search(recordQuery);
+
+    let records = await this.record.search(recordQuery);
+    records = records.sort((a, b) =>
+      a.updated.getTime() < b.updated.getTime() ? 1 : -1,
+    );
 
     let record: DialogueTaskRecordDto = records.length ? records[0] : undefined;
-    if (!record) {
+    if (!record || forceNew) {
       this.logger.debug(`Create new task record for sessionId=${sessionId}`);
       record = await this.record.save({
         ...recordQuery,
@@ -400,6 +408,16 @@ export class DialogueTasksHandlerService {
       this.logger.verbose(`Task matches ${task.name}`);
 
       let record = await this.ensureRecord(ev.sessionId, task);
+
+      if (
+        record &&
+        (record?.status === 'completed' || record.status === 'aborted')
+      ) {
+        this.logger.log(
+          `Repeating task=${task.name} after previous state=${record.status}`,
+        );
+        record = await this.ensureRecord(ev.sessionId, task, true);
+      }
 
       const started = Object.values(record.values).length === 0;
 
