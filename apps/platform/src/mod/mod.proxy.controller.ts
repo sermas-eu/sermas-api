@@ -1,6 +1,6 @@
 import { All, Controller, Param, Req } from '@nestjs/common';
 import { Request } from 'express';
-import { Public } from 'nest-keycloak-connect';
+import { Public } from 'libs/auth/auth.decorators';
 import { PlatformModuleProxyService } from './mod.proxy.service';
 
 @Controller()

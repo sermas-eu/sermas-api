@@ -29,7 +29,7 @@ import { DefaultLanguage } from 'libs/language/lang-codes';
 import { getChunkId } from 'libs/sermas/sermas.utils';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
-import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
+import { AuthenticatedUser, Public } from 'libs/auth/auth.decorators';
 import { ulid } from 'ulidx';
 import { DialogueAvatarSpeechControlDto } from './dialogue.speech.dto';
 

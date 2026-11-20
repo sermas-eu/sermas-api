@@ -6,13 +6,14 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from 'libs/auth/auth.decorators';
+import { JwtAuthGuard } from 'libs/auth/jwt.guard';
 import { AuthJwtUser } from '../auth.dto';
 import { MqttAclPayload } from './mqtt.dto';
 import { MqttService } from './mqtt.service';
 
 @Controller('mqtt')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 export class MqttController {
   constructor(private readonly mqttService: MqttService) {}
 

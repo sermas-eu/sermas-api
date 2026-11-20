@@ -18,7 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthJwtUser } from 'apps/auth/src/auth.dto';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from 'libs/auth/auth.decorators';
 import { XRMarkerDto, XRMarkerListRequestDto } from './xr.marker.dto';
 import { XrMarkerService } from './xr.marker.service';
 

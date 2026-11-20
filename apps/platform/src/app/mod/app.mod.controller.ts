@@ -7,7 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from 'libs/auth/auth.decorators';
 import { AppModuleConfigDto } from '../platform.app.dto';
 import { PlatformAppModuleService } from './app.mod.service';
 

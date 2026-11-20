@@ -10,7 +10,7 @@ import {
 import { Request } from 'express';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { Public } from 'nest-keycloak-connect';
+import { Public } from 'libs/auth/auth.decorators';
 import {
   AccessTokenRequestDto,
   JwtTokenDto,

@@ -36,5 +36,6 @@ edited to say something else.
 
 ## The records
 
-<TODO: a one-line table as they accumulate. An index nobody updates is worse than none,
-so either keep it or delete this section.>
+| ADR | Decision | Status |
+|---|---|---|
+| [ADR-0001](ADR-0001-validate-tokens-as-oidc-jwts.md) | Validate access tokens as plain OIDC JWTs; keep Keycloak permission evaluation | accepted |

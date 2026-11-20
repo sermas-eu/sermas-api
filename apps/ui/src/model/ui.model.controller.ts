@@ -6,7 +6,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from 'libs/auth/auth.decorators';
 import {
   UIModelMapBlendShapesRequestDto,
   UIModelMapBlendShapesResponseDto,

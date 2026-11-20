@@ -9,10 +9,10 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthJwtUser } from 'apps/auth/src/auth.dto';
 import {
+  META_PUBLIC,
   META_RESOURCE,
   META_SCOPES,
-  META_UNPROTECTED,
-} from 'nest-keycloak-connect';
+} from 'libs/auth/auth.constants';
 import { PlatformContextDto } from './platform.auth.dto';
 import { PlatformAuthService } from './platform.auth.service';
 
@@ -36,7 +36,7 @@ export class PlatformGuard implements CanActivate {
       context.getHandler(),
     );
     const isUnprotected = this.reflector.getAllAndOverride<boolean>(
-      META_UNPROTECTED,
+      META_PUBLIC,
       [context.getClass(), context.getHandler()],
     );
 

@@ -6,17 +6,11 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { PlatformGuard } from 'apps/platform/src/auth/platform.auth.guard';
-import { AuthGuard, Resource, Scopes } from 'nest-keycloak-connect';
+import { Resource, Scopes } from 'libs/auth/auth.decorators';
+import { JwtAuthGuard } from 'libs/auth/jwt.guard';
 
 export function ApiResource(params: string) {
-  const decorators = [
-    UseGuards(
-      AuthGuard,
-      PlatformGuard,
-      // ResourceGuard
-    ),
-    Resource(params),
-  ];
+  const decorators = [UseGuards(JwtAuthGuard, PlatformGuard), Resource(params)];
   return applyDecorators(...decorators);
 }
 
@@ -56,12 +50,16 @@ const apiGenericObject = (options?: ApiGenericPropertyOptions) => {
   );
 };
 
-export function ApiGenericProperty(options?: ApiGenericPropertyOptions) {  // eslint-disable-line
+export function ApiGenericProperty(options?: ApiGenericPropertyOptions) {
+  // eslint-disable-line
   options = options || {};
   options.required = true;
   return apiGenericObject(options);
 }
-export function ApiGenericPropertyOptional(options?: ApiGenericPropertyOptions) {  // eslint-disable-line
+export function ApiGenericPropertyOptional(
+  options?: ApiGenericPropertyOptions,
+) {
+  // eslint-disable-line
   options = options || {};
   options.required = false;
   return apiGenericObject(options);

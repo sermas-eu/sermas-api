@@ -11,7 +11,7 @@ import { AuthJwtUser } from 'apps/auth/src/auth.dto';
 import { AdminRole } from 'libs/decorator/admin-role.decorator';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiUpload } from 'libs/decorator/openapi.upload.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from 'libs/auth/auth.decorators';
 import { UIAssetDto } from './ui.asset.dto';
 import { UIAssetService } from './ui.asset.service';
 

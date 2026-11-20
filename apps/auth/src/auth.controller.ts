@@ -18,7 +18,7 @@ import {
 import { Request } from 'express';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
+import { AuthenticatedUser, Public } from 'libs/auth/auth.decorators';
 import {
   AuthJwtUser,
   LoginRequestDto,

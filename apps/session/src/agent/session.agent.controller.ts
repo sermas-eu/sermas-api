@@ -10,7 +10,7 @@ import { AuthJwtUser } from 'apps/auth/src/auth.dto';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
 import { addDTOContext } from 'libs/util';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from 'libs/auth/auth.decorators';
 import { AgentDto, AgentHeartBeatEventDto } from './session.agent.dto';
 import { SessionAgentService } from './session.agent.service';
 

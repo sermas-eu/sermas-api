@@ -17,7 +17,7 @@ import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
 import { AdminRole } from 'libs/decorator/admin-role.decorator';
 import { ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { Resource } from 'nest-keycloak-connect';
+import { Resource } from 'libs/auth/auth.decorators';
 import { PlatformAppDto, PlatformAppExportFilterDto } from './platform.app.dto';
 
 @ApiBearerAuth()
