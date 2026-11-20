@@ -1,0 +1,66 @@
+version: "3"
+
+# sermas-api tasks. Run standalone, or from sermas-dev, which sets SERMAS_DEV_ROOT so
+# that `dev` reads the stack's config/api/.env and config/api/ files.
+
+vars:
+  CONFIG_DIR: '{{if .SERMAS_DEV_ROOT}}{{.SERMAS_DEV_ROOT}}/config/api{{else}}{{.ROOT_DIR}}/config{{end}}'
+
+tasks:
+
+  default:
+    cmds:
+      - task --list
+
+  setup:
+    desc: "Install dependencies (npm ci)"
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "1"
+    cmds:
+      - npm ci --no-audit --no-fund
+
+  dev:
+    desc: "Run from source with hot reload on :3000 (config: {{.CONFIG_DIR}})"
+    env:
+      ENV_PATH: '{{.CONFIG_DIR}}/.env'
+      CONFIG_BASEPATH: '{{.CONFIG_DIR}}'
+    cmds:
+      - npm run start:dev
+
+  build:
+    desc: "Compile (nest build)"
+    cmds:
+      - npm run build
+
+  typecheck:
+    desc: "Type-check the whole tree, specs included"
+    cmds:
+      - npx tsc -p tsconfig.json --noEmit
+
+  lint:
+    desc: "Lint without rewriting files (lint:fix rewrites)"
+    cmds:
+      - npx eslint "{apps,libs}/**/*.ts"
+
+  lint:fix:
+    desc: "Lint and fix in place"
+    cmds:
+      - npx eslint "{apps,libs}/**/*.ts" --fix
+
+  test:
+    desc: "Unit tests (task test -- <pattern>)"
+    cmds:
+      - npm test -- --ci {{.CLI_ARGS}}
+
+  check:
+    desc: "Everything CI runs: build, typecheck, lint, test"
+    cmds:
+      - task: build
+      - task: typecheck
+      - task: lint
+      - task: test
+
+  docker:build:
+    desc: "Build the image locally (never pushed)"
+    cmds:
+      - docker compose build api
