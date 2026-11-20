@@ -2,10 +2,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { BarkAITextToSpeech } from './providers/tts.bark-ai.provider';
-import { ElevenIOTextToSpeech } from './providers/tts.elevenio.provider';
 import { GoogleTextToSpeech } from './providers/tts.google.provider';
-import { OpenAITextToSpeech } from './providers/tts.openai.provider';
 
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SessionService } from 'apps/session/src/session.service';
@@ -28,10 +25,7 @@ export class TTSProviderService {
 
   constructor(
     private readonly googletts: GoogleTextToSpeech,
-    private readonly barkaitts: BarkAITextToSpeech,
-    private readonly openaitts: OpenAITextToSpeech,
     private readonly azuretts: AzureTextToSpeech,
-    private readonly eleveniotts: ElevenIOTextToSpeech,
 
     private readonly configService: ConfigService,
     private readonly session: SessionService,
@@ -180,10 +174,6 @@ export class TTSProviderService {
 
     let data: Buffer;
     switch (ttsProvider) {
-      case 'barkai':
-        data = await this.barkaitts.speak(params);
-        perf('barkai');
-        break;
       case 'google':
         data = await this.googletts.speak(params);
         perf('google');
@@ -192,15 +182,10 @@ export class TTSProviderService {
         data = await this.azuretts.speak(params);
         perf('azure');
         break;
-      case 'elevenio':
-        data = await this.eleveniotts.speak(params);
-        perf('elevenio');
-        break;
-      case 'openai':
       default:
-        data = await this.openaitts.speak(params);
-        perf('openai');
-        break;
+        throw new Error(
+          `Unsupported TTS_SERVICE=${ttsProvider}: use google or azure`,
+        );
     }
 
     this.cache.set(cacheKey, data);

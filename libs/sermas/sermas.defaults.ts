@@ -92,8 +92,10 @@ export const SermasDefaultConfig = {
 
   // TRANSLATION_SERVICE Provider name to translate messages
   TRANSLATION_SERVICE: 'openai',
-  // STT_SERVICE Service for Speech to Text. Provided are openai, google, whisper, azure. Each need it's own setup.
-  STT_SERVICE: 'openai',
+  // STT_SERVICE Service for Speech to Text: google, azure or whisper. Each needs its own setup.
+  STT_SERVICE: 'whisper',
+  // WHISPER_URL URL of a whisper ASR web service, used when STT_SERVICE=whisper
+  WHISPER_URL: '',
   // STT_GOOGLE_IMPROVED_RECOGNITION List of short words that need better recognition when using GOOGLE as STT
   STT_GOOGLE_IMPROVED_RECOGNITION: 'si,no,ok,fatto,sì,yes,done,continue,wait',
 
@@ -102,8 +104,8 @@ export const SermasDefaultConfig = {
   // STT_AZURE_REGION Azure region
   STT_AZURE_REGION: '',
 
-  // TTS_SERVICE Service for Text to Speech
-  TTS_SERVICE: 'openai',
+  // TTS_SERVICE Service for Text to Speech: google or azure. An avatar may override it.
+  TTS_SERVICE: 'google',
 
   // GOOGLE_TTS_MODEL_TYPE Preferred Google TTS model type (such as Journey, Neural, Wavenet or Standard). See https://cloud.google.com/text-to-speech/docs/voices
   GOOGLE_TTS_MODEL_TYPE: 'Journey',
@@ -113,12 +115,6 @@ export const SermasDefaultConfig = {
   // TTS_AZURE_REGION Azure region
   TTS_AZURE_REGION: '',
 
-  // ELEVENIO_APIKEY Elevenio API key
-  ELEVENIO_APIKEY: '',
-  // ELEVENIO_VOICEIDS Elevenio voice id, separated by comma
-  ELEVENIO_VOICEIDS: '',
-  // ELEVENIO_MODELS Elevenio models
-  ELEVENIO_MODELS: 'eleven_multilingual_v2',
 
   // LLM_SERVICE LLM service to use. Only `openai` is supported: any OpenAI-compatible
   // endpoint (OpenAI, LiteLLM, vLLM, ...) selected with OPENAI_BASEURL
@@ -171,12 +167,6 @@ export const SermasDefaultConfig = {
   // OPENAI_MODEL Default OpenAI model used as fallback
   OPENAI_MODEL: 'gpt-4o',
 
-  // OPENAI_TTS_MODEL OpenAI TTS model, one of tts-1 or tts-1-hd
-  OPENAI_TTS_MODEL: 'tts-1',
-  // OPENAI_TTS_VOICE_F Openai female TTS voice model
-  OPENAI_TTS_VOICE_F: 'shimmer',
-  // OPENAI_TTS_VOICE_M Openai male TTS voice model
-  OPENAI_TTS_VOICE_M: 'onyx',
 
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',
