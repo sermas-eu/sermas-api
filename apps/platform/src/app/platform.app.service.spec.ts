@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
 import { KeycloakModule } from 'apps/keycloak/src/keycloak.module';
 import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import { KEYCLOACK_TEST_REALM } from 'libs/test';
 import { PlatformModule } from '../platform.module';
 import { PlatformAppService } from './platform.app.service';
@@ -53,6 +53,8 @@ describe('PlatformAppService', () => {
       const user = await platformAppService.saveUser({
         appId,
         username,
+        firstName: username,
+        lastName: username,
         email: `${username}@sermas.local`,
         password: username,
       });
@@ -70,6 +72,8 @@ describe('PlatformAppService', () => {
       const user = await platformAppService.saveUser({
         appId,
         username,
+        firstName: username,
+        lastName: username,
         email: `${username}@sermas.local`,
         password: username,
       });

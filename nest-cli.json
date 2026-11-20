@@ -27,24 +27,6 @@
         "tsConfigPath": "apps/dialogue/tsconfig.app.json"
       }
     },
-    "gesture": {
-      "type": "application",
-      "root": "apps/gesture",
-      "entryFile": "main",
-      "sourceRoot": "apps/gesture/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/gesture/tsconfig.app.json"
-      }
-    },
-    "dataset": {
-      "type": "library",
-      "root": "libs/dataset",
-      "entryFile": "index",
-      "sourceRoot": "libs/dataset/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/dataset/tsconfig.lib.json"
-      }
-    },
     "auth": {
       "type": "application",
       "root": "apps/auth",
@@ -79,15 +61,6 @@
       "sourceRoot": "apps/session/src",
       "compilerOptions": {
         "tsConfigPath": "apps/session/tsconfig.lib.json"
-      }
-    },
-    "edge": {
-      "type": "application",
-      "root": "apps/edge",
-      "entryFile": "main",
-      "sourceRoot": "apps/edge/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/edge/tsconfig.app.json"
       }
     },
     "app": {

@@ -7,7 +7,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AsyncApiOperation } from 'nestjs-asyncapi';
+import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
 
 class TestStuffEmbed {
   @ApiProperty()
@@ -44,7 +44,7 @@ export class TestCustomModuleController {
   @AsyncApiOperationName({
     operationId: 'sendStuff',
     channel: 'app/:appId/stuff/send',
-    type: 'pub',
+    publish: true,
     message: {
       payload: TestStuff,
     },
@@ -87,7 +87,7 @@ export class TestCustomModuleController {
 
   @AsyncApiOperationName({
     operationId: 'listAllStuff',
-    type: 'pub',
+    publish: true,
     channel: 'app/:appId/stuff/list',
     message: {
       payload: TestStuff,

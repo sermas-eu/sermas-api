@@ -4,8 +4,11 @@ export const newApp = (appId: string, ownerId: string) => ({
   ownerId,
   modules: [],
   repository: {
-    avatars: {},
-    backgrounds: {},
+    avatars: [],
+    backgrounds: [],
+    robots: [],
+    documents: [],
+    animations: [],
   },
   clients: [],
 });

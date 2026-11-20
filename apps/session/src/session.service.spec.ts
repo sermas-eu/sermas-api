@@ -8,7 +8,7 @@ import {
 } from 'apps/detection/src/detection.dto';
 import { DetectionService } from 'apps/detection/src/detection.service';
 import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { sleep } from 'libs/test';
 import { waitEvents } from 'libs/util';
@@ -73,7 +73,7 @@ describe('SessionAgentService', () => {
       await sessionAgentService.onAgentHeartBeat({
         appId,
         moduleId,
-        status: AgentStatus.ready,
+        status: 'ready',
       });
 
       const evTopic = `mqtt.pub.${SermasTopics.session.sessionChanged}`;

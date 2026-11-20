@@ -2,7 +2,7 @@ import { HttpServer, INestApplication, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
 import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/dataset/src';
+import { uuidv4 } from 'libs/util';
 import * as request from 'supertest';
 import { PlatformAppService } from '../app/platform.app.service';
 import { newApp } from '../app/tests/app';
@@ -81,6 +81,8 @@ describe('PlatformModuleService', () => {
       const adminUser = await platformAppService.saveUser({
         appId,
         username: adminUsername,
+        firstName: adminUsername,
+        lastName: adminUsername,
         email: `${adminUsername}@sermas.local`,
         password: adminUsername,
       });
@@ -109,6 +111,8 @@ describe('PlatformModuleService', () => {
       const user = await platformAppService.saveUser({
         appId,
         username,
+        firstName: username,
+        lastName: username,
         email: `${username}@sermas.local`,
         password: username,
       });
@@ -116,7 +120,7 @@ describe('PlatformModuleService', () => {
       const userToken = await keycloakService.login(username, username);
 
       const platformApp = newApp(appId, user.id);
-      await platformAppService.createApp(platformApp, false);
+      await platformAppService.createApp({ data: platformApp, skipClients: false });
 
       // 5. query platform module from app client
       await requestModule(userToken.access_token, {

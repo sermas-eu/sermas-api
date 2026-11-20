@@ -57,8 +57,12 @@ const contents: UIContentDto[] = [
     appId: 'mimex',
     contentType: 'object',
     content: {
-      type: 'glb',
-      url: 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF-Binary/Duck.glb',
+      list: [
+        {
+          type: 'glb',
+          url: 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF-Binary/Duck.glb',
+        },
+      ],
     },
   } as ObjectUIContentDto,
 
