@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { PlatformTopic } from '../topics/platform.topics.dto';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { PlatformTopic } from '../topics/platform.topics.dto.js';
 
 export class ModuleResourceDto extends PlatformTopic {
   @ApiProperty({

@@ -3,7 +3,7 @@ import {
   RepositoryAvatarDto,
   RepositoryBackgroundDto,
   RepositoryConfigDto,
-} from './platform.app.dto';
+} from './platform.app.dto.js';
 
 export const ModuleRobot: AppModuleConfigDto = {
   moduleId: 'robot',

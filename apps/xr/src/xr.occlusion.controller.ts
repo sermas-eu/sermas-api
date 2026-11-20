@@ -5,9 +5,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
-import { XROcclusionResponseDto } from './xr.occlusion.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { XROcclusionResponseDto } from './xr.occlusion.dto.js';
 
 @ApiBearerAuth()
 @Controller('xr')
@@ -31,7 +31,7 @@ export class XROcclusionController {
   })
   occlusion(
     @AuthenticatedUser()
-    user?: any,
+    _user?: any,
   ): Promise<XROcclusionResponseDto> {
     throw new NotImplementedException();
   }

@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { SessionService } from 'apps/session/src/session.service';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMBaseArgs } from 'libs/llm/llm.provider.dto';
-import { extractProviderName, parseJSON } from 'libs/llm/util';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
+import { createSessionContext } from '#apps/session/src/session.context';
+import { SessionService } from '#apps/session/src/session.service';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { LLMBaseArgs } from '#libs/llm/llm.provider.dto';
+import { extractProviderName, parseJSON } from '#libs/llm/util';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { getChunkId, getMessageId } from '#libs/sermas/sermas.utils';
+import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
 import {
   DialogueChatProgressEvent,
   DialogueChatValidationEvent,
@@ -16,31 +16,31 @@ import {
   LLMParsedResult,
   MatchingToolsResult,
   ToolsWrapper,
-} from './dialogue.chat.dto';
-import { convertToolsToPrompt, packAvatarObject } from './utils';
+} from './dialogue.chat.dto.js';
+import { convertToolsToPrompt, packAvatarObject } from './utils.js';
 
 import { ConfigService } from '@nestjs/config';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
-import { DialogueAsyncApiService } from '../dialogue.async.service';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { SermasSessionDto } from '#libs/sermas/sermas.dto';
+import { DialogueAsyncApiService } from '../dialogue.async.service.js';
 import {
   DialogueSessionRequestDto,
   DialogueSessionRequestStatus,
-} from '../dialogue.request-monitor.dto';
-import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service';
-import { DialogueIntentService } from '../intent/dialogue.intent.service';
-import { DialogueMemoryService } from '../memory/dialogue.memory.service';
-import { convertTaskToPrompt } from '../tasks/util';
+} from '../dialogue.request-monitor.dto.js';
+import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service.js';
+import { DialogueIntentService } from '../intent/dialogue.intent.service.js';
+import { DialogueMemoryService } from '../memory/dialogue.memory.service.js';
+import { convertTaskToPrompt } from '../tasks/util.js';
 import {
   avatarChatPrompt,
   AvatarChatSystemPromptParams,
   AvatarChatUserPromptParams,
   avatarSystemChatPrompt,
-} from './dialogue.chat.prompt';
-import { SelectedTool } from './dialogue.chat.tools.dto';
-import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer';
-import { SentenceTransformer } from './transformer/sentence.transformer';
+} from './dialogue.chat.prompt.js';
+import { SelectedTool } from './dialogue.chat.tools.dto.js';
+import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer.js';
+import { SentenceTransformer } from './transformer/sentence.transformer.js';
 
 const TrimmablePrefixes = [
   'ASSISTANT',
@@ -60,7 +60,7 @@ const RemoveTagsParts = [
   /<\/?filter>/gim,
   /<\/?intents>/gim,
   /<\/?tools>/gim,
-  /\`\`\`/,
+  /```/,
 ];
 
 @Injectable()
@@ -450,52 +450,55 @@ export class DialogueChatService {
     };
     const llmParsedResult: LLMParsedResult = {};
 
-    const promise = new Promise<LLMCombinedResult>(async (resolve) => {
-      const result = await this.llmProvider.chat({
-        tag: 'chat',
-        stream: true,
-        json: false,
+    // a failing LLM call must reject, or the turn would wait forever
+    const promise = new Promise<LLMCombinedResult>((resolve, reject) => {
+      (async () => {
+        const result = await this.llmProvider.chat({
+          tag: 'chat',
+          stream: true,
+          json: false,
 
-        provider: chatProvider,
-        model: chatModel,
-        sessionContext: createSessionContext(message),
+          provider: chatProvider,
+          model: chatModel,
+          sessionContext: createSessionContext(message),
 
-        system: avatarSystemChatPrompt(systemPromptParams),
-        user: avatarChatPrompt(chatPromptParams),
+          system: avatarSystemChatPrompt(systemPromptParams),
+          user: avatarChatPrompt(chatPromptParams),
 
-        transformers: [
-          new StreamingMarkupParserTransformer(
-            'filter',
-            (res: string | undefined) => {
-              llmParsedResult.filter = parseJSON(res) || undefined;
-            },
-          ),
-          new StreamingMarkupParserTransformer(
-            'intents',
-            (res: string | undefined) => {
-              if (res) {
-                llmParsedResult.intent = parseJSON(res) || undefined;
-              }
-            },
-          ),
-          new StreamingMarkupParserTransformer(
-            'tools',
-            (res: string | undefined) => {
-              llmParsedResult.tools = this.parseMatchingTools(
-                res,
-                activeTools.tools,
-              );
-            },
-          ),
-          new SentenceTransformer(() => {
-            resolve({
-              ...result,
-              ...llmParsedResult,
-              ...llmChatData,
-            });
-          }),
-        ],
-      });
+          transformers: [
+            new StreamingMarkupParserTransformer(
+              'filter',
+              (res: string | undefined) => {
+                llmParsedResult.filter = parseJSON(res) || undefined;
+              },
+            ),
+            new StreamingMarkupParserTransformer(
+              'intents',
+              (res: string | undefined) => {
+                if (res) {
+                  llmParsedResult.intent = parseJSON(res) || undefined;
+                }
+              },
+            ),
+            new StreamingMarkupParserTransformer(
+              'tools',
+              (res: string | undefined) => {
+                llmParsedResult.tools = this.parseMatchingTools(
+                  res,
+                  activeTools.tools,
+                );
+              },
+            ),
+            new SentenceTransformer(() => {
+              resolve({
+                ...result,
+                ...llmParsedResult,
+                ...llmChatData,
+              });
+            }),
+          ],
+        });
+      })().catch(reject);
     });
 
     return await promise;
@@ -512,7 +515,7 @@ export class DialogueChatService {
 
     for (const prefix of allPrefixes) {
       const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const pattern = new RegExp(`^\s*#*?${escapedPrefix}[:|\n]?\\s*`, 'igm'); // optional colon and trailing space/newlines
+      const pattern = new RegExp(`^\\s*#*?${escapedPrefix}[:|\n]?\\s*`, 'igm'); // optional colon and trailing space/newlines
 
       if (pattern.test(text)) {
         text = text.replace(pattern, '');

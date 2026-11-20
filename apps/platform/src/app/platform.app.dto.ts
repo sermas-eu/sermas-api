@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
-import { DialogueTaskDto } from 'apps/dialogue/src/tasks/store/dialogue.tasks.store.dto';
-import { KeycloakUser } from 'apps/keycloak/src/keycloak.admin.dto';
+import { DialogueTaskDto } from '#apps/dialogue/src/tasks/store/dialogue.tasks.store.dto';
+import { KeycloakUser } from '#apps/keycloak/src/keycloak.admin.dto';
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
   Contains,
@@ -12,16 +12,16 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { SermasRecordChangedDto } from 'libs/sermas/sermas.dto';
+import { SermasRecordChangedDto } from '#libs/sermas/sermas.dto';
 import * as sanitizeHtml from 'sanitize-html';
-import { PlatformModuleConfigDto } from '../mod/mod.dto';
+import { PlatformModuleConfigDto } from '../mod/mod.dto.js';
 import {
   AppPromptDto,
   AppToolsDTO,
   LLMSettingsDto,
-} from './platform.app.tools.dto';
+} from './platform.app.tools.dto.js';
 
-export * from './platform.app.tools.dto';
+export * from './platform.app.tools.dto.js';
 
 export const RepositoryAssetList = [
   'avatars',
@@ -185,9 +185,9 @@ export class AvatarCameraConfig {
 
 export class RepositoryAssetMetadataDto implements Record<string, any> {}
 
-export class RepositoryAssetDto<T = RepositoryAssetMetadataDto>
-  implements Record<string, any>
-{
+export class RepositoryAssetDto<
+  T = RepositoryAssetMetadataDto,
+> implements Record<string, any> {
   @ApiProperty({ required: true })
   id: string;
   @ApiProperty({

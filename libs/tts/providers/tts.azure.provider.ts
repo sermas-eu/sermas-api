@@ -7,8 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 import * as toBuffer from 'typedarray-to-buffer';
-import { ITextToSpeech, SpeakParam } from '../tts.dto';
-import { fixSSML } from '../ssml/util';
+import { ITextToSpeech, SpeakParam } from '../tts.dto.js';
+import { fixSSML } from '../ssml/util.js';
 
 // { lang: { gender: [ model names ] } }
 // { 'it-IT': { 'F': [ ... ] } }
@@ -87,7 +87,8 @@ export class AzureTextToSpeech implements ITextToSpeech, OnModuleInit {
   }
 
   public async speak(params: SpeakParam): Promise<Buffer> {
-    let { text, ssml } = params;
+    const { ssml } = params;
+    let { text } = params;
 
     const languageCode = params.languageCode;
 
@@ -136,10 +137,8 @@ export class AzureTextToSpeech implements ITextToSpeech, OnModuleInit {
 
     if (ssml) {
       const ssmlCheck = await fixSSML(ssml, text);
-      if (!ssmlCheck.ssml) {
-        ssml = '';
-        text = text || ssmlCheck.text;
-      }
+      // D-20: Azure is always given plain text, so valid SSML is not used
+      if (!ssmlCheck.ssml) text = text || ssmlCheck.text;
     }
 
     speechConfig.speechSynthesisVoiceName = ttsModelName;

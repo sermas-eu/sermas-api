@@ -5,11 +5,11 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { jwtDecode } from 'libs/util';
-import { PlatformAuthService } from '../auth/platform.auth.service';
-import { ModuleProxyRequestDto } from './mod.dto';
-import { PlatformModuleService } from './mod.service';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { jwtDecode } from '#libs/util';
+import { PlatformAuthService } from '../auth/platform.auth.service.js';
+import { ModuleProxyRequestDto } from './mod.dto.js';
+import { PlatformModuleService } from './mod.service.js';
 
 @Injectable()
 export class PlatformModuleProxyService {

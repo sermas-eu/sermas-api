@@ -1,11 +1,11 @@
-jest.mock('openai');
+vi.mock('openai');
 
 import { Logger } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
-import { IdentityTrackerService } from './identity-tracker.service';
+import { IdentityTrackerService } from './identity-tracker.service.js';
 
-jest.setTimeout(10 * 100000);
+vi.setConfig({ testTimeout: 10 * 100000 });
 
 describe('IdentityTrackerService', () => {
   let moduleRef: TestingModule;

@@ -1,24 +1,24 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UiModule } from 'apps/ui/src/ui.module';
-import { DialogueMemoryModule } from '../memory/dialogue.memory.module';
-import { DialogueToolsModule } from '../tools/dialogue.tools.module';
-import { DialogueTasksAsyncApiService } from './dialogue.tasks.async.service';
-import { DialogueTaskController } from './dialogue.tasks.controller';
-import { DialogueTasksEventsService } from './dialogue.tasks.events.service';
-import { DialogueTasksHandlerFieldsService } from './dialogue.tasks.handler.fields.service';
-import { DialogueTasksHandlerService } from './dialogue.tasks.handler.service';
-import { DialogueTasksService } from './dialogue.tasks.service';
+import { UiModule } from '#apps/ui/src/ui.module';
+import { DialogueMemoryModule } from '../memory/dialogue.memory.module.js';
+import { DialogueToolsModule } from '../tools/dialogue.tools.module.js';
+import { DialogueTasksAsyncApiService } from './dialogue.tasks.async.service.js';
+import { DialogueTaskController } from './dialogue.tasks.controller.js';
+import { DialogueTasksEventsService } from './dialogue.tasks.events.service.js';
+import { DialogueTasksHandlerFieldsService } from './dialogue.tasks.handler.fields.service.js';
+import { DialogueTasksHandlerService } from './dialogue.tasks.handler.service.js';
+import { DialogueTasksService } from './dialogue.tasks.service.js';
 import {
   DialogueTaskRecord,
   DialogueTaskRecordSchema,
-} from './record/dialogue.tasks.record.schema';
-import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service';
+} from './record/dialogue.tasks.record.schema.js';
+import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service.js';
 import {
   DialogueTaskStore,
   DialogueTaskStoreSchema,
-} from './store/dialogue.tasks.store.schema';
-import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service';
+} from './store/dialogue.tasks.store.schema.js';
+import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service.js';
 
 @Module({
   imports: [

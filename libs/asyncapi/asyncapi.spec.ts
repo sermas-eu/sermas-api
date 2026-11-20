@@ -6,7 +6,7 @@ import {
   AsyncApiOperationName,
   createAsyncApiDocument,
   getAsyncApiOperations,
-} from 'libs/asyncapi';
+} from '#libs/asyncapi/index';
 
 class NestedDto {
   @ApiProperty()

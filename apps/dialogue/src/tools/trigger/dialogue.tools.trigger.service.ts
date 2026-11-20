@@ -8,13 +8,13 @@ import {
   PlatformAppDto,
   ToolsRequestSchema,
   ToolsRequestSchemaAuthBearer,
-} from 'apps/platform/src/app/platform.app.dto';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { PlatformKeycloakService } from 'apps/platform/src/platform.keycloack.service';
+} from '#apps/platform/src/app/platform.app.dto';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { PlatformKeycloakService } from '#apps/platform/src/platform.keycloack.service';
 import axios, { AxiosError, AxiosRequestConfig, isAxiosError } from 'axios';
-import { DialogueToolsAsyncApiService } from '../dialogue.tools.async.service';
-import { DialogueToolTriggeredEventDto } from '../dialogue.tools.dto';
-import { ToolTriggerEventDto } from './dialogue.tools.trigger.dto';
+import { DialogueToolsAsyncApiService } from '../dialogue.tools.async.service.js';
+import { DialogueToolTriggeredEventDto } from '../dialogue.tools.dto.js';
+import { ToolTriggerEventDto } from './dialogue.tools.trigger.dto.js';
 
 @Injectable()
 export class DialogueToolsTriggerService {
@@ -196,7 +196,7 @@ export class DialogueToolsTriggerService {
         const err = e as AxiosError;
         axiosErr = ` code=${err.code} status=${err.status}`;
       }
-      throw new Error(`request failed${axiosErr}`);
+      throw new Error(`request failed${axiosErr}`, { cause: e });
     }
   }
 
@@ -246,6 +246,7 @@ export class DialogueToolsTriggerService {
           } catch (e: any) {
             throw new Error(
               `failed to obtain a token for module ${config.moduleId}`,
+              { cause: e },
             );
           }
         } else throw new Error(`module client ${config.moduleId} not found`);

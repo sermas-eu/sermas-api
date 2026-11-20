@@ -1,30 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { DialogueEmotionService } from './dialogue.emotion.service';
+import { DialogueEmotionService } from './dialogue.emotion.service.js';
 
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
-import { UIService } from 'apps/ui/src/ui.service';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { sleep } from 'libs/test';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { createSessionContext } from '#apps/session/src/session.context';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { SessionService } from '#apps/session/src/session.service';
+import { ButtonsUIContentDto } from '#apps/ui/src/ui.content.dto';
+import { UIService } from '#apps/ui/src/ui.service';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { getChunkId, getMessageId } from '#libs/sermas/sermas.utils';
+import { sleep } from '#libs/test';
 import { ulid } from 'ulidx';
-import { packAvatarObject } from './chat/utils';
-import { DialogueSpeechService } from './dialogue.speech.service';
+import { packAvatarObject } from './chat/utils.js';
+import { DialogueSpeechService } from './dialogue.speech.service.js';
 import {
   welcomeMessagePrompt,
   welcomeMessageSystemPrompt,
-} from './dialogue.speech.welcome.prompt';
-import { DialogueTasksService } from './tasks/dialogue.tasks.service';
-import { DialogueToolsService } from './tools/dialogue.tools.service';
-import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
+} from './dialogue.speech.welcome.prompt.js';
+import { DialogueTasksService } from './tasks/dialogue.tasks.service.js';
+import { DialogueToolsService } from './tools/dialogue.tools.service.js';
+import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto.js';
 
 @Injectable()
 export class DialogueWelcomeService {

@@ -5,8 +5,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformKeycloakService } from 'apps/platform/src/platform.keycloack.service';
-import { jwtDecode } from 'libs/util';
+import { PlatformKeycloakService } from '#apps/platform/src/platform.keycloack.service';
+import { jwtDecode } from '#libs/util';
 
 import {
   AuthJwtUser,
@@ -15,7 +15,7 @@ import {
   RefreshTokenRequestDto,
   RegistrationRequestDto,
   RegistrationResponseDto,
-} from './auth.dto';
+} from './auth.dto.js';
 
 @Injectable()
 export class AuthService {

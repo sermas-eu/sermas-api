@@ -2,15 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Interval } from '@nestjs/schedule';
-import { DetectionAsyncApiService } from '../../detection.async.service';
+import { DetectionAsyncApiService } from '../../detection.async.service.js';
 import {
   UserCharacterizationEventDto,
   UserCharacterizationEventSource,
-} from '../../detection.dto';
-import { EmotionRecord } from './emotion-tracker.dto';
+} from '../../detection.dto.js';
+import { EmotionRecord } from './emotion-tracker.dto.js';
 
-interface CachedUserCharacterizationEventDto
-  extends UserCharacterizationEventDto {
+interface CachedUserCharacterizationEventDto extends UserCharacterizationEventDto {
   ts: Date;
 }
 

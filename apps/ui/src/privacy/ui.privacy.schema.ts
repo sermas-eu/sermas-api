@@ -1,6 +1,6 @@
 import { Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { UserPrivacyDto } from './ui.privacy.dto';
+import { UserPrivacyDto } from './ui.privacy.dto.js';
 
 @Schema()
 export class UserPrivacy extends UserPrivacyDto {}

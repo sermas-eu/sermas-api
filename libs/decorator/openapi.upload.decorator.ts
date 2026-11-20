@@ -6,7 +6,7 @@ import {
   ApiOkResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { ApiOperationName } from './openapi.operation.decorator';
+import { ApiOperationName } from './openapi.operation.decorator.js';
 
 /** A multipart upload: the fields of `body` plus a binary `fileField`. */
 export function ApiUpload(body?: Type, fileField = 'file') {

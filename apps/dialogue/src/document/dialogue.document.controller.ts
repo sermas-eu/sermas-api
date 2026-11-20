@@ -15,10 +15,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { DialogueDocumentDto } from './dialogue.document.dto';
-import { DialogueDocumentService } from './dialogue.document.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { DialogueDocumentDto } from './dialogue.document.dto.js';
+import { DialogueDocumentService } from './dialogue.document.service.js';
 
 @ApiBearerAuth()
 @Controller('dialogue/document')
@@ -61,7 +61,6 @@ export class DialogueDocumentController {
   ): Promise<DialogueDocumentDto[]> {
     return this.document.import(documents);
   }
-
 
   @Delete(':appId/all')
   @ApiOperationName({

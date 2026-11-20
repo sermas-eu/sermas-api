@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RepositoryAssetTypes } from 'apps/platform/src/app/platform.app.dto';
+import { RepositoryAssetTypes } from '#apps/platform/src/app/platform.app.dto';
 
 export interface RepositoryDocument {
   appId: string;
@@ -50,4 +50,3 @@ export class DialogueDocumentDto {
   @ApiPropertyOptional()
   metadata?: DialogueDocumentMetadataDto;
 }
-

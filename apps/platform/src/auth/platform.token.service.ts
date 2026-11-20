@@ -7,17 +7,17 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ClientLoginDto } from 'apps/keycloak/src/keycloak.dto';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { getKeycloakClientId } from 'apps/keycloak/src/util';
-import { PlatformAuthService } from './platform.auth.service';
-import { PlatformTokenAsyncApiService } from './platform.token.async.service';
+import { ClientLoginDto } from '#apps/keycloak/src/keycloak.dto';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { getKeycloakClientId } from '#apps/keycloak/src/util';
+import { PlatformAuthService } from './platform.auth.service.js';
+import { PlatformTokenAsyncApiService } from './platform.token.async.service.js';
 import {
   AccessTokenRequestDto,
   JwtTokenDto,
   PlatformTokenDto,
   RefreshTokenRequestDto,
-} from './platform.token.dto';
+} from './platform.token.dto.js';
 
 @Injectable()
 export class PlatformAuthTokenService {

@@ -2,26 +2,29 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { hash } from 'libs/util';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { hash } from '#libs/util';
 import { Readable } from 'stream';
 import { ulid } from 'ulidx';
-import { LLMCacheService, SaveToCacheTransformer } from './llm.cache.service';
+import {
+  LLMCacheService,
+  SaveToCacheTransformer,
+} from './llm.cache.service.js';
 import {
   LLMChatRequest,
   LLMResultEvent,
   LLMSendArgs,
-} from './llm.provider.dto';
-import { SessionContextHandler } from './llm.session-context.handler';
+} from './llm.provider.dto.js';
+import { SessionContextHandler } from './llm.session-context.handler.js';
 import {
   PromptTemplate,
   PromptTemplateOutput,
   PromptTemplateParams,
-} from './prompt/prompt.template';
-import { LLMChatProvider } from './providers/chat.provider';
-import { LLMEmbeddingProvider } from './providers/embeddings.provider';
-import { OpenAIChatProvider } from './providers/openai/openai.chat.provider';
-import { OpenAIEmbeddingProvider } from './providers/openai/openai.embeddings.provider';
+} from './prompt/prompt.template.js';
+import { LLMChatProvider } from './providers/chat.provider.js';
+import { LLMEmbeddingProvider } from './providers/embeddings.provider.js';
+import { OpenAIChatProvider } from './providers/openai/openai.chat.provider.js';
+import { OpenAIEmbeddingProvider } from './providers/openai/openai.embeddings.provider.js';
 import {
   LLMCallResult,
   LLMEmbeddingConfig,
@@ -29,11 +32,11 @@ import {
   LLMProvider,
   LLMProviderConfig,
   LLMProviderList,
-} from './providers/provider.dto';
-import { LogTransformer } from './stream/log.transformer';
-import { TextTransformer } from './stream/text-transformer.stream';
-import { readResponse } from './stream/util';
-import { extractProviderName, parseJSON } from './util';
+} from './providers/provider.dto.js';
+import { LogTransformer } from './stream/log.transformer.js';
+import { TextTransformer } from './stream/text-transformer.stream.js';
+import { readResponse } from './stream/util.js';
+import { extractProviderName, parseJSON } from './util.js';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
@@ -390,6 +393,18 @@ export class LLMProviderService implements OnModuleInit {
   //   }
   //   return this.createDefaultPrompt(promptArgs);
   // }
+
+  /**
+   * Identifies the embedding space: vectors from different fingerprints
+   * cannot be compared, and may differ in size.
+   */
+  async embeddingsFingerprint(args?: LLMEmbeddingConfig): Promise<string> {
+    const provider = await this.getEmbeddingsProvider(args);
+    const config = await provider.getConfig();
+    return [provider.getName(), config.model, config.binaryQuantization && 'bq']
+      .filter(Boolean)
+      .join('/');
+  }
 
   async embeddings(text: string | string[], args?: LLMEmbeddingConfig) {
     const provider = await this.getEmbeddingsProvider(args);

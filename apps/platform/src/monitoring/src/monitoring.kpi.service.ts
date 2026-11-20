@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { DialogueTaskRecordChangedDto } from 'apps/dialogue/src/tasks/dialogue.tasks.dto';
-import { DatasetRecordDto } from './dataset/monitoring.dataset.dto';
-import { MonitoringDatasetService } from './dataset/monitoring.dataset.service';
+import { DialogueTaskRecordChangedDto } from '#apps/dialogue/src/tasks/dialogue.tasks.dto';
+import { DatasetRecordDto } from './dataset/monitoring.dataset.dto.js';
+import { MonitoringDatasetService } from './dataset/monitoring.dataset.service.js';
 
 @Injectable()
 export class MonitoringKpiService {

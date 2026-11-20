@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AppSettingsDto } from 'apps/platform/src/app/platform.app.dto';
-import { SermasBaseDto, SermasRecordChangedDto } from 'libs/sermas/sermas.dto';
-import { SearchFilter } from 'libs/sermas/sermas.query.dto';
+import { AppSettingsDto } from '#apps/platform/src/app/platform.app.dto';
+import { SermasBaseDto, SermasRecordChangedDto } from '#libs/sermas/sermas.dto';
+import { SearchFilter } from '#libs/sermas/sermas.query.dto';
 
 export const AgentStatusCodes: Record<AgentStatus, number> = {
   // ko

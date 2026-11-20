@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { TaskEventType } from '../store/dialogue.tasks.store.dto';
+import { TaskEventType } from '../store/dialogue.tasks.store.dto.js';
 import {
   DialogueTaskRecordDto,
   TaskRecordValues,
-} from './dialogue.tasks.record.dto';
+} from './dialogue.tasks.record.dto.js';
 
 export type DialogueTaskRecordDocument = HydratedDocument<DialogueTaskRecord>;
 

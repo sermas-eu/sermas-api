@@ -4,7 +4,7 @@ import {
   QuizAnswerDto,
   QuizUIContentDto,
   UIContentDto,
-} from './ui.content.dto';
+} from './ui.content.dto.js';
 
 export const uiContentToText = (
   payload: UIContentDto,
@@ -12,7 +12,7 @@ export const uiContentToText = (
 ): string => {
   options = options || {};
   switch (payload.contentType) {
-    case 'buttons':
+    case 'buttons': {
       const buttons = payload as ButtonsUIContentDto;
 
       const formatButtons = (buttons: ButtonDto[]) =>
@@ -29,7 +29,8 @@ export const uiContentToText = (
           : formatButtons(buttons.content.list);
 
       return `${buttons.content.label} ${buttonsList}`.trim();
-    case 'quiz':
+    }
+    case 'quiz': {
       const quiz = payload as QuizUIContentDto;
 
       const formatAnswers = (answers: QuizAnswerDto[]) =>
@@ -44,6 +45,7 @@ export const uiContentToText = (
           : formatAnswers(quiz.content.answers);
 
       return `${quiz.content.question} ${answers}`.trim();
+    }
     default:
       return '';
   }

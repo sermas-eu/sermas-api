@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { DialogueAsyncApiService } from './dialogue.async.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { DialogueAsyncApiService } from './dialogue.async.service.js';
 import {
   DialogueSessionRequestEvent,
   DialogueSessionRequestStatus,
   DialogueSessionRequestTracker,
-} from './dialogue.request-monitor.dto';
+} from './dialogue.request-monitor.dto.js';
 import { Interval } from '@nestjs/schedule';
 
 const CACHE_TTL = 3 * 60 * 1000; // 3 min

@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { META_ROLES } from './auth.constants';
+import { META_ROLES } from './auth.constants.js';
 
 /**
  * Requires every realm role named by @Roles(). Runs after JwtAuthGuard, which sets

@@ -7,12 +7,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser, Public } from 'libs/auth/auth.decorators';
-import { PlatformSettingsDto } from './platform.dto';
-import { PlatformSettingsService } from './platform.settings.service';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser, Public } from '#libs/auth/auth.decorators';
+import { PlatformSettingsDto } from './platform.dto.js';
+import { PlatformSettingsService } from './platform.settings.service.js';
 
 @ApiBearerAuth()
 @ApiTags('PLATFORM')

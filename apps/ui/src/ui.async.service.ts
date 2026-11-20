@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ApiExtraModels } from '@nestjs/swagger';
-import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { AsyncApi } from 'libs/asyncapi';
-import { UIAssetChangedDto } from './ui.asset.dto';
-import { UIContentDto } from './ui.content.dto';
-import { UIInteractionEventDto } from './ui.dto';
+import { AsyncApiOperationName } from '#libs/decorator/asyncapi.operation.decorator';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { AsyncApi } from '#libs/asyncapi/index';
+import { UIAssetChangedDto } from './ui.asset.dto.js';
+import { UIContentDto } from './ui.content.dto.js';
+import { UIInteractionEventDto } from './ui.dto.js';
 
 @AsyncApi()
 @Injectable()

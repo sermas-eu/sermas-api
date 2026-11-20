@@ -11,13 +11,14 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   RepositoryAssetList,
   RepositoryAssetTypes,
-} from 'apps/platform/src/app/platform.app.dto';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { BucketItem } from 'minio';
-import { MinioService } from 'nestjs-minio-client';
+} from '#apps/platform/src/app/platform.app.dto';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+// an entry from listObjects: an object, or a prefix when not recursive
+type ObjectInfo = { name?: string; prefix?: string; size?: number };
+import { MinioService } from '#libs/storage/minio.service';
 import * as path from 'path';
-import { UIAssetChangedDto, UIAssetDto } from './ui.asset.dto';
-import { UIAsyncApiService } from './ui.async.service';
+import { UIAssetChangedDto, UIAssetDto } from './ui.asset.dto.js';
+import { UIAsyncApiService } from './ui.async.service.js';
 
 const BACKGROUND_EXTENSIONS = ['jpg', 'jpeg', 'png'];
 const DOCUMENTS_EXTENSIONS = ['txt'];
@@ -78,24 +79,14 @@ export class UIAssetService {
   }
 
   async getAssetMetadata(modelPath?: string) {
-    const stream = await this.minioService.client.listObjects(
+    const buckets: ObjectInfo[] = [];
+    for await (const obj of this.minioService.client.listObjects(
       this.repository,
       modelPath,
       false,
-    );
-
-    const buckets = await new Promise<BucketItem[]>((resolve, reject) => {
-      const data: BucketItem[] = [];
-      stream.on('data', function (obj) {
-        data.push(obj);
-      });
-      stream.on('end', function () {
-        resolve(data);
-      });
-      stream.on('error', function (err) {
-        reject(err);
-      });
-    });
+    )) {
+      buckets.push(obj);
+    }
 
     const found = buckets.filter((b) => b.name === modelPath);
     return found.length ? found.at(0) : null;
@@ -118,7 +109,7 @@ export class UIAssetService {
     // ensure app exists
     const app = await this.app.readApp(appId);
 
-    let modelPath = null;
+    let modelPath: string | null;
 
     if (assetId !== 'default') {
       const repo = app.repository[type] || [];
@@ -242,6 +233,7 @@ export class UIAssetService {
         this.repository,
         assetPath,
         file.buffer,
+        file.buffer.length,
         metadata,
       );
 

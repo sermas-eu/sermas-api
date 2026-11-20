@@ -6,13 +6,13 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { addDTOContext } from 'libs/util';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
-import { AgentDto, AgentHeartBeatEventDto } from './session.agent.dto';
-import { SessionAgentService } from './session.agent.service';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { addDTOContext } from '#libs/util';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { AgentDto, AgentHeartBeatEventDto } from './session.agent.dto.js';
+import { SessionAgentService } from './session.agent.service.js';
 
 @ApiBearerAuth()
 @Controller('session/agent')

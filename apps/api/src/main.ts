@@ -1,9 +1,9 @@
 import { LogLevel, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { PlatformModuleService } from 'apps/platform/src/mod/mod.service';
-import { isNodeEnv } from 'libs/util';
-import { ValidationPipeOptions } from 'libs/validation/validation-options';
-import { AppModule } from './app.module';
+import { PlatformModuleService } from '#apps/platform/src/mod/mod.service';
+import { isNodeEnv } from '#libs/util';
+import { ValidationPipeOptions } from '#libs/validation/validation-options';
+import { AppModule } from './app.module.js';
 
 const logger = new Logger('bootstrap');
 

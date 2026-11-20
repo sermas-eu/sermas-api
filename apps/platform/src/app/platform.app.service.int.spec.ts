@@ -1,17 +1,17 @@
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
-import { KeycloakModule } from 'apps/keycloak/src/keycloak.module';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/util';
-import { KEYCLOACK_TEST_REALM } from 'libs/test';
-import { PlatformModule } from '../platform.module';
-import { PlatformAppService } from './platform.app.service';
-import { newApp } from './tests/app';
+import { SermasBaseModule } from '#apps/api/src/sermas.base.module';
+import { KeycloakModule } from '#apps/keycloak/src/keycloak.module';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { uuidv4 } from '#libs/util';
+import { KEYCLOACK_TEST_REALM } from '#libs/test';
+import { PlatformModule } from '../platform.module.js';
+import { PlatformAppService } from './platform.app.service.js';
+import { newApp } from './tests/app.js';
 
 const realm = KEYCLOACK_TEST_REALM;
 
-jest.setTimeout(5 * 60 * 1000);
+vi.setConfig({ testTimeout: 5 * 60 * 1000 });
 
 describe('PlatformAppService', () => {
   let moduleRef: TestingModule;

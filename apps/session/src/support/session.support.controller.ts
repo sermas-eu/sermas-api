@@ -4,19 +4,14 @@ import {
   NotImplementedException,
   Post,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
 import {
   SessionSupportRequestDto,
   SessionSupportResponseDto,
-} from './session.support.dto';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
+} from './session.support.dto.js';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
 
 @ApiBearerAuth()
 @Controller('session')
@@ -38,9 +33,9 @@ export class SessionSupportController {
     description: 'Request support from human',
   })
   support(
-    @Body() data: SessionSupportRequestDto,
+    @Body() _data: SessionSupportRequestDto,
     @AuthenticatedUser()
-    user?: any,
+    _user?: any,
   ): Promise<SessionSupportResponseDto> {
     throw new NotImplementedException();
   }

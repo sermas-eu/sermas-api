@@ -5,11 +5,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformContextDto } from 'apps/platform/src/auth/platform.auth.dto';
-import { PlatformAuthService } from 'apps/platform/src/auth/platform.auth.service';
+import { PlatformContextDto } from '#apps/platform/src/auth/platform.auth.dto';
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
 import { Request } from 'express';
-import { AuthJwtUser } from '../auth.dto';
-import { MqttAclAcc, MqttAclPayload } from './mqtt.dto';
+import { AuthJwtUser } from '../auth.dto.js';
+import { MqttAclAcc, MqttAclPayload } from './mqtt.dto.js';
 
 @Injectable()
 export class MqttService {
@@ -34,8 +34,8 @@ export class MqttService {
       payload.acc === MqttAclAcc.WRITE
         ? 'Write'
         : payload.acc === MqttAclAcc.READ
-        ? 'Read'
-        : 'Subscribe';
+          ? 'Read'
+          : 'Subscribe';
 
     if (process.env.LOG_REQUEST === '1')
       this.logger.debug(`ACL ${action} ${payload.topic} clientId=${user.azp}`);

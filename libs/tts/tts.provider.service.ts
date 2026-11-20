@@ -2,22 +2,22 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { GoogleTextToSpeech } from './providers/tts.google.provider';
+import { GoogleTextToSpeech } from './providers/tts.google.provider.js';
 
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SessionService } from 'apps/session/src/session.service';
+import { SessionService } from '#apps/session/src/session.service';
 import { Cache } from 'cache-manager';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { mapLanguageCode } from '../language/language';
-import { AzureTextToSpeech } from './providers/tts.azure.provider';
-import { SSMLService } from './ssml/ssml.service';
-import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { mapLanguageCode } from '../language/language.js';
+import { AzureTextToSpeech } from './providers/tts.azure.provider.js';
+import { SSMLService } from './ssml/ssml.service.js';
+import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto.js';
 
 import {
   createSessionContext,
   SessionContext,
-} from 'apps/session/src/session.context';
-import { hash } from 'libs/util';
+} from '#apps/session/src/session.context';
+import { hash } from '#libs/util';
 
 @Injectable()
 export class TTSProviderService {

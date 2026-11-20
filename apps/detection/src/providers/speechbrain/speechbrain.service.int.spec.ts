@@ -2,8 +2,8 @@ import { ConfigService } from '@nestjs/config';
 import {
   SpeechBrainSeparation,
   SpeechBrainSpeakerCount,
-} from 'apps/detection/src/providers/speechbrain/speechbrain.dto';
-import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
+} from '#apps/detection/src/providers/speechbrain/speechbrain.dto';
+import { SpeechBrainService } from '#apps/detection/src/providers/speechbrain/speechbrain.service';
 import { readFile } from 'fs/promises';
 
 const SECONDS = 1000;

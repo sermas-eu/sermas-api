@@ -2,16 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { readFile } from 'fs/promises';
-import { getConfigPath } from 'libs/sermas/sermas.utils';
-import { fileExists } from 'libs/util';
-import { NavigationService } from '../navigation/navigation.service';
-import { RoboticsAsyncApiService } from '../robotics.async.service';
+import { getConfigPath } from '#libs/sermas/sermas.utils';
+import { fileExists } from '#libs/util';
+import { NavigationService } from '../navigation/navigation.service.js';
+import { RoboticsAsyncApiService } from '../robotics.async.service.js';
 import {
   ActuationEventDto,
   InitialPoseDto,
   MovementEventDto,
   StatusEventDto,
-} from '../robotics.dto';
+} from '../robotics.dto.js';
 
 class RobotConfig {
   name: string;

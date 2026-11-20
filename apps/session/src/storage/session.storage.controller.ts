@@ -7,15 +7,15 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
 import {
   SessionStorageRecordDto,
   SessionStorageSearchDto,
-} from './session.storage.dto';
-import { SessionStorageService } from './session.storage.service';
+} from './session.storage.dto.js';
+import { SessionStorageService } from './session.storage.service.js';
 
 @ApiBearerAuth()
 @Controller('session')
@@ -38,7 +38,7 @@ export class SessionStorageController {
   })
   setRecord(
     @Body() data: SessionStorageRecordDto,
-    @AuthenticatedUser() user?: AuthJwtUser,
+    @AuthenticatedUser() _user?: AuthJwtUser,
   ): Promise<SessionStorageRecordDto> {
     return this.storage.set(data);
   }
@@ -58,7 +58,7 @@ export class SessionStorageController {
   })
   findRecords(
     @Body() data: SessionStorageSearchDto,
-    @AuthenticatedUser() user?: AuthJwtUser,
+    @AuthenticatedUser() _user?: AuthJwtUser,
   ): Promise<SessionStorageRecordDto[]> {
     return this.storage.search(data);
   }
@@ -76,7 +76,7 @@ export class SessionStorageController {
   })
   getRecord(
     @Param('storageId') storageId: string,
-    @AuthenticatedUser() user?: AuthJwtUser,
+    @AuthenticatedUser() _user?: AuthJwtUser,
   ): Promise<SessionStorageRecordDto> {
     return this.storage.get(storageId);
   }

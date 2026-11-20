@@ -7,9 +7,9 @@ import {
   UIContentDto,
   VideoUIContentDto,
   WebpageUIContentDto,
-} from '../ui.content.dto';
+} from '../ui.content.dto.js';
 
-const contents: UIContentDto[] = [
+export const contents: UIContentDto[] = [
   {
     appId: 'mimex',
     contentType: 'video',
@@ -92,4 +92,4 @@ const contents: UIContentDto[] = [
   } as LinkUIContentDto,
 ];
 
-export const getUiContent = (appId: string) => {};
+export const getUiContent = (_appId: string) => {};

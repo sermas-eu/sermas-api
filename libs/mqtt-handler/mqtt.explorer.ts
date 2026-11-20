@@ -9,15 +9,15 @@ import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { PlatformTopicsService } from 'apps/platform/src/topics/platform.topics.service';
-import { SermasBaseDto } from 'libs/sermas/sermas.dto';
-import { sleep } from 'libs/test';
+import { PlatformTopicsService } from '#apps/platform/src/topics/platform.topics.service';
+import { SermasBaseDto } from '#libs/sermas/sermas.dto';
+import { sleep } from '#libs/test';
 import {
   addDTOContext,
   extractTopicAppId,
   isNodeEnv,
   mapMqttTopic,
-} from 'libs/util';
+} from '#libs/util';
 import { MqttClient } from 'mqtt';
 import { Packet } from 'mqtt-packet';
 import {
@@ -26,14 +26,14 @@ import {
   MQTT_OPTION_PROVIDER,
   MQTT_SUBSCRIBER_PARAMS,
   MQTT_SUBSCRIBE_OPTIONS,
-} from './mqtt.constants';
+} from './mqtt.constants.js';
 import {
   MqttModuleOptions,
   MqttSubscribeOptions,
   MqttSubscriber,
   MqttSubscriberParameter,
-} from './mqtt.interface';
-import { getTransform } from './mqtt.transform';
+} from './mqtt.interface.js';
+import { getTransform } from './mqtt.transform.js';
 
 @Injectable()
 export class MqttExplorer implements OnModuleInit, OnModuleDestroy {
@@ -290,7 +290,7 @@ export class MqttExplorer implements OnModuleInit, OnModuleDestroy {
         topic
           .replace('$queue/', '')
           .replace(/^\$share\/([A-Za-z0-9]+)\//, '')
-          .replace(/([\[\]\?\(\)\\\\$\^\*\.|])/g, '\\$1')
+          .replace(/([[\]?()\\$^*.|])/g, '\\$1')
           .replace(/\+/g, '([^/]+)')
           .replace(/\/#$/, '(/.*)?') +
         '$',

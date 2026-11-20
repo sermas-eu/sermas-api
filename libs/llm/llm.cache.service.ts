@@ -6,9 +6,9 @@ import {
 } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { md5 } from 'libs/util';
+import { md5 } from '#libs/util';
 import { Transform } from 'stream';
-import { LLMMessage } from './providers/provider.dto';
+import { LLMMessage } from './providers/provider.dto.js';
 
 const cacheTTL = +process.env.CACHE_TTL_SEC || 86400;
 

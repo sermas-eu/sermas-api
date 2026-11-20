@@ -3,8 +3,8 @@ import {
   RepositoryAssetDto,
   RepositoryAssetList,
   RepositoryAssetTypes,
-} from 'apps/platform/src/app/platform.app.dto';
-import { SermasRecordChangedDto } from 'libs/sermas/sermas.dto';
+} from '#apps/platform/src/app/platform.app.dto';
+import { SermasRecordChangedDto } from '#libs/sermas/sermas.dto';
 
 export class UIAssetDto extends RepositoryAssetDto {
   @ApiPropertyOptional()

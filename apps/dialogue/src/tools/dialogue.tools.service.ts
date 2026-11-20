@@ -5,20 +5,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SelectedTool } from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { deepcopy, uuidv4 } from 'libs/util';
-import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
-import { DialogueToolsAsyncApiService } from './dialogue.tools.async.service';
-import { DialogueToolsRepositoryChanged } from './dialogue.tools.dto';
+import { SelectedTool } from '#apps/dialogue/src/chat/dialogue.chat.tools.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { deepcopy, uuidv4 } from '#libs/util';
+import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto.js';
+import { DialogueToolsAsyncApiService } from './dialogue.tools.async.service.js';
+import { DialogueToolsRepositoryChanged } from './dialogue.tools.dto.js';
 import {
   DialogueToolsRepositoryDto,
   DialogueToolsRepositoryRecordDto,
-} from './repository/dialogue.tools.repository.dto';
-import { DialogueToolsRepositoryService } from './repository/dialogue.tools.repository.service';
-import { ToolTriggerEventDto } from './trigger/dialogue.tools.trigger.dto';
-import { DialogueToolsTriggerService } from './trigger/dialogue.tools.trigger.service';
+} from './repository/dialogue.tools.repository.dto.js';
+import { DialogueToolsRepositoryService } from './repository/dialogue.tools.repository.service.js';
+import { ToolTriggerEventDto } from './trigger/dialogue.tools.trigger.dto.js';
+import { DialogueToolsTriggerService } from './trigger/dialogue.tools.trigger.service.js';
 
 type ToolsSchemaValues = string | number | boolean | object | undefined;
 type ToolsSchemaParameters = Record<string, ToolsSchemaValues>;

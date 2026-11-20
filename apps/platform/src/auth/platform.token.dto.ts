@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SermasBaseDto } from 'libs/sermas/sermas.dto';
-import { KeycloakTokenDto } from 'apps/keycloak/src/keycloak.admin.dto';
+import { ApiProperty, ApiPropertyOptional, ApiSchema } from '@nestjs/swagger';
+import { SermasBaseDto } from '#libs/sermas/sermas.dto';
+import { KeycloakTokenDto } from '#apps/keycloak/src/keycloak.admin.dto';
 
 export class PlatformTokenDto extends SermasBaseDto {
   tokenType: 'access' | 'refresh';
@@ -45,6 +45,8 @@ export class AccessTokenRequestDto {
   clientSecret?: string;
 }
 
+// auth has its own RefreshTokenRequestDto: keep the OpenAPI schemas apart
+@ApiSchema({ name: 'PlatformRefreshTokenRequestDto' })
 export class RefreshTokenRequestDto extends AccessTokenRequestDto {
   @ApiProperty()
   refreshToken: string;

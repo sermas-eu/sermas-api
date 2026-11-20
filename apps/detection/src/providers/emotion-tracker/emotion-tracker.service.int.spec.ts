@@ -1,14 +1,14 @@
-jest.mock('openai');
+vi.mock('openai');
 
 import { Logger } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Emotion } from 'libs/sermas/sermas.dto';
-import { uuidv4 } from 'libs/util';
-import { DetectionAsyncApiService } from '../../detection.async.service';
-import { EmotionTrackerService } from './emotion-tracker.service';
+import { Emotion } from '#libs/sermas/sermas.dto';
+import { uuidv4 } from '#libs/util';
+import { DetectionAsyncApiService } from '../../detection.async.service.js';
+import { EmotionTrackerService } from './emotion-tracker.service.js';
 
-jest.setTimeout(10 * 100000);
+vi.setConfig({ testTimeout: 10 * 100000 });
 
 describe('EmotionTrackerService', () => {
   let moduleRef: TestingModule;
@@ -23,10 +23,7 @@ describe('EmotionTrackerService', () => {
     })
       .overrideProvider(DetectionAsyncApiService)
       .useValue({
-        userCharacterization(e: any) {
-          e;
-          //
-        },
+        userCharacterization() {},
       })
       .compile();
 

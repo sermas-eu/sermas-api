@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import * as FormData from 'form-data';
-import { Emotion } from 'libs/sermas/sermas.dto';
+import FormData from 'form-data';
+import { Emotion } from '#libs/sermas/sermas.dto';
 import {
   SpeechBrainClassification,
   SpeechBrainSpeakerVerification,
@@ -10,7 +10,7 @@ import {
   SpeechBrainSpeakerCount,
   SpeechBrainSimilarityMatrix,
   SpeechBrainEmbeddings,
-} from './speechbrain.dto';
+} from './speechbrain.dto.js';
 import { Interval } from '@nestjs/schedule';
 
 @Injectable()

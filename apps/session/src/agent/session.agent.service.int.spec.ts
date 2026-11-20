@@ -1,14 +1,13 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppModule } from 'apps/api/src/app.module';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { uuidv4 } from 'libs/util';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { waitEvents } from 'libs/util';
-import { AgentStatus } from '../session.dto';
-import { SessionAgentService } from './session.agent.service';
+import { AppModule } from '#apps/api/src/app.module';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { uuidv4 } from '#libs/util';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { waitEvents } from '#libs/util';
+import { SessionAgentService } from './session.agent.service.js';
 
-jest.setTimeout(10 * 1000);
+vi.setConfig({ testTimeout: 10 * 1000 });
 
 describe('SessionAgentService', () => {
   let sessionAgentService: SessionAgentService;

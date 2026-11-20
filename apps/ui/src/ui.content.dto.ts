@@ -3,9 +3,9 @@ import {
   ApiProperty,
   ApiPropertyOptional,
 } from '@nestjs/swagger';
-import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.generic.decorator';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
+import { ApiGenericPropertyOptional } from '#libs/decorator/openapi.generic.decorator';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { SermasSessionDto } from '#libs/sermas/sermas.dto';
 
 export const SupportedContentTypeList = [
   'video',

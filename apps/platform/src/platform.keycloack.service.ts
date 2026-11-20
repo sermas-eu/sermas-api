@@ -6,30 +6,30 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RegistrationRequestDto } from 'apps/auth/src/auth.dto';
+import { RegistrationRequestDto } from '#apps/auth/src/auth.dto';
 import {
   EvaluatePermissionResourceDto,
   KeycloakClientResponseDto,
-} from 'apps/keycloak/src/keycloack.authz.dto';
+} from '#apps/keycloak/src/keycloack.authz.dto';
 import {
   AssignClientRolesDto,
   AssignRealmRolesDto,
   KeycloakUser,
-} from 'apps/keycloak/src/keycloak.admin.dto';
+} from '#apps/keycloak/src/keycloak.admin.dto';
 import {
   AddClientOptions,
   ClientLoginDto,
-} from 'apps/keycloak/src/keycloak.dto';
+} from '#apps/keycloak/src/keycloak.dto';
 import {
   KeycloakService,
   ROLE_ADMIN,
   ROLE_APP_OWNER,
-} from 'apps/keycloak/src/keycloak.service';
-import { getKeycloakClientId } from 'apps/keycloak/src/util';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { fileExists, readJSON, toDTO } from 'libs/util';
-import { PlatformAppAsyncApiService } from './app/platform.app.async.service';
-import { AppClientDto } from './app/platform.app.dto';
+} from '#apps/keycloak/src/keycloak.service';
+import { getKeycloakClientId } from '#apps/keycloak/src/util';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { fileExists, readJSON, toDTO } from '#libs/util';
+import { PlatformAppAsyncApiService } from './app/platform.app.async.service.js';
+import { AppClientDto } from './app/platform.app.dto.js';
 
 export const APP_CLIENT_NAME = 'application';
 

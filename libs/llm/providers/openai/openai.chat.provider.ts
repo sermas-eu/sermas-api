@@ -3,13 +3,13 @@ import {
   LLMChatOptions,
   LLMMessage,
   LLMProviderConfig,
-} from 'libs/llm/providers/provider.dto';
-import { ChatMessageStream } from 'libs/llm/stream/chat-message.stream';
+} from '#libs/llm/providers/provider.dto';
+import { ChatMessageStream } from '#libs/llm/stream/chat-message.stream';
 import OpenAI from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { Stream } from 'openai/streaming';
-import { LLMChatProvider } from '../chat.provider';
-import { createClient } from './util';
+import { LLMChatProvider } from '../chat.provider.js';
+import { createClient } from './util.js';
 
 export class OpenAIChatProvider extends LLMChatProvider {
   private openai: OpenAI;

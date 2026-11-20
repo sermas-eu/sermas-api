@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { AzureSpeechToText } from './providers/stt.azure.service';
-import { GoogleSpeechToText } from './providers/stt.google.service';
-import { WhisperSpeechToText } from './providers/stt.whisper.service';
-import { DialogueSpeechToTextDto } from './stt.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { AzureSpeechToText } from './providers/stt.azure.service.js';
+import { GoogleSpeechToText } from './providers/stt.google.service.js';
+import { WhisperSpeechToText } from './providers/stt.whisper.service.js';
+import { DialogueSpeechToTextDto } from './stt.dto.js';
 
 export type STTResponse = {
   provider: string;
@@ -32,7 +32,7 @@ export class STTProviderService {
     const { buffer, language } = payload;
 
     const provider = this.configService.get('STT_SERVICE');
-    let text = '';
+    let text: string;
 
     this.logger.verbose(
       `Processing speech input with ${provider} language=${language}`,

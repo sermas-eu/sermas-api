@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { UIContentDto } from 'apps/ui/src/ui.content.dto';
-import { uiContentToText } from 'apps/ui/src/util';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { DialogueTaskProgressDto } from '../tasks/dialogue.tasks.dto';
-import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto';
-import { DialogueMemoryMessageDto } from './dialogue.memory.dto';
-import { DialogueMemoryService } from './dialogue.memory.service';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { UIContentDto } from '#apps/ui/src/ui.content.dto';
+import { uiContentToText } from '#apps/ui/src/util';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { DialogueTaskProgressDto } from '../tasks/dialogue.tasks.dto.js';
+import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto.js';
+import { DialogueMemoryMessageDto } from './dialogue.memory.dto.js';
+import { DialogueMemoryService } from './dialogue.memory.service.js';
 
 @Injectable()
 export class DialogueMemoryEventsService {
@@ -141,7 +141,5 @@ export class DialogueMemoryEventsService {
         },
       },
     ]);
-
-    ev.task.name;
   }
 }

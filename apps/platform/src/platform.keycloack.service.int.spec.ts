@@ -1,15 +1,15 @@
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/util';
-import { PlatformAppService } from './app/platform.app.service';
-import { newApp } from './app/tests/app';
-import { PlatformKeycloakService } from './platform.keycloack.service';
-import { PlatformModule } from './platform.module';
-import { PlatformTopicsService } from './topics/platform.topics.service';
+import { SermasBaseModule } from '#apps/api/src/sermas.base.module';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { uuidv4 } from '#libs/util';
+import { PlatformAppService } from './app/platform.app.service.js';
+import { newApp } from './app/tests/app.js';
+import { PlatformKeycloakService } from './platform.keycloack.service.js';
+import { PlatformModule } from './platform.module.js';
+import { PlatformTopicsService } from './topics/platform.topics.service.js';
 
-jest.setTimeout(5 * 60 * 1000);
+vi.setConfig({ testTimeout: 5 * 60 * 1000 });
 
 const newResources = ['module1.scopeA', 'module1.scopeB', 'module2.scopeC'];
 
@@ -73,7 +73,10 @@ describe('PlatformKeycloakService', () => {
         password: username,
       });
 
-      const app = await platformAppService.createApp({ data: newApp(appId, user.id), skipClients: false });
+      const app = await platformAppService.createApp({
+        data: newApp(appId, user.id),
+        skipClients: false,
+      });
 
       // create client with defaults
       let client = await platformKeycloakService.getAppClient(app.appId);

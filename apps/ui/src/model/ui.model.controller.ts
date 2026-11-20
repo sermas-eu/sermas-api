@@ -5,13 +5,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
 import {
   UIModelMapBlendShapesRequestDto,
   UIModelMapBlendShapesResponseDto,
-} from './ui.model.dto';
-import { UIModelService } from './ui.model.service';
+} from './ui.model.dto.js';
+import { UIModelService } from './ui.model.service.js';
 
 @ApiBearerAuth()
 @Controller('ui/model')
@@ -37,7 +37,7 @@ export class UIModelController {
   mapBlendShapes(
     @Body() data: UIModelMapBlendShapesRequestDto,
     @AuthenticatedUser()
-    user?: any,
+    _user?: any,
   ): Promise<UIModelMapBlendShapesResponseDto> {
     return this.model.mapBlendShapes(data);
   }

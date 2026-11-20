@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { Feature, Geometry } from 'geojson';
-import { PoseDto } from '../robotics.dto';
+import { PoseDto } from '../robotics.dto.js';
 
 export class SpaceOptionsDto {
   mapType?: 'svg' | 'custom';

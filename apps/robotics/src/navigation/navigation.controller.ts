@@ -5,10 +5,10 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { NavigationSpaceDto } from './navigation.dto';
-import { NavigationService } from './navigation.service';
-import { StatusDto } from '../robotics.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { NavigationSpaceDto } from './navigation.dto.js';
+import { NavigationService } from './navigation.service.js';
+import { StatusDto } from '../robotics.dto.js';
 
 @ApiBearerAuth()
 @Controller('robotics/navigation')

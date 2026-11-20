@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import * as YAML from 'js-yaml';
-import { AsyncApiDocument } from './asyncapi.types';
+import { AsyncApiDocument } from './asyncapi.types.js';
 
 /**
  * Serves the document as `<path>-json` and `<path>-yaml`. `getDocument` runs

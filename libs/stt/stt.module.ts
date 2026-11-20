@@ -1,9 +1,9 @@
 import { Global, Module } from '@nestjs/common';
-import { MonitorModule } from 'libs/monitor/monitor.module';
-import { AzureSpeechToText } from './providers/stt.azure.service';
-import { GoogleSpeechToText } from './providers/stt.google.service';
-import { WhisperSpeechToText } from './providers/stt.whisper.service';
-import { STTProviderService } from './stt.provider.service';
+import { MonitorModule } from '#libs/monitor/monitor.module';
+import { AzureSpeechToText } from './providers/stt.azure.service.js';
+import { GoogleSpeechToText } from './providers/stt.google.service.js';
+import { WhisperSpeechToText } from './providers/stt.whisper.service.js';
+import { STTProviderService } from './stt.provider.service.js';
 
 @Global()
 @Module({

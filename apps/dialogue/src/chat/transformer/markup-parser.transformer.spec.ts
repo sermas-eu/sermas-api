@@ -1,8 +1,8 @@
-import { parseJSON } from 'libs/llm/util';
+import { parseJSON } from '#libs/llm/util';
 import { Readable } from 'stream';
-import { LLMParsedResult } from '../dialogue.chat.dto';
-import { StreamingMarkupParserTransformer } from './markup-parser.transformer';
-import { SentenceTransformer } from './sentence.transformer';
+import { LLMParsedResult } from '../dialogue.chat.dto.js';
+import { StreamingMarkupParserTransformer } from './markup-parser.transformer.js';
+import { SentenceTransformer } from './sentence.transformer.js';
 
 const contents = [
   {
@@ -105,9 +105,7 @@ describe('MarkupParser', () => {
             stream = stream.pipe(transformer);
           }
 
-          stream.on('data', (chunk) => {
-            console.log('data', chunk.toString());
-          });
+          stream.resume();
 
           sourceStream.push(null);
         });

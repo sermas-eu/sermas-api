@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SermasBaseDto, SermasRecordChangedDto } from 'libs/sermas/sermas.dto';
+import { SermasBaseDto, SermasRecordChangedDto } from '#libs/sermas/sermas.dto';
 
 export class XRMarkerDto extends SermasBaseDto {
   @ApiPropertyOptional({

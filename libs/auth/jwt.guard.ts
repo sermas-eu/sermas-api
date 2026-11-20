@@ -6,8 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { META_PUBLIC, TOKEN_COOKIE } from './auth.constants';
-import { JwtVerifierService } from './jwt.verifier.service';
+import { META_PUBLIC, TOKEN_COOKIE } from './auth.constants.js';
+import { JwtVerifierService } from './jwt.verifier.service.js';
 
 export const extractToken = (request: any): string | undefined => {
   const header: string | undefined = request.headers?.authorization;

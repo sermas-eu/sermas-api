@@ -1,11 +1,11 @@
 import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as YAML from 'js-yaml';
-import { SermasBaseDto, SermasSessionDto } from 'libs/sermas/sermas.dto';
+import { SermasBaseDto, SermasSessionDto } from '#libs/sermas/sermas.dto';
 import { Document } from 'mongoose';
 import * as path from 'path';
 
@@ -128,8 +128,8 @@ export const isNodeEnv = (
 };
 
 export enum WaitEventsMode {
-  'AT_LEAST_ONE',
-  'ALL',
+  AT_LEAST_ONE,
+  ALL,
 }
 export type WaitEventsReceived = Record<string, (unknown | null)[]>;
 

@@ -1,12 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
-import { uuidv4 } from 'libs/util';
-import { KEYCLOACK_TEST_REALM } from 'libs/test';
-import { KeycloakAdminService } from './keycloak.admin.service';
-import { KeycloakModule } from './keycloak.module';
+import { SermasBaseModule } from '#apps/api/src/sermas.base.module';
+import { uuidv4 } from '#libs/util';
+import { KEYCLOACK_TEST_REALM } from '#libs/test';
+import { KeycloakAdminService } from './keycloak.admin.service.js';
+import { KeycloakModule } from './keycloak.module.js';
 
-jest.setTimeout(10 * 1000);
+vi.setConfig({ testTimeout: 10 * 1000 });
 
 const realm = KEYCLOACK_TEST_REALM;
 
@@ -45,7 +45,9 @@ describe('KeycloackAdminService', () => {
         token,
         realm,
       });
-    } catch {}
+    } catch {
+      // the realm may not exist yet
+    }
 
     const clients = await keycloakService.clientsList({
       realm,

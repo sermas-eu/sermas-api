@@ -1,27 +1,24 @@
 import { Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppModule } from 'apps/api/src/app.module';
+import { AppModule } from '#apps/api/src/app.module';
 import {
   InteractionType,
   UserInteractionIntentionDto,
-} from 'apps/detection/src/detection.dto';
-import { DetectionService } from 'apps/detection/src/detection.service';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { uuidv4 } from 'libs/util';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { sleep } from 'libs/test';
-import { waitEvents } from 'libs/util';
-import { SessionAgentService } from './agent/session.agent.service';
-import { AgentStatus } from './session.dto';
-import { SessionService } from './session.service';
+} from '#apps/detection/src/detection.dto';
+import { DetectionService } from '#apps/detection/src/detection.service';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { uuidv4 } from '#libs/util';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { sleep } from '#libs/test';
+import { waitEvents } from '#libs/util';
+import { SessionAgentService } from './agent/session.agent.service.js';
 
-jest.setTimeout(10 * 1000);
+vi.setConfig({ testTimeout: 10 * 1000 });
 
 describe('SessionAgentService', () => {
   let moduleRef: TestingModule;
 
-  let sessionService: SessionService;
   let detectionService: DetectionService;
   let platformAppService: PlatformAppService;
   let sessionAgentService: SessionAgentService;
@@ -37,7 +34,6 @@ describe('SessionAgentService', () => {
 
     moduleRef.useLogger(new Logger());
 
-    sessionService = moduleRef.get(SessionService);
     platformAppService = moduleRef.get(PlatformAppService);
     sessionAgentService = moduleRef.get(SessionAgentService);
     detectionService = moduleRef.get(DetectionService);

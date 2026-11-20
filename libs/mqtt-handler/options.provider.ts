@@ -2,13 +2,13 @@ import {
   MqttModuleAsyncOptions,
   MqttModuleOptions,
   MqttOptionsFactory,
-} from './mqtt.interface';
+} from './mqtt.interface.js';
 import { Logger, Provider } from '@nestjs/common';
 import {
   MQTT_CLIENT_INSTANCE,
   MQTT_LOGGER_PROVIDER,
   MQTT_OPTION_PROVIDER,
-} from './mqtt.constants';
+} from './mqtt.constants.js';
 
 export function createOptionsProvider(
   options: MqttModuleAsyncOptions,

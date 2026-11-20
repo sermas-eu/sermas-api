@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PlatformTopicsService } from './platform.topics.service';
+import { PlatformTopicsService } from './platform.topics.service.js';
 
 describe('PlatformTopicsService', () => {
   let moduleRef: TestingModule;

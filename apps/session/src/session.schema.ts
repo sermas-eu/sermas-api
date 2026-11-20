@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { AppSettingsDto } from 'apps/platform/src/app/platform.app.dto';
+import { AppSettingsDto } from '#apps/platform/src/app/platform.app.dto';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import {
   SessionDto,
   SessionProperties,
   UserReferenceDto,
   UserReferenceSource,
-} from './session.dto';
+} from './session.dto.js';
 
 export type SessionDocument = HydratedDocument<Session>;
 
@@ -33,7 +33,7 @@ export class Session extends SessionDto {
   createdAt: Date;
   @Prop({ default: () => new Date(), index: true })
   modifiedAt: Date;
-  @Prop({ index: true, required: false, default: null })
+  @Prop({ type: Date, index: true, required: false, default: null })
   closedAt: Date | null;
   @Prop({ index: true, default: {}, type: MongooseSchema.Types.Map })
   settings: AppSettingsDto;

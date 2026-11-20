@@ -1,2 +1,2 @@
-export * from './lakefs.module';
-export * from './lakefs.service';
+export * from './lakefs.module.js';
+export * from './lakefs.service.js';

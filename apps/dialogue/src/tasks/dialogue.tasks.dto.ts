@@ -2,14 +2,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   SermasRecordChangedDto,
   SermasSessionDto,
-} from 'libs/sermas/sermas.dto';
-import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto';
+} from '#libs/sermas/sermas.dto';
+import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto.js';
 import {
   DialogueTaskDto,
   TaskEventType,
   TaskEventTypeList,
   TaskFieldDto,
-} from './store/dialogue.tasks.store.dto';
+} from './store/dialogue.tasks.store.dto.js';
 
 export class DialogueTaskProgressDto {
   @ApiProperty({

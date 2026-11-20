@@ -8,7 +8,7 @@ import {
   META_RESOURCE,
   META_ROLES,
   META_SCOPES,
-} from './auth.constants';
+} from './auth.constants.js';
 
 /** The route accepts requests without a token. A valid token still sets the user. */
 export const Public = () => SetMetadata(META_PUBLIC, true);

@@ -5,15 +5,15 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { SermasBaseDto } from 'libs/sermas/sermas.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { SermasBaseDto } from '#libs/sermas/sermas.dto';
 import {
   ActuationEventDto,
   MovementEventDto,
   StatusEventDto,
-} from '../robotics.dto';
-import { OPENAPI_AGENT_TAG } from './constants';
-import { RoboticsAgentService } from './robotics.agent.service';
+} from '../robotics.dto.js';
+import { OPENAPI_AGENT_TAG } from './constants.js';
+import { RoboticsAgentService } from './robotics.agent.service.js';
 
 @ApiBearerAuth()
 @Controller('robotics/agent')

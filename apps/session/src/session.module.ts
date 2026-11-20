@@ -1,16 +1,16 @@
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from 'apps/auth/src/auth.module';
-import { SessionAgentModule } from './agent/session.agent.module';
-import { SessionAsyncApiService } from './session.async.service';
-import { SessionController } from './session.controller';
-import { SessionEventsService } from './session.events.service';
-import { Session, SessionSchema } from './session.schema';
-import { SessionService } from './session.service';
-import { SessionStorageModule } from './storage/session.storage.module';
-import { SessionSupportAsyncApiService } from './support/session.support.async.service';
-import { SessionSupportController } from './support/session.support.controller';
-import { SessionLLMContextHandlerService } from './session.llm-context.handler';
+import { AuthModule } from '#apps/auth/src/auth.module';
+import { SessionAgentModule } from './agent/session.agent.module.js';
+import { SessionAsyncApiService } from './session.async.service.js';
+import { SessionController } from './session.controller.js';
+import { SessionEventsService } from './session.events.service.js';
+import { Session, SessionSchema } from './session.schema.js';
+import { SessionService } from './session.service.js';
+import { SessionStorageModule } from './storage/session.storage.module.js';
+import { SessionSupportAsyncApiService } from './support/session.support.async.service.js';
+import { SessionSupportController } from './support/session.support.controller.js';
+import { SessionLLMContextHandlerService } from './session.llm-context.handler.js';
 
 @Module({
   imports: [

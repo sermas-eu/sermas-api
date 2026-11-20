@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import * as sox from 'sox-stream';
+import sox from 'sox-stream';
 import * as wavefile from 'wavefile';
 
 const soxConvert = (

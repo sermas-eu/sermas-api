@@ -1,12 +1,12 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SessionDto } from 'apps/session/src/session.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
+import { SessionDto } from '#apps/session/src/session.dto';
+import { SessionService } from '#apps/session/src/session.service';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
 import { ulid } from 'ulidx';
-import { DialogueSpeechService } from '../dialogue.speech.service';
-import { convertRawPCMToWav } from './convert-wav';
+import { DialogueSpeechService } from '../dialogue.speech.service.js';
+import { convertRawPCMToWav } from './convert-wav.js';
 
 const MESSAGE_FRAME_CLEANUP_MS = 20 * 1000;
 
@@ -38,7 +38,9 @@ export class DialogueSpeechStreamService {
   parseJSON<T = any>(buffer: Buffer) {
     try {
       return JSON.parse((buffer || '').toString()) as T;
-    } catch {}
+    } catch {
+      // not JSON: an audio frame
+    }
     return null;
   }
 
@@ -130,7 +132,9 @@ export class DialogueSpeechStreamService {
   async releaseCache(sessionId: string, chunkId: string) {
     try {
       await this.cacheManager.del(this.getCacheId({ sessionId, chunkId }));
-    } catch {}
+    } catch {
+      // already gone
+    }
   }
 
   async processChunk(topic: string, buffer: Buffer) {

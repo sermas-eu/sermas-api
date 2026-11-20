@@ -1,13 +1,16 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { PlatformAuthModule } from '../auth/platform.auth.module';
-import { PlatformModuleAsyncApiService } from './mod.async.service';
-import { PlatformModuleController } from './mod.controller';
-import { PlatformModuleProxyController } from './mod.proxy.controller';
-import { PlatformModuleProxyService } from './mod.proxy.service';
-import { PlatformModuleRegistryService } from './mod.registry.service';
-import { PlatformModuleConfig, PlatformModuleConfigSchema } from './mod.schema';
-import { PlatformModuleService } from './mod.service';
+import { PlatformAuthModule } from '../auth/platform.auth.module.js';
+import { PlatformModuleAsyncApiService } from './mod.async.service.js';
+import { PlatformModuleController } from './mod.controller.js';
+import { PlatformModuleProxyController } from './mod.proxy.controller.js';
+import { PlatformModuleProxyService } from './mod.proxy.service.js';
+import { PlatformModuleRegistryService } from './mod.registry.service.js';
+import {
+  PlatformModuleConfig,
+  PlatformModuleConfigSchema,
+} from './mod.schema.js';
+import { PlatformModuleService } from './mod.service.js';
 
 @Module({
   imports: [

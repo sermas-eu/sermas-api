@@ -1,7 +1,7 @@
 import { All, Controller, Param, Req } from '@nestjs/common';
 import { Request } from 'express';
-import { Public } from 'libs/auth/auth.decorators';
-import { PlatformModuleProxyService } from './mod.proxy.service';
+import { Public } from '#libs/auth/auth.decorators';
+import { PlatformModuleProxyService } from './mod.proxy.service.js';
 
 @Controller()
 export class PlatformModuleProxyController {

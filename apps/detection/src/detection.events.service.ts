@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { UserCharacterizationEventDto } from './detection.dto';
-import { DetectionService } from './detection.service';
-import { VideoFrameEvent } from './detection.streamer.dto';
-import { DeepFaceDetectionEvent } from './providers/deepface/deepface.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { UserCharacterizationEventDto } from './detection.dto.js';
+import { DetectionService } from './detection.service.js';
+import { VideoFrameEvent } from './detection.streamer.dto.js';
+import { DeepFaceDetectionEvent } from './providers/deepface/deepface.dto.js';
 
 @Injectable()
 export class DetectionEventsService {

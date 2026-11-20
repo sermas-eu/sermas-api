@@ -1,22 +1,19 @@
 // based on https://github.com/ferrerojosh/nest-keycloak-connect/blob/master/src/guards/resource.guard.ts
 import {
   CanActivate,
-  ContextType,
   ExecutionContext,
   Injectable,
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import {
   META_PUBLIC,
   META_RESOURCE,
   META_SCOPES,
-} from 'libs/auth/auth.constants';
-import { PlatformContextDto } from './platform.auth.dto';
-import { PlatformAuthService } from './platform.auth.service';
-
-type GqlContextType = 'graphql' | ContextType;
+} from '#libs/auth/auth.constants';
+import { PlatformContextDto } from './platform.auth.dto.js';
+import { PlatformAuthService } from './platform.auth.service.js';
 
 @Injectable()
 export class PlatformGuard implements CanActivate {
@@ -41,7 +38,7 @@ export class PlatformGuard implements CanActivate {
     );
 
     // Extract request/response
-    const [request, response] = extractRequest(context);
+    const [request] = extractRequest(context);
 
     // if is not an HTTP request ignore this guard
     if (!request) {
@@ -145,31 +142,9 @@ export class PlatformGuard implements CanActivate {
   }
 }
 
+/** The HTTP request and response; both undefined for other transports. */
 export const extractRequest = (context: ExecutionContext): [any, any] => {
-  let request: any, response: any;
-
-  // Check if request is coming from graphql or http
-  if (context.getType() === 'http') {
-    // http request
-    const httpContext = context.switchToHttp();
-
-    request = httpContext.getRequest();
-    response = httpContext.getResponse();
-  } else if (context.getType<GqlContextType>() === 'graphql') {
-    let gql: any;
-    // Check if graphql is installed
-    try {
-      gql = require('@nestjs/graphql');
-    } catch (er) {
-      throw new Error('@nestjs/graphql is not installed, cannot proceed');
-    }
-
-    // graphql request
-    const gqlContext = gql.GqlExecutionContext.create(context).getContext();
-
-    request = gqlContext.req;
-    response = gqlContext.res;
-  }
-
-  return [request, response];
+  if (context.getType() !== 'http') return [undefined, undefined];
+  const http = context.switchToHttp();
+  return [http.getRequest(), http.getResponse()];
 };

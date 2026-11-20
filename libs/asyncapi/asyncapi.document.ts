@@ -4,8 +4,8 @@ import {
   AsyncApiPayloadType,
   getAsyncApiOperations,
   getAsyncApiServices,
-} from './asyncapi.decorators';
-import { AsyncApiDocument } from './asyncapi.types';
+} from './asyncapi.decorators.js';
+import { AsyncApiDocument } from './asyncapi.types.js';
 
 // Passed as swagger's only included module so that no route is scanned:
 // the swagger document is used just to render the payload schemas.

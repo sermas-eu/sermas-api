@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PositionDto } from 'apps/robotics/src/robotics.dto';
-import { UserReferenceSource } from 'apps/session/src/session.dto';
+import { PositionDto } from '#apps/robotics/src/robotics.dto';
+import { UserReferenceSource } from '#apps/session/src/session.dto';
 import {
   Emotion,
   EmotionInferenceValue,
   SermasBaseDto,
   SermasInferenceValue,
   StringInferenceValue,
-} from 'libs/sermas/sermas.dto';
+} from '#libs/sermas/sermas.dto';
 
 export class BoundingBox {
   @ApiProperty()

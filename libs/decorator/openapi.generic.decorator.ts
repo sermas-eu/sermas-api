@@ -34,7 +34,6 @@ const apiGenericObject = (options?: ApiGenericPropertyOptions) => {
 };
 
 export function ApiGenericProperty(options?: ApiGenericPropertyOptions) {
-  // eslint-disable-line
   options = options || {};
   options.required = true;
   return apiGenericObject(options);
@@ -42,7 +41,6 @@ export function ApiGenericProperty(options?: ApiGenericPropertyOptions) {
 export function ApiGenericPropertyOptional(
   options?: ApiGenericPropertyOptions,
 ) {
-  // eslint-disable-line
   options = options || {};
   options.required = false;
   return apiGenericObject(options);

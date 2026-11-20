@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { LLMSettingsDto } from 'apps/platform/src/app/platform.app.tools.dto';
-import { Emotion, SermasSessionDto } from 'libs/sermas/sermas.dto';
+import { LLMSettingsDto } from '#apps/platform/src/app/platform.app.tools.dto';
+import { Emotion, SermasSessionDto } from '#libs/sermas/sermas.dto';
 
 export const DialogueActorList = ['user', 'agent'] as const;
 export type DialogueActor = (typeof DialogueActorList)[number];

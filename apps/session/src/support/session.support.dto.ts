@@ -1,10 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { SermasBaseDto } from 'libs/sermas/sermas.dto';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SermasBaseDto } from '#libs/sermas/sermas.dto';
 
 export class SessionSupportRequestDto extends SermasBaseDto {
   @ApiProperty()
   sessionId?: string;
-  @ApiProperty()
+  @ApiPropertyOptional()
   userId?: string;
   @ApiProperty()
   code?: string;

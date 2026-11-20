@@ -1,7 +1,7 @@
-import { Emotion } from 'libs/sermas/sermas.dto';
-import { LanguageCode } from '../language/lang-codes';
-import { DialogueMessageDto } from '../language/dialogue.message.dto';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Emotion } from '#libs/sermas/sermas.dto';
+import { LanguageCode } from '../language/lang-codes.js';
+import { DialogueMessageDto } from '../language/dialogue.message.dto.js';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export interface SpeakParam {
   text?: string;
@@ -28,7 +28,7 @@ export class DialogueTextToSpeechDto extends DialogueMessageDto {
     description: 'SSML markup to render as speech.',
   })
   ssml?: string;
-  @ApiProperty()
+  @ApiPropertyOptional()
   language: string | null;
   @ApiPropertyOptional()
   emotion?: Emotion;

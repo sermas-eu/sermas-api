@@ -1,5 +1,5 @@
 import { Controller, Post, Req } from '@nestjs/common';
-import { UiPrivacyService } from './ui.privacy.service';
+import { UiPrivacyService } from './ui.privacy.service.js';
 import { Request } from 'express';
 
 @Controller('ui')

@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Perf } from 'libs/performance';
+import { Perf } from '#libs/performance';
 import {
   MonitorContextDto,
   MonitorLogDto,
   MonitorRecordDto,
-} from './monitor.dto';
+} from './monitor.dto.js';
 
 @Injectable()
 export class MonitorService {

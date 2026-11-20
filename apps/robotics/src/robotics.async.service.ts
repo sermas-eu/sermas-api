@@ -1,15 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { AsyncApi } from 'libs/asyncapi';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { AsyncApi } from '#libs/asyncapi/index';
 import {
   ActuationEventDto,
   InitialPoseEventDto,
   MovementEventDto,
   OperationalStateEventDto,
   StatusEventDto,
-} from './robotics.dto';
-import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
+} from './robotics.dto.js';
+import { AsyncApiOperationName } from '#libs/decorator/asyncapi.operation.decorator';
 
 @AsyncApi()
 @Injectable()

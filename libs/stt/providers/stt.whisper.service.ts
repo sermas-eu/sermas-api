@@ -2,8 +2,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import * as FormData from 'form-data';
-import { ISpeechToText, SpeechToTextResponse } from '../stt.dto';
+import FormData from 'form-data';
+import { ISpeechToText, SpeechToTextResponse } from '../stt.dto.js';
 
 @Injectable()
 export class WhisperSpeechToText implements ISpeechToText {

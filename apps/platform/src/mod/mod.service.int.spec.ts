@@ -1,13 +1,17 @@
 import { HttpServer, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
-import { PlatformModule } from '../platform.module';
-import { PlatformModuleProxyService } from './mod.proxy.service';
-import { PlatformModuleRegistryService } from './mod.registry.service';
-import { PlatformModuleService } from './mod.service';
-import { registerExternalModule, startServer, stopServer } from './tests/mod';
+import { SermasBaseModule } from '#apps/api/src/sermas.base.module';
+import { PlatformModule } from '../platform.module.js';
+import { PlatformModuleProxyService } from './mod.proxy.service.js';
+import { PlatformModuleRegistryService } from './mod.registry.service.js';
+import { PlatformModuleService } from './mod.service.js';
+import {
+  registerExternalModule,
+  startServer,
+  stopServer,
+} from './tests/mod.js';
 
-jest.setTimeout(5 * 60 * 1000);
+vi.setConfig({ testTimeout: 5 * 60 * 1000 });
 
 describe('PlatformModuleService', () => {
   let moduleHttpServer: HttpServer;
@@ -86,11 +90,7 @@ describe('PlatformModuleService', () => {
       //
 
       const moduleId = `mymodule`;
-      const mod = await registerExternalModule(
-        platformModuleService,
-        moduleId,
-        port,
-      );
+      await registerExternalModule(platformModuleService, moduleId, port);
 
       const app = moduleRef.createNestApplication({
         // logger: new Logger(),
@@ -108,11 +108,7 @@ describe('PlatformModuleService', () => {
     it('generate module asyncapi', async () => {
       //
       const moduleId = `mymodule`;
-      const mod = await registerExternalModule(
-        platformModuleService,
-        moduleId,
-        port,
-      );
+      await registerExternalModule(platformModuleService, moduleId, port);
 
       const app = moduleRef.createNestApplication({
         // logger: new Logger(),
@@ -120,6 +116,7 @@ describe('PlatformModuleService', () => {
 
       await platformModuleService.setupApiDocs(app);
       const doc = await platformModuleService.getAsyncApiDocument();
+      expect(Object.keys(doc.channels).length).toBeGreaterThan(0);
 
       // console.log(JSON.stringify(doc, null, 2));
 

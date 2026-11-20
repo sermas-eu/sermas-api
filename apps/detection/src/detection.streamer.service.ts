@@ -8,18 +8,18 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as fs from 'fs/promises';
 import { Socket } from 'net';
 import { Transform, TransformCallback } from 'stream';
-import { DetectionService } from './detection.service';
+import { DetectionService } from './detection.service.js';
 import {
   CameraConfig,
   CameraHandler,
   DetectionStreamerRequest,
   VideoFrame,
   VideoFrameEvent,
-} from './detection.streamer.dto';
-import { MJPEG_BOUNDARY } from './libs/constants';
-import { toMjpegBuffer } from './libs/mjpeg';
-import { MjpegConsumer } from './libs/mjpeg-consumer';
-import { DeepFaceDetectionEvent } from './providers/deepface/deepface.dto';
+} from './detection.streamer.dto.js';
+import { MJPEG_BOUNDARY } from './libs/constants.js';
+import { toMjpegBuffer } from './libs/mjpeg.js';
+import { MjpegConsumer } from './libs/mjpeg-consumer.js';
+import { DeepFaceDetectionEvent } from './providers/deepface/deepface.dto.js';
 
 @Injectable()
 export class DetectionStreamingService

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { LLMProvider, LLMProviderList } from 'libs/llm/providers/provider.dto';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
-import { AgentEvaluatePromptOptionsDto } from '../agent/session.agent.dto';
+import { LLMProvider, LLMProviderList } from '#libs/llm/providers/provider.dto';
+import { SermasSessionDto } from '#libs/sermas/sermas.dto';
+import { AgentEvaluatePromptOptionsDto } from '../agent/session.agent.dto.js';
 
 export class AgentEvaluatePromptDto extends SermasSessionDto {
   @ApiProperty({

@@ -1,4 +1,4 @@
-import GroupRepresentation from '@keycloak/keycloak-admin-client/lib/defs/groupRepresentation';
+import GroupRepresentation from '@keycloak/keycloak-admin-client/lib/defs/groupRepresentation.js';
 import {
   Injectable,
   InternalServerErrorException,
@@ -8,11 +8,11 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformContextDto } from 'apps/platform/src/auth/platform.auth.dto';
-import { PlatformTopicsService } from 'apps/platform/src/topics/platform.topics.service';
+import { PlatformContextDto } from '#apps/platform/src/auth/platform.auth.dto';
+import { PlatformTopicsService } from '#apps/platform/src/topics/platform.topics.service';
 
-import { KEYCLOACK_TEST_REALM, sleep } from 'libs/test';
-import { isNodeEnv, jwtDecode, readJSON } from 'libs/util';
+import { KEYCLOACK_TEST_REALM, sleep } from '#libs/test';
+import { isNodeEnv, jwtDecode, readJSON } from '#libs/util';
 
 import {
   ClientCreatePolicy,
@@ -21,7 +21,7 @@ import {
   KeycloakClientResponseDto,
   KeycloakPolicyDto,
   KeycloakResourceDto,
-} from './keycloack.authz.dto';
+} from './keycloack.authz.dto.js';
 import {
   AssignClientRolesDto,
   AssignRealmRolesDto,
@@ -33,11 +33,11 @@ import {
   KeycloakUser,
   KeycloakUserRecord,
   RealmClientScopesDto,
-} from './keycloak.admin.dto';
+} from './keycloak.admin.dto.js';
 import {
   KeycloakAdminService,
   SAME_CLIENT_POLICY_NAME,
-} from './keycloak.admin.service';
+} from './keycloak.admin.service.js';
 import {
   AddAppClientDto,
   AddClientDto,
@@ -48,7 +48,7 @@ import {
   ClientRefreshTokenDto,
   KeycloakJwtTokenDto,
   SystemClientCreateDto,
-} from './keycloak.dto';
+} from './keycloak.dto.js';
 
 export const ROLE_APP_OWNER = 'app-owner';
 export const ROLE_ADMIN = 'platform-admin';

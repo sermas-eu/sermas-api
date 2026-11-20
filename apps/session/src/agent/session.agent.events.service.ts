@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
-import { SessionAgentService } from 'apps/session/src/agent/session.agent.service';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { AgentHeartBeatEventDto } from './session.agent.dto';
+import { PlatformAppChangedDto } from '#apps/platform/src/app/platform.app.dto';
+import { SessionAgentService } from '#apps/session/src/agent/session.agent.service';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { AgentHeartBeatEventDto } from './session.agent.dto.js';
 
 @Injectable()
 export class SessionAgentEventsService {

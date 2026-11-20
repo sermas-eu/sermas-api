@@ -5,7 +5,7 @@ import {
   ToolParamType,
   ToolRequestConfig,
   ToolSchemaTypeList,
-} from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
+} from '#apps/dialogue/src/chat/dialogue.chat.tools.dto';
 
 export class AppPromptDto {
   @ApiProperty()

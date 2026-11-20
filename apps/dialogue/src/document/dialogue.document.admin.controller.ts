@@ -1,8 +1,8 @@
 import { Controller, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { DialogueDocumentService } from './dialogue.document.service';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { DialogueDocumentService } from './dialogue.document.service.js';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
 
 @ApiBearerAuth()
 @Controller('dialogue/admin/document')

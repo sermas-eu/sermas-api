@@ -1,10 +1,10 @@
-import { LLMProvider } from './base.provider';
+import { LLMProvider } from './base.provider.js';
 import {
   LLMCallResult,
   LLMMessage,
   LLMChatOptions,
   LLMProviderConfig,
-} from './provider.dto';
+} from './provider.dto.js';
 
 export abstract class LLMChatProvider extends LLMProvider<LLMProviderConfig> {
   abstract getName(): string;

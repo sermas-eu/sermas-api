@@ -1,5 +1,5 @@
-import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
-import { Emotion } from 'libs/sermas/sermas.dto';
+import { PromptTemplate } from '#libs/llm/prompt/prompt.template';
+import { Emotion } from '#libs/sermas/sermas.dto';
 
 export const ssmlPrompt = PromptTemplate.create<{
   context?: string;

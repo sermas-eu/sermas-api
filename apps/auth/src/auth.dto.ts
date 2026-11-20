@@ -1,11 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { KeycloakTokenDto } from 'apps/keycloak/src/keycloak.admin.dto';
+import { KeycloakTokenDto } from '#apps/keycloak/src/keycloak.admin.dto';
 import {
   KeycloakJwtTokenDto,
   KeycloakJwtTokenRealmAccess,
   KeycloakJwtTokenResourceAccess,
-} from 'apps/keycloak/src/keycloak.dto';
-import { SermasBaseDto } from 'libs/sermas/sermas.dto';
+} from '#apps/keycloak/src/keycloak.dto';
+import { SermasBaseDto } from '#libs/sermas/sermas.dto';
 
 export class AuthJwtUser extends KeycloakJwtTokenDto {
   @ApiProperty()

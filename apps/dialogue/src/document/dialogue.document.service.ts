@@ -7,23 +7,23 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
-import { UIAssetChangedDto } from 'apps/ui/src/ui.asset.dto';
+import { UIAssetChangedDto } from '#apps/ui/src/ui.asset.dto';
 import {
   minioListFiles,
   minioReadFile,
   minioReadMetadata,
-} from 'libs/language/minio';
-import { toDTO, uuidv4 } from 'libs/util';
+} from '#libs/language/minio';
+import { toDTO } from '#libs/util';
 
 import { Model } from 'mongoose';
-import { MinioClient, MinioService } from 'nestjs-minio-client';
+import { MinioClient, MinioService } from '#libs/storage/minio.service';
 import * as path from 'path';
 import {
   DialogueDocumentDto,
   RepositoryDocument,
-} from './dialogue.document.dto';
-import { DialogueDocument } from './dialogue.document.schema';
-import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
+} from './dialogue.document.dto.js';
+import { DialogueDocument } from './dialogue.document.schema.js';
+import { PlatformAppChangedDto } from '#apps/platform/src/app/platform.app.dto';
 
 const QUEUE_TIMEOUT_SEC = 10 * 1000;
 type ImportQueueItem = {
@@ -223,6 +223,20 @@ export class DialogueDocumentService implements OnModuleInit {
     return this.documentModel.findOne({ documentId: documentId, appId }).exec();
   }
 
+  /** Sends every stored document of an app to indexing again. */
+  @OnEvent('dialogue.document.reindex')
+  async onReindex(ev: { appId: string }) {
+    const documents = await this.documentModel.find({ appId: ev.appId });
+    this.logger.log(
+      `Re-indexing ${documents.length} documents for appId=${ev.appId}`,
+    );
+    if (documents.length)
+      this.emitter.emit(
+        'dialogue.document.saved',
+        documents.map((d) => toDTO<DialogueDocumentDto>(d)),
+      );
+  }
+
   @OnEvent('platform.app')
   async onAppChange(ev: PlatformAppChangedDto) {
     this.logger.debug(
@@ -264,12 +278,10 @@ export class DialogueDocumentService implements OnModuleInit {
       }
 
       let record = await this.getById(document.documentId, document.appId);
-
-      if (!record) {
-        record = new this.documentModel({
-          ...document,
-          documentId: uuidv4(),
-        });
+      if (record) {
+        record.set(document);
+      } else {
+        record = new this.documentModel(document);
       }
 
       this.logger.debug(

@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Param,
   Post,
   Put,
@@ -16,11 +15,11 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
-import { XRMarkerDto, XRMarkerListRequestDto } from './xr.marker.dto';
-import { XrMarkerService } from './xr.marker.service';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { XRMarkerDto, XRMarkerListRequestDto } from './xr.marker.dto.js';
+import { XrMarkerService } from './xr.marker.service.js';
 
 @ApiBearerAuth()
 @Controller('xr/marker')
@@ -78,7 +77,7 @@ export class XRMarkerController {
   deleteMarker(
     @Param(':markerId') markerId: string,
     @AuthenticatedUser()
-    user?: any,
+    _user?: any,
   ): Promise<void> {
     return this.marker.remove(markerId);
   }
@@ -100,7 +99,7 @@ export class XRMarkerController {
   getMarkerQRCode(
     @Param(':markerId') markerId: string,
     @AuthenticatedUser()
-    user?: any,
+    _user?: any,
   ) {
     return this.marker.read(markerId);
   }

@@ -1,17 +1,20 @@
+import type { Mocked } from 'vitest';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import axios from 'axios';
 import { generateKeyPairSync, KeyObject } from 'crypto';
-import { sign } from 'jsonwebtoken';
-import { META_PUBLIC, META_ROLES } from './auth.constants';
-import { extractToken, JwtAuthGuard } from './jwt.guard';
-import { JwtVerifierService } from './jwt.verifier.service';
-import { RoleGuard } from './role.guard';
+import jwt from 'jsonwebtoken';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+const { sign } = jwt;
+import { META_PUBLIC, META_ROLES } from './auth.constants.js';
+import { extractToken, JwtAuthGuard } from './jwt.guard.js';
+import { JwtVerifierService } from './jwt.verifier.service.js';
+import { RoleGuard } from './role.guard.js';
+
+vi.mock('axios');
+const mockedAxios = axios as Mocked<typeof axios>;
 
 const REALM = 'sermas-test';
 const BACKCHANNEL = 'http://172.17.0.1:8080/keycloak';

@@ -1,50 +1,50 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ToolsParameterSchema } from 'apps/platform/src/app/platform.app.dto';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { SessionService } from 'apps/session/src/session.service';
+import { ToolsParameterSchema } from '#apps/platform/src/app/platform.app.dto';
+import { createSessionContext } from '#apps/session/src/session.context';
+import { SessionService } from '#apps/session/src/session.service';
 import {
   ButtonsContentDto,
   ButtonsUIContentDto,
   SupportedContentTypes,
   UIContentDto,
-} from 'apps/ui/src/ui.content.dto';
-import { UIService } from 'apps/ui/src/ui.service';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { getChunkId } from 'libs/sermas/sermas.utils';
-import { uuidv4 } from 'libs/util';
+} from '#apps/ui/src/ui.content.dto';
+import { UIService } from '#apps/ui/src/ui.service';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { getChunkId } from '#libs/sermas/sermas.utils';
+import { uuidv4 } from '#libs/util';
 import { ulid } from 'ulidx';
 import {
   TOOL_CATCH_ALL,
   TOOL_CATCH_ALL_VALUE,
-} from '../tools/dialogue.tools.dto';
-import { DialogueToolsService } from '../tools/dialogue.tools.service';
-import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto';
-import { DialogueTasksAsyncApiService } from './dialogue.tasks.async.service';
-import { DialogueTaskProgressDto } from './dialogue.tasks.dto';
+} from '../tools/dialogue.tools.dto.js';
+import { DialogueToolsService } from '../tools/dialogue.tools.service.js';
+import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto.js';
+import { DialogueTasksAsyncApiService } from './dialogue.tasks.async.service.js';
+import { DialogueTaskProgressDto } from './dialogue.tasks.dto.js';
 import {
   ToolFieldValuesDto,
   ValidationResultDto,
-} from './dialogue.tasks.handler.dto';
+} from './dialogue.tasks.handler.dto.js';
 import {
   taskFieldConditionPrompt,
   taskFieldExpressionPrompt,
   taskFieldRephrasePrompt,
   taskFieldValidationPrompt,
-} from './dialogue.tasks.handler.fields.prompt';
+} from './dialogue.tasks.handler.fields.prompt.js';
 import {
   TOOL_CANCEL_TASK_NAME,
   TOOL_CONTEXT_TASK_FIELD,
-} from './dialogue.tasks.constants';
-import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto';
+} from './dialogue.tasks.constants.js';
+import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto.js';
 import {
   DialogueTaskDto,
   TaskEventTriggerDto,
   TaskFieldDto,
-} from './store/dialogue.tasks.store.dto';
+} from './store/dialogue.tasks.store.dto.js';
 
 interface TaskFieldContext {
   task: DialogueTaskDto;
@@ -314,7 +314,11 @@ export class DialogueTasksHandlerFieldsService {
     record = record || {};
     let value = text;
     for (const key in record) {
-      value = value.replace(new RegExp(`\{${key}\}`, 'ig'), record[key]);
+      const placeholder = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      value = value.replace(
+        new RegExp(`\\{${placeholder}\\}`, 'ig'),
+        record[key],
+      );
     }
     return value;
   }
@@ -607,7 +611,7 @@ Return the matching 'value' field from options`;
   }
 
   async askForRequiredField(context: TaskFieldContext) {
-    let text = '';
+    let text: string;
     switch (context.field.type) {
       case 'boolean':
       case 'select':

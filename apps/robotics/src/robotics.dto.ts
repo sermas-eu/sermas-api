@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { SermasBaseDto } from 'libs/sermas/sermas.dto';
+import { SermasBaseDto } from '#libs/sermas/sermas.dto';
 
 export class ActuationDto {
   @ApiProperty()

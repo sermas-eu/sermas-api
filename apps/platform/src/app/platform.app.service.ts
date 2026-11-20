@@ -11,21 +11,21 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
-import { RegistrationRequestDto } from 'apps/auth/src/auth.dto';
-import { KeycloakUserRecord } from 'apps/keycloak/src/keycloak.admin.dto';
+import { RegistrationRequestDto } from '#apps/auth/src/auth.dto';
+import { KeycloakUserRecord } from '#apps/keycloak/src/keycloak.admin.dto';
 import { createHash } from 'crypto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { DefaultLLMs } from 'libs/llm/constants';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { getConfigPath } from 'libs/sermas/sermas.utils';
-import { isNodeEnv, loadFile, toDTO, uuidv4 } from 'libs/util';
-import { FilterQuery, Model } from 'mongoose';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { DefaultLLMs } from '#libs/llm/constants';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { getConfigPath } from '#libs/sermas/sermas.utils';
+import { isNodeEnv, loadFile, toDTO, uuidv4 } from '#libs/util';
+import { QueryFilter, Model } from 'mongoose';
 import {
   APP_CLIENT_NAME,
   PlatformKeycloakService,
-} from '../platform.keycloack.service';
-import { PlatformAppAsyncApiService } from './platform.app.async.service';
-import { RepositoryDefaults } from './platform.app.defaults';
+} from '../platform.keycloack.service.js';
+import { PlatformAppAsyncApiService } from './platform.app.async.service.js';
+import { RepositoryDefaults } from './platform.app.defaults.js';
 import {
   AppModuleConfigDto,
   AppSettingsDto,
@@ -33,8 +33,8 @@ import {
   PlatformAppChangedDto,
   PlatformAppDto,
   PlatformAppExportFilterDto,
-} from './platform.app.dto';
-import { PlatformApp, PlatformAppDocument } from './platform.app.schema';
+} from './platform.app.dto.js';
+import { PlatformApp, PlatformAppDocument } from './platform.app.schema.js';
 
 @Injectable()
 @CacheTTL(10 * 60 * 1000)
@@ -79,7 +79,9 @@ export class PlatformAppService implements OnModuleInit {
     try {
       const adminUser = await this.keycloack.getUser(username);
       if (adminUser) return adminUser;
-    } catch {}
+    } catch {
+      // not found: create it below
+    }
 
     const user = await this.keycloack.saveUser({
       email: `${username}@sermas.local`,
@@ -96,7 +98,7 @@ export class PlatformAppService implements OnModuleInit {
   }
 
   async exportApps(filter: PlatformAppExportFilterDto) {
-    const q: FilterQuery<PlatformApp> = {};
+    const q: QueryFilter<PlatformApp> = {};
 
     if (filter.appId && filter.appId.length) {
       q.appId = filter.appId;
@@ -199,7 +201,7 @@ export class PlatformAppService implements OnModuleInit {
   }
 
   async removeApps(query?: PlatformAppExportFilterDto, skipClients = false) {
-    const filter: FilterQuery<PlatformApp> = {};
+    const filter: QueryFilter<PlatformApp> = {};
 
     if (query) {
       if (query.appId && query.appId.length) {
@@ -598,7 +600,7 @@ export class PlatformAppService implements OnModuleInit {
     return toDTO(app);
   }
 
-  async searchApps(q: FilterQuery<PlatformApp>) {
+  async searchApps(q: QueryFilter<PlatformApp>) {
     const apps = await this.platformApp.find(q).exec();
     return apps.map((app) => toDTO<PlatformAppDto>(app));
   }

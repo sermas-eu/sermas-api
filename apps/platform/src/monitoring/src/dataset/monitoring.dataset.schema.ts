@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { DatasetRecordDto, LogType } from './monitoring.dataset.dto';
+import { DatasetRecordDto, LogType } from './monitoring.dataset.dto.js';
 
 export type DatasetRecordDocument = HydratedDocument<DatasetRecord>;
 

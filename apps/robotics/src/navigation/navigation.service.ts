@@ -1,13 +1,13 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { DialogueToolRequestDto } from 'apps/dialogue/src/dialogue.speech.dto';
-import { UIAsyncApiService } from 'apps/ui/src/ui.async.service';
+import { DialogueToolRequestDto } from '#apps/dialogue/src/dialogue.speech.dto';
+import { UIAsyncApiService } from '#apps/ui/src/ui.async.service';
 import { readFile } from 'fs/promises';
-import { getConfigPath } from 'libs/sermas/sermas.utils';
-import { fileExists } from 'libs/util';
+import { getConfigPath } from '#libs/sermas/sermas.utils';
+import { fileExists } from '#libs/util';
 import { compareTwoStrings } from 'string-similarity';
-import { PoseDto, StatusDto, StatusEventDto } from '../robotics.dto';
-import { AreaDto, NavigationSpaceDto } from './navigation.dto';
+import { PoseDto, StatusDto, StatusEventDto } from '../robotics.dto.js';
+import { AreaDto, NavigationSpaceDto } from './navigation.dto.js';
 
 const MATCH_AREA_THRESH = 0.8;
 
@@ -65,7 +65,7 @@ export class NavigationService {
   }
 
   async import() {
-    let spaces: NavigationSpaceDto[] = [];
+    let spaces: NavigationSpaceDto[];
 
     try {
       const spacesPath = `${getConfigPath()}/spaces.json`;
@@ -94,7 +94,7 @@ export class NavigationService {
 
     if (space.map && space.options) {
       if (space.options.mapType === 'svg') {
-        const raw = await readFile(space.map);
+        // placeholder: SVG maps are not parsed yet
         /*const svgPaths = await getSvgPaths(
           raw,
           space.options?.svgAreaMatch?.tag,

@@ -6,8 +6,8 @@ import {
   ApiProperty,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AsyncApiOperationName } from '#libs/decorator/asyncapi.operation.decorator';
 
 class TestStuffEmbed {
   @ApiProperty()

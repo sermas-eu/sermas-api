@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.tools.dto';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.tools.dto';
+import { SermasSessionDto } from '#libs/sermas/sermas.dto';
 
 export class DialogueToolsRepositoryOptionsDto {
   [key: string]: any;

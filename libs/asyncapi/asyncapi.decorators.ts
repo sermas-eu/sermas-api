@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { capitalize } from 'libs/util';
-import { AsyncApiTag } from './asyncapi.types';
+import { capitalize } from '#libs/util';
+import { AsyncApiTag } from './asyncapi.types.js';
 
 /** A payload class: a DTO decorated for swagger, or Buffer for binary frames. */
 export type AsyncApiPayloadType = abstract new (...args: any[]) => unknown;

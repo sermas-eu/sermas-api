@@ -14,12 +14,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
-import { PlatformModuleConfigDto } from './mod.dto';
-import { PlatformModuleService } from './mod.service';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { PlatformModuleConfigDto } from './mod.dto.js';
+import { PlatformModuleService } from './mod.service.js';
 
 @ApiBearerAuth()
 @Controller('platform/module')

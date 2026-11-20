@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { mapMqttTopic } from 'libs/util';
-import { AsyncApi } from 'libs/asyncapi';
-import { DialogueToolNotMatchingEventDto } from '../chat/dialogue.chat.dto';
+import { AsyncApiOperationName } from '#libs/decorator/asyncapi.operation.decorator';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { mapMqttTopic } from '#libs/util';
+import { AsyncApi } from '#libs/asyncapi/index';
+import { DialogueToolNotMatchingEventDto } from '../chat/dialogue.chat.dto.js';
 import {
   DialogueToolTriggeredEventDto,
   DialogueToolsRepositoryChanged,
-} from './dialogue.tools.dto';
+} from './dialogue.tools.dto.js';
 
 @AsyncApi()
 @Injectable()

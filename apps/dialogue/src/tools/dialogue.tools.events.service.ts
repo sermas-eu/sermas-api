@@ -3,29 +3,29 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import {
   ToolParamType,
   ToolSchemaTypeList,
-} from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
+} from '#apps/dialogue/src/chat/dialogue.chat.tools.dto';
 import {
   AppToolsDTO,
   PlatformAppChangedDto,
   ToolsParameterSchema,
-} from 'apps/platform/src/app/platform.app.dto';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
+} from '#apps/platform/src/app/platform.app.dto';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
 import {
   ButtonsContentDto,
   QuizContentDto,
   UIContentDto,
-} from 'apps/ui/src/ui.content.dto';
-import { UIInteractionDTO, UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { hash, uuidv4 } from 'libs/util';
-import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
-import { DialogueTaskChangedDto } from '../tasks/dialogue.tasks.dto';
-import { DialogueToolTriggeredEventDto } from './dialogue.tools.dto';
-import { DialogueToolsService } from './dialogue.tools.service';
-import { ToolTriggerEventDto } from './trigger/dialogue.tools.trigger.dto';
-import { DialogueToolsTriggerService } from './trigger/dialogue.tools.trigger.service';
-import { extractToolValues } from './utils';
+} from '#apps/ui/src/ui.content.dto';
+import { UIInteractionDTO, UIInteractionEventDto } from '#apps/ui/src/ui.dto';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { hash, uuidv4 } from '#libs/util';
+import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto.js';
+import { DialogueTaskChangedDto } from '../tasks/dialogue.tasks.dto.js';
+import { DialogueToolTriggeredEventDto } from './dialogue.tools.dto.js';
+import { DialogueToolsService } from './dialogue.tools.service.js';
+import { ToolTriggerEventDto } from './trigger/dialogue.tools.trigger.dto.js';
+import { DialogueToolsTriggerService } from './trigger/dialogue.tools.trigger.service.js';
+import { extractToolValues } from './utils.js';
 
 type UiToolParam = {
   description: string;
@@ -193,7 +193,7 @@ export class DialogueToolsEventsService {
     }
 
     switch (ev.contentType) {
-      case 'buttons':
+      case 'buttons': {
         const buttons = ev.content as ButtonsContentDto;
 
         await addTools(
@@ -221,7 +221,8 @@ export class DialogueToolsEventsService {
             }),
         );
         break;
-      case 'quiz':
+      }
+      case 'quiz': {
         const quiz = ev.content as QuizContentDto;
         await addTools(
           quiz.answers.map((answer) => ({
@@ -238,6 +239,7 @@ export class DialogueToolsEventsService {
           })),
         );
         break;
+      }
       case 'clear-screen':
         await resetTools();
         break;

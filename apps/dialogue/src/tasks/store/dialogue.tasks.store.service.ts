@@ -6,16 +6,16 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { toDTO, uuidv4 } from 'libs/util';
-import { FilterQuery, Model } from 'mongoose';
-import { DialogueTasksAsyncApiService } from '../dialogue.tasks.async.service';
-import { DialogueTaskChangedDto } from '../dialogue.tasks.dto';
-import { DialogueTaskDto } from './dialogue.tasks.store.dto';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { toDTO, uuidv4 } from '#libs/util';
+import { QueryFilter, Model } from 'mongoose';
+import { DialogueTasksAsyncApiService } from '../dialogue.tasks.async.service.js';
+import { DialogueTaskChangedDto } from '../dialogue.tasks.dto.js';
+import { DialogueTaskDto } from './dialogue.tasks.store.dto.js';
 import {
   DialogueTaskStore,
   DialogueTaskStoreDocument,
-} from './dialogue.tasks.store.schema';
+} from './dialogue.tasks.store.schema.js';
 
 @Injectable()
 export class DialogueTaskStoreService implements OnModuleInit {
@@ -96,7 +96,7 @@ export class DialogueTaskStoreService implements OnModuleInit {
     }
   }
 
-  async search(q: FilterQuery<DialogueTaskStore>) {
+  async search(q: QueryFilter<DialogueTaskStore>) {
     const tasks = await this.tasks.find(q).exec();
     return (tasks || []).map((t) => toDTO<DialogueTaskDto>(t));
   }

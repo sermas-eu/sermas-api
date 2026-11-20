@@ -19,19 +19,19 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { DialogueSpeechService } from 'apps/dialogue/src/dialogue.speech.service';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { ApiUpload } from 'libs/decorator/openapi.upload.decorator';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { getChunkId } from 'libs/sermas/sermas.utils';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
-import { AuthenticatedUser, Public } from 'libs/auth/auth.decorators';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { DialogueSpeechService } from '#apps/dialogue/src/dialogue.speech.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { ApiUpload } from '#libs/decorator/openapi.upload.decorator';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { getChunkId } from '#libs/sermas/sermas.utils';
+import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
+import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
+import { AuthenticatedUser, Public } from '#libs/auth/auth.decorators';
 import { ulid } from 'ulidx';
-import { DialogueAvatarSpeechControlDto } from './dialogue.speech.dto';
+import { DialogueAvatarSpeechControlDto } from './dialogue.speech.dto.js';
 
 @ApiBearerAuth()
 @Controller('dialogue/speech')

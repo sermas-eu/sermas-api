@@ -5,10 +5,10 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { DialogueMemoryMessageDto } from './dialogue.memory.dto';
-import { DialogueMemoryService } from './dialogue.memory.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { DialogueMemoryMessageDto } from './dialogue.memory.dto.js';
+import { DialogueMemoryService } from './dialogue.memory.service.js';
 
 @ApiBearerAuth()
 @Controller('dialogue/memory')

@@ -2,45 +2,45 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { convertRawToWav, convertWav } from 'libs/language/audio';
+import { convertRawToWav, convertWav } from '#libs/language/audio';
 
-import { DialogueAsyncApiService } from './dialogue.async.service';
-import { DialogueEmotionService } from './dialogue.emotion.service';
+import { DialogueAsyncApiService } from './dialogue.async.service.js';
+import { DialogueEmotionService } from './dialogue.emotion.service.js';
 
-import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
-import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { UIContentDto } from 'apps/ui/src/ui.content.dto';
-import { uiContentToText } from 'apps/ui/src/util';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { STTProviderService } from 'libs/stt/stt.provider.service';
-import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
-import { TTSProviderService } from 'libs/tts/tts.provider.service';
-import { LLMTranslationService } from '../../../libs/translation/translation.service';
+import { IdentityTrackerService } from '#apps/detection/src/providers/identify-tracker/identity-tracker.service';
+import { SpeechBrainService } from '#apps/detection/src/providers/speechbrain/speechbrain.service';
+import { createSessionContext } from '#apps/session/src/session.context';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { SessionService } from '#apps/session/src/session.service';
+import { UIContentDto } from '#apps/ui/src/ui.content.dto';
+import { uiContentToText } from '#apps/ui/src/util';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { getChunkId, getMessageId } from '#libs/sermas/sermas.utils';
+import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
+import { STTProviderService } from '#libs/stt/stt.provider.service';
+import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
+import { TTSProviderService } from '#libs/tts/tts.provider.service';
+import { LLMTranslationService } from '../../../libs/translation/translation.service.js';
 import {
   DialogueChatProgressEvent,
   DialogueChatValidationEvent,
-} from './chat/dialogue.chat.dto';
-import { DialogueChatService } from './chat/dialogue.chat.service';
+} from './chat/dialogue.chat.dto.js';
+import { DialogueChatService } from './chat/dialogue.chat.service.js';
 import {
   DialogueSessionRequestEvent,
   DialogueSessionRequestStatus,
-} from './dialogue.request-monitor.dto';
-import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
+} from './dialogue.request-monitor.dto.js';
+import { DialogueRequestMonitorService } from './dialogue.request-monitor.service.js';
 import {
   DialogueAvatarSpeechControlDto,
   OutgoingChunkQueue,
   OutgoingQueueMessage,
-} from './dialogue.speech.dto';
-import { DialogueMemoryService } from './memory/dialogue.memory.service';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
+} from './dialogue.speech.dto.js';
+import { DialogueMemoryService } from './memory/dialogue.memory.service.js';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
 
 const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
 

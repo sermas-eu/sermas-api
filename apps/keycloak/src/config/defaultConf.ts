@@ -1,8 +1,8 @@
-import { createSecret } from 'libs/util';
+import { createSecret } from '#libs/util';
 import {
   KeycloakClientCreateDto,
   KeycloakClientDataDto,
-} from '../keycloack.authz.dto';
+} from '../keycloack.authz.dto.js';
 
 export const clientDefaultConfiguration = (
   config: Partial<KeycloakClientDataDto> = {},

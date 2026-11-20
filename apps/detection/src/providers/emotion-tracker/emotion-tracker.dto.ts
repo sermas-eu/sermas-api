@@ -1,4 +1,4 @@
-import { Emotion } from 'libs/sermas/sermas.dto';
+import { Emotion } from '#libs/sermas/sermas.dto';
 
 export interface EmotionProcessingData {
   values: number[];

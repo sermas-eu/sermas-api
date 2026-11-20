@@ -20,14 +20,14 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import { Response } from 'express';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { ApiUpload } from 'libs/decorator/openapi.upload.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
-import { UIAssetDto } from './ui.asset.dto';
-import { UIAssetService } from './ui.asset.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { ApiUpload } from '#libs/decorator/openapi.upload.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { UIAssetDto } from './ui.asset.dto.js';
+import { UIAssetService } from './ui.asset.service.js';
 
 @ApiBearerAuth()
 @Controller('ui/asset')
@@ -76,7 +76,7 @@ export class UIAssetController {
   saveAsset(
     @UploadedFile() file: Express.Multer.File,
     @Body() data: UIAssetDto,
-    @AuthenticatedUser() user: AuthJwtUser,
+    @AuthenticatedUser() _user: AuthJwtUser,
   ): Promise<void> {
     return this.assets.saveAsset(data, file);
   }

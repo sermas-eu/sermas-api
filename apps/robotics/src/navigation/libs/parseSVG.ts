@@ -1,43 +1,42 @@
+/// <reference lib="dom" />
 import { flattenSVG } from 'flatten-svg';
 //import { createSVGWindow } from 'svgdom';
 // let createSVGWindow = await import("svgdom");
 
 export interface SvgPath {
-    id: string
-    points: [number, number][],
-    stroke: string
-    groupId: string | null
+  id: string;
+  points: [number, number][];
+  stroke: string;
+  groupId: string | null;
 }
 
 export const getSvgPaths = async (
-    svg: string | Buffer,
-    tag = 'desc',
-    tagContentMatch = 'navigation-space',
+  svg: string | Buffer,
+  tag = 'desc',
+  tagContentMatch = 'navigation-space',
 ): Promise<SvgPath[]> => {
+  const createSVGWindow = await import('svgdom');
+  let window = createSVGWindow();
+  window.document.documentElement.innerHTML = svg;
 
+  const doc = window.document.documentElement as SVGElement;
 
-    const createSVGWindow = await import('svgdom');
-    let window = createSVGWindow()
-    window.document.documentElement.innerHTML = svg
+  const areasList: SVGElement[] = [];
+  Array.from(doc.querySelectorAll(tag)).forEach((desc) => {
+    if (desc.textContent?.indexOf(tagContentMatch) === -1) return;
+    if (!desc.parentNode) return;
+    areasList.push(desc.parentNode as unknown as SVGElement);
+  });
 
-    const doc = window.document.documentElement as SVGElement
+  // update with filtered paths
+  window = createSVGWindow();
+  window.document.documentElement.append(...areasList);
 
-    const areasList: SVGElement[] = []
-    Array.from(doc.querySelectorAll(tag)).forEach((desc) => {
-        if (desc.textContent?.indexOf(tagContentMatch) === -1) return
-        if (!desc.parentNode) return
-        areasList.push(desc.parentNode as unknown as SVGElement)
-    })
+  const svgPaths: SvgPath[] = flattenSVG(window.document.documentElement);
 
-    // update with filtered paths
-    window = createSVGWindow()
-    window.document.documentElement.append(...areasList)
+  svgPaths.forEach((svgPath, i) => {
+    svgPath.id = areasList[i].id;
+  });
 
-    const svgPaths: SvgPath[] = flattenSVG(window.document.documentElement)
-
-    svgPaths.forEach((svgPath, i) => {
-        svgPath.id = areasList[i].id
-    })
-
-    return svgPaths
-}
+  return svgPaths;
+};

@@ -6,11 +6,11 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
-import { JwtAuthGuard } from 'libs/auth/jwt.guard';
-import { AuthJwtUser } from '../auth.dto';
-import { MqttAclPayload } from './mqtt.dto';
-import { MqttService } from './mqtt.service';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { JwtAuthGuard } from '#libs/auth/jwt.guard';
+import { AuthJwtUser } from '../auth.dto.js';
+import { MqttAclPayload } from './mqtt.dto.js';
+import { MqttService } from './mqtt.service.js';
 
 @Controller('mqtt')
 @UseGuards(JwtAuthGuard)

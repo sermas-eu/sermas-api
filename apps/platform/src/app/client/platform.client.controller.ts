@@ -6,10 +6,10 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { AppClientDto } from '../platform.app.dto';
-import { PlatformAppClientService } from './platform.client.service';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { AppClientDto } from '../platform.app.dto.js';
+import { PlatformAppClientService } from './platform.client.service.js';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
 
 @ApiBearerAuth()
 @ApiTags('PLATFORM')

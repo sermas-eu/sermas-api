@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { PlatformTopicsService } from './platform.topics.service';
+import { PlatformTopicsService } from './platform.topics.service.js';
 
 @Global()
 @Module({

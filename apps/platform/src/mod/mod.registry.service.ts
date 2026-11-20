@@ -2,13 +2,13 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
-import { loadFile, toDTO } from 'libs/util';
-import { FilterQuery, Model } from 'mongoose';
-import { PlatformModuleConfigDto } from './mod.dto';
+import { loadFile, toDTO } from '#libs/util';
+import { QueryFilter, Model } from 'mongoose';
+import { PlatformModuleConfigDto } from './mod.dto.js';
 import {
   PlatformModuleConfig,
   PlatformModuleConfigDocument,
-} from './mod.schema';
+} from './mod.schema.js';
 
 @Injectable()
 export class PlatformModuleRegistryService implements OnModuleInit {
@@ -62,7 +62,7 @@ export class PlatformModuleRegistryService implements OnModuleInit {
     return this.find();
   }
 
-  async find(q: FilterQuery<PlatformModuleConfig> = {}) {
+  async find(q: QueryFilter<PlatformModuleConfig> = {}) {
     const modules = await this.modules.find(q);
     return modules.map((m) => toDTO<PlatformModuleConfigDto>(m));
   }

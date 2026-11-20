@@ -6,11 +6,11 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AdminRole } from 'libs/decorator/admin-role.decorator';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { RegistrationRequestDto, RegistrationResponseDto } from './auth.dto';
-import { AuthService } from './auth.service';
+import { AdminRole } from '#libs/decorator/admin-role.decorator';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { RegistrationRequestDto, RegistrationResponseDto } from './auth.dto.js';
+import { AuthService } from './auth.service.js';
 
 @ApiBearerAuth()
 @Controller('auth/admin')

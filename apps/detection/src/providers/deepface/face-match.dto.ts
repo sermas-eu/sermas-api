@@ -1,4 +1,7 @@
-import { DeepFaceAnalyzeItemDto, DeepFaceDetectionEvent } from './deepface.dto';
+import {
+  DeepFaceAnalyzeItemDto,
+  DeepFaceDetectionEvent,
+} from './deepface.dto.js';
 
 export interface FaceMatch {
   detection: DeepFaceDetectionEvent;

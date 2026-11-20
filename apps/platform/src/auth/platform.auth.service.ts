@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { getKeycloakClientId } from 'apps/keycloak/src/util';
-import { jwtDecode } from 'libs/util';
-import { PlatformContextDto } from './platform.auth.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { getKeycloakClientId } from '#apps/keycloak/src/util';
+import { jwtDecode } from '#libs/util';
+import { PlatformContextDto } from './platform.auth.dto.js';
 
 // guard cache in seconds
 const CACHE_TTL_SECONDS = 30;
@@ -71,11 +71,38 @@ export class PlatformAuthService {
     return null;
   }
 
+  /**
+   * Whether the caller may use `scopes` on `resource`. The answer depends on
+   * the client, the user and the app, so all of them are in the cache key;
+   * a cached answer skips the Keycloak calls.
+   */
   async isAllowed(payload: PlatformContextDto): Promise<boolean> {
-    let scopes: string[] = [];
+    if (!payload.clientId) throw new BadRequestException(`clientId is missing`);
 
+    const cacheKey = JSON.stringify([
+      payload.clientId,
+      payload.userId || null,
+      payload.appId || null,
+      payload.resource,
+      [...(payload.scopes || [])].sort(),
+    ]);
+    const cached = this.cache[cacheKey];
+    if (cached && cached.expires > Date.now()) return cached.isAllowed;
+
+    const isAllowed = await this.evaluate(payload);
+    if (isAllowed !== null) {
+      this.cache[cacheKey] = {
+        isAllowed,
+        expires: Date.now() + CACHE_TTL_SECONDS * 1000,
+      };
+    }
+    return isAllowed === true;
+  }
+
+  /** Asks Keycloak; null when it could not answer (not cached). */
+  private async evaluate(payload: PlatformContextDto): Promise<boolean | null> {
     let clientId = payload.clientId;
-    if (!clientId) throw new BadRequestException(`clientId is missing`);
+    let scopes: string[];
 
     try {
       let client = await this.keycloak.getClientByName(clientId);
@@ -94,76 +121,40 @@ export class PlatformAuthService {
           `Client clientId=${clientId} not found appId=${payload.appId} `,
         );
       const clientScopes = await this.keycloak.getClientScopes(client.id);
-      const reqScopes = payload.scopes || [];
-      scopes = reqScopes
+      scopes = (payload.scopes || [])
         .map((scope) => `${payload.resource}:${scope}`)
-        .filter(
-          (scope) => clientScopes.filter(({ name }) => name === scope).length,
-        );
+        .filter((scope) => clientScopes.some(({ name }) => name === scope));
     } catch (e: any) {
       this.logger.error(`Failed to load client scopes: ${e.message}`);
-      return false;
+      return null;
     }
-
-    // if (payload.appId) {
-    //   const apps = this.keycloak.getServiceAccountsApps(payload.clientId);
-    //   if (!(await apps).includes(payload.appId)) {
-    //     this.logger.warn(
-    //       `Client ${payload.clientId} does not have access to appId=${payload.appId}`,
-    //     );
-    //     return false;
-    //   }
-    // }
 
     if (!scopes.length) {
       this.logger.warn(
-        `Client ${
-          payload.clientId
-        } does not have matching scopes ${payload.scopes.join(',')}`,
+        `Client ${payload.clientId} does not have matching scopes ${(payload.scopes || []).join(',')}`,
       );
       return false;
     }
 
-    const data = {
-      context: {},
-      entitlements: false,
-      roleIds: [],
-      userId: payload.userId,
-      resources: [
-        {
-          name: payload.resource,
-          scopes: scopes.map((name) => ({ name })),
-        },
-      ],
-    };
-
-    const cacheKey = [
-      payload.appId || payload.userId,
-      payload.resource,
-      ...scopes,
-    ].join('-');
-
-    if (this.cache[cacheKey]) {
-      return this.cache[cacheKey].isAllowed;
-    }
-
-    let isAllowed = false;
     try {
-      const res = await this.keycloak.evaluatePermission(clientId, data);
-      isAllowed = res.status === 'PERMIT';
+      const res = await this.keycloak.evaluatePermission(clientId, {
+        context: {},
+        entitlements: false,
+        roleIds: [],
+        userId: payload.userId,
+        resources: [
+          {
+            name: payload.resource,
+            scopes: scopes.map((name) => ({ name })),
+          },
+        ],
+      });
+      return res.status === 'PERMIT';
     } catch (e) {
-      this.logger.debug(
-        `evaluatePermission clientId=${clientId} data=${JSON.stringify(data)}`,
+      this.logger.error(
+        `Failed to evaluatePermission clientId=${clientId}: ${e.message}`,
       );
-      this.logger.error(`Failed to evaluatePermission: ${e.message}`);
-      return false;
+      return null;
     }
-
-    this.cache[cacheKey] = {
-      isAllowed,
-      expires: Date.now() + CACHE_TTL_SECONDS * 1000,
-    };
-
-    return isAllowed;
   }
 }

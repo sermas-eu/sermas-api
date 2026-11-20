@@ -2,7 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createPublicKey, KeyObject } from 'crypto';
-import { decode, JwtPayload, verify } from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
+
+const { decode, verify } = jwt;
 
 type Jwk = { kid: string; kty: string; use?: string; alg?: string };
 

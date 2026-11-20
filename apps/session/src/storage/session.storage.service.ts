@@ -5,16 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { toDTO, uuidv4 } from 'libs/util';
-import { FilterQuery, Model } from 'mongoose';
-import { SessionStorageAsyncApiService } from './session.storage.async.service';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { toDTO, uuidv4 } from '#libs/util';
+import { QueryFilter, Model } from 'mongoose';
+import { SessionStorageAsyncApiService } from './session.storage.async.service.js';
 import {
   SessionStorageEventDto,
   SessionStorageRecordDto,
   SessionStorageSearchDto,
-} from './session.storage.dto';
-import { SessionStorage } from './session.storage.schema';
+} from './session.storage.dto.js';
+import { SessionStorage } from './session.storage.schema.js';
 
 @Injectable()
 export class SessionStorageService {
@@ -26,7 +26,7 @@ export class SessionStorageService {
     private readonly asyncApi: SessionStorageAsyncApiService,
   ) {}
 
-  async read(filter?: FilterQuery<SessionStorage>) {
+  async read(filter?: QueryFilter<SessionStorage>) {
     const record = await this.storageModel.findOne(filter);
     return record || null;
   }
@@ -34,7 +34,7 @@ export class SessionStorageService {
   async search(data: SessionStorageSearchDto) {
     if (!data.sessionId) throw new BadRequestException('sessionId is missing');
 
-    const filter: FilterQuery<SessionStorage> = {
+    const filter: QueryFilter<SessionStorage> = {
       sessionId: data.sessionId,
     };
 

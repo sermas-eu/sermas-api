@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   SessionEmbeddingsDto,
   SpeakerVerificationDto,
-} from './identity-tracker.dto';
-import { SpeechBrainService } from '../speechbrain/speechbrain.service';
+} from './identity-tracker.dto.js';
+import { SpeechBrainService } from '../speechbrain/speechbrain.service.js';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()

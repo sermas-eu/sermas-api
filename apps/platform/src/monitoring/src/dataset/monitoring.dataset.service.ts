@@ -2,22 +2,22 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
-import { SessionService } from 'apps/session/src/session.service';
-import { DialogueActor } from 'libs/language/dialogue.message.dto';
-import { getChunkId } from 'libs/sermas/sermas.utils';
-import { toDTO } from 'libs/util';
-import { FilterQuery, Model } from 'mongoose';
-import { MinioService } from 'nestjs-minio-client';
-import { MonitoringAsyncApiService } from './monitoring.async.service';
+import { SessionService } from '#apps/session/src/session.service';
+import { DialogueActor } from '#libs/language/dialogue.message.dto';
+import { getChunkId } from '#libs/sermas/sermas.utils';
+import { toDTO } from '#libs/util';
+import { QueryFilter, Model } from 'mongoose';
+import { MinioService } from '#libs/storage/minio.service';
+import { MonitoringAsyncApiService } from './monitoring.async.service.js';
 import {
   DatasetRecordDto,
   DatasetRecordFilterDto,
   AdvancedDatasetRecordFilterDto,
   LogType,
   MonitoringRecordDto,
-} from './monitoring.dataset.dto';
-import { DatasetRecord } from './monitoring.dataset.schema';
-import { SessionContext } from 'apps/session/src/session.context';
+} from './monitoring.dataset.dto.js';
+import { DatasetRecord } from './monitoring.dataset.schema.js';
+import { SessionContext } from '#apps/session/src/session.context';
 
 @Injectable()
 export class MonitoringDatasetService {
@@ -89,6 +89,7 @@ export class MonitoringDatasetService {
         this.repository,
         assetPath,
         payload.buffer,
+        payload.buffer.length,
         {
           appId: payload.appId,
           sessionId: payload.sessionId,
@@ -150,7 +151,7 @@ export class MonitoringDatasetService {
   }
 
   async search(filter: DatasetRecordFilterDto) {
-    const q: FilterQuery<DatasetRecord> = {
+    const q: QueryFilter<DatasetRecord> = {
       sessionId: filter.sessionId,
     };
 
@@ -169,7 +170,7 @@ export class MonitoringDatasetService {
   }
 
   async advancedSearch(filter: AdvancedDatasetRecordFilterDto) {
-    const q: FilterQuery<MonitoringRecordDto> = {};
+    const q: QueryFilter<MonitoringRecordDto> = {};
     if (filter.appId) {
       q.appId = filter.appId;
     }

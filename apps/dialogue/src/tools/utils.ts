@@ -1,4 +1,4 @@
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
 
 export const extractToolValues = (
   tool: AppToolsDTO,

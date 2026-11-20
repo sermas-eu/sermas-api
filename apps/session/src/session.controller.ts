@@ -18,12 +18,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
-import { SessionDto, SessionSearchFilter } from './session.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { SessionService } from '#apps/session/src/session.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { SessionDto, SessionSearchFilter } from './session.dto.js';
 
 @ApiBearerAuth()
 @Controller('session')

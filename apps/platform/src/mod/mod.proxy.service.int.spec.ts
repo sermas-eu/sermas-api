@@ -1,17 +1,21 @@
 import { HttpServer, INestApplication, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/util';
-import * as request from 'supertest';
-import { PlatformAppService } from '../app/platform.app.service';
-import { newApp } from '../app/tests/app';
-import { PlatformModule } from '../platform.module';
-import { PlatformModuleRegistryService } from './mod.registry.service';
-import { PlatformModuleService } from './mod.service';
-import { registerExternalModule, startServer, stopServer } from './tests/mod';
+import { SermasBaseModule } from '#apps/api/src/sermas.base.module';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { uuidv4 } from '#libs/util';
+import request from 'supertest';
+import { PlatformAppService } from '../app/platform.app.service.js';
+import { newApp } from '../app/tests/app.js';
+import { PlatformModule } from '../platform.module.js';
+import { PlatformModuleRegistryService } from './mod.registry.service.js';
+import { PlatformModuleService } from './mod.service.js';
+import {
+  registerExternalModule,
+  startServer,
+  stopServer,
+} from './tests/mod.js';
 
-jest.setTimeout(5 * 60 * 1000);
+vi.setConfig({ testTimeout: 5 * 60 * 1000 });
 
 describe('PlatformModuleService', () => {
   let moduleHttpServer: HttpServer;

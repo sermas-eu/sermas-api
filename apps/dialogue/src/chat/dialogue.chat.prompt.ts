@@ -1,9 +1,9 @@
-import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
+import { PromptTemplate } from '#libs/llm/prompt/prompt.template';
 import {
   BaseSystemPromptParams,
   createDataPrompt,
-} from '../dialogue.system.prompt';
-import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto';
+} from '../dialogue.system.prompt.js';
+import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto.js';
 
 export type AvatarChatSystemPromptParams = {
   suggestedTasks?: string;

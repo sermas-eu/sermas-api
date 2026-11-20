@@ -1,4 +1,4 @@
-import { AsyncApiDocument, AsyncApiSchemaObject } from 'libs/asyncapi';
+import { AsyncApiDocument, AsyncApiSchemaObject } from '#libs/asyncapi/index';
 
 export class AsyncApiUtils {
   extractSchemaReferences(asyncApiJson: AsyncApiDocument) {

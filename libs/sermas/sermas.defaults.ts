@@ -1,4 +1,4 @@
-import { getConfigPath } from './sermas.utils';
+import { getConfigPath } from './sermas.utils.js';
 
 export const SermasDefaultConfig = {
   // IMPORT_USER default user used when importing apps
@@ -117,7 +117,6 @@ export const SermasDefaultConfig = {
   // TTS_AZURE_REGION Azure region
   TTS_AZURE_REGION: '',
 
-
   // LLM_SERVICE LLM service to use. Only `openai` is supported: any OpenAI-compatible
   // endpoint (OpenAI, LiteLLM, vLLM, ...) selected with OPENAI_BASEURL
   LLM_SERVICE: 'openai',
@@ -168,7 +167,6 @@ export const SermasDefaultConfig = {
 
   // OPENAI_MODEL Default OpenAI model used as fallback
   OPENAI_MODEL: 'gpt-4o',
-
 
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',

@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
-import { ASYNCAPI_BASEURL, OPENAPI_BASEURL } from './mod/constants';
-import { SermasWellKnowDto } from './platform.well-known.dto';
+import { ASYNCAPI_BASEURL, OPENAPI_BASEURL } from './mod/constants.js';
+import { SermasWellKnowDto } from './platform.well-known.dto.js';
 
 @Controller('.well-known')
 export class PlatformWellKnownController {

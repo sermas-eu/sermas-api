@@ -1,7 +1,7 @@
 import { UseGuards, applyDecorators } from '@nestjs/common';
-import { PlatformGuard } from 'apps/platform/src/auth/platform.auth.guard';
-import { Resource, Scopes } from 'libs/auth/auth.decorators';
-import { JwtAuthGuard } from 'libs/auth/jwt.guard';
+import { PlatformGuard } from '#apps/platform/src/auth/platform.auth.guard';
+import { Resource, Scopes } from '#libs/auth/auth.decorators';
+import { JwtAuthGuard } from '#libs/auth/jwt.guard';
 
 export function ApiResource(params: string) {
   const decorators = [UseGuards(JwtAuthGuard, PlatformGuard), Resource(params)];

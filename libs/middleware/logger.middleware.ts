@@ -1,7 +1,7 @@
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import { NextFunction, Request, Response } from 'express';
-import { jwtDecode } from 'libs/util';
+import { jwtDecode } from '#libs/util';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {

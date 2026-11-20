@@ -1,10 +1,13 @@
 import { HttpServer, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
-import { createAsyncApiDocument, serveAsyncApiDocument } from 'libs/asyncapi';
-import { ModuleResourceDto, PlatformModuleConfigDto } from '../mod.dto';
-import { PlatformModuleService } from '../mod.service';
-import { TestCustomModuleController } from './test.custom-module.controller';
+import {
+  createAsyncApiDocument,
+  serveAsyncApiDocument,
+} from '#libs/asyncapi/index';
+import { ModuleResourceDto, PlatformModuleConfigDto } from '../mod.dto.js';
+import { PlatformModuleService } from '../mod.service.js';
+import { TestCustomModuleController } from './test.custom-module.controller.js';
 
 export const registerExternalModule = async (
   platformModuleService: PlatformModuleService,

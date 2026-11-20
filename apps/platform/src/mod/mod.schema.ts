@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { ModuleSettingsDto, PlatformModuleConfigDto } from './mod.dto';
+import { ModuleSettingsDto, PlatformModuleConfigDto } from './mod.dto.js';
 
 export type PlatformModuleConfigDocument =
   HydratedDocument<PlatformModuleConfig>;
@@ -16,7 +16,12 @@ export class PlatformModuleConfig extends PlatformModuleConfigDto {
   @Prop({ index: true, required: false })
   name?: string;
 
-  @Prop({ index: true, required: false, default: () => 'enabled' })
+  @Prop({
+    type: String,
+    index: true,
+    required: false,
+    default: () => 'enabled',
+  })
   status?: 'enabled' | 'disabled' | 'failure';
 
   @Prop({ index: true, required: false })

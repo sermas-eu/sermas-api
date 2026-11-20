@@ -8,17 +8,17 @@ import {
 import {
   AppSettingsDto,
   PlatformAppChangedDto,
-} from 'apps/platform/src/app/platform.app.dto';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { uuidv4 } from 'libs/util';
-import { AgentStatus, AgentStatusCodes } from '../session.dto';
-import { SessionAgentAsyncApiService } from './session.agent.async.service';
+} from '#apps/platform/src/app/platform.app.dto';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { uuidv4 } from '#libs/util';
+import { AgentStatus, AgentStatusCodes } from '../session.dto.js';
+import { SessionAgentAsyncApiService } from './session.agent.async.service.js';
 import {
   AgentChangedDto,
   AgentDto,
   AgentHeartBeatEventDto,
-} from './session.agent.dto';
+} from './session.agent.dto.js';
 
 @Injectable()
 export class SessionAgentService implements OnModuleInit, OnModuleDestroy {

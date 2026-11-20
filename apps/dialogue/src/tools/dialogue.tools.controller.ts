@@ -14,11 +14,11 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { DialogueToolsService } from './dialogue.tools.service';
-import { DialogueToolsRepositoryDto } from './repository/dialogue.tools.repository.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { DialogueToolsService } from './dialogue.tools.service.js';
+import { DialogueToolsRepositoryDto } from './repository/dialogue.tools.repository.dto.js';
 
 @ApiBearerAuth()
 @Controller('dialogue/tools')

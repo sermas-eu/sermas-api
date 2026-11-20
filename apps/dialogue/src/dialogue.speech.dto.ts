@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ToolsParameterSchema } from 'apps/platform/src/app/platform.app.dto';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
+import { ToolsParameterSchema } from '#apps/platform/src/app/platform.app.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { SermasSessionDto } from '#libs/sermas/sermas.dto';
 
 export class DialogueToolRequestDto extends SermasSessionDto {
   @ApiProperty()
@@ -33,7 +33,7 @@ export class DialogueAvatarSpeechControlDto extends SermasSessionDto {
   chunkId?: string;
 }
 
-const DialogueProgressEventList = [
+export const DialogueProgressEventList = [
   'stt',
   'analyze',
   'llm',

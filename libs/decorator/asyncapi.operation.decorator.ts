@@ -1,1 +1,1 @@
-export { AsyncApiOperationName } from 'libs/asyncapi';
+export { AsyncApiOperationName } from '#libs/asyncapi/index';

@@ -1,27 +1,25 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "declaration": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "customConditions": ["source"],
+    "target": "es2023",
+    "lib": ["es2023"],
+    "rootDir": ".",
+    "outDir": "./dist",
+    "declaration": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "es2022",
     "useDefineForClassFields": false,
     "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "paths": {
-      // "@keycloak-admin-client": [
-      //   "./keycloack-admin-client"
-      // ]
-    }
-  }
+    "types": ["node", "multer", "vitest/globals"]
+  },
+  "include": ["apps/**/*.ts", "libs/**/*.ts", "vitest.config.ts"]
 }

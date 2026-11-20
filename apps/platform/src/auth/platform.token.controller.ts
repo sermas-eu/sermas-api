@@ -8,15 +8,15 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Request } from 'express';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { Public } from 'libs/auth/auth.decorators';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { Public } from '#libs/auth/auth.decorators';
 import {
   AccessTokenRequestDto,
   JwtTokenDto,
   RefreshTokenRequestDto,
-} from './platform.token.dto';
-import { PlatformAuthTokenService } from './platform.token.service';
+} from './platform.token.dto.js';
+import { PlatformAuthTokenService } from './platform.token.service.js';
 
 @ApiBearerAuth()
 @Controller('platform/token')

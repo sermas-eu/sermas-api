@@ -2,12 +2,12 @@ import { CustomDecorator, SetMetadata } from '@nestjs/common';
 import {
   MQTT_SUBSCRIBE_OPTIONS,
   MQTT_SUBSCRIBER_PARAMS,
-} from './mqtt.constants';
+} from './mqtt.constants.js';
 import {
   MqttMessageTransformer,
   MqttSubscribeOptions,
   MqttSubscriberParameter,
-} from './mqtt.interface';
+} from './mqtt.interface.js';
 
 export function Subscribe(
   topic: string | string[] | MqttSubscribeOptions,

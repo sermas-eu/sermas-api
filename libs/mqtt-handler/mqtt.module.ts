@@ -1,16 +1,16 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { DiscoveryModule } from '@nestjs/core';
-import { KeycloakModule } from 'apps/keycloak/src/keycloak.module';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { createClientProvider } from './client.provider';
-import { MQTT_OPTION_PROVIDER } from './mqtt.constants';
-import { MqttExplorer } from './mqtt.explorer';
-import { MqttModuleAsyncOptions, MqttModuleOptions } from './mqtt.interface';
-import { MqttService } from './mqtt.service';
+import { KeycloakModule } from '#apps/keycloak/src/keycloak.module';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { createClientProvider } from './client.provider.js';
+import { MQTT_OPTION_PROVIDER } from './mqtt.constants.js';
+import { MqttExplorer } from './mqtt.explorer.js';
+import { MqttModuleAsyncOptions, MqttModuleOptions } from './mqtt.interface.js';
+import { MqttService } from './mqtt.service.js';
 import {
   createLoggerProvider,
   createOptionProviders,
-} from './options.provider';
+} from './options.provider.js';
 
 @Global()
 @Module({

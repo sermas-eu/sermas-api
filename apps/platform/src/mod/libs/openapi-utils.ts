@@ -24,7 +24,7 @@ export class OpenApiUtils {
         }
 
         for (const key in obj) {
-          if (obj.hasOwnProperty(key)) {
+          if (Object.hasOwn(obj, key)) {
             replaceReferences(obj[key]);
           }
         }
@@ -32,7 +32,7 @@ export class OpenApiUtils {
     }
 
     for (const key in spec.components.schemas) {
-      if (spec.components.schemas.hasOwnProperty(key)) {
+      if (Object.hasOwn(spec.components.schemas, key)) {
         if (key in replacements) {
           spec.components.schemas[replacements[key]] =
             spec.components.schemas[key];
@@ -77,7 +77,7 @@ export class OpenApiUtils {
   ) {
     if (content) {
       for (const contentType in content) {
-        if (content.hasOwnProperty(contentType)) {
+        if (Object.hasOwn(content, contentType)) {
           const mediaType = content[contentType];
           const ref = mediaType.schema?.$ref || mediaType.schema?.items?.$ref;
           if (ref) {
@@ -113,7 +113,7 @@ export class OpenApiUtils {
   ) {
     if (responses) {
       for (const statusCode in responses) {
-        if (responses.hasOwnProperty(statusCode)) {
+        if (Object.hasOwn(responses, statusCode)) {
           const response = responses[statusCode];
           this.replaceReferencesInContent(response.content, referenceMap);
         }
@@ -130,7 +130,7 @@ export class OpenApiUtils {
       const schemas = doc.components.schemas;
 
       for (const schemaName in schemas) {
-        if (schemas.hasOwnProperty(schemaName)) {
+        if (Object.hasOwn(schemas, schemaName)) {
           schemaDefinitions.push(schemaName);
         }
       }
@@ -141,11 +141,11 @@ export class OpenApiUtils {
       const paths = doc.paths;
 
       for (const path in paths) {
-        if (paths.hasOwnProperty(path)) {
+        if (Object.hasOwn(paths, path)) {
           const pathObject = paths[path];
 
           for (const method in pathObject) {
-            if (pathObject.hasOwnProperty(method)) {
+            if (Object.hasOwn(pathObject, method)) {
               const operation = pathObject[method];
 
               // Check for request and response schemas
@@ -187,7 +187,7 @@ export class OpenApiUtils {
   private extractSchemaReferences(content: any, schemaDefinitions) {
     if (content) {
       for (const contentType in content) {
-        if (content.hasOwnProperty(contentType)) {
+        if (Object.hasOwn(content, contentType)) {
           const mediaType = content[contentType];
           if (mediaType.schema && mediaType.schema.$ref) {
             const refParts = mediaType.schema.$ref.split('/');

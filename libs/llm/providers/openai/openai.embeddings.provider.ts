@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
-import { LLMEmbeddingConfig } from 'libs/llm/providers/provider.dto';
+import { LLMEmbeddingConfig } from '#libs/llm/providers/provider.dto';
 import OpenAI from 'openai';
-import { LLMEmbeddingProvider } from '../embeddings.provider';
-import { createClient } from './util';
+import { LLMEmbeddingProvider } from '../embeddings.provider.js';
+import { createClient } from './util.js';
 
 export class OpenAIEmbeddingProvider extends LLMEmbeddingProvider {
   private logger = new Logger(OpenAIEmbeddingProvider.name);

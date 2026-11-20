@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   TaskEventType,
   TaskEventTypeList,
-} from '../store/dialogue.tasks.store.dto';
+} from '../store/dialogue.tasks.store.dto.js';
 
 export class TaskRecordValues {
   [key: string]: any;

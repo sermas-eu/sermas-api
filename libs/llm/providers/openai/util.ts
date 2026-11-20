@@ -1,5 +1,5 @@
 import OpenAI, { ClientOptions } from 'openai';
-import { LLMProviderConfig } from '../provider.dto';
+import { LLMProviderConfig } from '../provider.dto.js';
 
 export const createClient = (config: LLMProviderConfig) => {
   const { apiKey, baseURL } = config;

@@ -1,7 +1,11 @@
 // typescript port of https://github.com/mmaelzer/mjpeg-consumer/blob/master/lib/mjpeg-consumer.js
 import { Transform, TransformCallback } from 'stream';
-import { MjpegConsumerOptions, MjpegFrame, MjpegHeaders } from '../buffer.dto';
-import { MJPEG_BOUNDARY } from './constants';
+import {
+  MjpegConsumerOptions,
+  MjpegFrame,
+  MjpegHeaders,
+} from '../buffer.dto.js';
+import { MJPEG_BOUNDARY } from './constants.js';
 
 // Start of Image
 const soi = Buffer.from([0xff, 0xd8]);

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { isNodeEnv, mapMqttTopic } from 'libs/util';
+import { isNodeEnv, mapMqttTopic } from '#libs/util';
 import {
   IClientPublishOptions,
   IClientSubscribeOptions,
@@ -8,7 +8,7 @@ import {
   MqttClient,
   Packet,
 } from 'mqtt';
-import { MQTT_CLIENT_INSTANCE } from './mqtt.constants';
+import { MQTT_CLIENT_INSTANCE } from './mqtt.constants.js';
 
 @Injectable()
 export class MqttService {
@@ -50,7 +50,7 @@ export class MqttService {
     message: string | Buffer | object,
     opts?: IClientPublishOptions,
   ): Promise<Packet> {
-    return new Promise<Packet>((resolve, reject) => {
+    return new Promise<Packet>((resolve, _reject) => {
       let payload: string | Buffer;
 
       let isBuffer = false;

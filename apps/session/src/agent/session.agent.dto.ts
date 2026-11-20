@@ -1,12 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AppSettingsDto } from 'apps/platform/src/app/platform.app.dto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
+import { AppSettingsDto } from '#apps/platform/src/app/platform.app.dto';
+import { DefaultLanguage } from '#libs/language/lang-codes';
 import {
   SermasBaseDto,
   SermasRecordChangedDto,
   SermasSessionDto,
-} from 'libs/sermas/sermas.dto';
-import { AgentStatus, AgentStatusList } from '../session.dto';
+} from '#libs/sermas/sermas.dto';
+import { AgentStatus, AgentStatusList } from '../session.dto.js';
 
 export class AgentHeartBeatEventDto extends SermasSessionDto {
   @ApiPropertyOptional()
@@ -32,7 +32,7 @@ export class AgentChangedDto extends SermasRecordChangedDto<AgentDto> {
   @ApiProperty()
   moduleId?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   sessionId?: string;
 
   @ApiProperty()

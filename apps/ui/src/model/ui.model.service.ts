@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { PROMPT_BLENDSHAPE_MAP } from './prompts';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { PROMPT_BLENDSHAPE_MAP } from './prompts.js';
 import {
   UIModelMapBlendShapesRequestDto,
   UIModelMapBlendShapesResponseDto,
-} from './ui.model.dto';
+} from './ui.model.dto.js';
 
 @Injectable()
 export class UIModelService {

@@ -1,13 +1,13 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { createSessionContext } from 'apps/session/src/session.context';
+import { createSessionContext } from '#apps/session/src/session.context';
 import { setTimeout as sleep } from 'timers/promises';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
 import { Model } from 'mongoose';
 import { ulid } from 'ulidx';
-import { DialogueMemory } from './dialogue.memory.schema';
-import { conversationToText } from './util';
+import { DialogueMemory } from './dialogue.memory.schema.js';
+import { conversationToText } from './util.js';
 
 // number of recent messages to return in the history
 const MAX_RAW_HISTORY = 3;

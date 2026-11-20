@@ -1,5 +1,5 @@
-import { ASSET_METADATA_PREFIX } from 'apps/ui/src/ui.asset.service';
-import { MinioClient } from 'nestjs-minio-client';
+import { ASSET_METADATA_PREFIX } from '#apps/ui/src/ui.asset.service';
+import { MinioClient } from '#libs/storage/minio.service';
 import { Readable, Transform } from 'stream';
 
 export const minioListFiles = async <T = any>(

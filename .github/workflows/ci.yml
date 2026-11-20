@@ -21,11 +21,11 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run build
       - name: Typecheck
-        run: npx tsc -p tsconfig.json --noEmit
+        run: npm run typecheck
       - name: Lint
-        run: npx eslint "{apps,libs}/**/*.ts"
+        run: npm run lint
       - name: Unit tests
-        run: npm test -- --ci
+        run: npm test
       - name: Audit (report only)
         if: always()
         run: npm audit --omit=dev || true

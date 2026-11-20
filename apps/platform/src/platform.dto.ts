@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 
 export class PlatformSettingsDto {
   @ApiProperty({

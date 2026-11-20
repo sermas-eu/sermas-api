@@ -3,21 +3,21 @@ import {
   AppSettingsDto,
   AppToolsDTO,
   RepositoryAvatarDto,
-} from 'apps/platform/src/app/platform.app.dto';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMCallResult } from 'libs/llm/providers/provider.dto';
+} from '#apps/platform/src/app/platform.app.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { LLMCallResult } from '#libs/llm/providers/provider.dto';
 import {
   ActiveTaskRecord,
   IntentActiveTools,
   TaskFilterWrapper,
   TaskIntentWrapper,
-} from '../intent/dialogue.intent.dto';
+} from '../intent/dialogue.intent.dto.js';
 import {
   DialogueTaskDto,
   TaskFieldDto,
-} from '../tasks/store/dialogue.tasks.store.dto';
-import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto';
-import { SelectedTool } from './dialogue.chat.tools.dto';
+} from '../tasks/store/dialogue.tasks.store.dto.js';
+import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto.js';
+import { SelectedTool } from './dialogue.chat.tools.dto.js';
 
 export type MatchingToolsResult = {
   matches?: Record<string, Record<string, any>>;

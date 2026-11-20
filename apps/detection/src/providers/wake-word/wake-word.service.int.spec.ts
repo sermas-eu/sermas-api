@@ -1,8 +1,8 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { WakeWordService } from './wake-word.service';
+import { WakeWordService } from './wake-word.service.js';
 
-jest.setTimeout(10 * 1000);
+vi.setConfig({ testTimeout: 10 * 1000 });
 
 describe('WakeWordService', () => {
   let wakeWordService: WakeWordService;

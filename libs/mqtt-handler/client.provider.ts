@@ -1,15 +1,15 @@
 import { Logger, Provider } from '@nestjs/common';
 // import { getKeycloakAccessToken } from 'apps/auth/src/libs/token-client';
-import { KeycloakTokenDto } from 'apps/keycloak/src/keycloak.admin.dto';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { isNodeEnv } from 'libs/util';
+import { KeycloakTokenDto } from '#apps/keycloak/src/keycloak.admin.dto';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { isNodeEnv } from '#libs/util';
 import { IClientOptions, MqttClient, connect } from 'mqtt';
 import {
   MQTT_CLIENT_INSTANCE,
   MQTT_LOGGER_PROVIDER,
   MQTT_OPTION_PROVIDER,
-} from './mqtt.constants';
-import { MqttModuleOptions } from './mqtt.interface';
+} from './mqtt.constants.js';
+import { MqttModuleOptions } from './mqtt.interface.js';
 
 const MAX_CONN_RETRIES = 5;
 const REFRESH_BEFORE = 60 * 1000;

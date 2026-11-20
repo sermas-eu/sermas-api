@@ -1,6 +1,6 @@
-import { RepositoryAvatarDto } from 'apps/platform/src/app/platform.app.dto';
-import { packPromptObject } from 'libs/llm/prompt/prompt.template';
-import { LLMTool } from './dialogue.chat.tools.dto';
+import { RepositoryAvatarDto } from '#apps/platform/src/app/platform.app.dto';
+import { packPromptObject } from '#libs/llm/prompt/prompt.template';
+import { LLMTool } from './dialogue.chat.tools.dto.js';
 
 export const packAvatarObject = (avatar: RepositoryAvatarDto) => {
   return packPromptObject(avatar, ['name', 'gender', 'prompt']);

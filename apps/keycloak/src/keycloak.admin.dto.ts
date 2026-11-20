@@ -3,7 +3,7 @@ import type {
   ClientCreateResource,
   ClientCreateScope,
   KeycloakClientResponseDto,
-} from './keycloack.authz.dto';
+} from './keycloack.authz.dto.js';
 
 export class KeycloakLoginDto {
   @ApiProperty()
@@ -407,8 +407,10 @@ export interface CreateRealmClientScopeDto {
   protocol: string;
 }
 
-export interface CreateRealmClientScopeAttributes
-  extends Record<string, string> {
+export interface CreateRealmClientScopeAttributes extends Record<
+  string,
+  string
+> {
   'consent.screen.text': string;
   'display.on.consent.screen': string;
   'include.in.token.scope': string;
@@ -422,8 +424,10 @@ export interface CreateProtocolMapperDto {
   config: CreateProtocolMapperConfig;
 }
 
-export interface CreateProtocolMapperConfig
-  extends Record<string, string | boolean> {
+export interface CreateProtocolMapperConfig extends Record<
+  string,
+  string | boolean
+> {
   'user.attribute': string;
   'claim.name': string;
   'jsonType.label': string;

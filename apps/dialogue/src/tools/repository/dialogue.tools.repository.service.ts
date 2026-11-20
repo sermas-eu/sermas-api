@@ -5,10 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { toDTO } from 'libs/util';
-import { FilterQuery, Model } from 'mongoose';
-import { DialogueToolsRepositoryRecordDto } from './dialogue.tools.repository.dto';
-import { DialogueToolsRepository } from './dialogue.tools.repository.schema';
+import { toDTO } from '#libs/util';
+import { QueryFilter, Model } from 'mongoose';
+import { DialogueToolsRepositoryRecordDto } from './dialogue.tools.repository.dto.js';
+import { DialogueToolsRepository } from './dialogue.tools.repository.schema.js';
 
 @Injectable()
 export class DialogueToolsRepositoryService {
@@ -53,7 +53,7 @@ export class DialogueToolsRepositoryService {
     return record ? toDTO<DialogueToolsRepositoryRecordDto>(record) : null;
   }
 
-  async search(filter: FilterQuery<DialogueToolsRepository>) {
+  async search(filter: QueryFilter<DialogueToolsRepository>) {
     const results = await this.repository.find(filter);
     return results.map((r) => toDTO<DialogueToolsRepositoryRecordDto>(r));
   }

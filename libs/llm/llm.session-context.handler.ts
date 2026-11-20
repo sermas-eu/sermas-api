@@ -1,4 +1,4 @@
-import { LLMSendArgs } from './llm.provider.dto';
+import { LLMSendArgs } from './llm.provider.dto.js';
 
 export interface SessionContextHandler {
   getChatServiceByTag(

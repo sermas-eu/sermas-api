@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { LLMService } from 'libs/llm/llm.service';
-import { ObjectDetectionDto } from '../../detection.dto';
+import { LLMService } from '#libs/llm/llm.service';
+import { ObjectDetectionDto } from '../../detection.dto.js';
 
 @Injectable()
 export class ChatGPTObjectDetectionService {
@@ -32,7 +32,7 @@ export class ChatGPTObjectDetectionService {
        ', ',
      )}]. Answer with this json format: { “detections”: object_list }, where “detection” is the key and object_list is the value, for example: { “detections”: [“envelope”] }`;
 
-    let content = '';
+    let content: string;
     try {
       const openai = this.llm.getOpenAIClient();
 

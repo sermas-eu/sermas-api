@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { NavigationService } from '../navigation/navigation.service';
-import { StatusEventDto } from '../robotics.dto';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { NavigationService } from '../navigation/navigation.service.js';
+import { StatusEventDto } from '../robotics.dto.js';
 
 @Injectable()
 export class RoboticsAgentEventsService {

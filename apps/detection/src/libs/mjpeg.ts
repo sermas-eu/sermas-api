@@ -1,5 +1,5 @@
-import { VideoFrame } from '../detection.streamer.dto';
-import { CRLF, MJPEG_BOUNDARY } from './constants';
+import { VideoFrame } from '../detection.streamer.dto.js';
+import { CRLF, MJPEG_BOUNDARY } from './constants.js';
 
 export const toMjpegBuffer = (frame: VideoFrame): Buffer => {
   const headers = [

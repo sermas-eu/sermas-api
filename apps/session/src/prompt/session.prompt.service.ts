@@ -1,24 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { packAvatarObject } from 'apps/dialogue/src/chat/utils';
-import { DialogueVectorStoreService } from 'apps/dialogue/src/document/dialogue.vectorstore.service';
-import { DialogueMemoryService } from 'apps/dialogue/src/memory/dialogue.memory.service';
+import { packAvatarObject } from '#apps/dialogue/src/chat/utils';
+import { DialogueVectorStoreService } from '#apps/dialogue/src/document/dialogue.vectorstore.service';
+import { DialogueMemoryService } from '#apps/dialogue/src/memory/dialogue.memory.service';
 import {
   AppSettingsDto,
   RepositoryAvatarDto,
-} from 'apps/platform/src/app/platform.app.dto';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { createSessionContext } from '../session.context';
-import { SessionService } from '../session.service';
+} from '#apps/platform/src/app/platform.app.dto';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { createSessionContext } from '../session.context.js';
+import { SessionService } from '../session.service.js';
 import {
   AgentEvaluatePromptDto,
   AgentEvaluatePromptResponseDto,
-} from './session.prompt.dto';
+} from './session.prompt.dto.js';
 import {
   AgentEvaluatePromptParams,
   sessionPrompt,
-} from './session.prompt.service.prompt';
+} from './session.prompt.service.prompt.js';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()

@@ -17,4 +17,4 @@ services:
       CONFIG_BASEPATH: /config
     volumes:
       - ${SERMAS_DEV_ROOT:-.}/config/api:/config:ro
-    command: ["dist/apps/api/main.js"]
+    command: ["dist/apps/api/src/main.js"]

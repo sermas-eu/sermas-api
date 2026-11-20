@@ -5,10 +5,10 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { DialogueTasksHandlerService } from './dialogue.tasks.handler.service';
-import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { DialogueTasksHandlerService } from './dialogue.tasks.handler.service.js';
+import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto.js';
 
 @ApiBearerAuth()
 @Controller('dialogue/tasks')

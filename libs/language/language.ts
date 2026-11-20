@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
-import { LanguageCode, SupportedLanguageCodes } from './lang-codes';
-import { languagesMap, languagesMapKV } from './languagesMap';
+import { LanguageCode, SupportedLanguageCodes } from './lang-codes.js';
+import { languagesMap, languagesMapKV } from './languagesMap.js';
 
 const SupportedLanguageCodesList =
   SupportedLanguageCodes as unknown as string[];
@@ -22,12 +22,13 @@ export const mapLanguageCode = (language: string): LanguageCode | null => {
       case 'it':
         matchingLanguage = 'it-IT';
         break;
-      default:
+      default: {
         const matches = SupportedLanguageCodes.filter(
           (v) => v.indexOf(matchingLanguage) > -1,
         );
         if (matches.length === 0) return null;
         matchingLanguage = matches[0];
+      }
     }
 
     return matchingLanguage as LanguageCode;

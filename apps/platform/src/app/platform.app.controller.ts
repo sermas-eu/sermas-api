@@ -17,11 +17,11 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser, Public } from 'libs/auth/auth.decorators';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser, Public } from '#libs/auth/auth.decorators';
 import {
   AppSettingsDto,
   AppToolsDTO,
@@ -32,7 +32,7 @@ import {
   RepositoryBackgroundDto,
   RepositoryConfigDto,
   RepositoryRobotModelDto,
-} from './platform.app.dto';
+} from './platform.app.dto.js';
 
 @ApiBearerAuth()
 @ApiTags('PLATFORM')

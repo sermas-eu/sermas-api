@@ -6,13 +6,13 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
 import {
   AgentEvaluatePromptDto,
   AgentEvaluatePromptResponseDto,
-} from './session.prompt.dto';
-import { SessionPromptService } from './session.prompt.service';
+} from './session.prompt.dto.js';
+import { SessionPromptService } from './session.prompt.service.js';
 
 @ApiBearerAuth()
 @Controller('session/agent')

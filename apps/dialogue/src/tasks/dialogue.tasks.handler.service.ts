@@ -1,29 +1,29 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { uuidv4 } from 'libs/util';
-import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
-import { DialogueMemoryService } from '../memory/dialogue.memory.service';
-import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto';
-import { DialogueTasksAsyncApiService } from './dialogue.tasks.async.service';
-import { DialogueTaskProgressDto } from './dialogue.tasks.dto';
-import { ToolFieldValuesDto } from './dialogue.tasks.handler.dto';
-import { DialogueTasksHandlerFieldsService } from './dialogue.tasks.handler.fields.service';
-import { DialogueTasksService } from './dialogue.tasks.service';
-import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto';
-import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { uuidv4 } from '#libs/util';
+import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto.js';
+import { DialogueMemoryService } from '../memory/dialogue.memory.service.js';
+import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto.js';
+import { DialogueTasksAsyncApiService } from './dialogue.tasks.async.service.js';
+import { DialogueTaskProgressDto } from './dialogue.tasks.dto.js';
+import { ToolFieldValuesDto } from './dialogue.tasks.handler.dto.js';
+import { DialogueTasksHandlerFieldsService } from './dialogue.tasks.handler.fields.service.js';
+import { DialogueTasksService } from './dialogue.tasks.service.js';
+import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto.js';
+import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service.js';
 import {
   DialogueTaskDto,
   TaskEventDto,
   TaskEventType,
   TaskFieldDto,
-} from './store/dialogue.tasks.store.dto';
-import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service';
+} from './store/dialogue.tasks.store.dto.js';
+import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service.js';
 
 import {
   TOOL_CANCEL_TASK_NAME,
   TOOL_CONTEXT_TASK_FIELD,
-} from './dialogue.tasks.constants';
+} from './dialogue.tasks.constants.js';
 
 @Injectable()
 export class DialogueTasksHandlerService {
@@ -294,7 +294,7 @@ export class DialogueTasksHandlerService {
             }
 
             // handle form tool/tool-name or task/task-name
-            const [type, name] = toolTrigger?.name.split('/');
+            const [type = '', name] = (toolTrigger?.name || '').split('/');
 
             if (type.startsWith('task') && name) {
               this.logger.debug(`Trigger task ${toolTrigger.name}`);
@@ -563,7 +563,7 @@ export class DialogueTasksHandlerService {
     );
 
     if (completed) {
-      record = await this.updateTaskProgress('completed', task, record);
+      await this.updateTaskProgress('completed', task, record);
       return;
     }
 

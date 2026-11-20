@@ -1,4 +1,4 @@
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
 
 export class DialogueSpeechToTextDto extends DialogueMessageDto {
   buffer: Buffer;

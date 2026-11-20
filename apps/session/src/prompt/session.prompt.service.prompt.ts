@@ -1,8 +1,8 @@
 import {
   createBaseSystemPrompt,
   BaseSystemPromptParams,
-} from 'apps/dialogue/src/dialogue.system.prompt';
-import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
+} from '#apps/dialogue/src/dialogue.system.prompt';
+import { PromptTemplate } from '#libs/llm/prompt/prompt.template';
 
 export type AgentEvaluatePromptParams = BaseSystemPromptParams & {
   json?: boolean;

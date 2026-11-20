@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PlatformSettingsDto, PlatformSettingsParamsDto } from './platform.dto';
-import { PlatformKeycloakService } from './platform.keycloack.service';
-import { PlatformTopicsService } from './topics/platform.topics.service';
+import {
+  PlatformSettingsDto,
+  PlatformSettingsParamsDto,
+} from './platform.dto.js';
+import { PlatformKeycloakService } from './platform.keycloack.service.js';
+import { PlatformTopicsService } from './topics/platform.topics.service.js';
 
 @Injectable()
 export class PlatformSettingsService {

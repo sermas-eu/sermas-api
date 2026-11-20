@@ -1,5 +1,5 @@
-import { LLMProvider } from './base.provider';
-import { LLMEmbeddingConfig } from './provider.dto';
+import { LLMProvider } from './base.provider.js';
+import { LLMEmbeddingConfig } from './provider.dto.js';
 
 export abstract class LLMEmbeddingProvider extends LLMProvider<LLMEmbeddingConfig> {
   abstract getName(): string;

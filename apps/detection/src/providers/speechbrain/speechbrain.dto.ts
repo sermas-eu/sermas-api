@@ -2,7 +2,7 @@ import {
   EmotionInferenceValue,
   StringInferenceValue,
   NumberInferenceValue,
-} from 'libs/sermas/sermas.dto';
+} from '#libs/sermas/sermas.dto';
 
 export class SpeechBrainClassification {
   language: StringInferenceValue;

@@ -1,21 +1,21 @@
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
-import { APP_CLIENT_NAME } from 'apps/platform/src/platform.keycloack.service';
-import { PlatformModule } from 'apps/platform/src/platform.module';
-import { PlatformTopicsService } from 'apps/platform/src/topics/platform.topics.service';
-import { uuidv4 } from 'libs/util';
-import { KEYCLOACK_TEST_REALM } from 'libs/test';
-import { KeycloakUser } from './keycloak.admin.dto';
-import { KeycloakModule } from './keycloak.module';
+import { SermasBaseModule } from '#apps/api/src/sermas.base.module';
+import { APP_CLIENT_NAME } from '#apps/platform/src/platform.keycloack.service';
+import { PlatformModule } from '#apps/platform/src/platform.module';
+import { PlatformTopicsService } from '#apps/platform/src/topics/platform.topics.service';
+import { uuidv4 } from '#libs/util';
+import { KEYCLOACK_TEST_REALM } from '#libs/test';
+import { KeycloakUser } from './keycloak.admin.dto.js';
+import { KeycloakModule } from './keycloak.module.js';
 import {
   KeycloakService,
   ROLE_ADMIN,
   ROLE_APP_OWNER,
-} from './keycloak.service';
-import { getKeycloakClientId } from './util';
+} from './keycloak.service.js';
+import { getKeycloakClientId } from './util.js';
 
-jest.setTimeout(5 * 60 * 1000);
+vi.setConfig({ testTimeout: 5 * 60 * 1000 });
 
 const realm = KEYCLOACK_TEST_REALM;
 

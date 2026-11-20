@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.generic.decorator';
+import { ApiGenericPropertyOptional } from '#libs/decorator/openapi.generic.decorator';
 
 export class SearchFilter<T = any> {
   @ApiGenericPropertyOptional({

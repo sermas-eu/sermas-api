@@ -5,11 +5,11 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'libs/auth/auth.decorators';
-import { AppModuleConfigDto } from '../platform.app.dto';
-import { PlatformAppModuleService } from './app.mod.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { AppModuleConfigDto } from '../platform.app.dto.js';
+import { PlatformAppModuleService } from './app.mod.service.js';
 
 @ApiBearerAuth()
 @Controller('platform/app/:appId/module')
