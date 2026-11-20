@@ -8,10 +8,18 @@ import { readFile } from 'fs/promises';
 
 const SECONDS = 1000;
 
-describe('SpeechBrainService', () => {
+// Needs a running SpeechBrain service and a fixture wav from the sermas-speechbrain
+// repository (tests/data/01-s1s2s3_with_noise-...-0014.wav). Skipped unless set.
+const TEST_WAV = process.env.SPEECHBRAIN_TEST_WAV;
+const describeIfFixture = TEST_WAV ? describe : describe.skip;
+
+describeIfFixture('SpeechBrainService', () => {
   let speechBrainService: SpeechBrainService;
   const config = new ConfigService();
-  config.set('SPEECHBRAIN_URL', 'http://127.0.0.1:5011');
+  config.set(
+    'SPEECHBRAIN_URL',
+    process.env.SPEECHBRAIN_URL || 'http://127.0.0.1:5011',
+  );
   beforeEach(async () => {
     speechBrainService = new SpeechBrainService(config);
   });
@@ -20,8 +28,7 @@ describe('SpeechBrainService', () => {
     it(
       'split an audio recording into several sources',
       async () => {
-        const testFile: string =
-          '/home/kanthavel/Code/sermas.xr/public/sermas-speechbrain/tests/data/01-s1s2s3_with_noise-251-136532-0015_1993-147965-0008_7976-110124-0014.wav';
+        const testFile = TEST_WAV;
         const audio: Buffer = await readFile(testFile);
         const result = {
           speakerCount: { value: 2, probability: 0.05685618729096997 },
@@ -34,8 +41,7 @@ describe('SpeechBrainService', () => {
 
   describe('countSpeakers', () => {
     it('count the number of speakers in an audio recording', async () => {
-      const testFile: string =
-        '/home/kanthavel/Code/sermas.xr/public/sermas-speechbrain/tests/data/01-s1s2s3_with_noise-251-136532-0015_1993-147965-0008_7976-110124-0014.wav';
+      const testFile = TEST_WAV;
       const audio: Buffer = await readFile(testFile);
       const result = {
         speakerCount: { value: 2, probability: 0.05685618729096997 },
