@@ -7,6 +7,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import { ClientLoginDto } from '#apps/keycloak/src/keycloak.dto';
 import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
 import { getKeycloakClientId } from '#apps/keycloak/src/util';
@@ -28,7 +29,15 @@ export class PlatformAuthTokenService {
     private readonly auth: PlatformAuthService,
   ) {}
 
-  async getClientAccessToken(req: AccessTokenRequestDto, bearerToken?: string) {
+  /**
+   * `caller` is the identity the JWT guard verified, never a token parsed
+   * here: an unverified token would let anyone claim any client or user.
+   */
+  async getClientAccessToken(
+    req: AccessTokenRequestDto,
+    caller?: { user: AuthJwtUser; token: string },
+  ) {
+    const bearerToken = caller?.token;
     if (!req.appId) throw new BadRequestException('appId missing');
     if (!req.clientId) throw new BadRequestException('appId missing');
 
@@ -42,10 +51,8 @@ export class PlatformAuthTokenService {
       clientSecret: req.clientSecret,
     };
 
-    if (bearerToken) {
-      const jwt = this.auth.parseToken(bearerToken);
-      if (jwt === null)
-        throw new BadRequestException(`Failed to parse bearer token`);
+    if (caller) {
+      const jwt = caller.user;
 
       // A system client (AUTH_KEYCLOAK_CLIENT_ID, AUTH_KEYCLOAK_SYSTEM_CLIENT_ID)
       // that passed the route guard (platform:token) may mint tokens for any

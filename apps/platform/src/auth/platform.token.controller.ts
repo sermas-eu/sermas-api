@@ -1,4 +1,11 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -39,7 +46,19 @@ export class PlatformAuthTokenController {
     @Body() payload: AccessTokenRequestDto,
     @Req() req: Request,
   ): Promise<JwtTokenDto> {
-    return this.token.getClientAccessToken(payload, req.headers?.authorization);
+    const verified = req as Request & {
+      user?: AuthJwtUser;
+      accessTokenJWT?: string;
+    };
+    // public route: a token that did not verify is not ignored, it is refused
+    if (req.headers?.authorization && !verified.user)
+      throw new UnauthorizedException();
+    return this.token.getClientAccessToken(
+      payload,
+      verified.user
+        ? { user: verified.user, token: verified.accessTokenJWT }
+        : undefined,
+    );
   }
 
   @Post(['refresh', 'refresh_token'])

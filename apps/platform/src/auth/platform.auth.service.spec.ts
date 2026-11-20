@@ -1,8 +1,18 @@
 import { PlatformContextDto } from './platform.auth.dto.js';
 import { PlatformAuthService } from './platform.auth.service.js';
 
+const appsModel = (apps: Record<string, string[]>) => ({
+  findOne: vi.fn(({ appId }: { appId: string }) => ({
+    lean: async () =>
+      apps[appId]
+        ? { clients: apps[appId].map((clientId) => ({ clientId })) }
+        : null,
+  })),
+});
+
 const createService = (
   permit: (clientId: string, userId: string) => boolean,
+  apps: Record<string, string[]> = {},
 ) => {
   const keycloak = {
     getClientByName: vi.fn(async (name: string) => ({ id: `id-${name}` })),
@@ -16,7 +26,11 @@ const createService = (
       key === 'AUTH_KEYCLOAK_SYSTEM_CLIENT_ID' ? 'system' : 'platform',
   };
   return {
-    service: new PlatformAuthService(config as any, keycloak as any),
+    service: new PlatformAuthService(
+      config as any,
+      keycloak as any,
+      appsModel(apps) as any,
+    ),
     keycloak,
   };
 };
@@ -75,5 +89,29 @@ describe('PlatformAuthService.isAllowed', () => {
     keycloak.getClientScopes.mockResolvedValueOnce([{ name: 'other:read' }]);
     expect(await service.isAllowed(ctx('app1-a', 'u'))).toBe(false);
     expect(keycloak.evaluatePermission).not.toHaveBeenCalled();
+  });
+});
+
+describe('PlatformAuthService.isOwnAppClient', () => {
+  const apps = { myapp: ['avatar', 'application'], 'myapp-x': ['avatar'] };
+
+  it("accepts the app's own clients", async () => {
+    const { service } = createService(() => false, apps);
+    expect(await service.isOwnAppClient('myapp', 'myapp-avatar')).toBe(true);
+    expect(await service.isOwnAppClient('myapp', 'myapp-application')).toBe(
+      true,
+    );
+  });
+
+  it('rejects clients of another app, even with a matching prefix', async () => {
+    const { service } = createService(() => false, apps);
+    expect(await service.isOwnAppClient('myapp', 'myapp-x-avatar')).toBe(false);
+    expect(await service.isOwnAppClient('myapp', 'other-avatar')).toBe(false);
+    expect(await service.isOwnAppClient('myapp', 'platform')).toBe(false);
+  });
+
+  it('rejects everything for an unknown app', async () => {
+    const { service } = createService(() => false, apps);
+    expect(await service.isOwnAppClient('nope', 'nope-avatar')).toBe(false);
   });
 });

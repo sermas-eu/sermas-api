@@ -5,11 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
 import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
 import { getKeycloakClientId } from '#apps/keycloak/src/util';
 import { jwtDecode } from '#libs/util';
+import { Model } from 'mongoose';
+import {
+  PlatformApp,
+  PlatformAppDocument,
+} from '../app/platform.app.schema.js';
 import { PlatformContextDto } from './platform.auth.dto.js';
 
 // guard cache in seconds
@@ -27,10 +33,16 @@ export class PlatformAuthService {
   private readonly allowedClients: string[];
 
   private readonly cache: Record<string, TokenCache> = {};
+  private readonly appClients: Record<
+    string,
+    { clients: Set<string>; expires: number }
+  > = {};
 
   constructor(
     private readonly config: ConfigService,
     private readonly keycloak: KeycloakService,
+    @InjectModel(PlatformApp.name)
+    private readonly apps: Model<PlatformAppDocument>,
   ) {
     this.allowedClients = [
       this.config.get('AUTH_KEYCLOAK_CLIENT_ID'),
@@ -69,6 +81,31 @@ export class PlatformAuthService {
       this.logger.warn(`Failed to parse token: ${e.stack}`);
     }
     return null;
+  }
+
+  /**
+   * Whether `clientId` (a token's `azp`) is one of the app's own clients, e.g.
+   * `myapp-avatar` for app `myapp`. The app's clients come from its record, so
+   * a client of app `myapp-x` never counts for app `myapp`.
+   */
+  async isOwnAppClient(appId: string, clientId: string): Promise<boolean> {
+    if (!appId || !clientId) return false;
+    let entry = this.appClients[appId];
+    if (!entry || entry.expires < Date.now()) {
+      const app = await this.apps
+        .findOne({ appId }, { clients: 1 })
+        .lean<Pick<PlatformApp, 'clients'>>();
+      entry = {
+        clients: new Set(
+          (app?.clients || []).map((c) =>
+            getKeycloakClientId(appId, c.clientId),
+          ),
+        ),
+        expires: Date.now() + CACHE_TTL_SECONDS * 1000,
+      };
+      this.appClients[appId] = entry;
+    }
+    return entry.clients.has(clientId);
   }
 
   /**

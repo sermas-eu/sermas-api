@@ -79,10 +79,10 @@ export class PlatformGuard implements CanActivate {
       `Protecting resource [ ${resource} ] with scopes: [ ${scopes} ]`,
     );
 
-    if (!request.user && isUnprotected) {
-      this.logger.verbose(
-        `Route ${request.path} has no user, and is public, allowed`,
-      );
+    // Public means anyone: a valid token must not get less than no token.
+    // Routes that act on the caller's identity check it themselves.
+    if (isUnprotected) {
+      this.logger.verbose(`Route ${request.path} is public, allowed`);
       return true;
     }
 
@@ -110,11 +110,16 @@ export class PlatformGuard implements CanActivate {
       token: request.accessTokenJWT,
     };
 
-    let isAllowed = false;
+    let isAllowed: boolean;
     try {
-      isAllowed = await this.auth.isAllowed(appContext);
-    } catch (e: any) {
-      //
+      // an app's own clients (kiosk, modules) may read that app's resources;
+      // anything else goes through the Keycloak permissions
+      isAllowed =
+        (request.method === 'GET' &&
+          (await this.auth.isOwnAppClient(appId, user.azp))) ||
+        (await this.auth.isAllowed(appContext));
+    } catch {
+      isAllowed = false;
     }
 
     if (process.env.LOG_REQUEST === '1') {
