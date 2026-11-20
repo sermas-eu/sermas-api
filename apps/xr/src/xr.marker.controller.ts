@@ -95,7 +95,6 @@ export class XRMarkerController {
       type: 'string',
       format: 'binary',
     },
-    status: HttpStatus.OK,
   })
   @ApiProduces('image/jpeg')
   getMarkerQRCode(

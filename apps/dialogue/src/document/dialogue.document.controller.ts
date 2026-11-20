@@ -52,7 +52,6 @@ export class DialogueDocumentController {
     isArray: true,
   })
   @ApiOkResponse({
-    status: 200,
     type: DialogueDocumentDto,
     isArray: true,
   })

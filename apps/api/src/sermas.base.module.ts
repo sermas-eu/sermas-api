@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
-import { redisStore } from 'cache-manager-redis-yet';
+import { createKeyv } from '@keyv/redis';
 import { LLMModule } from 'libs/llm/llm.module';
 import { LoggerMiddleware } from 'libs/middleware/logger.middleware';
 import { MonitorModule } from 'libs/monitor/monitor.module';
@@ -25,8 +25,9 @@ import { SermasConfigModule } from './sermas.config.module';
       useFactory: async (config: ConfigService) => {
         return {
           ttl: config.get<number>('CACHE_TTL_SEC') * 1000,
-          store: redisStore,
-          url: config.get('REDIS_URL'),
+          // createKeyv, not `new KeyvRedis`: the bare adapter does not round-trip
+          // objects through cache-manager.
+          stores: [createKeyv(config.get<string>('REDIS_URL'))],
         };
       },
     }),
@@ -73,6 +74,6 @@ export class SermasBaseModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(LoggerMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
+      .forRoutes({ path: '{*splat}', method: RequestMethod.ALL });
   }
 }

@@ -23,9 +23,9 @@ export function ApiScopes(params: string | string[]) {
   return applyDecorators(...decorators);
 }
 
-export interface ApiGenericPropertyOptions extends ApiPropertyOptions {
+export type ApiGenericPropertyOptions = ApiPropertyOptions & {
   genericModels?: Function[]; // eslint-disable-line
-}
+};
 
 const apiGenericObject = (options?: ApiGenericPropertyOptions) => {
   const models = options?.genericModels || [];
@@ -46,7 +46,7 @@ const apiGenericObject = (options?: ApiGenericPropertyOptions) => {
           type: 'object',
         },
       ],
-    }),
+    } as ApiPropertyOptions),
   );
 };
 

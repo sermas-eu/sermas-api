@@ -26,7 +26,7 @@ export class LLMCacheService {
   ) {
     if (config.get('CLEAR_CACHE_ON_START') === '1') {
       this.logger.log('Clearing REDIS LLM responses cache');
-      this.cacheManager.reset();
+      this.cacheManager.clear();
     }
     this.enabled = config.get('LLM_CACHE_ENABLED') !== '0';
     this.logger.log(`LLM caching ${this.enabled ? 'enabled' : 'disabled'}`);
