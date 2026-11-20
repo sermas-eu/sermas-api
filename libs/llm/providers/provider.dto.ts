@@ -17,15 +17,7 @@ export const LLMPromptTagList = [
 
 export type LLMPromptTag = (typeof LLMPromptTagList)[number];
 
-export const LLMProviderList = [
-  'ollama',
-  'openai',
-  'gemini',
-  'groq',
-  'antrophic',
-  'mistral',
-  'azure_openai',
-];
+export const LLMProviderList = ['openai'];
 export type LLMProvider = (typeof LLMProviderList)[number];
 
 export const LLMRoleList = ['system', 'user', 'assistant'] as const;

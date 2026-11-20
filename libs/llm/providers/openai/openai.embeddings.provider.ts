@@ -11,12 +11,17 @@ export class OpenAIEmbeddingProvider extends LLMEmbeddingProvider {
   constructor(protected config: LLMEmbeddingConfig) {
     super(config);
 
+    // The model check only knows OpenAI's own embedding models. A custom endpoint
+    // (LiteLLM, vLLM, ...) serves models under its own names, so leave the list
+    // unset and let checkModel pass.
     // https://platform.openai.com/docs/guides/embeddings/embedding-models
-    this.models = [
-      'text-embedding-3-small',
-      'text-embedding-3-large',
-      'text-embedding-ada-002',
-    ];
+    if (!config.baseURL) {
+      this.models = [
+        'text-embedding-3-small',
+        'text-embedding-3-large',
+        'text-embedding-ada-002',
+      ];
+    }
 
     this.openai = createClient(config);
   }

@@ -120,7 +120,8 @@ export const SermasDefaultConfig = {
   // ELEVENIO_MODELS Elevenio models
   ELEVENIO_MODELS: 'eleven_multilingual_v2',
 
-  // LLM_SERVICE default LLM service to use (supported: openai, groq, ollama, azure_openai, vertexai)
+  // LLM_SERVICE LLM service to use. Only `openai` is supported: any OpenAI-compatible
+  // endpoint (OpenAI, LiteLLM, vLLM, ...) selected with OPENAI_BASEURL
   LLM_SERVICE: 'openai',
 
   // LLM_SERVICE_CHAT LLM service to use for textual chat in format provider/model. If not provided will use LLM_SERVICE
@@ -154,8 +155,14 @@ export const SermasDefaultConfig = {
   // LLM_DISABLE_SUMMARY, when equals to '1', summarization is not used and the full conversation history is passed to the LLM instead
   LLM_DISABLE_SUMMARY: '0',
 
-  // OPENAI_API_KEY OpenAI api key
+  // OPENAI_BASEURL Base URL of the OpenAI-compatible endpoint, e.g. http://litellm:4000/v1. Empty uses api.openai.com
+  OPENAI_BASEURL: '',
+  // OPENAI_API_KEY API key for OPENAI_BASEURL
   OPENAI_API_KEY: '',
+  // OPENAI_EMBEDDINGS_BASEURL Base URL for embeddings, when they come from a different endpoint. Empty uses OPENAI_BASEURL
+  OPENAI_EMBEDDINGS_BASEURL: '',
+  // OPENAI_EMBEDDINGS_API_KEY API key for OPENAI_EMBEDDINGS_BASEURL. Empty uses OPENAI_API_KEY
+  OPENAI_EMBEDDINGS_API_KEY: '',
   // OPENAI_EMBEDDINGS_MODEL OpenAi Embedding model
   OPENAI_EMBEDDINGS_MODEL: 'text-embedding-3-small',
   // OPENAI_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
@@ -170,84 +177,6 @@ export const SermasDefaultConfig = {
   OPENAI_TTS_VOICE_F: 'shimmer',
   // OPENAI_TTS_VOICE_M Openai male TTS voice model
   OPENAI_TTS_VOICE_M: 'onyx',
-
-  // LITELLM_URL LiteLLM endpoint URL
-  LITELLM_URL: 'http://litellm',
-
-  // OLLAMA_BASEURL Url to Ollama
-  OLLAMA_BASEURL: 'http://ollama:11434',
-  // OLLAMA_MODEL Default Ollama model used as fallback
-  OLLAMA_MODEL: 'sermas-llama3',
-  // OLLAMA_CHAT_MODELS Supported chat models from Ollama. Leave empty to allow all available.
-  OLLAMA_CHAT_MODELS: '',
-  // OLLAMA_EMBEDDINGS_MODEL Default embedding model
-  OLLAMA_EMBEDDINGS_MODEL: 'nomic-embed-text',
-
-  // GROQ_API_KEY Groq api key
-  GROQ_API_KEY: '',
-  // GROQ_MODEL Default Groq model used as fallback
-  GROQ_MODEL: 'llama3-70b-8192',
-  // GROQ_CHAT_MODELS Supported chat models from Groq. Leave empty to allow all available.
-  GROQ_CHAT_MODELS: '',
-
-  // MISTRAL_API_KEY Mistral api key
-  MISTRAL_API_KEY: '',
-  // MISTRAL_EMBEDDINGS_MODEL Mistral Embedding model
-  MISTRAL_EMBEDDINGS_MODEL: 'mistral-embed',
-  // MISTRAL_CHAT_MODELS Supported chat models from Mistral. Leave empty to allow all available.
-  MISTRAL_CHAT_MODELS: '',
-  // MISTRAL_MODEL Default Mistral model used as fallback
-  MISTRAL_MODEL: 'open-mistral-nemo',
-
-  // ANTROPHIC_API_KEY Antrophic api key
-  ANTROPHIC_API_KEY: '',
-  // ANTROPHIC_MODEL Default Antrophic model used as fallback
-  ANTROPHIC_MODEL: 'claude-3-haiku-20240307',
-  // ANTROPHIC_MODELS Supported chat models from Antrophic. Leave empty to allow all available.
-  ANTROPHIC_CHAT_MODELS: '',
-
-  // GEMINI_API_KEY Provide a Google Gemini api key for chat and embedding services
-  GEMINI_API_KEY: '',
-  // GEMINI_EMBEDDINGS_MODEL Supported embedding models from Google Gemini. Leave empty to allow all available.
-  GEMINI_EMBEDDINGS_MODEL: '',
-  // GEMINI_CHAT_MODELS Supported chat models from Google Gemini. Leave empty to allow all available.
-  GEMINI_CHAT_MODELS: '',
-
-  // HUGGINGFACE_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
-  HUGGINGFACE_API_KEY: '',
-  // HUGGINGFACE_CHAT_MODELS Supported chat models from Hugging Face. Leave empty to allow any.
-  HUGGINGFACE_CHAT_MODELS: '',
-  // HUGGINGFACE_BASEURL Base URL for Hugging Face inference service
-  HUGGINGFACE_BASEURL: '',
-
-  // AZURE_OPENAI_BASEURL Azure resoure endpoint URL
-  AZURE_OPENAI_BASEURL: '',
-  // AZURE_OPENAI_API_KEY  Azure resource API KEY
-  AZURE_OPENAI_API_KEY: '',
-  // AZURE_OPENAI_MODEL Supported chat models from OpenAI on Azure.
-  AZURE_OPENAI_CHAT_MODELS: '',
-  // AZURE_OPENAI_CHAT_API_VERSION Version of chat model distributed in Azure
-  AZURE_OPENAI_CHAT_API_VERSION: '2024-08-01-preview',
-  // AZURE_OPENAI_MODEL Supported embeddings models from OpenAI on Azure.
-  AZURE_OPENAI_EMBEDDINGS_MODEL: 'text-embedding-ada-002',
-  // AZURE_OPENAI_CHAT_API_VERSION Version of embeddings model distributed in Azure
-  AZURE_OPENAI_EMBEDDINGS_API_VERSION: '2023-05-15',
-
-  // VERTEXAI_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
-  VERTEXAI_API_KEY: '',
-  // VERTEXAI_CHAT_MODELS Supported Google chat models under Vertex AI. Leave empty to allow any.
-  VERTEXAI_CHAT_MODELS: 'mistral-small-2503',
-  // VERTEXAI_REGION Google Cloud Processing region for Vertex AI
-  VERTEXAI_REGION: '',
-  // VERTEXAI_PROJECT Google Cloud project ID for Vertex AI
-  VERTEXAI_PROJECT: '',
-
-  // GCP_MISTRAL_CHAT_MODELS Supported Mistral chat models under Google Cloud. Leave empty to allow any.
-  GCP_MISTRAL_CHAT_MODELS: 'mistral-small-2503',
-  // GCP_MISTRAL_REGION Google Cloud Processing region for Mistral
-  GCP_MISTRAL_REGION: '',
-  // GCP_MISTRAL_PROJECT Google Cloud project ID for Mistral
-  GCP_MISTRAL_PROJECT: '',
 
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',
