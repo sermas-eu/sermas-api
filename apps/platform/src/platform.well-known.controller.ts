@@ -9,11 +9,10 @@ export class PlatformWellKnownController {
   @ApiExcludeEndpoint()
   wellKnownSermasXr() {
     const wellKnown: SermasWellKnowDto = {
-      openapiSpec: `${ASYNCAPI_BASEURL}-json`,
+      openapiSpec: `${OPENAPI_BASEURL}-json`,
       openapiUi: OPENAPI_BASEURL,
 
       asyncapiSpec: `${ASYNCAPI_BASEURL}-json`,
-      asyncapiUi: ASYNCAPI_BASEURL,
     };
 
     return wellKnown;

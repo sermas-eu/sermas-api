@@ -1,9 +1,10 @@
-import {
-  OpenAPIObject,
-  ReferenceObject,
-  SchemaObject,
-} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { OpenAPIObject } from '@nestjs/swagger';
 import { Document, Operation } from 'openapi-client-axios';
+
+// @nestjs/swagger does not export these: derive them from its document type
+type SchemaOrReference = OpenAPIObject['components']['schemas'][string];
+type ReferenceObject = Extract<SchemaOrReference, { $ref: string }>;
+type SchemaObject = Exclude<SchemaOrReference, ReferenceObject>;
 
 export interface PlatformModuleSwaggerOperation {
   operation: Operation;

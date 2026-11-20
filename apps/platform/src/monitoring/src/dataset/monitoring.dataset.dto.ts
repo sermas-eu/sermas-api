@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ApiGenericProperty } from 'libs/decorator/openapi.decorator';
+import { ApiGenericProperty } from 'libs/decorator/openapi.generic.decorator';
 import { SermasSessionDto } from 'libs/sermas/sermas.dto';
 
 export const LogTypeList = [

@@ -1,5 +1,4 @@
-import { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
-import { AsyncApiDocument } from 'nestjs-asyncapi';
+import { AsyncApiDocument, AsyncApiSchemaObject } from 'libs/asyncapi';
 
 export class AsyncApiUtils {
   extractSchemaReferences(asyncApiJson: AsyncApiDocument) {
@@ -28,7 +27,7 @@ export class AsyncApiUtils {
 
     exploreObject(asyncApiJson);
 
-    const result: Record<string, SchemaObject> = {};
+    const result: Record<string, AsyncApiSchemaObject> = {};
 
     schemaReferences.forEach((ref) => {
       const objName = ref.replace(refPrefix, '');

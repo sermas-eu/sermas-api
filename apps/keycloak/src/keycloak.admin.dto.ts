@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
+import type {
   ClientCreateResource,
   ClientCreateScope,
   KeycloakClientResponseDto,

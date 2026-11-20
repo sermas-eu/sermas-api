@@ -120,7 +120,10 @@ describe('PlatformModuleService', () => {
       const userToken = await keycloakService.login(username, username);
 
       const platformApp = newApp(appId, user.id);
-      await platformAppService.createApp({ data: platformApp, skipClients: false });
+      await platformAppService.createApp({
+        data: platformApp,
+        skipClients: false,
+      });
 
       // 5. query platform module from app client
       await requestModule(userToken.access_token, {

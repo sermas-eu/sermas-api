@@ -1,7 +1,7 @@
 import { HttpServer, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
-import { AsyncApiDocumentBuilder, AsyncApiModule } from 'nestjs-asyncapi';
+import { createAsyncApiDocument, serveAsyncApiDocument } from 'libs/asyncapi';
 import { ModuleResourceDto, PlatformModuleConfigDto } from '../mod.dto';
 import { PlatformModuleService } from '../mod.service';
 import { TestCustomModuleController } from './test.custom-module.controller';
@@ -72,15 +72,12 @@ export const startServer = async (port?: number) => {
   const openapiDoc = SwaggerModule.createDocument(app, config, {});
   SwaggerModule.setup('/openapi', app, openapiDoc, {});
 
-  const asyncApiOptions = new AsyncApiDocumentBuilder()
-    .setTitle('Test AsyncAPI')
-    .setDescription('Test AsyncAPI')
-    .setVersion('1.0')
-    .setDefaultContentType('application/json')
-    .addBearerAuth()
-    .build();
-  const asyncDoc = AsyncApiModule.createDocument(app, asyncApiOptions);
-  await AsyncApiModule.setup('/asyncapi', app, asyncDoc);
+  const asyncDoc = createAsyncApiDocument(app, {
+    title: 'Test AsyncAPI',
+    description: 'Test AsyncAPI',
+    version: '1.0',
+  });
+  serveAsyncApiDocument(app, '/asyncapi', () => asyncDoc);
 
   const server: HttpServer = await app.listen(port);
   const logger = new Logger();

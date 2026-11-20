@@ -1,6 +1,6 @@
 // https://www.deskriders.dev/posts/1702742595-function-calling-ollama-models/
 import { Readable } from 'stream';
-import { PromptTemplateOutput } from '../prompt/prompt.template';
+import type { PromptTemplateOutput } from '../prompt/prompt.template';
 
 export const LLMPromptTagList = [
   // main chat prompt

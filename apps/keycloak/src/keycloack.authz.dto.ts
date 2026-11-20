@@ -1,5 +1,5 @@
 import { PlatformContextDto } from 'apps/platform/src/auth/platform.auth.dto';
-import { KeycloakPermissionUpdateDto } from './keycloak.admin.dto';
+import type { KeycloakPermissionUpdateDto } from './keycloak.admin.dto';
 
 export interface EvaluatePermissionResourceDto {
   name: string;

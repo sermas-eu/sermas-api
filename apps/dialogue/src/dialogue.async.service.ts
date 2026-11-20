@@ -5,7 +5,7 @@ import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
 import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
 import { mapMqttTopic } from 'libs/util';
-import { AsyncApi } from 'nestjs-asyncapi';
+import { AsyncApi } from 'libs/asyncapi';
 import { DialogueSessionRequestDto } from './dialogue.request-monitor.dto';
 import {
   DialogueAvatarSpeechControlDto,

@@ -1,5 +1,5 @@
 import { Eta } from 'eta';
-import { LLMProvider } from '../providers/provider.dto';
+import type { LLMProvider } from '../providers/provider.dto';
 
 let engine: Eta;
 

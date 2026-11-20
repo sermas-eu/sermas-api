@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.decorator';
+import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.generic.decorator';
 import { DialogueToolsRepositoryOptionsDto } from '../../tools/repository/dialogue.tools.repository.dto';
 import { UIContentOptionsDto } from 'apps/ui/src/ui.content.dto';
 

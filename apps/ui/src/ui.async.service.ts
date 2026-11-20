@@ -3,7 +3,7 @@ import { ApiExtraModels } from '@nestjs/swagger';
 import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
 import { MqttService } from 'libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { AsyncApi } from 'nestjs-asyncapi';
+import { AsyncApi } from 'libs/asyncapi';
 import { UIAssetChangedDto } from './ui.asset.dto';
 import { UIContentDto } from './ui.content.dto';
 import { UIInteractionEventDto } from './ui.dto';

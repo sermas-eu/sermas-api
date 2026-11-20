@@ -38,7 +38,7 @@ import {
 import {
   TOOL_CANCEL_TASK_NAME,
   TOOL_CONTEXT_TASK_FIELD,
-} from './dialogue.tasks.handler.service';
+} from './dialogue.tasks.constants';
 import { DialogueTaskRecordDto } from './record/dialogue.tasks.record.dto';
 import {
   DialogueTaskDto,

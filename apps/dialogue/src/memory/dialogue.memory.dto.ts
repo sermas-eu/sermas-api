@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.decorator';
+import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.generic.decorator';
 import {
   LLMMessage,
   LLMRole,
