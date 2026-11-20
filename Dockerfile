@@ -1,31 +1,29 @@
-FROM node:20 AS builder
+FROM node:24 AS builder
 
-RUN apt update -q && apt install -y sox
+RUN apt-get update -q && apt-get install -y -q sox && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-ADD package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 
-# fix husky error in minio-client
-RUN mkdir -p .git/hooks && npm install husky -g
+# Some dependencies run git hooks setup (husky) on install.
+RUN mkdir -p .git/hooks && npm ci --no-audit --no-fund
 
-RUN npm i
+COPY . ./
 
-ADD . ./
-
+# No `npm prune --omit=dev`: nestjs-asyncapi's document generator loads ts-node,
+# TypeScript and Babel at runtime, so the runtime image needs them.
 RUN npm run build
 
-# ENTRYPOINT [ "npm" ]
-# CMD [ "run", "start:debug" ]
+FROM node:24
 
-FROM node:20
-
-RUN apt update -q && apt install -y sox
+RUN apt-get update -q && apt-get install -y -q sox && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/package.json /app/package.json
-COPY --from=builder /app/package-lock.json /app/package-lock.json
 
+ENV NODE_ENV=production
+EXPOSE 3000
 ENTRYPOINT [ "node" ]
 CMD [ "dist/apps/api/main.js" ]
