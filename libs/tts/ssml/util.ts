@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import * as ssmlCheck from 'ssml-check-core';
+import ssmlCheck from 'ssml-check-core';
 
 const logger = new Logger('ssml.utils');
 

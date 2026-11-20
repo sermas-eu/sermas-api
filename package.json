@@ -76,7 +76,6 @@
     "ssml-check-core": "^0.3.9",
     "string-similarity": "^4.0.4",
     "svgdom": "^0.1.19",
-    "typedarray-to-buffer": "^4.0.0",
     "ulidx": "^2.3.0",
     "wavefile": "^11.0.0"
   },

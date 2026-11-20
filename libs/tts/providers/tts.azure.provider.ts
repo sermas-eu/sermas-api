@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
-import * as toBuffer from 'typedarray-to-buffer';
 import { ITextToSpeech, SpeakParam } from '../tts.dto.js';
 import { fixSSML } from '../ssml/util.js';
 
@@ -151,7 +150,7 @@ export class AzureTextToSpeech implements ITextToSpeech, OnModuleInit {
         (result) => {
           const { audioData } = result;
           synthesizer.close();
-          resolve(toBuffer(audioData));
+          resolve(Buffer.from(audioData));
         },
         (error) => {
           synthesizer.close();

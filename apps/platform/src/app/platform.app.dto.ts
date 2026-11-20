@@ -13,7 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { SermasRecordChangedDto } from '#libs/sermas/sermas.dto';
-import * as sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from 'sanitize-html';
 import { PlatformModuleConfigDto } from '../mod/mod.dto.js';
 import {
   AppPromptDto,

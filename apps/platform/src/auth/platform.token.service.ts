@@ -47,14 +47,19 @@ export class PlatformAuthTokenService {
       if (jwt === null)
         throw new BadRequestException(`Failed to parse bearer token`);
 
-      const isAllowed = await this.auth.isAllowed({
-        appId: req.appId,
-        clientId: req.clientId,
-        resource: 'platform',
-        scopes: ['token'],
-        token: bearerToken,
-        userId: jwt.sub,
-      });
+      // A system client (AUTH_KEYCLOAK_CLIENT_ID, AUTH_KEYCLOAK_SYSTEM_CLIENT_ID)
+      // that passed the route guard (platform:token) may mint tokens for any
+      // app; any other caller needs the permission on the target app client.
+      const isAllowed =
+        this.auth.isSystemClient(jwt.azp) ||
+        (await this.auth.isAllowed({
+          appId: req.appId,
+          clientId: req.clientId,
+          resource: 'platform',
+          scopes: ['token'],
+          token: bearerToken,
+          userId: jwt.sub,
+        }));
 
       if (!isAllowed) throw new ForbiddenException();
 

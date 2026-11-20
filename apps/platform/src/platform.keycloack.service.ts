@@ -480,7 +480,29 @@ export class PlatformKeycloakService implements OnModuleInit {
       client = await save(true);
     }
 
+    await this.grantPlatformAdmin(client.clientId);
+
     return await this.keycloack.getClientByName(client.clientId);
+  }
+
+  /**
+   * The platform client mints app tokens for the kiosk and other services
+   * (POST /platform/token), which its own `has-admin-role` policy only allows
+   * to the admin realm role: give that role to its service account.
+   */
+  private async grantPlatformAdmin(clientId: string) {
+    const account = await this.keycloack.getUserByUsername(
+      `service-account-${clientId}`,
+    );
+    if (!account) {
+      this.logger.warn(`No service account for client ${clientId}`);
+      return;
+    }
+    await this.keycloack.getToken();
+    await this.keycloack.assignRealmRoles({
+      userId: account.id,
+      roles: [ROLE_ADMIN],
+    });
   }
 
   login(username: string, password: string, clientId?: string) {
