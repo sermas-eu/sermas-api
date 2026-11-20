@@ -51,13 +51,3 @@ export class DialogueDocumentDto {
   metadata?: DialogueDocumentMetadataDto;
 }
 
-export class RagWebsiteDto {
-  @ApiProperty()
-  appId: string;
-
-  @ApiProperty()
-  url: string;
-
-  @ApiProperty({ type: [String] })
-  filterPaths: string[];
-}

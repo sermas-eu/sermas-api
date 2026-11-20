@@ -20,13 +20,10 @@ import { MinioClient, MinioService } from 'nestjs-minio-client';
 import * as path from 'path';
 import {
   DialogueDocumentDto,
-  RagWebsiteDto,
   RepositoryDocument,
 } from './dialogue.document.dto';
 import { DialogueDocument } from './dialogue.document.schema';
 import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
-import { CheerioCrawler, Sitemap } from 'crawlee';
-import { compile } from 'html-to-text';
 
 const QUEUE_TIMEOUT_SEC = 10 * 1000;
 type ImportQueueItem = {
@@ -237,103 +234,12 @@ export class DialogueDocumentService implements OnModuleInit {
       await this.removeAll(ev.record.appId);
       return;
     }
-
-    if (ev.record.rag && ev.record.rag.websites) {
-      this.logger.debug(`Importing ${ev.record.rag.websites.length} websites`);
-      for (const www of ev.record.rag.websites) {
-        await this.importWebsite(ev.record.appId, www);
-      }
-    }
   }
 
   async import(documents: DialogueDocumentDto[]) {
     this.logger.debug(`Import ${documents.length} documents`);
     const result = await this.save(documents);
     return result;
-  }
-
-  async importWebsite(appId: string, website: RagWebsiteDto) {
-    this.logger.debug(`Import content from ${website.url}`);
-    await this.scrap(appId, website);
-  }
-
-  async scrap(appId: string, website: RagWebsiteDto): Promise<void> {
-    // use sitemap.xml
-    const urls = [
-      'sitemap.xml',
-      'sitemap_index.xml',
-      'sitemapindex.xml',
-      'sitemap.php',
-      'sitemap.txt',
-    ].map((u) => website.url + '/' + u);
-    const sitemap = await Sitemap.load(urls);
-    // add base url
-    sitemap.urls.push(website.url);
-    this.logger.log(`Found ${sitemap.urls.length} URLs`);
-    if (sitemap.urls.length) {
-      await this.scrapUrls(
-        appId,
-        sitemap.urls,
-        website.filterPaths || [],
-        this,
-      );
-    }
-  }
-
-  async scrapUrls(
-    appId: string,
-    urls: string[],
-    filterPaths: string[],
-    context: DialogueDocumentService,
-  ): Promise<void> {
-    const options = {
-      wordwrap: 130,
-      baseElements: {
-        selectors: ['body'],
-      },
-      ignoreHref: true,
-    };
-    const compiledConvert = compile(options);
-    const crawler = new CheerioCrawler({
-      async requestHandler({ request, response, body, $ }) {
-        context.logger.debug(`Importing ${request.url}`);
-        const toFilter = filterPaths.some((f) => request.url.indexOf(f) > -1);
-        if (toFilter) {
-          context.logger.debug(`Skipped ${request.url}`);
-          return;
-        }
-        const content = compiledConvert(body.toString());
-        await context.handleScrapResult(appId, request.url, content);
-      },
-      failedRequestHandler({ request }) {
-        context.logger.warn(`Request ${request.url} failed`);
-      },
-    });
-
-    await crawler.addRequests(urls);
-
-    // Run the crawler
-    await crawler.run();
-  }
-
-  async handleScrapResult(
-    appId: string,
-    url: string,
-    data: string,
-  ): Promise<void> {
-    const doc: DialogueDocumentDto = {
-      metadata: {
-        source: 'import-website',
-        uri: url,
-      },
-      content: data,
-      appId,
-      documentId: url
-        .replace(/^https:\/\//, '')
-        .replace(/\/$/, '')
-        .replace(/\//g, '-'),
-    };
-    await this.save([doc]);
   }
 
   async save(documents: DialogueDocumentDto[], failOnError = false) {

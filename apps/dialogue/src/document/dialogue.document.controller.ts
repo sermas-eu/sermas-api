@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
 import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { DialogueDocumentDto, RagWebsiteDto } from './dialogue.document.dto';
+import { DialogueDocumentDto } from './dialogue.document.dto';
 import { DialogueDocumentService } from './dialogue.document.service';
 
 @ApiBearerAuth()
@@ -63,21 +63,6 @@ export class DialogueDocumentController {
     return this.document.import(documents);
   }
 
-  @Post('/website')
-  @ApiOperationName({
-    summary: 'Import RAG documents by website scraping',
-  })
-  @ApiBody({
-    description: 'URL',
-    type: RagWebsiteDto,
-  })
-  @ApiOkResponse({
-    status: 200,
-  })
-  @ApiScopes('document')
-  async importWebsite(@Body() website: RagWebsiteDto): Promise<void> {
-    return this.document.importWebsite(website.appId, website);
-  }
 
   @Delete(':appId/all')
   @ApiOperationName({

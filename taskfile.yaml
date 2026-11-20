@@ -14,8 +14,6 @@ tasks:
 
   setup:
     desc: "Install dependencies (npm ci)"
-    env:
-      PUPPETEER_SKIP_DOWNLOAD: "1"
     cmds:
       - npm ci --no-audit --no-fund
 

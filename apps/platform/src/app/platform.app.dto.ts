@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
-import { RagWebsiteDto } from 'apps/dialogue/src/document/dialogue.document.dto';
 import { DialogueTaskDto } from 'apps/dialogue/src/tasks/store/dialogue.tasks.store.dto';
 import { KeycloakUser } from 'apps/keycloak/src/keycloak.admin.dto';
 import { Transform, TransformFnParams } from 'class-transformer';
@@ -438,10 +437,6 @@ export class RepositoryConfigDto implements Record<RepositoryAssetTypes, any> {
   animations: RepositoryAnimationDto[];
 }
 
-export class RagDocumentsDto {
-  websites: [RagWebsiteDto];
-}
-
 export class PlatformAppDto {
   // @IsUUID('4')
   @ApiProperty()
@@ -511,13 +506,6 @@ export class PlatformAppDto {
   })
   @IsOptional()
   tasks: DialogueTaskDto[];
-
-  @IsOptional()
-  @ApiPropertyOptional({
-    description: 'List of RAG documents or urls to import',
-    type: RagDocumentsDto,
-  })
-  rag?: RagDocumentsDto;
 }
 
 export class CreatePlatformAppDto extends OmitType(PlatformAppDto, [

@@ -2,7 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { createSessionContext } from 'apps/session/src/session.context';
-import { sleep } from 'crawlee';
+import { setTimeout as sleep } from 'timers/promises';
 import { LLMProviderService } from 'libs/llm/llm.provider.service';
 import { Model } from 'mongoose';
 import { ulid } from 'ulidx';

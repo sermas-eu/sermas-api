@@ -160,10 +160,7 @@ export class PlatformAppService implements OnModuleInit {
         }
         imported.push(savedApp);
 
-        await this.publishApp(
-          { rag: importApp.rag, ...savedApp },
-          exists ? 'updated' : 'created',
-        );
+        await this.publishApp(savedApp, exists ? 'updated' : 'created');
 
         this.logger.log(
           `Imported "${savedApp.name}" with appId=${savedApp.appId}`,
