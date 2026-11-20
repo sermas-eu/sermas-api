@@ -15,7 +15,6 @@ import { RegistrationRequestDto } from '#apps/auth/src/auth.dto';
 import { KeycloakUserRecord } from '#apps/keycloak/src/keycloak.admin.dto';
 import { createHash } from 'crypto';
 import { DefaultLanguage } from '#libs/language/lang-codes';
-import { DefaultLLMs } from '#libs/llm/constants';
 import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
 import { getConfigPath } from '#libs/sermas/sermas.utils';
 import { isNodeEnv, loadFile, toDTO, uuidv4 } from '#libs/util';
@@ -408,8 +407,9 @@ export class PlatformAppService implements OnModuleInit {
       };
     }
 
+    // empty: each tag falls back to LLM_SERVICE_<TAG>, then the default model
     if (!settings.llm) {
-      settings.llm = DefaultLLMs;
+      settings.llm = {};
     }
 
     app.settings = settings;

@@ -146,11 +146,21 @@ export class AppToolsDTO implements LLMTool {
   url?: string;
 }
 
+/**
+ * LLM per task, as `provider/model`. An unset task falls back to
+ * LLM_SERVICE_<TASK>, then to the default model.
+ */
 export class LLMSettingsDto {
-  chat: string;
-  tools: string;
-  sentiment: string;
-  tasks: string;
-  intent: string;
-  translation: string;
+  @ApiPropertyOptional()
+  chat?: string;
+  @ApiPropertyOptional()
+  tools?: string;
+  @ApiPropertyOptional()
+  sentiment?: string;
+  @ApiPropertyOptional()
+  tasks?: string;
+  @ApiPropertyOptional()
+  intent?: string;
+  @ApiPropertyOptional()
+  translation?: string;
 }
