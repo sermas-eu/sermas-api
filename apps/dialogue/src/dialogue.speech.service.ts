@@ -268,14 +268,17 @@ export class DialogueSpeechService implements OnModuleInit {
 
     ev.buffer = await this.convert(ev);
 
-    const promise = Promise.all([
-      await this.isExpectedSpeaker(ev.sessionId, ev.buffer),
-      await this.hasMultipleSpeakers(ev),
+    // speaker checks run while STT transcribes; convertToText awaits them
+    const checks = Promise.all([
+      this.isExpectedSpeaker(ev.sessionId, ev.buffer),
+      this.hasMultipleSpeakers(ev),
     ]);
+    // handled where awaited; avoid an unhandled rejection if STT fails first
+    checks.catch(() => undefined);
 
     this.emitter.emit('dialogue.speech.audio', ev);
 
-    const ok = await this.convertToText(ev, () => promise);
+    const ok = await this.convertToText(ev, () => checks);
 
     if (ok) {
       // cancel active requests, excepts for the current one

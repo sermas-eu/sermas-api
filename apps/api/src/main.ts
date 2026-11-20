@@ -33,4 +33,9 @@ async function bootstrap() {
   logger.log(`Application is running on: ${await app.getUrl()}`);
 }
 
-bootstrap().catch((e) => logger.error(e.stack));
+bootstrap().catch((e) => {
+  logger.error(e.stack);
+  // timers (MQTT, schedules) would keep a half-started process alive without
+  // an HTTP server: exit, so the supervisor restarts it
+  process.exit(1);
+});

@@ -25,6 +25,8 @@ export const SermasDefaultConfig = {
   AUTH_KEYCLOAK_REALM: 'sermas-local',
   // AUTH_KEYCLOAK_CLIENT_ID set the keycloack client ID used for administrative purposes
   AUTH_KEYCLOAK_CLIENT_ID: 'platform',
+  // KEYCLOAK_WAIT_SEC how long the API waits at start for Keycloak to answer
+  KEYCLOAK_WAIT_SEC: 180,
   // AUTH_KEYCLOAK_SECRET set the keycloack client password used for administrative purposes
   AUTH_KEYCLOAK_SECRET: 'platform',
   // SHOW_KEYCLOAK_LOGS show verbose logging related to keycloak authentication for API endpoints

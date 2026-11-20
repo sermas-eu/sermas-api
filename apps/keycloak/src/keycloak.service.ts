@@ -805,6 +805,14 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
       this.logger.verbose(
         `Client ${req.clientId} exists, updating scope-based permissions`,
       );
+      if (req.secret) {
+        await this.kc.updateClientSecret({
+          realm: this.realm,
+          token: this.token,
+          id: client.id,
+          secret: req.secret,
+        });
+      }
       await this.syncClientResources(client.clientId);
     }
 

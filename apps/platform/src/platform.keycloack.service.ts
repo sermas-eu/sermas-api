@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from 'node:timers/promises';
 import {
   BadRequestException,
   Injectable,
@@ -44,7 +45,8 @@ export class PlatformKeycloakService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.ensurePlatformClient(true);
+    await this.waitForKeycloak();
+    await this.ensurePlatformClient();
 
     const filename = this.config.get('IMPORT_USERS_FILENAME');
     await this.importUsersFromFile(filename);
@@ -428,16 +430,55 @@ export class PlatformKeycloakService implements OnModuleInit {
     return this.keycloack.getUserApps(userId);
   }
 
+  /**
+   * Keycloak may still be starting (a first boot, a stack restart): wait for
+   * it rather than fail the API start. KEYCLOAK_WAIT_SEC bounds the wait.
+   */
+  async waitForKeycloak() {
+    const waitSec = +(this.config.get('KEYCLOAK_WAIT_SEC') ?? 180);
+    const until = Date.now() + waitSec * 1000;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await this.keycloack.getToken(true);
+        return;
+      } catch (e: any) {
+        if (Date.now() >= until) throw e;
+        this.logger.warn(
+          `Keycloak not ready (${e.message}), retrying (attempt ${attempt})`,
+        );
+        await sleep(Math.min(10_000, 1000 * attempt));
+      }
+    }
+  }
+
+  /**
+   * Creates the platform client, or brings an existing one up to date. It is
+   * not removed first: a start that failed half-way would leave the realm
+   * without the client every other service authenticates with. A client that
+   * cannot be updated (left incomplete by such a start) is created again.
+   */
   async ensurePlatformClient(force = false) {
     await this.keycloack.ensureRealm(this.keycloack.getRealm());
 
-    const client = await this.keycloack.savePlatformClient({
-      clientId: this.keycloack.getPlatformClientName(),
-      adminRole: ROLE_ADMIN,
-      secret: this.config.get('AUTH_KEYCLOAK_SECRET'),
-      removeIfExists: force,
-      attributes: ['appId'],
-    });
+    const save = (removeIfExists: boolean) =>
+      this.keycloack.savePlatformClient({
+        clientId: this.keycloack.getPlatformClientName(),
+        adminRole: ROLE_ADMIN,
+        secret: this.config.get('AUTH_KEYCLOAK_SECRET'),
+        removeIfExists,
+        attributes: ['appId'],
+      });
+
+    let client: Awaited<ReturnType<typeof save>>;
+    try {
+      client = await save(force);
+    } catch (e: any) {
+      if (force) throw e;
+      this.logger.warn(
+        `Platform client could not be updated (${e.message}), creating it again`,
+      );
+      client = await save(true);
+    }
 
     return await this.keycloack.getClientByName(client.clientId);
   }

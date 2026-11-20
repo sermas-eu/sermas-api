@@ -881,6 +881,27 @@ export class KeycloakAdminService implements OnModuleInit {
     this.logger.verbose(`Permissions created for clientId=${clientId}.`);
   }
 
+  /**
+   * Sets the secret of an existing client (`id` is the client UUID). The PUT
+   * carries the full representation: Keycloak reads absent fields as unset,
+   * and an absent authorizationServicesEnabled removes the resource server.
+   */
+  async updateClientSecret(data: {
+    realm: string;
+    token: string;
+    id: string;
+    secret: string;
+  }): Promise<void> {
+    const url = `${this.keycloakUrl}/admin/realms/${data.realm}/clients/${data.id}`;
+    const headers = {
+      'content-type': 'application/json',
+      Authorization: `bearer ${data.token}`,
+    };
+    const { data: client } = await this.client.get(url, { headers });
+    if (client.secret === data.secret) return;
+    await this.client.put(url, { ...client, secret: data.secret }, { headers });
+  }
+
   async deleteClient(data: KeycloakClientsCreationDto): Promise<any> {
     try {
       const res = await this.client.delete(

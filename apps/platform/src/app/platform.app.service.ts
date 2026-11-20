@@ -1,4 +1,4 @@
-import { Cache, CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
@@ -36,8 +36,10 @@ import {
 } from './platform.app.dto.js';
 import { PlatformApp, PlatformAppDocument } from './platform.app.schema.js';
 
+// apps change rarely and are read on every request
+const APP_CACHE_TTL = 10 * 60 * 1000;
+
 @Injectable()
-@CacheTTL(10 * 60 * 1000)
 export class PlatformAppService implements OnModuleInit {
   private readonly logger = new Logger(PlatformAppService.name);
 
@@ -253,7 +255,7 @@ export class PlatformAppService implements OnModuleInit {
     const app = toDTO(doc);
 
     // set cache
-    this.cacheManager.set(cacheKey, app);
+    this.cacheManager.set(cacheKey, app, APP_CACHE_TTL);
 
     return app;
   }
