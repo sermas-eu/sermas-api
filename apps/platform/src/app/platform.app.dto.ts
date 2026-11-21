@@ -12,6 +12,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { SermasRecordChangedDto } from '#libs/sermas/sermas.dto';
@@ -243,6 +244,9 @@ export class RepositoryAssetDto<
     type: RepositoryAssetMetadataDto,
   })
   @IsOptional()
+  // multipart uploads (POST /ui/asset) send it as a JSON string, parsed by the
+  // asset service; anything else must be an object
+  @ValidateIf((_o, value) => typeof value !== 'string')
   @IsObject()
   metadata?: T;
 }
