@@ -36,6 +36,8 @@ export interface LLMProviderConfig {
   project?: string;
   temperature?: number;
   top_p?: number;
+  // reasoning_effort for reasoning models (none, minimal, low, medium, high)
+  reasoningEffort?: string;
   timeout?: number;
 }
 

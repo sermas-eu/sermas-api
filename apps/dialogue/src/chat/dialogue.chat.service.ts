@@ -380,16 +380,22 @@ export class DialogueChatService {
 
     const { appId, sessionId } = message;
 
+    // time each step before the LLM call: they run in sequence
+    const perf = this.monitor.performance({ ...message, label: 'chat.send' });
+
     const settings = await this.session.getSettings(message);
     const avatar = await this.session.getAvatar(message, message.avatar);
+    perf('session');
 
     const knowledge = await this.vectorStore.search(appId, message.text);
+    perf('knowledge');
     let summaryOrHistory: string;
     if (this.config.get('LLM_DISABLE_SUMMARY') === '1') {
       summaryOrHistory = await this.memory.getConversation(sessionId);
     } else {
       summaryOrHistory = await this.memory.getSummary(sessionId);
     }
+    perf('history');
 
     const activeTask = await this.intent.getActiveTaskRecord(message.sessionId);
     const currentTask = activeTask.task;
@@ -408,6 +414,7 @@ export class DialogueChatService {
       currentTask,
       message.sessionId,
     );
+    perf('tasks');
 
     const systemPromptParams: AvatarChatSystemPromptParams = {
       knowledge,
@@ -422,6 +429,9 @@ export class DialogueChatService {
         currentField && currentField?.hint
           ? `${currentField?.label || currentField?.name}: ${currentField?.hint}`
           : undefined,
+      hasTasks: Boolean(currentTask || tasks?.length),
+      hasTools: Boolean(activeTools.tools?.length),
+      explain: this.config.get('LLM_EXPLAIN') === '1',
     };
 
     const chatPromptParams: AvatarChatUserPromptParams = {
@@ -490,6 +500,7 @@ export class DialogueChatService {
               },
             ),
             new SentenceTransformer(() => {
+              perf('first-sentence');
               resolve({
                 ...result,
                 ...llmParsedResult,

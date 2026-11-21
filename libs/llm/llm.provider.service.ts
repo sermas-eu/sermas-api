@@ -160,7 +160,9 @@ export class LLMProviderService implements OnModuleInit {
         config.provider +
         (config.baseURL || '') +
         (config.apiKey || '') +
-        (config.model || ''),
+        (config.model || '') +
+        // sampling settings are fixed per instance
+        `${config.temperature ?? ''}/${config.top_p ?? ''}/${config.reasoningEffort ?? ''}`,
     );
     return providerId;
   }
@@ -172,6 +174,9 @@ export class LLMProviderService implements OnModuleInit {
       config.temperature = this.config.get<number>('LLM_TEMPERATURE');
     if (config.top_p === undefined)
       config.top_p = this.config.get<number>('LLM_TOP_P');
+    if (config.reasoningEffort === undefined)
+      config.reasoningEffort =
+        this.config.get<string>('LLM_REASONING_EFFORT') || undefined;
 
     if (!config.provider) {
       if (config.tag) {
@@ -223,6 +228,9 @@ export class LLMProviderService implements OnModuleInit {
           model,
           apiKey: config.apiKey || this.config.get('OPENAI_API_KEY'),
           availableModels,
+          temperature: config.temperature,
+          top_p: config.top_p,
+          reasoningEffort: config.reasoningEffort,
         });
         break;
     }

@@ -161,6 +161,11 @@ export const SermasDefaultConfig = {
   // LLM_TOP_P only the most probable tokens which cumulative probability reaches top_p are used for next token sampling
   LLM_TOP_P: 0.3,
 
+  // LLM_REASONING_EFFORT reasoning_effort sent to reasoning models (none, minimal, low, medium, high). Empty leaves the model default. Thinking delays the first spoken word: `none` cut it from ~17s to ~1s on a local reasoning model
+  LLM_REASONING_EFFORT: '',
+  // LLM_EXPLAIN Ask the chat model to explain its filter, intent and tool decisions, for debugging. The explanations are logged and delay the answer
+  LLM_EXPLAIN: '0',
+
   // LLM_DISABLE_SUMMARY, when equals to '1', summarization is not used and the full conversation history is passed to the LLM instead
   LLM_DISABLE_SUMMARY: '0',
 

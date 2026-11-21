@@ -67,6 +67,13 @@ export class OpenAIChatProvider extends LLMChatProvider {
       stream: isStream,
       top_p: this.config.top_p,
       temperature: this.config.temperature,
+      // OpenAI-compatible servers (vLLM, LiteLLM) take `none` to skip thinking
+      ...(this.config.reasoningEffort
+        ? {
+            reasoning_effort: this.config
+              .reasoningEffort as OpenAI.ReasoningEffort,
+          }
+        : {}),
     });
 
     if (!isStream) {
