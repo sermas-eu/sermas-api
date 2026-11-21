@@ -10,6 +10,7 @@ import { Cache } from 'cache-manager';
 import { MonitorService } from '#libs/monitor/monitor.service';
 import { mapLanguageCode } from '../language/language.js';
 import { AzureTextToSpeech } from './providers/tts.azure.provider.js';
+import { OpenAITextToSpeech } from './providers/tts.openai.provider.js';
 import { SSMLService } from './ssml/ssml.service.js';
 import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto.js';
 
@@ -26,6 +27,7 @@ export class TTSProviderService {
   constructor(
     private readonly googletts: GoogleTextToSpeech,
     private readonly azuretts: AzureTextToSpeech,
+    private readonly openaitts: OpenAITextToSpeech,
 
     private readonly configService: ConfigService,
     private readonly session: SessionService,
@@ -182,9 +184,13 @@ export class TTSProviderService {
         data = await this.azuretts.speak(params);
         perf('azure');
         break;
+      case 'openai':
+        data = await this.openaitts.speak(params);
+        perf('openai');
+        break;
       default:
         throw new Error(
-          `Unsupported TTS_SERVICE=${ttsProvider}: use google or azure`,
+          `Unsupported TTS_SERVICE=${ttsProvider}: use google, azure or openai`,
         );
     }
 

@@ -108,12 +108,22 @@ export const SermasDefaultConfig = {
   // STT_AZURE_REGION Azure region
   STT_AZURE_REGION: '',
 
-  // TTS_SERVICE Service for Text to Speech: google or azure. An avatar may override it.
+  // TTS_SERVICE Service for Text to Speech: google, azure or openai (any OpenAI-compatible /v1/audio/speech, such as a local Kokoro). An avatar may override it.
   TTS_SERVICE: 'google',
 
   // GOOGLE_TTS_MODEL_TYPE Preferred Google TTS model type (such as Journey, Neural, Wavenet or Standard). See https://cloud.google.com/text-to-speech/docs/voices
   GOOGLE_TTS_MODEL_TYPE: 'Journey',
 
+  // TTS_OPENAI_BASEURL Base URL of the OpenAI-compatible speech API, used when TTS_SERVICE=openai. Empty means api.openai.com
+  TTS_OPENAI_BASEURL: '',
+  // TTS_OPENAI_API_KEY API key for TTS_OPENAI_BASEURL
+  TTS_OPENAI_API_KEY: '',
+  // TTS_OPENAI_MODEL Speech model name
+  TTS_OPENAI_MODEL: 'tts-1',
+  // TTS_OPENAI_VOICE Default voice
+  TTS_OPENAI_VOICE: 'alloy',
+  // TTS_OPENAI_VOICES Voices per language and gender, as `<lang>[-<gender>]=<voice>` separated by commas (it-F=if_sara,it-M=im_nicola,en=af_heart). An avatar's tts.model overrides them
+  TTS_OPENAI_VOICES: '',
   // TTS_AZURE_KEY Azure subscription key
   TTS_AZURE_KEY: '',
   // TTS_AZURE_REGION Azure region
