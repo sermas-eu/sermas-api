@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import {
+  META_CREATES_APP,
   META_PUBLIC,
   META_RESOURCE,
   META_SCOPES,
@@ -132,10 +133,17 @@ export class PlatformGuard implements CanActivate {
       isAllowed =
         (request.method === 'GET' &&
           (await this.auth.isOwnAppClient(appId, user.azp))) ||
-        (await this.auth.isAllowed(appContext));
+        (await this.auth.isAllowed(appContext)) ||
+        // owners manage their own apps (D-38): any user may use these scopes,
+        // the app checks below and in the controllers decide on which app
+        this.auth.isOwnerScope(user, resource, scopes);
       // app isolation: the scope says what, this says on which app. Routes
       // that name no app check the record they load themselves.
-      if (isAllowed && appId)
+      const createsApp = this.reflector.get<boolean>(
+        META_CREATES_APP,
+        context.getHandler(),
+      );
+      if (isAllowed && appId && !createsApp)
         isAllowed = await this.auth.canAccessApp(user, appId);
     } catch {
       isAllowed = false;

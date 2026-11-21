@@ -27,6 +27,8 @@ import { PlatformContextDto } from './platform.auth.dto.js';
 // platform.keycloack.service.ts, not imported here to keep this module a leaf)
 const APP_CLIENT_NAME = 'application';
 
+const OWNER_SCOPES = ['app', 'app:editor', 'client', 'module', 'monitoring'];
+
 // guard cache in seconds
 const CACHE_TTL_SECONDS = 30;
 
@@ -207,6 +209,20 @@ export class PlatformAuthService {
         expires: Date.now() + 10 * 60 * 1000,
       };
     return appId;
+  }
+
+  /**
+   * Scopes every user logged in through the platform client holds, so that
+   * owners can create and manage their own apps (D-38). Each route under them
+   * checks the app: app access in the guard, `assertAppManager` for changes,
+   * `assertPlatformAdmin` for global modules; `/app/list` lists own apps.
+   */
+  isOwnerScope(user: AuthJwtUser, resource: string, scopes: string[]) {
+    if (resource !== 'platform' || !user?.sub) return false;
+    if (user.azp !== this.config.get('AUTH_KEYCLOAK_CLIENT_ID')) return false;
+    // a service account is not a user
+    if (user.preferred_username?.startsWith('service-account-')) return false;
+    return (scopes || []).some((s) => OWNER_SCOPES.includes(s));
   }
 
   /** Throws 403 unless canAccessApp. */

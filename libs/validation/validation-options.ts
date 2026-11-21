@@ -1,7 +1,9 @@
 import {
+  ArgumentMetadata,
   BadRequestException,
   Logger,
   ValidationError,
+  ValidationPipe,
   ValidationPipeOptions as NestValidationPipeOptions,
 } from '@nestjs/common';
 
@@ -31,4 +33,30 @@ export class ValidationPipeOptions implements NestValidationPipeOptions {
     // a factory that returns nothing makes Nest throw `undefined`: a 500
     return new BadRequestException(describe(errors));
   };
+}
+
+/**
+ * The validation pipe with these options, returning bodies as plain objects:
+ * `transform` makes them DTO class instances, and mongoose refuses a class
+ * instance where a schema expects a Map or Mixed value (app and session
+ * `settings`). Whitelisting, validation and typed query parameters stay.
+ */
+export class SermasValidationPipe extends ValidationPipe {
+  constructor() {
+    super(new ValidationPipeOptions());
+  }
+
+  async transform(value: any, metadata: ArgumentMetadata) {
+    const out = await super.transform(value, metadata);
+    if (
+      metadata.type === 'body' &&
+      out &&
+      typeof out === 'object' &&
+      !Array.isArray(out) &&
+      !Buffer.isBuffer(out) &&
+      Object.getPrototypeOf(out) !== Object.prototype
+    )
+      return { ...out };
+    return out;
+  }
 }

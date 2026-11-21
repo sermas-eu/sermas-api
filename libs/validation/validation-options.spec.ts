@@ -1,6 +1,9 @@
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { IsArray, IsObject, IsString } from 'class-validator';
-import { ValidationPipeOptions } from './validation-options.js';
+import {
+  SermasValidationPipe,
+  ValidationPipeOptions,
+} from './validation-options.js';
 
 class Payload {
   @IsString()
@@ -29,12 +32,24 @@ describe('ValidationPipeOptions', () => {
       @IsObject()
       settings: Record<string, unknown>;
     }
-    const pipe = new ValidationPipe(new ValidationPipeOptions());
+    const pipe = new SermasValidationPipe();
     const out = await pipe.transform(
       { name: 'x', ownerId: 'injected', settings: { a: 1 } },
       { type: 'body', metatype: Body },
     );
-    expect(out).toBeInstanceOf(Body);
+    // a plain object: mongoose refuses DTO instances in Map fields
+    expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
     expect(out).toEqual({ name: 'x', settings: { a: 1 } });
+  });
+
+  it('still converts typed query parameters', async () => {
+    const pipe = new SermasValidationPipe();
+    expect(
+      await pipe.transform('16000', {
+        type: 'query',
+        metatype: Number,
+        data: 'sampleRate',
+      }),
+    ).toBe(16000);
   });
 });

@@ -24,7 +24,11 @@ import { PlatformAppService } from '#apps/platform/src/app/platform.app.service'
 import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
 import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
 import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser, Public } from '#libs/auth/auth.decorators';
+import {
+  AuthenticatedUser,
+  CreatesApp,
+  Public,
+} from '#libs/auth/auth.decorators';
 import {
   AppSettingsDto,
   AppToolsDTO,
@@ -86,6 +90,7 @@ export class PlatformAppController {
   })
   @ApiBadRequestResponse()
   @ApiOperationName()
+  @CreatesApp()
   createApp(
     @Body() payload: CreatePlatformAppDto,
     @AuthenticatedUser() user: AuthJwtUser,

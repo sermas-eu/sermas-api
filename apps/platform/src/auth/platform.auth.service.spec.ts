@@ -292,3 +292,41 @@ describe('PlatformAuthService.canAccessApp (app isolation)', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('PlatformAuthService.isOwnerScope (D-38)', () => {
+  const svc = new PlatformAuthService(
+    new ConfigService({
+      AUTH_KEYCLOAK_CLIENT_ID: 'platform',
+      AUTH_KEYCLOAK_SYSTEM_CLIENT_ID: '',
+    }),
+    {} as any,
+    {} as any,
+  );
+  const user = {
+    sub: 'u',
+    azp: 'platform',
+    preferred_username: 'alice',
+  } as AuthJwtUser;
+
+  it('gives platform users the app management scopes', () => {
+    expect(svc.isOwnerScope(user, 'platform', ['app', 'app:editor'])).toBe(
+      true,
+    );
+    expect(svc.isOwnerScope(user, 'platform', ['client'])).toBe(true);
+  });
+
+  it('not other scopes, resources, clients or service accounts', () => {
+    expect(svc.isOwnerScope(user, 'platform', ['token'])).toBe(false);
+    expect(svc.isOwnerScope(user, 'session', ['session'])).toBe(false);
+    expect(
+      svc.isOwnerScope({ ...user, azp: 'a-avatar' }, 'platform', ['app']),
+    ).toBe(false);
+    expect(
+      svc.isOwnerScope(
+        { ...user, preferred_username: 'service-account-platform' },
+        'platform',
+        ['app'],
+      ),
+    ).toBe(false);
+  });
+});

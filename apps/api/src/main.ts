@@ -1,8 +1,8 @@
-import { LogLevel, Logger, ValidationPipe } from '@nestjs/common';
+import { LogLevel, Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { PlatformModuleService } from '#apps/platform/src/mod/mod.service';
 import { isNodeEnv } from '#libs/util';
-import { ValidationPipeOptions } from '#libs/validation/validation-options';
+import { SermasValidationPipe } from '#libs/validation/validation-options';
 import { AppModule } from './app.module.js';
 
 const logger = new Logger('bootstrap');
@@ -20,7 +20,7 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
-  app.useGlobalPipes(new ValidationPipe(new ValidationPipeOptions()));
+  app.useGlobalPipes(new SermasValidationPipe());
 
   try {
     await app.get(PlatformModuleService).setupApiDocs(app);

@@ -4,6 +4,7 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import {
+  META_CREATES_APP,
   META_PUBLIC,
   META_RESOURCE,
   META_ROLES,
@@ -12,6 +13,12 @@ import {
 
 /** The route accepts requests without a token. A valid token still sets the user. */
 export const Public = () => SetMetadata(META_PUBLIC, true);
+
+/**
+ * The route creates the app its body names: the guard does not require access
+ * to that appId (no one has it yet); the route refuses one that exists.
+ */
+export const CreatesApp = () => SetMetadata(META_CREATES_APP, true);
 
 /** The Keycloak authorization resource a controller maps to. */
 export const Resource = (resource: string) =>

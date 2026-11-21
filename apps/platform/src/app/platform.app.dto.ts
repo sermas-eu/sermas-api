@@ -360,6 +360,8 @@ export class PlatformAppDto {
   @IsString()
   ownerId: string;
 
+  // optional: the service defaults to none
+  @IsOptional()
   @IsArray()
   @ValidateNested()
   @ApiProperty({
@@ -372,6 +374,8 @@ export class PlatformAppDto {
   @IsObject()
   repository: RepositoryConfigDto;
 
+  @IsOptional()
+  @IsArray()
   @ValidateNested()
   @ApiProperty({
     type: [AppClientDto],
@@ -411,7 +415,15 @@ export class CreatePlatformAppDto extends OmitType(PlatformAppDto, [
   'appId',
   'createdAt',
   'updatedAt',
-] as const) {}
+] as const) {
+  // optional on create: generated when missing, refused (409) when taken
+  @ApiPropertyOptional({
+    description: 'The app id, generated when missing',
+  })
+  @IsOptional()
+  @IsString()
+  appId?: string;
+}
 
 export class PlatformAppChangedDto extends SermasRecordChangedDto<PlatformAppDto> {
   @ApiProperty()

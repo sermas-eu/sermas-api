@@ -42,20 +42,42 @@ describe('request DTOs', () => {
     expect(dtos.size).toBeGreaterThan(30);
 
     const missing: string[] = [];
-    for (const [dto, route] of dtos) {
-      const validated = new Set(
-        getMetadataStorage()
-          .getTargetValidationMetadatas(dto, '', true, false)
-          .map((m) => m.propertyName),
+    const seen = new Set<any>();
+    const check = (dto: any, route: string) => {
+      if (seen.has(dto)) return;
+      seen.add(dto);
+      const rules = getMetadataStorage().getTargetValidationMetadatas(
+        dto,
+        '',
+        true,
+        false,
       );
+      const validated = new Set(rules.map((m) => m.propertyName));
       const documented: string[] = (
         Reflect.getMetadata('swagger/apiModelPropertiesArray', dto.prototype) ||
         []
       ).map((p: string) => p.slice(1));
-      for (const prop of documented)
+      for (const prop of documented) {
         if (!validated.has(prop))
           missing.push(`${dto.name}.${prop} (${route})`);
-    }
+        // whitelist also strips inside nested objects marked @ValidateNested
+        const nested = rules.some(
+          (m) => m.propertyName === prop && m.type === 'nestedValidation',
+        );
+        if (!nested) continue;
+        let type = Reflect.getMetadata(
+          'swagger/apiModelProperties',
+          dto.prototype,
+          prop,
+        )?.type;
+        if (typeof type === 'function' && !/^[A-Z]/.test(type.name || ''))
+          type = type();
+        if (Array.isArray(type)) type = type[0];
+        if (typeof type === 'function' && !PRIMITIVES.includes(type))
+          check(type, `${route} > ${dto.name}.${prop}`);
+      }
+    };
+    for (const [dto, route] of dtos) check(dto, route);
     expect(missing).toEqual([]);
   });
 });
