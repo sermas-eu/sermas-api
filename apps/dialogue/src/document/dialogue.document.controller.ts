@@ -27,6 +27,14 @@ import { DialogueDocumentService } from './dialogue.document.service.js';
 export class DialogueDocumentController {
   constructor(private readonly document: DialogueDocumentService) {}
 
+  /** Every document names the same app, which the guard checked. */
+  private assertDocumentsApp(documents: DialogueDocumentDto[]) {
+    if (!Array.isArray(documents) || !documents.length)
+      throw new BadRequestException('Missing documents');
+    if (documents.some((d) => !d?.appId))
+      throw new BadRequestException('Missing appId');
+  }
+
   @Put()
   @ApiBody({
     type: DialogueDocumentDto,
@@ -39,6 +47,7 @@ export class DialogueDocumentController {
   @ApiScopes('document')
   @ApiOperationName()
   async save(@Body() documents: DialogueDocumentDto[]) {
+    this.assertDocumentsApp(documents);
     return this.document.save(documents);
   }
 
@@ -59,6 +68,7 @@ export class DialogueDocumentController {
   async import(
     @Body() documents: DialogueDocumentDto[],
   ): Promise<DialogueDocumentDto[]> {
+    this.assertDocumentsApp(documents);
     return this.document.import(documents);
   }
 

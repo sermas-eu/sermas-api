@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { MonitorService } from '#libs/monitor/monitor.service';
 import { uuidv4 } from '#libs/util';
@@ -216,6 +221,8 @@ export class DialogueTasksHandlerService {
     );
 
     const task = await this.store.read(raw.taskId, true);
+    if (raw.appId && task.appId && task.appId !== raw.appId)
+      throw new NotFoundException(`task not found`);
     let record = await this.ensureRecord(raw.sessionId, task);
 
     this.logger.debug(`Update record for taskId=${task.taskId}`);

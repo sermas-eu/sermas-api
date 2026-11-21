@@ -225,3 +225,70 @@ describe('PlatformAuthService.isAppOwnerOrAdmin', () => {
     ).toBe(true);
   });
 });
+
+describe('PlatformAuthService.canAccessApp (app isolation)', () => {
+  const apps: Record<string, any> = {
+    a: { ownerId: 'alice', clients: [{ clientId: 'avatar' }] },
+    b: { ownerId: 'bob', clients: [{ clientId: 'avatar' }] },
+  };
+  const svc = new PlatformAuthService(
+    new ConfigService({
+      AUTH_KEYCLOAK_CLIENT_ID: 'platform',
+      AUTH_KEYCLOAK_SYSTEM_CLIENT_ID: '',
+    }),
+    {} as any,
+    {
+      findOne: ({ appId }: { appId: string }) => ({
+        lean: async () => apps[appId] || null,
+      }),
+    } as any,
+  );
+  const token = (fields: Partial<AuthJwtUser> & Record<string, any>) =>
+    ({ sub: 'u', azp: 'platform', ...fields }) as AuthJwtUser;
+
+  it("lets an app's own client use that app only", async () => {
+    const avatar = token({ azp: 'a-avatar' });
+    expect(await svc.canAccessApp(avatar, 'a')).toBe(true);
+    expect(await svc.canAccessApp(avatar, 'b')).toBe(false);
+  });
+
+  it('lets a user logged in to an app use it (azp <appId>-application)', async () => {
+    expect(await svc.canAccessApp(token({ azp: 'a-application' }), 'a')).toBe(
+      true,
+    );
+    expect(await svc.canAccessApp(token({ azp: 'a-application' }), 'b')).toBe(
+      false,
+    );
+  });
+
+  it('lets the owner, or a user with a role on the app, use it', async () => {
+    expect(await svc.canAccessApp(token({ sub: 'alice' }), 'a')).toBe(true);
+    expect(await svc.canAccessApp(token({ sub: 'alice' }), 'b')).toBe(false);
+    const member = token({ resource_access: { 'b-application': {} } as any });
+    expect(await svc.canAccessApp(member, 'b')).toBe(true);
+    expect(await svc.canAccessApp(member, 'a')).toBe(false);
+  });
+
+  it('lets admins and system service accounts use every app', async () => {
+    const admin = token({ realm_access: { roles: ['platform-admin'] } as any });
+    expect(await svc.canAccessApp(admin, 'b')).toBe(true);
+    const system = token({ preferred_username: 'service-account-platform' });
+    expect(await svc.canAccessApp(system, 'b')).toBe(true);
+  });
+
+  it('refuses everyone else, and unknown or missing apps', async () => {
+    const other = token({ sub: 'eve' });
+    expect(await svc.canAccessApp(other, 'a')).toBe(false);
+    expect(await svc.canAccessApp(other, 'nope')).toBe(false);
+    expect(await svc.canAccessApp(other, undefined as any)).toBe(false);
+  });
+
+  it('app management is for the owner and admins, not app clients', async () => {
+    await expect(
+      svc.assertAppManager(token({ sub: 'alice' }), 'a'),
+    ).resolves.toBeUndefined();
+    await expect(
+      svc.assertAppManager(token({ azp: 'a-avatar' }), 'a'),
+    ).rejects.toThrow();
+  });
+});

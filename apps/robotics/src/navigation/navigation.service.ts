@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { DialogueToolRequestDto } from '#apps/dialogue/src/dialogue.speech.dto';
 import { UIAsyncApiService } from '#apps/ui/src/ui.async.service';
@@ -137,19 +142,28 @@ export class NavigationService {
       }
     }
 
-    await this.save(space);
+    await this.save(space.appId, space);
   }
 
-  async save(space: NavigationSpaceDto) {
+  async save(appId: string, space: NavigationSpaceDto) {
+    const existing = this.spaces[space.spaceId];
+    if (existing && existing.appId !== appId)
+      throw new ConflictException(`spaceId in use`);
     this.spaces[space.spaceId] = space;
   }
 
-  async remove(spaceId: string) {
-    if (this.spaces[spaceId]) delete this.spaces[spaceId];
+  async remove(appId: string, spaceId: string) {
+    if (this.spaces[spaceId]?.appId === appId) delete this.spaces[spaceId];
   }
 
-  async getById(spaceId: string): Promise<NavigationSpaceDto | null> {
-    return this.spaces[spaceId] || null;
+  /** The space, if it exists and, when appId is given, belongs to that app. */
+  async getById(
+    spaceId: string,
+    appId?: string,
+  ): Promise<NavigationSpaceDto | null> {
+    const space = this.spaces[spaceId];
+    if (!space || (appId && space.appId !== appId)) return null;
+    return space;
   }
 
   async getSpaceByName(
@@ -164,7 +178,6 @@ export class NavigationService {
   }
 
   async getAreaByName(appId: string, name: string): Promise<AreaDto | null> {
-    console.log('SPACES: ' + JSON.stringify(this.spaces));
     for (const spaceId in this.spaces) {
       if (this.spaces[spaceId].appId !== appId) continue;
       for (const area of this.spaces[spaceId].areas) {
@@ -196,6 +209,6 @@ export class NavigationService {
     if (!this.status) {
       throw new NotFoundException();
     }
-    return this.status[appId][robotId];
+    return this.status?.[appId]?.[robotId] ?? null;
   }
 }

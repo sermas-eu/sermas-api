@@ -1,5 +1,7 @@
 import {
+  BadRequestException,
   Body,
+  ForbiddenException,
   Controller,
   Delete,
   Get,
@@ -19,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
 import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
 import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
 import { AuthenticatedUser, Public } from '#libs/auth/auth.decorators';
@@ -47,7 +50,10 @@ import {
   AppToolsDTO,
 )
 export class PlatformAppController {
-  constructor(private readonly platformAppService: PlatformAppService) {}
+  constructor(
+    private readonly platformAppService: PlatformAppService,
+    private readonly auth: PlatformAuthService,
+  ) {}
 
   @Get('repository/defaults')
   @Public()
@@ -80,8 +86,15 @@ export class PlatformAppController {
   })
   @ApiBadRequestResponse()
   @ApiOperationName()
-  createApp(@Body() payload: CreatePlatformAppDto): Promise<PlatformAppDto> {
-    return this.platformAppService.createApp({ data: payload });
+  createApp(
+    @Body() payload: CreatePlatformAppDto,
+    @AuthenticatedUser() user: AuthJwtUser,
+  ): Promise<PlatformAppDto> {
+    // users create apps for themselves; admins and system accounts for anyone
+    const data = { ...payload };
+    if (!this.auth.isSystemClient(user) && !this.auth.isPlatformAdmin(user))
+      data.ownerId = user.sub;
+    return this.platformAppService.createApp({ data });
   }
 
   @Get('list')
@@ -105,7 +118,22 @@ export class PlatformAppController {
   })
   @ApiBadRequestResponse()
   @ApiOperationName()
-  updateApp(@Body() payload: PlatformAppDto): Promise<PlatformAppDto> {
+  async updateApp(
+    @Body() payload: PlatformAppDto,
+    @AuthenticatedUser() user: AuthJwtUser,
+  ): Promise<PlatformAppDto> {
+    if (!payload?.appId) throw new BadRequestException('Missing appId');
+    await this.auth.assertAppManager(user, payload.appId);
+    // handing the app to another owner is for admins
+    if (
+      payload.ownerId &&
+      !this.auth.isSystemClient(user) &&
+      !this.auth.isPlatformAdmin(user)
+    ) {
+      const current = await this.platformAppService.readApp(payload.appId);
+      if (payload.ownerId !== current.ownerId)
+        throw new ForbiddenException('Only admins change the owner');
+    }
     return this.platformAppService.updateApp({ data: payload });
   }
 
@@ -120,7 +148,9 @@ export class PlatformAppController {
   async updateAppTools(
     @Param('appId') appId: string,
     @Body() payload: AppToolsDTO[],
+    @AuthenticatedUser() user: AuthJwtUser,
   ) {
+    await this.auth.assertAppManager(user, appId);
     await this.platformAppService.updateAppTools(appId, payload);
   }
 
@@ -135,7 +165,9 @@ export class PlatformAppController {
   async updateAppSettings(
     @Param('appId') appId: string,
     @Body() payload: AppSettingsDto,
+    @AuthenticatedUser() user: AuthJwtUser,
   ) {
+    await this.auth.assertAppManager(user, appId);
     await this.platformAppService.updateAppSettings(appId, payload);
   }
 
@@ -208,7 +240,11 @@ export class PlatformAppController {
   @ApiOkResponse()
   @ApiBadRequestResponse()
   @ApiOperationName()
-  removeApp(@Param('appId') appId: string): Promise<void> {
+  async removeApp(
+    @Param('appId') appId: string,
+    @AuthenticatedUser() user: AuthJwtUser,
+  ): Promise<void> {
+    await this.auth.assertAppManager(user, appId);
     return this.platformAppService.removeApp(appId);
   }
 }

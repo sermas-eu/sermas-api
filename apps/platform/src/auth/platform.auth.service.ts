@@ -1,11 +1,12 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
 import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import {
@@ -14,12 +15,17 @@ import {
 } from '#apps/keycloak/src/keycloak.service';
 import { getKeycloakClientId } from '#apps/keycloak/src/util';
 import { jwtDecode } from '#libs/util';
+import type { Connection } from 'mongoose';
 import { Model } from 'mongoose';
 import {
   PlatformApp,
   PlatformAppDocument,
 } from '../app/platform.app.schema.js';
 import { PlatformContextDto } from './platform.auth.dto.js';
+
+// an app's own login client, `<appId>-application` (APP_CLIENT_NAME in
+// platform.keycloack.service.ts, not imported here to keep this module a leaf)
+const APP_CLIENT_NAME = 'application';
 
 // guard cache in seconds
 const CACHE_TTL_SECONDS = 30;
@@ -36,9 +42,9 @@ export class PlatformAuthService {
   private readonly allowedClients: string[];
 
   private readonly cache: Record<string, TokenCache> = {};
-  private readonly appClients: Record<
+  private readonly appInfo: Record<
     string,
-    { clients: Set<string>; expires: number }
+    { clients: Set<string>; ownerId?: string; expires: number }
   > = {};
 
   constructor(
@@ -46,6 +52,8 @@ export class PlatformAuthService {
     private readonly keycloak: KeycloakService,
     @InjectModel(PlatformApp.name)
     private readonly apps: Model<PlatformAppDocument>,
+    @InjectConnection()
+    private readonly connection?: Connection,
   ) {
     this.allowedClients = [
       this.config.get('AUTH_KEYCLOAK_CLIENT_ID'),
@@ -82,6 +90,8 @@ export class PlatformAuthService {
   @Interval(10 * 1000)
   public clearExpiredCache() {
     const now = Date.now();
+    for (const [key, v] of Object.entries(this.sessionApps))
+      if (v.expires < now) delete this.sessionApps[key];
     Object.entries(this.cache).forEach(([key, c]) => {
       if (c.expires < now) this.clearCache(key);
     });
@@ -116,35 +126,110 @@ export class PlatformAuthService {
    * `myapp-avatar` for app `myapp`. The app's clients come from its record, so
    * a client of app `myapp-x` never counts for app `myapp`.
    */
-  /** The caller is a platform admin, or the user who owns the app. */
-  async isAppOwnerOrAdmin(user: AuthJwtUser, appId: string): Promise<boolean> {
-    if (!user?.sub) return false;
-    if (user.realm_access?.roles?.includes(ROLE_ADMIN)) return true;
-    if (!appId) return false;
-    const app = await this.apps
-      .findOne({ appId }, { ownerId: 1 })
-      .lean<Pick<PlatformApp, 'ownerId'>>();
-    return Boolean(app?.ownerId) && app.ownerId === user.sub;
+  isPlatformAdmin(user: AuthJwtUser): boolean {
+    return Boolean(user?.realm_access?.roles?.includes(ROLE_ADMIN));
   }
 
-  async isOwnAppClient(appId: string, clientId: string): Promise<boolean> {
-    if (!appId || !clientId) return false;
-    let entry = this.appClients[appId];
+  /** The app's clients (Keycloak names) and owner, cached briefly. */
+  private async loadAppInfo(appId: string) {
+    let entry = this.appInfo[appId];
     if (!entry || entry.expires < Date.now()) {
       const app = await this.apps
-        .findOne({ appId }, { clients: 1 })
-        .lean<Pick<PlatformApp, 'clients'>>();
+        .findOne({ appId }, { clients: 1, ownerId: 1 })
+        .lean<Pick<PlatformApp, 'clients' | 'ownerId'>>();
       entry = {
         clients: new Set(
           (app?.clients || []).map((c) =>
             getKeycloakClientId(appId, c.clientId),
           ),
         ),
+        ownerId: app?.ownerId,
         expires: Date.now() + CACHE_TTL_SECONDS * 1000,
       };
-      this.appClients[appId] = entry;
+      this.appInfo[appId] = entry;
     }
-    return entry.clients.has(clientId);
+    return entry;
+  }
+
+  /** The caller is a platform admin, or the user who owns the app. */
+  async isAppOwnerOrAdmin(user: AuthJwtUser, appId: string): Promise<boolean> {
+    if (!user?.sub) return false;
+    if (this.isPlatformAdmin(user)) return true;
+    if (!appId) return false;
+    const { ownerId } = await this.loadAppInfo(appId);
+    return Boolean(ownerId) && ownerId === user.sub;
+  }
+
+  async isOwnAppClient(appId: string, clientId: string): Promise<boolean> {
+    if (!appId || !clientId) return false;
+    if (clientId === getKeycloakClientId(appId, APP_CLIENT_NAME)) return true;
+    return (await this.loadAppInfo(appId)).clients.has(clientId);
+  }
+
+  /**
+   * App isolation: may this caller act on this app's data? System service
+   * accounts and platform admins may act on every app; anyone else only through
+   * one of the app's own clients (an app token, or a user logged in to the app),
+   * as a user holding a role on the app (owners), or as its owner.
+   */
+  async canAccessApp(user: AuthJwtUser, appId: string): Promise<boolean> {
+    if (!user?.sub || !appId || typeof appId !== 'string') return false;
+    if (this.isSystemClient(user) || this.isPlatformAdmin(user)) return true;
+    if (await this.isOwnAppClient(appId, user.azp)) return true;
+    const appClient = getKeycloakClientId(appId, APP_CLIENT_NAME);
+    if (user.resource_access?.[appClient]) return true;
+    const { ownerId } = await this.loadAppInfo(appId);
+    return Boolean(ownerId) && ownerId === user.sub;
+  }
+
+  private readonly sessionApps: Record<
+    string,
+    { appId: string | null; expires: number }
+  > = {};
+
+  /**
+   * The app a session belongs to, or null for an unknown session. Read from the
+   * sessions collection directly: the session module depends on this one.
+   */
+  async getSessionAppId(sessionId: string): Promise<string | null> {
+    if (!sessionId || typeof sessionId !== 'string' || !this.connection)
+      return null;
+    const cached = this.sessionApps[sessionId];
+    if (cached && cached.expires > Date.now()) return cached.appId;
+    const doc = await this.connection
+      .collection('sessions')
+      .findOne({ sessionId }, { projection: { appId: 1 } });
+    const appId = (doc?.appId as string) || null;
+    // a session never changes app; unknown ones may be created any moment
+    if (appId)
+      this.sessionApps[sessionId] = {
+        appId,
+        expires: Date.now() + 10 * 60 * 1000,
+      };
+    return appId;
+  }
+
+  /** Throws 403 unless canAccessApp. */
+  async assertAppAccess(user: AuthJwtUser, appId: string): Promise<void> {
+    if (!(await this.canAccessApp(user, appId)))
+      throw new ForbiddenException(`No access to app ${appId}`);
+  }
+
+  /**
+   * Managing an app (settings, tools, clients and their secrets, modules,
+   * removal) is for its owner, platform admins and system service accounts;
+   * the app's own clients may use the app, not manage it.
+   */
+  async assertAppManager(user: AuthJwtUser, appId: string): Promise<void> {
+    if (this.isSystemClient(user)) return;
+    if (!(await this.isAppOwnerOrAdmin(user, appId)))
+      throw new ForbiddenException(`Not a manager of app ${appId}`);
+  }
+
+  /** Throws 403 unless the caller is a system service account or an admin. */
+  assertPlatformAdmin(user: AuthJwtUser): void {
+    if (!this.isSystemClient(user) && !this.isPlatformAdmin(user))
+      throw new ForbiddenException();
   }
 
   /**

@@ -5,6 +5,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
+import type { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
 import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
 import { AuthenticatedUser } from '#libs/auth/auth.decorators';
@@ -16,7 +18,10 @@ import { PlatformAppModuleService } from './app.mod.service.js';
 @ApiResource('platform')
 @ApiTags('PLATFORM')
 export class PlatformAppModuleController {
-  constructor(private readonly module: PlatformAppModuleService) {}
+  constructor(
+    private readonly module: PlatformAppModuleService,
+    private readonly auth: PlatformAuthService,
+  ) {}
 
   @Post()
   @ApiOkResponse()
@@ -25,12 +30,13 @@ export class PlatformAppModuleController {
   @ApiOperationName({
     description: 'Create or update an app module',
   })
-  saveAppModule(
+  async saveAppModule(
     @Param('appId') appId: string,
     @Body() data: AppModuleConfigDto,
     @AuthenticatedUser()
-    user?: any,
+    user?: AuthJwtUser,
   ) {
+    await this.auth.assertAppManager(user, appId);
     return this.module.saveModule(appId, data, user);
   }
 
@@ -41,12 +47,13 @@ export class PlatformAppModuleController {
   @ApiOperationName({
     description: 'Retrieve an app module',
   })
-  getAppModule(
+  async getAppModule(
     @Param('appId') appId: string,
     @Param('moduleId') moduleId: string,
     @AuthenticatedUser()
-    user?: any,
+    user?: AuthJwtUser,
   ) {
+    await this.auth.assertAppManager(user, appId);
     return this.module.getModule(appId, moduleId, user);
   }
 
@@ -57,12 +64,13 @@ export class PlatformAppModuleController {
   @ApiOperationName({
     description: 'Remove an app module',
   })
-  removeAppModule(
+  async removeAppModule(
     @Param('appId') appId: string,
     @Param('moduleId') moduleId: string,
     @AuthenticatedUser()
-    user?: any,
+    user?: AuthJwtUser,
   ) {
+    await this.auth.assertAppManager(user, appId);
     return this.module.removeModule(appId, moduleId, user);
   }
 }

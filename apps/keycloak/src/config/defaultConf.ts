@@ -13,7 +13,11 @@ export const clientDefaultConfiguration = (
 
   clientSpecific.secret = clientSpecific.secret || createSecret();
 
-  if (config.public) {
+  // createClient passes the flag inside `client`; Keycloak's field is publicClient
+  const isPublic = Boolean(config.public ?? clientSpecific.public);
+  delete clientSpecific.public;
+
+  if (isPublic) {
     clientSpecific.publicClient = true;
     clientSpecific.implicitFlowEnabled = true;
     clientSpecific.directAccessGrantsEnabled = true;

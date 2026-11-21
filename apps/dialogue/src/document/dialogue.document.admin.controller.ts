@@ -1,11 +1,13 @@
 import { Controller, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { AdminRole } from '#libs/decorator/admin-role.decorator';
 import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
 import { DialogueDocumentService } from './dialogue.document.service.js';
 import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
 
 @ApiBearerAuth()
 @Controller('dialogue/admin/document')
+@AdminRole()
 @ApiResource('dialogue')
 @ApiTags('DIALOGUE')
 export class DialogueDocumentAdminController {

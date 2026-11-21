@@ -109,7 +109,9 @@ export class SessionStorageService {
   async del(storageId: string, userId?: string) {
     if (!storageId) throw new BadRequestException('missing storageId');
     const record = await this.get(storageId, userId);
-    const res = await this.storageModel.deleteOne({ storageId, userId });
+    const res = await this.storageModel.deleteOne(
+      userId ? { storageId, userId } : { storageId },
+    );
     if (res?.deletedCount > 0) {
       await this.publish(record, 'deleted');
     }

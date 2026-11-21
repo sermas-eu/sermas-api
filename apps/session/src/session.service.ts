@@ -319,6 +319,8 @@ export class SessionService {
 
     if (session.sessionId) {
       const exists = await this.load(session.sessionId);
+      if (exists && exists.appId !== session.appId)
+        throw new BadRequestException(`Session belongs to another app`);
       if (exists) {
         this.logger.warn(
           `Reusing session sessionId=${session.sessionId} exists appId=${session.appId}`,

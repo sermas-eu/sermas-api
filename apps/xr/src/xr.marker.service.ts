@@ -23,9 +23,9 @@ export class XrMarkerService {
         if (!payload.payload || !payload.payload.length) return true;
         return payload.payload.includes(m.payload);
       })
-      .filter((_m) => {
+      .filter((m) => {
         if (!payload.tags || !payload.tags.length) return true;
-        return payload.tags.filter((tag) => payload.tags.includes(tag)).length;
+        return (m.tags || []).some((tag) => payload.tags.includes(tag));
       });
   }
 

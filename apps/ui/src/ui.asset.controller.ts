@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -22,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import { Response } from 'express';
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
 import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
 import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
 import { ApiUpload } from '#libs/decorator/openapi.upload.decorator';
@@ -35,7 +37,10 @@ import { UIAssetService } from './ui.asset.service.js';
 @ApiTags('UI')
 @ApiExtraModels(UIAssetDto)
 export class UIAssetController {
-  constructor(private readonly assets: UIAssetService) {}
+  constructor(
+    private readonly assets: UIAssetService,
+    private readonly auth: PlatformAuthService,
+  ) {}
 
   @Get(':appId/:type/:assetId')
   @ApiOkResponse({
@@ -73,11 +78,14 @@ export class UIAssetController {
   @ApiUpload(UIAssetDto, 'file')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
-  saveAsset(
+  async saveAsset(
     @UploadedFile() file: Express.Multer.File,
     @Body() data: UIAssetDto,
-    @AuthenticatedUser() _user: AuthJwtUser,
+    @AuthenticatedUser() user: AuthJwtUser,
   ): Promise<void> {
+    // multipart: the body is parsed after the guard ran, so check here
+    if (!data?.appId) throw new BadRequestException('Missing appId');
+    await this.auth.assertAppAccess(user, data.appId);
     return this.assets.saveAsset(data, file);
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -16,6 +17,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
 import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
 import { AuthenticatedUser } from '#libs/auth/auth.decorators';
 import { XRMarkerDto, XRMarkerListRequestDto } from './xr.marker.dto.js';
@@ -26,7 +28,10 @@ import { XrMarkerService } from './xr.marker.service.js';
 @ApiResource('xr')
 @ApiTags('XR')
 export class XRMarkerController {
-  constructor(private readonly marker: XrMarkerService) {}
+  constructor(
+    private readonly marker: XrMarkerService,
+    private readonly auth: PlatformAuthService,
+  ) {}
 
   @Post('search')
   @ApiOkResponse({
@@ -56,11 +61,20 @@ export class XRMarkerController {
   @ApiOperation({
     description: 'Save a marker',
   })
-  saveMarker(
+  async saveMarker(
     @Body() payload: XRMarkerDto,
     @AuthenticatedUser()
     user?: AuthJwtUser,
   ): Promise<XRMarkerDto> {
+    if (!payload?.appId) throw new BadRequestException('Missing appId');
+    await this.auth.assertAppAccess(user, payload.appId);
+    // an existing marker may only be replaced by its own app
+    if (payload.markerId) {
+      const existing = await this.marker
+        .read(payload.markerId)
+        .catch(() => null);
+      if (existing) await this.auth.assertAppAccess(user, existing.appId);
+    }
     return this.marker.save(payload, user);
   }
 
@@ -74,11 +88,14 @@ export class XRMarkerController {
   @ApiOperation({
     description: 'Delete a marker',
   })
-  deleteMarker(
-    @Param(':markerId') markerId: string,
+  async deleteMarker(
+    @Param('markerId') markerId: string,
     @AuthenticatedUser()
-    _user?: any,
+    user?: AuthJwtUser,
   ): Promise<void> {
+    const existing = await this.marker.read(markerId).catch(() => null);
+    if (!existing) return;
+    await this.auth.assertAppAccess(user, existing.appId);
     return this.marker.remove(markerId);
   }
 
@@ -96,11 +113,13 @@ export class XRMarkerController {
     },
   })
   @ApiProduces('image/jpeg')
-  getMarkerQRCode(
-    @Param(':markerId') markerId: string,
+  async getMarkerQRCode(
+    @Param('markerId') markerId: string,
     @AuthenticatedUser()
-    _user?: any,
+    user?: AuthJwtUser,
   ) {
-    return this.marker.read(markerId);
+    const marker = await this.marker.read(markerId);
+    await this.auth.assertAppAccess(user, marker.appId);
+    return marker;
   }
 }

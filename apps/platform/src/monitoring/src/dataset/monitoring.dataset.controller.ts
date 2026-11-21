@@ -59,6 +59,8 @@ export class MonitoringDatasetController {
     @AuthenticatedUser() user: AuthJwtUser,
     @Body() filter?: AdvancedDatasetRecordFilterDto,
   ): Promise<MonitoringRecordDto[]> {
+    // without an appId the search spans every app's records
+    if (!filter?.appId) throw new BadRequestException(`Missing appId`);
     return await this.datalogger.advancedSearch(filter);
   }
 }

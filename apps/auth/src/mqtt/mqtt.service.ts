@@ -57,6 +57,19 @@ export class MqttService {
       throw new UnauthorizedException('failed to load context');
     }
 
+    // app isolation: the topic's app must be one the caller may use. A
+    // wildcard app (`+`, `#`) spans every app: system service accounts only.
+    const wildcardApp = /[+#]/.test(context.appId);
+    const appAllowed = wildcardApp
+      ? this.platform.isSystemClient(user)
+      : await this.platform.canAccessApp(user, context.appId);
+    if (!appAllowed) {
+      this.logger.warn(
+        `ACL app not allowed appId=${context.appId} clientId=${user.azp} username=${user.preferred_username}`,
+      );
+      throw new UnauthorizedException();
+    }
+
     // perform keycloak enforcing
     const isAllowed = await this.platform.isAllowed(context);
     if (!isAllowed) {
