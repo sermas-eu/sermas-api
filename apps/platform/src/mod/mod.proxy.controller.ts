@@ -1,14 +1,16 @@
-import { All, Controller, Param, Req } from '@nestjs/common';
+import { All, Controller, Param, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
-import { Public } from '#libs/auth/auth.decorators';
+import type { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { JwtAuthGuard } from '#libs/auth/jwt.guard';
 import { PlatformModuleProxyService } from './mod.proxy.service.js';
 
 @Controller()
 export class PlatformModuleProxyController {
   constructor(private readonly module: PlatformModuleProxyService) {}
 
+  // the token must verify: the service only reads the identity it carries
   @All('module/:moduleId/:operationId')
-  @Public()
+  @UseGuards(JwtAuthGuard)
   trigger(
     @Param('moduleId') moduleId: string,
     @Param('operationId') operationId: string,
@@ -24,6 +26,7 @@ export class PlatformModuleProxyController {
         qs: query,
       },
       req.headers.authorization,
+      (req as Request & { user?: AuthJwtUser }).user,
     );
   }
 }
