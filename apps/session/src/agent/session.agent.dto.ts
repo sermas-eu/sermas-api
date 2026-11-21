@@ -1,3 +1,4 @@
+import { IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AppSettingsDto } from '#apps/platform/src/app/platform.app.dto';
 import { DefaultLanguage } from '#libs/language/lang-codes';
@@ -10,12 +11,20 @@ import { AgentStatus, AgentStatusList } from '../session.dto.js';
 
 export class AgentHeartBeatEventDto extends SermasSessionDto {
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   agentId?: string;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   moduleId: string;
   @ApiProperty({ enum: AgentStatusList, enumName: 'AgentStatus' })
+  @IsOptional()
+  @IsString()
   status: AgentStatus;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
   settings?: AppSettingsDto;
 }
 

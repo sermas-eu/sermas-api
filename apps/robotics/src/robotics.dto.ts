@@ -1,3 +1,4 @@
+import { IsArray, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { SermasBaseDto } from '#libs/sermas/sermas.dto';
 
@@ -80,18 +81,26 @@ export class ActuationEventDto extends SermasBaseDto {
   @ApiProperty({
     type: [ActuationDto],
   })
+  @IsOptional()
+  @IsArray()
   actuations: ActuationDto[];
 }
 
 export class MovementEventDto extends SermasBaseDto {
   @ApiProperty()
+  @IsOptional()
+  @IsObject()
   movement: MovementDto;
 }
 
 export class StatusEventDto extends SermasBaseDto {
   @ApiProperty()
+  @IsOptional()
+  @IsObject()
   status: StatusDto;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   robotId?: string;
 }
 

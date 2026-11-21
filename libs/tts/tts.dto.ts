@@ -1,3 +1,4 @@
+import { Allow, IsOptional, IsString } from 'class-validator';
 import { Emotion } from '#libs/sermas/sermas.dto';
 import { LanguageCode } from '../language/lang-codes.js';
 import { DialogueMessageDto } from '../language/dialogue.message.dto.js';
@@ -23,13 +24,18 @@ export class DialogueTextToSpeechDto extends DialogueMessageDto {
     description:
       'Text to convert to speech. If emotion field is set, it will be converted to SSML. If also `ssml` field is set, this field will be ignored',
   })
+  @Allow()
   text: string | null;
   @ApiPropertyOptional({
     description: 'SSML markup to render as speech.',
   })
+  @IsOptional()
+  @IsString()
   ssml?: string;
   @ApiPropertyOptional()
+  @Allow()
   language: string | null;
   @ApiPropertyOptional()
+  @Allow()
   emotion?: Emotion;
 }

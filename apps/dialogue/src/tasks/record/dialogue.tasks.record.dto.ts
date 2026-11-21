@@ -1,3 +1,4 @@
+import { Allow, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   TaskEventType,
@@ -12,21 +13,29 @@ export class DialogueTaskRecordDto {
   @ApiProperty({
     description: 'Record ID',
   })
+  @IsOptional()
+  @IsString()
   recordId: string;
 
   @ApiProperty({
     description: 'Task ID',
   })
+  @IsOptional()
+  @IsString()
   taskId: string;
 
   @ApiProperty({
     description: 'Application ID reference',
   })
+  @IsOptional()
+  @IsString()
   appId: string;
 
   @ApiProperty({
     description: 'Session ID reference',
   })
+  @IsOptional()
+  @IsString()
   sessionId: string;
 
   @ApiPropertyOptional({
@@ -34,6 +43,8 @@ export class DialogueTaskRecordDto {
     enum: TaskEventTypeList,
     enumName: 'TaskEventType',
   })
+  @IsOptional()
+  @IsString()
   status?: TaskEventType;
 
   @ApiProperty({
@@ -41,15 +52,18 @@ export class DialogueTaskRecordDto {
     type: Object,
     default: {},
   })
+  @Allow()
   values: TaskRecordValues;
 
   @ApiPropertyOptional({
     description: 'Updated date',
   })
+  @Allow()
   updated: Date;
 
   @ApiPropertyOptional({
     description: 'Creation date',
   })
+  @Allow()
   created: Date;
 }

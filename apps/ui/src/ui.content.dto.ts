@@ -1,3 +1,4 @@
+import { Allow, IsBoolean, IsOptional, IsString } from 'class-validator';
 import {
   ApiExtraModels,
   ApiProperty,
@@ -82,42 +83,55 @@ export class UIContentDto<T = any> extends SermasSessionDto {
     enum: SupportedContentTypeList,
     enumName: 'SupportedContentTypes',
   })
+  @IsOptional()
+  @IsString()
   contentType: SupportedContentTypes;
 
   @ApiProperty()
+  @Allow()
   content: T;
 
   @ApiPropertyOptional({
     description: 'Provide a description for the content',
   })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiGenericPropertyOptional({
     description: 'Provides metadata for the content',
     genericModels: [UIContentMetadataDto],
   })
+  @Allow()
   metadata?: UIContentMetadataDto;
 
   @ApiGenericPropertyOptional({
     description: 'Provides configuration options for the content',
     genericModels: [UIContentOptionsDto],
   })
+  @Allow()
   options?: UIContentOptionsDto;
 
   @ApiPropertyOptional({
     description: 'Unique sortable ID used to group and sort messages',
   })
+  @IsOptional()
+  @IsString()
   messageId?: string;
   @ApiPropertyOptional({
     description:
       'Unique sortable ID used to sort chunks from the same messageId',
   })
+  @IsOptional()
+  @IsString()
   chunkId?: string;
 
   @ApiPropertyOptional({
     default: false,
     description: 'Specify if it is a welcome message',
   })
+  @IsOptional()
+  @IsBoolean()
   isWelcome?: boolean;
 }
 

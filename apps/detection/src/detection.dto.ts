@@ -1,3 +1,4 @@
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PositionDto } from '#apps/robotics/src/robotics.dto';
 import { UserReferenceSource } from '#apps/session/src/session.dto';
@@ -29,18 +30,30 @@ export class UserInteractionIntentionDto extends SermasBaseDto {
   @ApiProperty({
     description: 'Module generating the event',
   })
+  @IsOptional()
+  @IsString()
   moduleId: string;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   userId?: string;
   @ApiProperty({ type: String })
+  @IsOptional()
+  @IsString()
   source: UserReferenceSource;
   @ApiProperty()
+  @IsOptional()
+  @IsNumber()
   probability: number;
   @ApiProperty({
     enum: InteractionType,
   })
+  @IsOptional()
+  @IsString()
   interactionType: InteractionType;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   sessionId: string;
 }
 
@@ -180,14 +193,20 @@ export type ObjectDetectionType = (typeof ObjectDetectionTypeList)[number];
 
 export class ObjectDetectionRequest extends SermasBaseDto {
   @ApiProperty({ format: 'byte' })
+  @IsOptional()
+  @IsString()
   image: string;
   @ApiProperty({
     enum: ObjectDetectionTypeList,
     default: '',
     enumName: 'ObjectDetectionType',
   })
+  @IsOptional()
+  @IsString()
   detectionType: ObjectDetectionType;
   @ApiProperty()
+  @IsOptional()
+  @IsArray()
   filter: [string];
 }
 export class ObjectDetectionResponse extends SermasBaseDto {
@@ -202,6 +221,8 @@ export class ObjectDetectionEventDto extends SermasBaseDto {
 
 export class SentimentAnalysisRequest extends SermasBaseDto {
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   text: string;
 }
 

@@ -1,5 +1,5 @@
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { IsArray, IsString } from 'class-validator';
+import { IsArray, IsObject, IsString } from 'class-validator';
 import { ValidationPipeOptions } from './validation-options.js';
 
 class Payload {
@@ -20,5 +20,21 @@ describe('ValidationPipeOptions', () => {
       .catch((e) => e);
     expect(err).toBeInstanceOf(BadRequestException);
     expect(err.getResponse().message).toEqual(['modules must be an array']);
+  });
+
+  it('strips undeclared properties and keeps nested objects whole', async () => {
+    class Body {
+      @IsString()
+      name: string;
+      @IsObject()
+      settings: Record<string, unknown>;
+    }
+    const pipe = new ValidationPipe(new ValidationPipeOptions());
+    const out = await pipe.transform(
+      { name: 'x', ownerId: 'injected', settings: { a: 1 } },
+      { type: 'body', metatype: Body },
+    );
+    expect(out).toBeInstanceOf(Body);
+    expect(out).toEqual({ name: 'x', settings: { a: 1 } });
   });
 });

@@ -1,3 +1,4 @@
+import { IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { LLMProvider, LLMProviderList } from '#libs/llm/providers/provider.dto';
 import { SermasSessionDto } from '#libs/sermas/sermas.dto';
@@ -7,16 +8,22 @@ export class AgentEvaluatePromptDto extends SermasSessionDto {
   @ApiProperty({
     description: 'Id of the session',
   })
+  @IsOptional()
+  @IsString()
   sessionId: string;
 
   @ApiProperty({
     description: 'Prompt to evaluate',
   })
+  @IsOptional()
+  @IsString()
   prompt: string;
 
   @ApiPropertyOptional({
     description: 'Prompt options',
   })
+  @IsOptional()
+  @IsObject()
   options?: AgentEvaluatePromptOptionsDto;
 
   @ApiPropertyOptional({
@@ -24,11 +31,15 @@ export class AgentEvaluatePromptDto extends SermasSessionDto {
     enum: LLMProviderList,
     enumName: 'LLMProvider',
   })
+  @IsOptional()
+  @IsString()
   provider?: LLMProvider;
 
   @ApiPropertyOptional({
     description: 'LLM provider model name',
   })
+  @IsOptional()
+  @IsString()
   model?: string;
 }
 

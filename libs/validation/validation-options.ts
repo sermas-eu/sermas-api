@@ -17,9 +17,11 @@ const describe = (errors: ValidationError[], parent = ''): string[] =>
   });
 
 // `transform` turns bodies into DTO instances and typed query parameters into their
-// types. `whitelist` stays off until every DTO property carries a class-validator
-// decorator: today most do not, and whitelisting would strip them (D-30)
+// types. `whitelist` strips properties a DTO does not declare with a class-validator
+// decorator; dto-coverage.spec.ts checks that every documented property has one
+// (D-30). Nested objects are not descended into unless marked @ValidateNested.
 export class ValidationPipeOptions implements NestValidationPipeOptions {
+  whitelist = true;
   transform = true;
   validationError = { target: false };
   exceptionFactory = (errors: ValidationError[]) => {

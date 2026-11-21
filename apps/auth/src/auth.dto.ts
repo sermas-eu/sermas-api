@@ -1,3 +1,4 @@
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { KeycloakTokenDto } from '#apps/keycloak/src/keycloak.admin.dto';
 import {
@@ -71,15 +72,23 @@ export class AuthorizationUser {
 
 export class LoginRequestDto extends SermasBaseDto {
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   username: string;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   password: string;
 }
 
 export class RefreshTokenRequestDto extends SermasBaseDto {
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   refreshToken: string;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   clientSecret?: string;
 }
 
@@ -103,14 +112,24 @@ export class LoginResponseDto extends KeycloakTokenDto {
 
 export class RegistrationRequestDto extends SermasBaseDto {
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   firstName: string;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   lastName: string;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   username: string;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   email: string;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   password: string;
 }
 
@@ -121,14 +140,24 @@ export class RegistrationResponseDto {
 
 export class UpdateUserRequestDto extends SermasBaseDto {
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   userId: string;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   password?: string;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   roles?: string;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
   enabled?: boolean;
   @ApiPropertyOptional({ type: [AuthorizationUser] })
+  @IsOptional()
+  @IsArray()
   authorization?: AuthorizationUser[];
 }
 

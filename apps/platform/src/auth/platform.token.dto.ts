@@ -1,3 +1,4 @@
+import { IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, ApiSchema } from '@nestjs/swagger';
 import { SermasBaseDto } from '#libs/sermas/sermas.dto';
 import { KeycloakTokenDto } from '#apps/keycloak/src/keycloak.admin.dto';
@@ -38,10 +39,16 @@ export class AppTokenRequestDto extends SermasBaseDto {
 
 export class AccessTokenRequestDto {
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   appId?: string;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   clientId: string;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   clientSecret?: string;
 }
 
@@ -49,9 +56,15 @@ export class AccessTokenRequestDto {
 @ApiSchema({ name: 'PlatformRefreshTokenRequestDto' })
 export class RefreshTokenRequestDto extends AccessTokenRequestDto {
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   refreshToken: string;
   @ApiProperty()
+  @IsOptional()
+  @IsString()
   clientId: string;
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   accessToken?: string;
 }
