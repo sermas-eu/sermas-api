@@ -13,8 +13,8 @@ export const DialogueActorList = ['user', 'agent'] as const;
 export type DialogueActor = (typeof DialogueActorList)[number];
 
 export class DialogueMessageDto extends SermasSessionDto {
+  // no `type`: with one, @nestjs/swagger 12 ignores enumName and inlines the enum
   @ApiPropertyOptional({
-    type: String,
     enum: DialogueActorList,
     enumName: 'DialogueActor',
     description: 'Actor providing the text, can be user or agent',
