@@ -39,7 +39,7 @@ export class PlatformAuthTokenService {
   ) {
     const bearerToken = caller?.token;
     if (!req.appId) throw new BadRequestException('appId missing');
-    if (!req.clientId) throw new BadRequestException('appId missing');
+    if (!req.clientId) throw new BadRequestException('clientId missing');
 
     if (!req.clientSecret && !bearerToken)
       throw new BadRequestException(
@@ -54,19 +54,15 @@ export class PlatformAuthTokenService {
     if (caller) {
       const jwt = caller.user;
 
-      // A system client (AUTH_KEYCLOAK_CLIENT_ID, AUTH_KEYCLOAK_SYSTEM_CLIENT_ID)
-      // that passed the route guard (platform:token) may mint tokens for any
-      // app; any other caller needs the permission on the target app client.
+      // The route is public, so no guard ran. A system client's service account
+      // (AUTH_KEYCLOAK_CLIENT_ID, AUTH_KEYCLOAK_SYSTEM_CLIENT_ID) may mint tokens
+      // for any app, the kiosk client for its app clients, a user for the apps
+      // they own (admins for all). Keycloak's evaluation of the target client's
+      // policies is not used here: it permits any realm user.
       const isAllowed =
-        this.auth.isSystemClient(jwt.azp) ||
-        (await this.auth.isAllowed({
-          appId: req.appId,
-          clientId: req.clientId,
-          resource: 'platform',
-          scopes: ['token'],
-          token: bearerToken,
-          userId: jwt.sub,
-        }));
+        this.auth.isSystemClient(jwt) ||
+        this.auth.isKioskTokenRequest(jwt, req.clientId) ||
+        (await this.auth.isAppOwnerOrAdmin(jwt, req.appId));
 
       if (!isAllowed) throw new ForbiddenException();
 
@@ -103,7 +99,7 @@ export class PlatformAuthTokenService {
 
       return token;
     } catch (e: any) {
-      if (e.stack.toString().indexOf('status code 401')) {
+      if (String(e?.stack).includes('status code 401')) {
         this.logger.debug(
           `Unauthorized client=${req.clientId} appId=${req.appId}`,
         );

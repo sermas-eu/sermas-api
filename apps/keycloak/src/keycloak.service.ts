@@ -170,6 +170,33 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  /**
+   * A confidential client with a service account and nothing else: no
+   * authorization services, no roles. Created, or its secret brought up to date.
+   */
+  async ensureServiceAccountClient(clientId: string, secret: string) {
+    await this.getToken();
+    const existing = await this.getClientByName(clientId);
+    if (existing) {
+      await this.kc.updateClientSecret({
+        realm: this.realm,
+        token: this.token,
+        id: existing.id,
+        secret,
+      });
+      return existing;
+    }
+    this.logger.log(`creating service account client ${clientId}`);
+    await this.kc.createClient({
+      token: this.token,
+      realm: this.realm,
+      name: clientId,
+      secret,
+      authorizationEnabled: false,
+    });
+    return await this.getClientByName(clientId);
+  }
+
   async getClientAccessToken(req: ClientLoginDto) {
     await this.getToken();
 

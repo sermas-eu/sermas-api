@@ -47,6 +47,7 @@ export class PlatformKeycloakService implements OnModuleInit {
   async onModuleInit() {
     await this.waitForKeycloak();
     await this.ensurePlatformClient();
+    await this.ensureKioskClient();
 
     const filename = this.config.get('IMPORT_USERS_FILENAME');
     await this.importUsersFromFile(filename);
@@ -483,6 +484,19 @@ export class PlatformKeycloakService implements OnModuleInit {
     await this.grantPlatformAdmin(client.clientId);
 
     return await this.keycloack.getClientByName(client.clientId);
+  }
+
+  /**
+   * The kiosk's own client (D-28): it mints app tokens and can do nothing else,
+   * so the kiosk no longer needs the platform client's admin secret.
+   */
+  async ensureKioskClient() {
+    const secret = this.config.get('AUTH_KEYCLOAK_KIOSK_CLIENT_SECRET');
+    if (!secret) return;
+    await this.keycloack.ensureServiceAccountClient(
+      this.config.get('AUTH_KEYCLOAK_KIOSK_CLIENT_ID'),
+      secret,
+    );
   }
 
   /**

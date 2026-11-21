@@ -41,6 +41,13 @@ export const SermasDefaultConfig = {
   AUTH_KEYCLOAK_ADMIN_REALM: 'master',
   // AUTH_KEYCLOAK_SYSTEM_CLIENT_ID Additonal system clients, separated by comma
   AUTH_KEYCLOAK_SYSTEM_CLIENT_ID: '',
+  // AUTH_KEYCLOAK_KIOSK_CLIENT_ID the kiosk's client: it may only mint app tokens
+  // (POST /platform/token) for AUTH_KEYCLOAK_KIOSK_APP_CLIENTS, nothing else
+  AUTH_KEYCLOAK_KIOSK_CLIENT_ID: 'kiosk',
+  // AUTH_KEYCLOAK_KIOSK_CLIENT_SECRET its secret; empty: the client is not created
+  AUTH_KEYCLOAK_KIOSK_CLIENT_SECRET: '',
+  // AUTH_KEYCLOAK_KIOSK_APP_CLIENTS the app clients the kiosk may mint tokens for
+  AUTH_KEYCLOAK_KIOSK_APP_CLIENTS: 'avatar,robot',
 
   // MQTT_URL the mqtt service url
   MQTT_URL: 'mqtt',

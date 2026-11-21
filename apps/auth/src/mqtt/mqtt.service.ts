@@ -22,7 +22,7 @@ export class MqttService {
 
   async checkUser(user: AuthJwtUser, checkSuperUser = false) {
     if (checkSuperUser) {
-      if (!this.platform.isSystemClient(user.azp)) {
+      if (!this.platform.isSystemClient(user)) {
         throw new UnauthorizedException();
       }
     }

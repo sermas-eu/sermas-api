@@ -8,7 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
 import { AuthJwtUser } from '#apps/auth/src/auth.dto';
-import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import {
+  KeycloakService,
+  ROLE_ADMIN,
+} from '#apps/keycloak/src/keycloak.service';
 import { getKeycloakClientId } from '#apps/keycloak/src/util';
 import { jwtDecode } from '#libs/util';
 import { Model } from 'mongoose';
@@ -49,8 +52,27 @@ export class PlatformAuthService {
       ...this.config
         .get('AUTH_KEYCLOAK_SYSTEM_CLIENT_ID')
         .split(',')
-        .map((p) => p.trim()),
+        .map((p) => p.trim())
+        .filter(Boolean),
     ];
+  }
+
+  /**
+   * The kiosk client's service account may mint tokens for the configured app
+   * clients (AUTH_KEYCLOAK_KIOSK_APP_CLIENTS) of any app, and nothing else.
+   */
+  isKioskTokenRequest(user: AuthJwtUser, appClientId: string): boolean {
+    const kiosk = this.config.get('AUTH_KEYCLOAK_KIOSK_CLIENT_ID');
+    if (!kiosk || !this.config.get('AUTH_KEYCLOAK_KIOSK_CLIENT_SECRET'))
+      return false;
+    if (user.azp !== kiosk) return false;
+    // a user who logged in through the kiosk client is not the kiosk
+    if (user.preferred_username !== `service-account-${kiosk}`) return false;
+    const allowed = (this.config.get('AUTH_KEYCLOAK_KIOSK_APP_CLIENTS') || '')
+      .split(',')
+      .map((c: string) => c.trim())
+      .filter(Boolean);
+    return allowed.includes(appClientId);
   }
 
   getPlatformClientName() {
@@ -69,8 +91,14 @@ export class PlatformAuthService {
     if (this.cache[key]) delete this.cache[key];
   }
 
-  isSystemClient(clientId: string): boolean {
-    return this.allowedClients.includes(clientId);
+  /**
+   * The caller is a system client's own service account. `azp` alone is not
+   * enough: every user who logs in through the platform client carries
+   * `azp=platform` too.
+   */
+  isSystemClient(user: AuthJwtUser): boolean {
+    if (!user?.azp || !this.allowedClients.includes(user.azp)) return false;
+    return user.preferred_username === `service-account-${user.azp}`;
   }
 
   parseToken(token: string) {
@@ -88,6 +116,17 @@ export class PlatformAuthService {
    * `myapp-avatar` for app `myapp`. The app's clients come from its record, so
    * a client of app `myapp-x` never counts for app `myapp`.
    */
+  /** The caller is a platform admin, or the user who owns the app. */
+  async isAppOwnerOrAdmin(user: AuthJwtUser, appId: string): Promise<boolean> {
+    if (!user?.sub) return false;
+    if (user.realm_access?.roles?.includes(ROLE_ADMIN)) return true;
+    if (!appId) return false;
+    const app = await this.apps
+      .findOne({ appId }, { ownerId: 1 })
+      .lean<Pick<PlatformApp, 'ownerId'>>();
+    return Boolean(app?.ownerId) && app.ownerId === user.sub;
+  }
+
   async isOwnAppClient(appId: string, clientId: string): Promise<boolean> {
     if (!appId || !clientId) return false;
     let entry = this.appClients[appId];
