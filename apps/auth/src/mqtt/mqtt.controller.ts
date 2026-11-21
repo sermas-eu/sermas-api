@@ -1,3 +1,4 @@
+import { ApiExcludeController } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -12,6 +13,8 @@ import { AuthJwtUser } from '../auth.dto.js';
 import { MqttAclPayload } from './mqtt.dto.js';
 import { MqttService } from './mqtt.service.js';
 
+// called by the MQTT broker (go-auth), not by clients
+@ApiExcludeController()
 @Controller('mqtt')
 @UseGuards(JwtAuthGuard)
 export class MqttController {
