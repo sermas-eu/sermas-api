@@ -65,6 +65,11 @@ describe('DialogueChatService', () => {
         }
         expect(res).toBe(key);
       });
+
+      // a wrapper alone on its line cleans to nothing: the stream skips such chunks
+      ['CHAT RESPONSE', 'CHAT RESPONSE:\n', '<tools>'].forEach((text) => {
+        expect(dialogueChatService.cleanTextWrappers(text).trim()).toBe('');
+      });
     });
   });
 });

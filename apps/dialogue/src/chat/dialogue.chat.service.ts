@@ -302,6 +302,10 @@ export class DialogueChatService {
       return;
     }
 
+    // set when a chunk is sent: the model sometimes puts its whole answer in
+    // filter.answer and writes no chat text
+    let answered = false;
+
     response.stream
       .on('data', (chunk: Buffer | string) => {
         perf('stream');
@@ -333,6 +337,11 @@ export class DialogueChatService {
           // chunkBuffer = chunkBuffer.substring(toSend.length);
 
           text = this.cleanTextWrappers(text, [response.data.avatar?.name]);
+          // a line holding only a wrapper (`CHAT RESPONSE`) is empty now: an empty
+          // agent message tells the kiosk the speech was not recognised, and it
+          // stops the answer that follows
+          if (!text.trim()) return;
+          answered = true;
 
           const chunkId = getChunkId();
           // this.sendMessage(message, messageId, chunkId, toSend);
@@ -355,6 +364,13 @@ export class DialogueChatService {
         if (chunkBuffer.length > 1) {
           chunkId = getChunkId();
           this.sendMessage(message, messageId, chunkId, chunkBuffer);
+        }
+
+        const fallback = response.filter?.answer?.trim();
+        if (!answered && fallback) {
+          this.logger.debug(`No chat text, answering with filter.answer`);
+          chunkId = getChunkId();
+          this.sendMessage(message, messageId, chunkId, fallback);
         }
 
         this.emitChatProgress({

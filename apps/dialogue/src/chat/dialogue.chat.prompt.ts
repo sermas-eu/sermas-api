@@ -46,6 +46,7 @@ Never add Notes or Explanations.
 { "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }<% if (data.explain) { %>, "explain": string<% } %> }
 </tools>
 <% } %>
+CHAT RESPONSE: the answer to the user, as plain text
 
 Execute sequentially the following sections delimited by markdown titles.
 
@@ -60,6 +61,7 @@ Set 'skip' to false when message matches one of in TOOLS.
 
 <% if (data.explain) { %>Set the field 'explain' describing your decision.<% } %>
 If skip is true and the last CONVERSATION messagge was not from the avatar, set the field 'answer' to provide feedback to the user.
+If skip is false, leave 'answer' empty and write the answer in CHAT RESPONSE.
 If message is skipped, do not continue with other sections. 
 
 <% if (data.hasTasks) { %>

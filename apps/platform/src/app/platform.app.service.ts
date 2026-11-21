@@ -295,6 +295,9 @@ export class PlatformAppService implements OnModuleInit {
       if (exists) throw new ConflictException('appId already exists');
     }
 
+    // before saving: a missing owner would leave a half-created app
+    await this.assertOwnerExists(data.ownerId);
+
     data.appId = data.appId || uuidv4();
     data.updatedAt = data.createdAt = new Date();
 
@@ -324,6 +327,11 @@ export class PlatformAppService implements OnModuleInit {
     });
 
     return toDTO(updatedApp);
+  }
+
+  private async assertOwnerExists(ownerId: string) {
+    const owner = await this.keycloack.getUserById(ownerId);
+    if (!owner) throw new BadRequestException(`Owner ${ownerId} not found`);
   }
 
   async updateAppTools(appId: string, tools: AppToolsDTO[]) {
@@ -449,16 +457,16 @@ export class PlatformAppService implements OnModuleInit {
         app.ownerId = data.ownerId;
       } else {
         // if previous user does not exists, update with the one provided
-        try {
-          await this.keycloack.getUserById(app.ownerId);
-        } catch (e: any) {
-          this.logger.warn(
-            `App userId=${app.ownerId} does not exists: ${e.message}`,
-          );
+        const currentOwner = app.ownerId
+          ? await this.keycloack.getUserById(app.ownerId)
+          : null;
+        if (!currentOwner) {
+          this.logger.warn(`App userId=${app.ownerId} does not exists`);
           app.ownerId = undefined;
         }
 
         if (!app.ownerId) {
+          await this.assertOwnerExists(data.ownerId);
           this.logger.log(`Updated userId=${data.ownerId}`);
           app.ownerId = data.ownerId;
         } else {
