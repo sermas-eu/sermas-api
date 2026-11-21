@@ -26,6 +26,7 @@ import {
 import { PlatformAppAsyncApiService } from './platform.app.async.service.js';
 import { RepositoryDefaults } from './platform.app.defaults.js';
 import {
+  AppClientDto,
   AppModuleConfigDto,
   AppSettingsDto,
   AppToolsDTO,
@@ -504,7 +505,12 @@ export class PlatformAppService implements OnModuleInit {
         removedModulesMap = oldModulesMap;
       }
 
-      const updatedModules = Object.values(updatedModulesMap);
+      // modules new to the app (D-37: they used to be dropped)
+      const addedModules = Object.values(newModulesMap) as AppModuleConfigDto[];
+      const updatedModules = [
+        ...Object.values(updatedModulesMap),
+        ...addedModules,
+      ];
       const removedModules = Object.values(removedModulesMap);
 
       if (updatedModules.length)
@@ -516,23 +522,33 @@ export class PlatformAppService implements OnModuleInit {
           `Removed modules: ${removedModules.map((m) => m.moduleId)}`,
         );
 
-      if (updatedModules.length) {
-        app.modules = [...updatedModules];
+      app.modules = [...updatedModules];
 
-        data.clients = data.clients || [];
-        // drop removed modules clients
-        data.clients = data.clients.filter(
-          (c) => removedModules.filter((m) => m.moduleId === c.clientId).length,
-        );
-        data.clients.push(
-          ...updatedModules.map((m) => ({
-            clientId: m.moduleId,
-            secret: m.secret,
-            name: m.name || m.moduleId,
-            permissions: (m.supports || []).map((s) => `${s}.*`),
-          })),
-        );
+      // Each module runs as a client of the same id. Drop the clients of
+      // removed modules; a client passed in for a module keeps its own
+      // permissions, otherwise they come from what the module supports (D-37:
+      // the filter was inverted and dropped every client passed in).
+      const removedIds = new Set(removedModules.map((m) => m.moduleId));
+      const given = (data.clients || []).filter(
+        (c) => !removedIds.has(c.clientId),
+      );
+      const byId = new Map(given.map((c) => [c.clientId, c]));
+      for (const m of updatedModules) {
+        const derived = (m.supports || []).map((s) => `${s}.*`);
+        const client = byId.get(m.moduleId);
+        if (client) {
+          if (!client.permissions?.length) client.permissions = derived;
+          client.secret = client.secret || m.secret;
+          continue;
+        }
+        byId.set(m.moduleId, {
+          clientId: m.moduleId,
+          secret: m.secret,
+          name: m.name || m.moduleId,
+          permissions: derived,
+        } as AppClientDto);
       }
+      data.clients = [...byId.values()];
 
       if (removedModules.length) {
         app.clients = app.clients || [];
