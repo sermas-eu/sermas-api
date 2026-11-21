@@ -16,9 +16,11 @@ const describe = (errors: ValidationError[], parent = ''): string[] =>
     ].map((m) => (m.startsWith(err.property) ? m : `${path}: ${m}`));
   });
 
-// `whitelist` and `transform` were declared as types only and never applied: enabling
-// them now would strip or convert payloads that clients send today (D-30)
+// `transform` turns bodies into DTO instances and typed query parameters into their
+// types. `whitelist` stays off until every DTO property carries a class-validator
+// decorator: today most do not, and whitelisting would strip them (D-30)
 export class ValidationPipeOptions implements NestValidationPipeOptions {
+  transform = true;
   validationError = { target: false };
   exceptionFactory = (errors: ValidationError[]) => {
     errors.forEach((err) => {
