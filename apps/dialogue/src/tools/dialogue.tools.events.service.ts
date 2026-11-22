@@ -233,12 +233,34 @@ export class DialogueToolsEventsService {
         await addTools(
           quiz.answers.map((answer) => ({
             description: answer.answer,
+            // what the quiz comment (DialogueQuizService) needs once answered
             schema: [
               {
                 description: 'Ignore: answerId',
                 parameter: 'answerId',
                 type: 'string',
                 value: answer.answerId,
+                ignore: true,
+              },
+              {
+                description: 'Ignore: question',
+                parameter: 'question',
+                type: 'string',
+                value: quiz.question || '',
+                ignore: true,
+              },
+              {
+                description: 'Ignore: correct',
+                parameter: 'correct',
+                type: 'boolean',
+                value: answer.correct === true,
+                ignore: true,
+              },
+              {
+                description: 'Ignore: reason',
+                parameter: 'reason',
+                type: 'string',
+                value: answer.reason || '',
                 ignore: true,
               },
             ],
