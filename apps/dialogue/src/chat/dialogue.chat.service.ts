@@ -414,6 +414,9 @@ export class DialogueChatService {
       currentTask,
       suggestedTasks,
     });
+    // question buttons of the welcome menu are not tools for the LLM
+    if (activeTools.tools?.length)
+      activeTools.tools = activeTools.tools.filter((t) => !t.options?.ask);
 
     const currentField = await this.intent.getCurrentField(
       currentTask,

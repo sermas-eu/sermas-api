@@ -6,7 +6,7 @@ import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
 import { LLMProviderService } from '#libs/llm/llm.provider.service';
 import { getChunkId, getMessageId } from '#libs/sermas/sermas.utils';
 import { ulid } from 'ulidx';
-import { packAvatarObject } from '../chat/utils.js';
+import { describeToolContent, packAvatarObject } from '../chat/utils.js';
 import { DialogueSpeechService } from '../dialogue.speech.service.js';
 import { toolContentPrompt } from './dialogue.tool-content.prompt.js';
 
@@ -17,21 +17,8 @@ const FALLBACK: Record<string, string> = {
 };
 
 /** the content's own words, for the prompt: never more than what the app wrote */
-const describe = (tool: AppToolsDTO): string => {
-  const content = (tool.ui?.content || {}) as Record<string, any>;
-  const parts = [
-    tool.ui?.description,
-    content.label,
-    content.title,
-    content.alt,
-    content.text,
-    content.url ? `site ${content.url}` : undefined,
-  ];
-  return parts
-    .filter((p) => typeof p === 'string' && p.trim())
-    .join('; ')
-    .slice(0, 500);
-};
+const describe = (tool: AppToolsDTO): string =>
+  describeToolContent(tool.ui as any) || '';
 
 /**
  * A tool started from a button (not by the LLM) shows its UI content without a word:

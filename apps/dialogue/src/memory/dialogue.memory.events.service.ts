@@ -44,6 +44,8 @@ export class DialogueMemoryEventsService {
 
     // match button value
     if (params.button && params.button['label']) {
+      // a question button: the chat saves the question itself, once
+      if (`${params.button['value'] || ''}`.startsWith('ask/')) return;
       content = params.button['label'];
     }
 

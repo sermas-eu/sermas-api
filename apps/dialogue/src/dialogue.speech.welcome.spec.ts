@@ -152,3 +152,100 @@ describe('welcome buttons', () => {
     );
   });
 });
+
+describe('welcome menu from tool labels and options', () => {
+  const menu = async (tools: unknown[]) => {
+    const showContent = vi.fn(async () => undefined);
+    let prompt = '';
+    const service = Object.create(DialogueWelcomeService.prototype);
+    Object.assign(service, {
+      logger: { verbose: () => undefined, debug: () => undefined },
+      app: { readApp: async () => ({ appId: 'a1', settings: {} }) },
+      session: {
+        getSettings: async () => ({ language: 'en-GB' }),
+        getAvatar: async () => ({}),
+        getLLM: async () => undefined,
+      },
+      tasks: { list: async () => [] },
+      tools: { loadFromSession: async () => [{ tools }] },
+      emotion: { getUserEmotion: async () => undefined },
+      monitor: { performance: () => () => undefined },
+      llmProvider: {
+        chat: async (req: any) => {
+          prompt = req.user;
+          return { message: 'Hi', labels: [] };
+        },
+        extractProviderName: () => ({}),
+      },
+      speech: { chat: async () => undefined },
+      uiService: { showContent },
+    });
+    await service.handleWelcomeText({
+      operation: 'created',
+      appId: 'a1',
+      record: { sessionId: 's1' },
+    });
+    return {
+      list: (showContent.mock.calls[0] as any)[0].content.list,
+      prompt,
+    };
+  };
+
+  it('uses a tool label as is (only translated), hides unlisted tools, marks question buttons', async () => {
+    const { list, prompt } = await menu([
+      {
+        name: 'about',
+        description: 'The user asks what SERMAS is',
+        label: 'What is SERMAS?',
+        options: { ask: true },
+      },
+      {
+        name: 'show-architecture',
+        description: 'The user asks how it works',
+        label: 'How does it work?',
+      },
+      {
+        name: 'open-documentation',
+        description: 'The user asks for the docs',
+        options: { list: false },
+      },
+    ]);
+    expect(list).toEqual([
+      { label: 'What is SERMAS?', value: 'ask/about' },
+      { label: 'How does it work?', value: 'tool/show-architecture' },
+    ]);
+    expect(prompt).toContain('"rephrase":false');
+  });
+});
+
+describe('a question button', () => {
+  it('sends its shown label as the visitor message', async () => {
+    const chat = vi.fn(async () => undefined);
+    const service = Object.create(DialogueWelcomeService.prototype);
+    Object.assign(service, {
+      session: { getLanguage: async () => 'it-IT' },
+      speech: { chat },
+      tools: {
+        getSchemaValue: (schema: any, key: string) =>
+          schema.find((p: any) => p.parameter === key)?.value,
+      },
+    });
+    await service.handleWelcomeTool({
+      appId: 'a1',
+      sessionId: 's1',
+      schema: [
+        { parameter: 'context', value: 'welcome-tools' },
+        { parameter: 'value', value: 'ask/about' },
+        { parameter: 'selection', value: 'Cos’è SERMAS?' },
+      ],
+    });
+    expect(chat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: 'user',
+        text: 'Cos’è SERMAS?',
+        language: 'it-IT',
+        sessionId: 's1',
+      }),
+    );
+  });
+});

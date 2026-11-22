@@ -26,8 +26,10 @@ type CompletionMessageDto = {
 export class DialogueSpeechStreamService {
   private readonly logger = new Logger(DialogueSpeechStreamService.name);
 
-  // private readonly cache: Record<string, Record<string, SpeechStreamMessage>> =
-  //   {};
+  // per chunk: the handling of its last message. The MQTT handler is not awaited, so
+  // without this frames of one chunk interleave their read-append-write on the cache
+  // (frames lost) and the completion can run before the last frames are appended.
+  private readonly chunkQueues = new Map<string, Promise<void>>();
 
   constructor(
     private session: SessionService,
@@ -64,7 +66,22 @@ export class DialogueSpeechStreamService {
     return `frames_${ev.sessionId}_${ev.chunkId}`;
   }
 
-  async processStreamFrame(topic: string, buffer: Buffer) {
+  /** handles the frames and the completion of one chunk one at a time, in order */
+  processStreamFrame(topic: string, buffer: Buffer): Promise<void> {
+    const key = topic.split('/').slice(-2).join('/');
+    const previous = this.chunkQueues.get(key) || Promise.resolve();
+    const next = previous
+      .then(() => this.handleStreamMessage(topic, buffer))
+      .catch((e) =>
+        this.logger.warn(`Failed to handle stream message: ${e.message}`),
+      );
+    this.chunkQueues.set(key, next);
+    return next.finally(() => {
+      if (this.chunkQueues.get(key) === next) this.chunkQueues.delete(key);
+    });
+  }
+
+  private async handleStreamMessage(topic: string, buffer: Buffer) {
     const context = await this.getSessionFromTopic(topic);
     if (context === null) return;
 

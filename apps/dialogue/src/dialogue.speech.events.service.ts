@@ -82,6 +82,11 @@ export class DialogueSpeechEventService {
 
     if (payload.interaction.element === 'button') {
       const buttonInteraction = payload.interaction as UiInteractionButtonDto;
+      // a question button: the chat publishes the question itself, once
+      if (
+        `${buttonInteraction.context?.button?.value || ''}`.startsWith('ask/')
+      )
+        return;
       message.text =
         buttonInteraction.context.button.label ||
         buttonInteraction.context.button.value;

@@ -11,6 +11,8 @@ export interface LLMTool {
     options?: Record<string, any>;
   };
   request?: ToolRequestConfig;
+  label?: string;
+  options?: { list?: boolean; ask?: boolean };
 }
 
 export const ToolSchemaTypeList = [

@@ -76,14 +76,19 @@ describe('DialogueSpeechService.speechToText', () => {
         asyncApi: { dialogueProgress: progress },
         emitter: { emit },
       });
-      const turn = (said: string, expected: boolean, embedding = 'voice') => {
+      const turn = (
+        said: string,
+        expected: boolean,
+        embedding = 'voice',
+        self = false,
+      ) => {
         text = said;
         return service.convertToText(
           { appId: 'a', sessionId: 's', language: 'en-GB' },
-          async () => ({ expected, embedding }),
+          async () => ({ expected, embedding, self }),
         );
       };
-      return { turn, progress, emit, speakers };
+      return { turn, progress, emit, speakers, service };
     };
     const run = async (text: string, expectedSpeaker: boolean) => {
       const { turn, progress, emit } = make();
@@ -135,6 +140,41 @@ describe('DialogueSpeechService.speechToText', () => {
         expect.objectContaining({ status: 'error', error: 'other-speaker' }),
       );
     });
+
+    // the agent's own voice, caught by the microphone, is no hearing failure
+    it("drops the agent's own voice silently, counting nothing", async () => {
+      const { turn, progress, emit, speakers, service } = make();
+      service.continueAgentSpeech = vi.fn(async () => undefined);
+      expect(await turn('hello there', false, 'pip', true)).toBe(false);
+      expect(await turn('how can I help', false, 'pip', true)).toBe(false);
+
+      expect(speakers.resetSpeaker).not.toHaveBeenCalled();
+      expect(speakers.update).not.toHaveBeenCalled();
+      expect(emit).not.toHaveBeenCalledWith(
+        'dialogue.turn.dropped',
+        expect.anything(),
+      );
+      expect(progress).toHaveBeenCalledWith(
+        expect.objectContaining({ event: 'stt', status: 'ended' }),
+      );
+      expect(progress).not.toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error' }),
+      );
+      expect(service.continueAgentSpeech).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('CONTINUE is published to the client', async () => {
+    const agentContinueSpeech = vi.fn(async () => undefined);
+    const service = Object.create(DialogueSpeechService.prototype);
+    Object.assign(service, {
+      logger: { debug: () => undefined },
+      asyncApi: { agentContinueSpeech },
+    });
+    await service.continueAgentSpeech('a', 's');
+    expect(agentContinueSpeech).toHaveBeenCalledWith(
+      expect.objectContaining({ appId: 'a', sessionId: 's' }),
+    );
   });
 
   // the chunks of one answer reach the client in stream order, even when the

@@ -12,6 +12,15 @@ tends to invent a phrase out of room noise. A clip whose text is empty, or whose
 is not the expected one (speaker verification), is dropped too. Each of these is a
 *hearing failure*.
 
+A clip in the avatar's own voice (its speech coming back through the microphone,
+recognised by speaker verification against the avatar's recent speech) is dropped
+too, but it is **not** a hearing failure: it counts toward nothing below, and the
+client gets a plain `stt` `ended` progress event, not a "didn't catch that".
+
+The API logs one `TURN` line per voice clip at debug level: the outcome (accepted, or
+dropped and why), the clip's duration and level, and the transcribed text. These are
+the numbers to tune the thresholds on a real kiosk.
+
 ### The voice signature
 
 Speaker verification (`SPEAKER_VERIFICATION`, on by default) learns the visitor's voice
@@ -42,6 +51,25 @@ as dropped (a `dialogue/progress` event with `event: llm`, `status: error`,
 `error: skipped`), and the kiosk shows a short "didn't catch that" notice and listens
 again. A visitor who was really talking to the avatar sees the notice and can repeat or
 type.
+
+## Talking over the avatar
+
+While the avatar speaks, the microphone hears it too. Echo cancellation in the browser
+removes part of it, how much depends on the device, so the web toolkit adds its own
+guard (barge-in):
+
+- a stretch of speech that overlaps the avatar's voice, or starts within half a second
+  after it, is sent only if it holds about 700 ms of confident speech; anything shorter
+  is the avatar's echo or noise, and is dropped on the device;
+- when it does, the visitor is talking over the avatar: the avatar's voice is lowered,
+  not paused, and the clip goes to the API as a normal turn;
+- the API answers `dialogue/stop` when the turn is accepted (the avatar stops, the new
+  answer follows) and `dialogue/continue` when it is dropped or skipped (the avatar's
+  voice comes back). Without either within 6 seconds the client restores it on its own.
+
+The toolkit sends each turn as one WAV clip on `dialogue/user-speech/:sessionId/:chunkId`.
+The API still accepts frames on `dialogue/user-speech/stream/...` from older clients and
+appends them in arrival order.
 
 ## The kiosk's reaction
 

@@ -73,13 +73,16 @@ export class DialogueWelcomeService {
     // a task enabled as a tool is listed once, as a task
     const isTaskTool = (t: { schema?: { parameter: string }[] }) =>
       (t.schema || []).some((p) => p.parameter === 'taskId');
+    // a tool's own label is only translated; without one its description is
+    // rephrased into a label. `options.ask`: a question button (see handleWelcomeTool)
     const toolsList = [
       ...(tools || [])
         .filter((t) => !isTaskTool(t))
+        .filter((t) => t.options?.list !== false)
         .map((t) => ({
-          label: t.description,
-          value: `tool/${t.name}`,
-          rephrase: true,
+          label: t.label || t.description,
+          value: `${t.options?.ask ? 'ask' : 'tool'}/${t.name}`,
+          rephrase: !t.label,
         })),
       ...(tasks || [])
         .filter((t) => t.options?.list !== false)
@@ -199,6 +202,17 @@ export class DialogueWelcomeService {
 
     let matches = false;
 
+    // a question button: its label, as shown (translated), is the visitor's question
+    if (type === 'ask') {
+      const question =
+        `${this.tools.getSchemaValue(ev.schema, 'selection') || ''}`
+          .replace(/\s*:\s*$/, '')
+          .trim();
+      if (!question) return;
+      await this.askQuestion(ev, question);
+      return;
+    }
+
     if (type === 'tool') {
       const repository = await this.tools.get(ev.appId);
       if (!repository) return;
@@ -250,6 +264,26 @@ export class DialogueWelcomeService {
       // };
       // this.uiService.showContent(clearScreen);
     }
+  }
+
+  /** sends a question as the visitor's message: the chat answers it */
+  async askQuestion(
+    ev: { appId: string; sessionId: string },
+    question: string,
+  ) {
+    const language = await this.session.getLanguage(ev);
+    const msg: DialogueMessageDto = {
+      actor: 'user',
+      appId: ev.appId,
+      sessionId: ev.sessionId,
+      language,
+      text: question,
+      ts: new Date(),
+      messageId: getMessageId(),
+      chunkId: getChunkId(),
+      requestId: ulid(),
+    };
+    await this.speech.chat(msg);
   }
 
   listModels() {

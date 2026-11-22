@@ -32,14 +32,31 @@ shows the content again.
 
 A UI tool does nothing by itself. What happens depends on the content:
 
-- **Welcome menu.** Each button's `value` is `tool/<name>` or `task/<taskId>`: the click
-  triggers that application tool, or starts that task. A tool that shows UI content
+- **Welcome menu.** It lists the application's tools and tasks, except those with
+  `options.list: false` (on a tool or a task), which stay usable
+  from the conversation. A tool's `label` is the button text, translated to the session
+  language but not rephrased; without a `label`, the LLM rephrases the tool's
+  `description` into one, differently at each session. Each button's `value` is
+  `tool/<name>`, `ask/<name>` or `task/<taskId>`: the click triggers that application
+  tool, asks a question, or starts that task. A tool with `options.ask: true` is a
+  **question button**: its label, as shown, is sent as the visitor's message and the
+  avatar answers it from the application's documents; such a tool is not offered to the
+  chat as a tool. A tool that shows UI content
   (an image, a link) also gets one short spoken line about what is now on the screen:
   the LLM writes it in the session language from the content's own words (its
   `description`, `label`, `alt`, `url`), and for a link points at the QR code the
   SERMAS kiosk shows. A tool with `skipResponse: true` (a quiz) shows its content
   without a line. If the LLM call fails, a fixed line is said instead (translated to
   the session language).
+- **Asked in conversation.** When the chat matches a tool that shows content, the content
+  never replaces the answer: the avatar answers the question, then says one short
+  sentence about what is now on the screen, from the same words (for a link, the QR
+  code). The chat sees each tool's `description` and what it shows. A tool that shows a
+  link is matched only when the visitor explicitly asks for a website, a link or the
+  documentation; a request to explain something is answered in words. A tool just
+  shown is not matched again unless the visitor asks for it again. Write a link tool's
+  `description` for explicit requests only ("The user asks for the project website or a
+  link to it"): a broad one ("more about the project") turns questions into links.
 - **Task choices.** The click answers the task's current field, and the task moves on.
 - **Quiz answers.** The avatar comments on the answer: the LLM writes one or two short
   sentences, in the session language, saying whether the answer is right and why. It

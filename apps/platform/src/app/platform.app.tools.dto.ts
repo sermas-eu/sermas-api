@@ -128,6 +128,20 @@ export class ToolUIContentDto {
   options?: Record<string, any>;
 }
 
+export class AppToolOptionsDto {
+  @ApiPropertyOptional({
+    description:
+      'Show this tool as a button of the welcome menu (default true), as task options.list',
+  })
+  list?: boolean;
+  @ApiPropertyOptional({
+    description:
+      'A question button: in the welcome menu its label is sent as the user message, ' +
+      'and the assistant answers it. Not offered to the LLM as a tool.',
+  })
+  ask?: boolean;
+}
+
 export class AppToolsDTO implements LLMTool {
   @ApiProperty({
     description:
@@ -167,6 +181,14 @@ export class AppToolsDTO implements LLMTool {
       'API url to call on tool match, defaults to unauthenticated POST if no `request` are provided.',
   })
   url?: string;
+  @ApiPropertyOptional({
+    description:
+      'Label of the tool button in the welcome menu, translated but not rephrased. ' +
+      'Without it the description is rephrased into a label.',
+  })
+  label?: string;
+  @ApiPropertyOptional({ type: AppToolOptionsDto })
+  options?: AppToolOptionsDto;
 }
 
 /**

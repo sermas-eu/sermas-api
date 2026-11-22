@@ -22,8 +22,15 @@ import { STTProviderService } from '#libs/stt/stt.provider.service';
 import { TurnDropReason } from './noise/turn-failure.tracker.js';
 import { wavStats } from './noise/wav.stats.js';
 
-/** the speaker check of one clip: whether to accept it, and its voice embedding */
-export type SpeakerCheck = { expected: boolean; embedding?: string };
+/**
+ * The speaker check of one clip: whether to accept it, and its voice embedding.
+ * `self`: the clip is the agent's own voice coming back through the microphone.
+ */
+export type SpeakerCheck = {
+  expected: boolean;
+  embedding?: string;
+  self?: boolean;
+};
 import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
 import { TTSProviderService } from '#libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service.js';
@@ -229,7 +236,7 @@ export class DialogueSpeechService implements OnModuleInit {
     // tends to hallucinate a phrase out of room noise
     const tooQuiet = this.isBelowSpeechLevel(ev.buffer);
     if (tooQuiet) {
-      this.logger.debug(`STT: turn dropped before STT (${tooQuiet})`);
+      this.logTurn(ev, `dropped:no-speech (${tooQuiet}, before STT)`);
       await this.dropTurn(ev, 'no-speech');
       return;
     }
@@ -308,12 +315,43 @@ export class DialogueSpeechService implements OnModuleInit {
     if (!res) return { expected: true };
     if (res.results[0] == true) {
       this.logger.debug('Agent self-speaking, skip');
-      return { expected: false };
+      return { expected: false, self: true };
     }
     const embedding = res.embeddings;
     if (embeddings[1] == '') return { expected: true, embedding }; // no signature yet
     this.logger.debug(`${res.results[1] ? 'Same' : 'Different'} speaker`);
     return { expected: res.results[1], embedding };
+  }
+
+  /**
+   * The agent's own voice, caught by the microphone: not a turn, and not a hearing
+   * failure either. Nothing is counted (no signature reset, no noisy-room line) and
+   * the client is not told "didn't catch that"; the agent carries on.
+   */
+  private async dropSelfSpeech(payload: { appId: string; sessionId: string }) {
+    await this.continueAgentSpeech(payload.appId, payload.sessionId);
+    await this.asyncApi.dialogueProgress({
+      event: 'stt',
+      sessionId: payload.sessionId,
+      appId: payload.appId,
+      status: 'ended',
+    });
+  }
+
+  /** one line per voice turn, to tune the gates from data */
+  private logTurn(
+    payload: DialogueSpeechToTextDto,
+    outcome: string,
+    text?: string,
+  ) {
+    const stats = wavStats(payload.buffer);
+    const clip = stats
+      ? `duration=${Math.round(stats.durationMs)}ms level=${stats.rmsDbfs.toFixed(1)}dBFS`
+      : 'clip=unknown';
+    this.logger.debug(
+      `TURN ${outcome} ${clip} chunkId=${payload.chunkId} sessionId=${payload.sessionId}` +
+        (text ? ` text="${text.replace(/\s+/g, ' ').slice(0, 80)}"` : ''),
+    );
   }
 
   /** dropped turns in a row, per session: a run resets the voice signature */
@@ -436,17 +474,24 @@ export class DialogueSpeechService implements OnModuleInit {
 
       // the speaker check (speechbrain) ran in parallel with STT
 
-      const speaker = expectedSpeaker
+      const speaker: SpeakerCheck = expectedSpeaker
         ? await expectedSpeaker()
         : { expected: false };
 
+      if (speaker.self) {
+        this.logTurn(payload, "dropped:self (the agent's own voice)", text);
+        await this.dropSelfSpeech(payload);
+        return false;
+      }
+
       if (!speaker.expected || !text) {
         const reason = text ? 'other-speaker' : 'no-speech';
-        this.logger.debug(`STT: turn dropped (${reason})`);
+        this.logTurn(payload, `dropped:${reason}`, text);
         await this.dropTurn(payload, reason);
         return false;
       }
 
+      this.logTurn(payload, 'accepted', text);
       this.acceptedTurn(payload.sessionId, speaker.embedding);
 
       if (!this.isRequestOngoing(payload)) {
@@ -751,16 +796,17 @@ export class DialogueSpeechService implements OnModuleInit {
     await this.chatProvider.inference(message);
   }
 
+  /**
+   * The turn that may have interrupted the agent was dropped or skipped: the client
+   * restores the agent's voice (ducked during a barge-in). STOP is the other answer.
+   */
   async continueAgentSpeech(appId: string, sessionId: string) {
-    this.logger.debug(
-      `Send avatar speech CONTINUE sessionId=${sessionId} (disabled)`,
-    );
-    // this.emitter.emit('dialogue.chat.continue', { appId, sessionId });
-    // this.asyncApi.agentContinueSpeech({
-    //   appId,
-    //   sessionId,
-    //   ts: new Date(),
-    // });
+    this.logger.debug(`Send avatar speech CONTINUE sessionId=${sessionId}`);
+    await this.asyncApi.agentContinueSpeech({
+      appId,
+      sessionId,
+      ts: new Date(),
+    });
   }
 
   async stopAgentSpeech(ev: DialogueAvatarSpeechControlDto) {
