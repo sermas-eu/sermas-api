@@ -8,7 +8,6 @@ import { DialogueAsyncApiService } from './dialogue.async.service.js';
 import { DialogueEmotionService } from './dialogue.emotion.service.js';
 
 import { IdentityTrackerService } from '#apps/detection/src/providers/identify-tracker/identity-tracker.service';
-import { SpeechBrainService } from '#apps/detection/src/providers/speechbrain/speechbrain.service';
 import { createSessionContext } from '#apps/session/src/session.context';
 import { SessionChangedDto } from '#apps/session/src/session.dto';
 import { SessionService } from '#apps/session/src/session.service';
@@ -42,13 +41,9 @@ import { DialogueMemoryService } from './memory/dialogue.memory.service.js';
 import { MqttService } from '#libs/mqtt-handler/mqtt.service';
 import { SermasTopics } from '#libs/sermas/sermas.topic';
 
-const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
-
 @Injectable()
 export class DialogueSpeechService implements OnModuleInit {
   private readonly logger = new Logger(DialogueSpeechService.name);
-
-  private sttMessagesCache: Record<string, Date> = {};
 
   outgoingMessageSemaphore: Set<string> = new Set<string>();
   outgoingMessageQueue: Record<string, OutgoingChunkQueue> = {};
@@ -71,8 +66,6 @@ export class DialogueSpeechService implements OnModuleInit {
 
     private readonly memory: DialogueMemoryService,
 
-    private readonly speechbrainProvider: SpeechBrainService,
-
     private readonly identiyTracker: IdentityTrackerService,
 
     private readonly monitor: MonitorService,
@@ -85,11 +78,6 @@ export class DialogueSpeechService implements OnModuleInit {
     if (this.configService.get('SPEAKER_VERIFICATION') == '0') {
       this.logger.warn(
         `Speaker verification disabled. To enable set SPEAKER_VERIFICATION env to 1`,
-      );
-    }
-    if (this.configService.get('SPEAKER_COUNTER') == '0') {
-      this.logger.warn(
-        `Speaker counter disabled. To enable set SPEAKER_COUNTER env to 1`,
       );
     }
   }
@@ -169,44 +157,6 @@ export class DialogueSpeechService implements OnModuleInit {
     return await this.ttsProvider.generateTTS(payload);
   }
 
-  async hasMultipleSpeakers(ev: DialogueSpeechToTextDto) {
-    if (this.configService.get('SPEAKER_COUNTER') == '0') {
-      return false;
-    }
-    const counter = await this.speechbrainProvider.countSpeakers(ev.buffer);
-    if (
-      counter &&
-      counter.speakerCount.value > 2 &&
-      counter.speakerCount.probability > 0.5
-    ) {
-      this.logger.warn(
-        `STT aborted: ${counter.speakerCount.value} speakers detected for sessionId=${ev.sessionId}`,
-      );
-
-      if (!this.sttMessagesCache[ev.sessionId]) {
-        this.sttMessagesCache[ev.sessionId] = new Date();
-      } else {
-        if (
-          Date.now() - this.sttMessagesCache[ev.sessionId].getTime() <
-          STT_MESSAGE_CACHE
-        ) {
-          return true;
-        } else {
-          // reset cache
-          delete this.sttMessagesCache[ev.sessionId];
-        }
-      }
-
-      await this.replyToUser(
-        'I cannot understand, could you try to use the keyboard',
-        ev,
-      );
-
-      return true;
-    }
-    return false;
-  }
-
   private trackRequest(
     status: DialogueSessionRequestStatus,
     ev: Omit<DialogueSessionRequestEvent, 'status'>,
@@ -268,11 +218,8 @@ export class DialogueSpeechService implements OnModuleInit {
 
     ev.buffer = await this.convert(ev);
 
-    // speaker checks run while STT transcribes; convertToText awaits them
-    const checks = Promise.all([
-      this.isExpectedSpeaker(ev.sessionId, ev.buffer),
-      this.hasMultipleSpeakers(ev),
-    ]);
+    // the speaker check runs while STT transcribes; convertToText awaits it
+    const checks = this.isExpectedSpeaker(ev.sessionId, ev.buffer);
     // handled where awaited; avoid an unhandled rejection if STT fails first
     checks.catch(() => undefined);
 
@@ -381,7 +328,7 @@ export class DialogueSpeechService implements OnModuleInit {
 
   async convertToText(
     payload: DialogueSpeechToTextDto,
-    validAudioChecks?: () => Promise<boolean[]>,
+    expectedSpeaker?: () => Promise<boolean>,
   ): Promise<boolean> {
     try {
       // set default
@@ -392,13 +339,11 @@ export class DialogueSpeechService implements OnModuleInit {
       const { text, dialogueMessagePayload } =
         await this.sttProvider.convertToText(payload);
 
-      // parallelize audio checks with speechbrain
+      // the speaker check (speechbrain) ran in parallel with STT
 
       let validSpeaker = false;
-      if (validAudioChecks) {
-        const [isExpectedSpeaker, skipAudio] = await validAudioChecks();
-        validSpeaker = isExpectedSpeaker;
-        if (skipAudio) return false;
+      if (expectedSpeaker) {
+        validSpeaker = await expectedSpeaker();
       }
 
       if (!validSpeaker || !text) {

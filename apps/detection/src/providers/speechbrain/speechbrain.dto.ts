@@ -1,7 +1,6 @@
 import {
   EmotionInferenceValue,
   StringInferenceValue,
-  NumberInferenceValue,
 } from '#libs/sermas/sermas.dto';
 
 export class SpeechBrainClassification {
@@ -10,19 +9,9 @@ export class SpeechBrainClassification {
   speakerId?: StringInferenceValue;
 }
 
-export class SpeechBrainSpeakerCount {
-  speakerCount: NumberInferenceValue;
-}
-
-export class SpeechBrainSeparation {
-  language?: StringInferenceValue;
-  emotion?: EmotionInferenceValue;
-  speakerCount: NumberInferenceValue;
-}
-
 export class SpeechBrainSpeakerVerification {
-  similarities: [number | null];
-  embeddings: StringInferenceValue;
+  similarities: (number | null)[];
+  embeddings: string;
 }
 
 export class SpeechBrainSimilarityMatrix {
@@ -30,5 +19,5 @@ export class SpeechBrainSimilarityMatrix {
 }
 
 export class SpeechBrainEmbeddings {
-  embeddings: StringInferenceValue;
+  embeddings: string;
 }

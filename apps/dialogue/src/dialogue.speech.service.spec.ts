@@ -22,11 +22,10 @@ describe('DialogueSpeechService.speechToText', () => {
         order.push('speaker check started');
         return speaker.promise;
       },
-      hasMultipleSpeakers: async () => false,
-      convertToText: async (_ev: any, checks: () => Promise<boolean[]>) => {
+      convertToText: async (_ev: any, checks: () => Promise<boolean>) => {
         order.push('stt started');
         speaker.resolve(true);
-        const [expected] = await checks();
+        const expected = await checks();
         order.push(`checks done: ${expected}`);
         return true;
       },
