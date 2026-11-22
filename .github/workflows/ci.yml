@@ -62,6 +62,14 @@ jobs:
         run: |
           tag=$(git tag --points-at HEAD --list 'v*' | head -n 1)
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+      # The image reports the released version (semantic-release writes no
+      # package.json back to the repository, and a re-run releases nothing).
+      - name: Image carries the released version
+        if: steps.version.outputs.version != ''
+        working-directory: .
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: npm pkg set "version=$VERSION"
       - if: steps.version.outputs.version != ''
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - if: steps.version.outputs.version != ''
