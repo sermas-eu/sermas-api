@@ -8,7 +8,7 @@ const deferred = <T>() => {
 
 describe('DialogueSpeechService.speechToText', () => {
   it('starts STT while the speaker checks are still running', async () => {
-    const speaker = deferred<boolean>();
+    const speaker = deferred<{ expected: boolean }>();
     const order: string[] = [];
 
     const service = Object.create(DialogueSpeechService.prototype);
@@ -22,10 +22,13 @@ describe('DialogueSpeechService.speechToText', () => {
         order.push('speaker check started');
         return speaker.promise;
       },
-      convertToText: async (_ev: any, checks: () => Promise<boolean>) => {
+      convertToText: async (
+        _ev: any,
+        checks: () => Promise<{ expected: boolean }>,
+      ) => {
         order.push('stt started');
-        speaker.resolve(true);
-        const expected = await checks();
+        speaker.resolve({ expected: true });
+        const { expected } = await checks();
         order.push(`checks done: ${expected}`);
         return true;
       },
@@ -46,12 +49,22 @@ describe('DialogueSpeechService.speechToText', () => {
 
   // T-08: a dropped turn is reported, so the kiosk can say so instead of waiting
   describe('convertToText drops a turn and says why', () => {
-    const run = async (text: string, expectedSpeaker: boolean) => {
+    const make = () => {
       const progress = vi.fn(async () => undefined);
       const emit = vi.fn();
+      const speakers = {
+        signature: 'bystander',
+        update: vi.fn(),
+        getSpeakerEmbedding: () => speakers.signature,
+        resetSpeaker: vi.fn(() => (speakers.signature = '')),
+      };
+      let text = '';
       const service = Object.create(DialogueSpeechService.prototype);
       Object.assign(service, {
         logger: { debug: () => undefined },
+        configService: { get: () => undefined },
+        droppedInARow: new Map(),
+        identiyTracker: speakers,
         sttProvider: {
           convertToText: async () => ({
             text,
@@ -59,15 +72,49 @@ describe('DialogueSpeechService.speechToText', () => {
           }),
         },
         continueAgentSpeech: async () => undefined,
+        isRequestOngoing: () => false,
         asyncApi: { dialogueProgress: progress },
         emitter: { emit },
       });
-      const ok = await service.convertToText(
-        { appId: 'a', sessionId: 's', language: 'en-GB' },
-        async () => expectedSpeaker,
-      );
+      const turn = (said: string, expected: boolean, embedding = 'voice') => {
+        text = said;
+        return service.convertToText(
+          { appId: 'a', sessionId: 's', language: 'en-GB' },
+          async () => ({ expected, embedding }),
+        );
+      };
+      return { turn, progress, emit, speakers };
+    };
+    const run = async (text: string, expectedSpeaker: boolean) => {
+      const { turn, progress, emit } = make();
+      const ok = await turn(text, expectedSpeaker);
       return { ok, progress, emit };
     };
+
+    it('learns the voice only from a transcribed, accepted clip', async () => {
+      const { turn, speakers } = make();
+      await turn('', true, 'noise');
+      await turn('hello', false, 'someone else');
+      expect(speakers.update).not.toHaveBeenCalled();
+      await turn('hello', true, 'visitor');
+      expect(speakers.update).toHaveBeenCalledWith('s', 'visitor');
+    });
+
+    it('two dropped turns in a row reset the voice signature', async () => {
+      const { turn, speakers } = make();
+      await turn('hello', false);
+      expect(speakers.resetSpeaker).not.toHaveBeenCalled();
+      await turn('', true);
+      expect(speakers.resetSpeaker).toHaveBeenCalledWith('s');
+    });
+
+    it('an accepted turn starts the count again', async () => {
+      const { turn, speakers } = make();
+      await turn('hello', false);
+      await turn('hello', true);
+      await turn('hello', false);
+      expect(speakers.resetSpeaker).not.toHaveBeenCalled();
+    });
 
     it('no-speech when nothing was transcribed', async () => {
       const { ok, progress } = await run('', true);
@@ -175,6 +222,11 @@ describe('DialogueSpeechService dropped turns', () => {
     Object.assign(service, {
       logger: { debug: () => undefined },
       configService: { get: () => undefined },
+      droppedInARow: new Map(),
+      identiyTracker: {
+        getSpeakerEmbedding: () => '',
+        resetSpeaker: () => undefined,
+      },
       trackRequest: () => undefined,
       asyncApi: { dialogueProgress: progress },
       emitter: { emit },

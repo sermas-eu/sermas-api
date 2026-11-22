@@ -21,6 +21,9 @@ import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
 import { STTProviderService } from '#libs/stt/stt.provider.service';
 import { TurnDropReason } from './noise/turn-failure.tracker.js';
 import { wavStats } from './noise/wav.stats.js';
+
+/** the speaker check of one clip: whether to accept it, and its voice embedding */
+export type SpeakerCheck = { expected: boolean; embedding?: string };
 import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
 import { TTSProviderService } from '#libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service.js';
@@ -254,6 +257,7 @@ export class DialogueSpeechService implements OnModuleInit {
     payload: { appId: string; sessionId: string },
     reason: TurnDropReason,
   ) {
+    this.countDroppedTurn(payload.sessionId);
     await this.continueAgentSpeech(payload.appId, payload.sessionId);
     await this.asyncApi.dialogueProgress({
       event: 'stt',
@@ -284,25 +288,64 @@ export class DialogueSpeechService implements OnModuleInit {
     return undefined;
   }
 
-  async isExpectedSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
+  /**
+   * Whether the clip is the session's speaker. The clip's embedding is returned, not
+   * learnt: `acceptedTurn` learns it once STT has transcribed the clip, so chatter
+   * and noise do not shape the voice signature.
+   */
+  async isExpectedSpeaker(
+    sessionId: string,
+    audio: Buffer,
+  ): Promise<SpeakerCheck> {
     if (this.configService.get('SPEAKER_VERIFICATION') == '0') {
-      return true;
+      return { expected: true };
     }
     const embeddings = [
       this.identiyTracker.getAgentEmbedding(sessionId),
       this.identiyTracker.getSpeakerEmbedding(sessionId),
     ];
     const res = await this.identiyTracker.verifySpeaker(audio, embeddings);
-    if (!res) return true;
-    // collect user audio embeddings
-    this.identiyTracker.update(sessionId, res.embeddings);
+    if (!res) return { expected: true };
     if (res.results[0] == true) {
       this.logger.debug('Agent self-speaking, skip');
-      return false;
+      return { expected: false };
     }
-    if (embeddings[1] == '') return true; // no result expected
+    const embedding = res.embeddings;
+    if (embeddings[1] == '') return { expected: true, embedding }; // no signature yet
     this.logger.debug(`${res.results[1] ? 'Same' : 'Different'} speaker`);
-    return res.results[1];
+    return { expected: res.results[1], embedding };
+  }
+
+  /** dropped turns in a row, per session: a run resets the voice signature */
+  private readonly droppedInARow = new Map<string, number>();
+
+  private acceptedTurn(sessionId: string, embedding?: string) {
+    this.droppedInARow.delete(sessionId);
+    if (embedding) this.identiyTracker.update(sessionId, embedding);
+  }
+
+  /**
+   * A run of hearing failures means a noisy room, or a signature learnt from the
+   * wrong voice: forget it, so the visitor is heard again and the signature is
+   * learnt anew from the next transcribed clips.
+   */
+  private countDroppedTurn(sessionId: string) {
+    const limit = Number(
+      this.configService.get('SPEAKER_RESET_AFTER_DROPS') ?? 2,
+    );
+    if (!Number.isFinite(limit) || limit <= 0) return;
+    const count = (this.droppedInARow.get(sessionId) || 0) + 1;
+    if (count < limit) {
+      this.droppedInARow.set(sessionId, count);
+      return;
+    }
+    this.droppedInARow.delete(sessionId);
+    if (this.identiyTracker.getSpeakerEmbedding(sessionId) !== '') {
+      this.logger.debug(
+        `${count} dropped turns in a row: voice signature reset sessionId=${sessionId}`,
+      );
+    }
+    this.identiyTracker.resetSpeaker(sessionId);
   }
 
   async handleSessionChanged(ev: SessionChangedDto) {
@@ -312,6 +355,7 @@ export class DialogueSpeechService implements OnModuleInit {
     if (!ev.record?.closedAt) return;
 
     this.identiyTracker.clearSessionEmbeddings(ev.record.sessionId);
+    this.droppedInARow.delete(ev.record.sessionId);
   }
 
   async chat(ev: DialogueMessageDto): Promise<void> {
@@ -379,7 +423,7 @@ export class DialogueSpeechService implements OnModuleInit {
 
   async convertToText(
     payload: DialogueSpeechToTextDto,
-    expectedSpeaker?: () => Promise<boolean>,
+    expectedSpeaker?: () => Promise<SpeakerCheck>,
   ): Promise<boolean> {
     try {
       // set default
@@ -392,17 +436,18 @@ export class DialogueSpeechService implements OnModuleInit {
 
       // the speaker check (speechbrain) ran in parallel with STT
 
-      let validSpeaker = false;
-      if (expectedSpeaker) {
-        validSpeaker = await expectedSpeaker();
-      }
+      const speaker = expectedSpeaker
+        ? await expectedSpeaker()
+        : { expected: false };
 
-      if (!validSpeaker || !text) {
+      if (!speaker.expected || !text) {
         const reason = text ? 'other-speaker' : 'no-speech';
         this.logger.debug(`STT: turn dropped (${reason})`);
         await this.dropTurn(payload, reason);
         return false;
       }
+
+      this.acceptedTurn(payload.sessionId, speaker.embedding);
 
       if (!this.isRequestOngoing(payload)) {
         return false;

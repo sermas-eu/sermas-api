@@ -226,6 +226,8 @@ export const SermasDefaultConfig = {
 
   // SPEAKER_VERIFICATION enables speaker verifiaction by comparing audio embeddings
   SPEAKER_VERIFICATION: '1',
+  // SPEAKER_RESET_AFTER_DROPS dropped voice turns in a row that reset the session's voice signature; 0 never resets it
+  SPEAKER_RESET_AFTER_DROPS: 2,
   // STT_MIN_DURATION_MS voice clips shorter than this are dropped before STT (no-speech)
   STT_MIN_DURATION_MS: 250,
   // STT_MIN_RMS_DBFS voice clips quieter than this RMS level (dBFS) are dropped before STT (no-speech)

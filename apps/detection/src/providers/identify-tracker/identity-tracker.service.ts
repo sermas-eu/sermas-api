@@ -36,6 +36,14 @@ export class IdentityTrackerService {
     delete this.embeddings[sessionId];
   }
 
+  /** forgets the session's speaker (signature and collected clips); the agent's stays */
+  resetSpeaker(sessionId: string) {
+    const session = this.embeddings[sessionId];
+    if (!session) return;
+    session.speakerEmbedding = '';
+    session.list = [];
+  }
+
   getSpeakerEmbedding(sessionId: string) {
     if (typeof this.embeddings[sessionId] === 'undefined') {
       return '';
