@@ -13,6 +13,7 @@ import {
   KeycloakService,
   ROLE_ADMIN,
 } from '#apps/keycloak/src/keycloak.service';
+import { LocalKeycloakService } from '#apps/keycloak/src/local/local-keycloak.service';
 import { getKeycloakClientId } from '#apps/keycloak/src/util';
 import { jwtDecode } from '#libs/util';
 import type { Connection } from 'mongoose';
@@ -278,6 +279,11 @@ export class PlatformAuthService {
 
   /** Asks Keycloak; null when it could not answer (not cached). */
   private async evaluate(payload: PlatformContextDto): Promise<boolean | null> {
+    // AUTH_PROVIDER=local: the client's declared permissions, no Keycloak
+    const local: unknown = this.keycloak;
+    if (local instanceof LocalKeycloakService) {
+      return local.isAllowed(payload);
+    }
     let clientId = payload.clientId;
     let scopes: string[];
 

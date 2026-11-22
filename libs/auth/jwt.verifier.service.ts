@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createPublicKey, KeyObject } from 'crypto';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
+import { getLocalKey, isLocalAuth } from './local/local-auth.js';
 
 const { decode, verify } = jwt;
 
@@ -28,8 +29,11 @@ export class JwtVerifierService {
 
   readonly issuers: string[];
   readonly jwksUrl: string;
+  /** AUTH_PROVIDER=local: the API's own key, no JWKS fetch */
+  private readonly local: boolean;
 
   constructor(private readonly config: ConfigService) {
+    this.local = isLocalAuth((k) => this.config.get<string>(k));
     const realm = this.config.get<string>('AUTH_KEYCLOAK_REALM');
     const url = this.trim(this.config.get<string>('AUTH_KEYCLOAK_URL'));
     const frontend = this.trim(
@@ -68,6 +72,10 @@ export class JwtVerifierService {
   }
 
   private async getKey(kid?: string): Promise<KeyObject | undefined> {
+    if (this.local) {
+      const key = getLocalKey();
+      return !kid || kid === key.kid ? key.publicKey : undefined;
+    }
     if (kid && this.keys[kid]) return this.keys[kid];
     // An unknown kid may be a rotated key: refetch, but not more than once per
     // JWKS_MIN_REFRESH_MS, so a stream of bad tokens cannot hammer Keycloak.

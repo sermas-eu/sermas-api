@@ -1,7 +1,6 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { DiscoveryModule } from '@nestjs/core';
 import { KeycloakModule } from '#apps/keycloak/src/keycloak.module';
-import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
 import { createClientProvider } from './client.provider.js';
 import { MQTT_OPTION_PROVIDER } from './mqtt.constants.js';
 import { MqttExplorer } from './mqtt.explorer.js';
@@ -24,7 +23,6 @@ export class MqttModule {
       module: MqttModule,
       providers: [
         ...createOptionProviders(options),
-        KeycloakService,
         createLoggerProvider(options),
         createClientProvider(),
         MqttExplorer,
@@ -41,7 +39,6 @@ export class MqttModule {
           provide: MQTT_OPTION_PROVIDER,
           useValue: options,
         },
-        KeycloakService,
         createLoggerProvider(options),
         createClientProvider(),
         MqttExplorer,

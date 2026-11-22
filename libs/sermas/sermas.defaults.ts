@@ -1,6 +1,14 @@
 import { getConfigPath } from './sermas.utils.js';
 
 export const SermasDefaultConfig = {
+  // AUTH_PROVIDER keycloak, or local: the API issues its own tokens (single instance, no user management; clients and the admin from env, a signing key in memory)
+  AUTH_PROVIDER: 'keycloak',
+  // AUTH_LOCAL_CLIENTS with AUTH_PROVIDER=local, extra service clients as name:secret, comma separated (system clients if listed in AUTH_KEYCLOAK_SYSTEM_CLIENT_ID)
+  AUTH_LOCAL_CLIENTS: '',
+  // AUTH_LOCAL_TOKEN_TTL_SEC with AUTH_PROVIDER=local, access token lifetime in seconds (12h, as the Keycloak realm: the kiosk does not refresh its app token)
+  AUTH_LOCAL_TOKEN_TTL_SEC: 43200,
+  // AUTH_LOCAL_REFRESH_TTL_SEC with AUTH_PROVIDER=local, refresh token lifetime in seconds
+  AUTH_LOCAL_REFRESH_TTL_SEC: 43200,
   // IMPORT_USER default user used when importing apps
   IMPORT_USER: 'admin',
   // API_URL public API url
@@ -79,7 +87,7 @@ export const SermasDefaultConfig = {
   // ADMIN_USER default admin username
 
   ADMIN_USER: `admin`,
-  // ADMIN_PASSWORD default admin password
+  // ADMIN_PASSWORD default admin password (with AUTH_PROVIDER=local a default value disables the admin login)
   ADMIN_PASSWORD: `admin`,
 
   // ASYNCAPI_PUBLIC_URL public URL path to mqtt over websocket
@@ -199,7 +207,7 @@ export const SermasDefaultConfig = {
 
   // SSML_GENERATE Enable empathic LLM-generated SSML for TTS
   SSML_GENERATE: '0',
-  // SSML_GENERATE Log generated SSML content
+  // SSML_PRINT Log generated SSML content
   SSML_PRINT: '0',
 
   // AZURE_KEY Azure subscription key (used as fallback to more specific ones)
@@ -214,6 +222,16 @@ export const SermasDefaultConfig = {
 
   // SPEAKER_VERIFICATION enables speaker verifiaction by comparing audio embeddings
   SPEAKER_VERIFICATION: '1',
+  // STT_MIN_DURATION_MS voice clips shorter than this are dropped before STT (no-speech)
+  STT_MIN_DURATION_MS: 250,
+  // STT_MIN_RMS_DBFS voice clips quieter than this RMS level (dBFS) are dropped before STT (no-speech)
+  STT_MIN_RMS_DBFS: -55,
+  // DIALOGUE_NOISY_THRESHOLD dropped voice turns in a row that make the avatar suggest the keyboard; 0 disables it
+  DIALOGUE_NOISY_THRESHOLD: 3,
+  // DIALOGUE_NOISY_WINDOW_SEC the window, in seconds, in which those dropped turns are counted
+  DIALOGUE_NOISY_WINDOW_SEC: 60,
+  // DIALOGUE_NOISY_COOLDOWN_SEC minimum seconds between two keyboard suggestions in a session
+  DIALOGUE_NOISY_COOLDOWN_SEC: 120,
   // MIN_EMBEDDINGS_NUMBER set the minimum number of audio samples to use for creating speaker embedding
   MIN_EMBEDDINGS_NUMBER: '3',
   // SPEECH_SIMILARITY_THRESHOLD value used for comparing embedding, same speaker if above threshold
