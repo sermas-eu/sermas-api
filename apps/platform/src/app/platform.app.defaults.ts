@@ -16,7 +16,7 @@ export const ModuleAvatar: AppModuleConfigDto = {
 
 // Pip, the robot the kiosk ships at /avatars/pip.glb (sermas-eu/sermas-avatar-pip). A
 // path starting with "/" is loaded from the kiosk's own origin; cameras are framed for
-// Pip. modelType only selects the bone names (Head, LeftEye, RightEye) its rig uses.
+// Pip: landscape in the left half of the screen, portrait centred. modelType only selects the bone names (Head, LeftEye, RightEye) its rig uses.
 export const RepositoryAvatarDefault: RepositoryAvatarDto = {
   id: 'default',
   type: 'avatars',
@@ -25,7 +25,7 @@ export const RepositoryAvatarDefault: RepositoryAvatarDto = {
   gender: 'F',
   path: '/avatars/pip.glb',
   camera: {
-    position: { x: -0.0001, y: 0.278, z: 1.664 },
+    position: { x: 0.62, y: 0.278, z: 1.664 },
     rotation: { x: -0.1235, y: 0, z: 0 },
   },
   cameraMobile: {
