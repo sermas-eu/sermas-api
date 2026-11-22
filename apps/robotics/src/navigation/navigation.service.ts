@@ -40,7 +40,7 @@ export class NavigationService {
     let lastPos = 0;
     setInterval(() => {
       this.onStatusUpdate({
-        appId: 'spindoxlabs',
+        appId: 'example-app',
         status: {
           actualPosition: positions[lastPos],
           velocity: {
