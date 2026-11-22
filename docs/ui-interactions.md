@@ -33,7 +33,13 @@ shows the content again.
 A UI tool does nothing by itself. What happens depends on the content:
 
 - **Welcome menu.** Each button's `value` is `tool/<name>` or `task/<taskId>`: the click
-  triggers that application tool, or starts that task.
+  triggers that application tool, or starts that task. A tool that shows UI content
+  (an image, a link) also gets one short spoken line about what is now on the screen:
+  the LLM writes it in the session language from the content's own words (its
+  `description`, `label`, `alt`, `url`), and for a link points at the QR code the
+  SERMAS kiosk shows. A tool with `skipResponse: true` (a quiz) shows its content
+  without a line. If the LLM call fails, a fixed line is said instead (translated to
+  the session language).
 - **Task choices.** The click answers the task's current field, and the task moves on.
 - **Quiz answers.** The avatar comments on the answer: the LLM writes one or two short
   sentences, in the session language, saying whether the answer is right and why. It

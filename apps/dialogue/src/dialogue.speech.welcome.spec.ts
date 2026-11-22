@@ -109,4 +109,46 @@ describe('welcome buttons', () => {
     );
     expect(values).toEqual(['tool/show-architecture', 'task/feedback']);
   });
+
+  // a welcome button that runs a tool: the tool runs, then its content gets a line
+  it('a tool button triggers the tool and speaks a line about its content', async () => {
+    const tool = {
+      name: 'show-architecture',
+      description: 'How it works',
+      ui: { contentType: 'image', content: { alt: 'Diagram' } },
+    };
+    const trigger = vi.fn();
+    const present = vi.fn(async () => undefined);
+    const service = Object.create(DialogueWelcomeService.prototype);
+    Object.assign(service, {
+      tools: {
+        getSchemaValue: (schema: any, key: string) =>
+          schema.schema.find((p: any) => p.parameter === key)?.value,
+        get: async () => ({ tools: [tool] }),
+        trigger,
+      },
+      toolContent: { present },
+    });
+    await service.handleWelcomeTool({
+      appId: 'a1',
+      sessionId: 's1',
+      schema: {
+        name: 'f1',
+        description: 'See how it works : ',
+        schema: [
+          { parameter: 'selection', value: 'See how it works : ' },
+          { parameter: 'value', value: 'tool/show-architecture' },
+          { parameter: 'context', value: 'welcome-tools' },
+        ],
+      },
+    });
+    expect(trigger).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'show-architecture' }),
+    );
+    expect(present).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 's1' }),
+      tool,
+      'See how it works',
+    );
+  });
 });

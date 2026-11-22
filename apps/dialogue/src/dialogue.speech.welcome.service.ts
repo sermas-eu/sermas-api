@@ -24,6 +24,7 @@ import {
 } from './dialogue.speech.welcome.prompt.js';
 import { DialogueTasksService } from './tasks/dialogue.tasks.service.js';
 import { DialogueToolsService } from './tools/dialogue.tools.service.js';
+import { DialogueToolContentService } from './tool-content/dialogue.tool-content.service.js';
 import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto.js';
 
 @Injectable()
@@ -41,6 +42,7 @@ export class DialogueWelcomeService {
     private readonly monitor: MonitorService,
     private readonly broker: MqttService,
     private readonly uiService: UIService,
+    private readonly toolContent: DialogueToolContentService,
   ) {}
 
   async handleWelcomeText(ev: SessionChangedDto) {
@@ -202,16 +204,23 @@ export class DialogueWelcomeService {
       if (!repository) return;
       const filtered = (repository.tools || []).filter((t) => t.name === name);
       if (!filtered.length) return;
+      const tool = filtered[0];
       this.tools.trigger({
         appId: ev.appId,
         sessionId: ev.sessionId,
         name,
-        schema: filtered[0],
+        schema: tool,
         repositoryId: ev.appId,
         source: 'agent',
         values: {},
       });
       matches = true;
+      // the content appears without a word: say what it is
+      const choice =
+        `${this.tools.getSchemaValue(ev.schema, 'selection') || ''}`
+          .replace(/\s*:\s*$/, '')
+          .trim();
+      await this.toolContent.present(ev, tool, choice);
     }
 
     if (type === 'task') {

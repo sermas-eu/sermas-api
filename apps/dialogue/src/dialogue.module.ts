@@ -16,6 +16,7 @@ import { DialogueSpeechService } from './dialogue.speech.service.js';
 import { DialogueWelcomeService } from './dialogue.speech.welcome.service.js';
 import { DialogueNoiseService } from './noise/dialogue.noise.service.js';
 import { DialogueQuizService } from './quiz/dialogue.quiz.service.js';
+import { DialogueToolContentService } from './tool-content/dialogue.tool-content.service.js';
 import { DialogueDocumentController } from './document/dialogue.document.controller.js';
 import { DialogueDocumentModule } from './document/dialogue.document.module.js';
 import {
@@ -51,6 +52,7 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module.js';
     DialogueWelcomeService,
     DialogueNoiseService,
     DialogueQuizService,
+    DialogueToolContentService,
     SpeechBrainService,
     IdentityTrackerService,
     DialogueRequestMonitorService,
