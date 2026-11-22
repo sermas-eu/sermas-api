@@ -32,14 +32,26 @@ describe('TurnFailureTracker', () => {
     expect(t.drop('s', 2000)).toBe(false);
   });
 
-  it('suggests at most once per cooldown', () => {
+  it('suggests once per run: a room that stays noisy does not hear it again', () => {
     const t = tracker();
     [0, 1, 2].forEach((i) => t.drop('s', i * 1000));
-    expect([3, 4, 5].map((i) => t.drop('s', i * 1000))).toEqual([
+    // long after the cooldown, still no answered turn: silent
+    const later = Array.from({ length: 30 }, (_, i) =>
+      t.drop('s', (130 + i * 20) * 1000),
+    );
+    expect(later.every((fired) => !fired)).toBe(true);
+  });
+
+  it('an answered turn re-arms it, but not before the cooldown', () => {
+    const t = tracker();
+    [0, 1, 2].forEach((i) => t.drop('s', i * 1000));
+    t.answered('s');
+    expect([10, 11, 12].map((i) => t.drop('s', i * 1000))).toEqual([
       false,
       false,
       false,
     ]);
+    t.answered('s');
     expect([130, 131, 132].map((i) => t.drop('s', i * 1000))).toEqual([
       false,
       false,

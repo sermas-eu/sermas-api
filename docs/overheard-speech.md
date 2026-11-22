@@ -40,8 +40,10 @@ When hearing failures pile up, the room is probably too noisy for the microphone
 `DIALOGUE_NOISY_WINDOW_SEC` seconds (default 60), the avatar says one short line, in the
 session language, suggesting the on-screen keyboard, and the API sends a
 `dialogue/progress` event with `error: noisy` so the client can open its keyboard. It
-does so at most once every `DIALOGUE_NOISY_COOLDOWN_SEC` seconds (default 120) per
-session. An answered turn starts the count again. `DIALOGUE_NOISY_THRESHOLD=0` disables
+says it once: while failures keep coming and no turn is answered (often there is
+nobody at the kiosk, only background noise), it stays silent. An answered turn starts
+the count again, and the line can then come back, but not sooner than
+`DIALOGUE_NOISY_COOLDOWN_SEC` seconds (default 120) after the last one. `DIALOGUE_NOISY_THRESHOLD=0` disables
 the suggestion.
 
 Messages the filter skipped do not count: the microphone heard them clearly, they were

@@ -234,7 +234,7 @@ export const SermasDefaultConfig = {
   DIALOGUE_NOISY_THRESHOLD: 3,
   // DIALOGUE_NOISY_WINDOW_SEC the window, in seconds, in which those dropped turns are counted
   DIALOGUE_NOISY_WINDOW_SEC: 60,
-  // DIALOGUE_NOISY_COOLDOWN_SEC minimum seconds between two keyboard suggestions in a session
+  // DIALOGUE_NOISY_COOLDOWN_SEC minimum seconds between two keyboard suggestions in a session; a second one also needs an answered turn in between
   DIALOGUE_NOISY_COOLDOWN_SEC: 120,
   // MIN_EMBEDDINGS_NUMBER set the minimum number of audio samples to use for creating speaker embedding
   MIN_EMBEDDINGS_NUMBER: '3',
