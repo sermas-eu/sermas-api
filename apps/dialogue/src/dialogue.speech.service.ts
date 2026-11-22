@@ -347,13 +347,16 @@ export class DialogueSpeechService implements OnModuleInit {
       }
 
       if (!validSpeaker || !text) {
-        this.logger.debug(`STT: cannot detect text from audio clip.`);
+        const reason = text ? 'other-speaker' : 'no-speech';
+        this.logger.debug(`STT: turn dropped (${reason})`);
         await this.continueAgentSpeech(payload.appId, payload.sessionId);
+        // the turn ends here: tell the client, so it can say so instead of waiting
         await this.asyncApi.dialogueProgress({
           event: 'stt',
           sessionId: payload.sessionId,
           appId: payload.appId,
-          status: 'ended',
+          status: 'error',
+          error: reason,
         });
         return false;
       }

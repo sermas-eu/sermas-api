@@ -34,7 +34,9 @@ export class WhisperSpeechToText implements ISpeechToText {
     });
     form.append('type', contentType);
 
-    const url = `${whisperUrl}/asr?method=${asrMethod}&task=${asrTask}&encode=${asrEncode}&output=${asrOutput}&language=${asrLanguage}`;
+    // vad_filter: silence and noise come back as no text instead of Whisper's
+    // hallucinated "Thank you." (faster-whisper; other engines ignore it)
+    const url = `${whisperUrl}/asr?method=${asrMethod}&task=${asrTask}&encode=${asrEncode}&output=${asrOutput}&language=${asrLanguage}&vad_filter=true`;
     const res = await axios.postForm(url, form);
 
     return {

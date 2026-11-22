@@ -48,5 +48,9 @@ export class DialogueProgressEventDto extends SermasSessionDto {
   event: DialogueProgressEvent;
   @ApiPropertyOptional({ default: 'started' })
   status?: 'started' | 'ended' | 'error';
+  @ApiPropertyOptional({
+    description:
+      'Why the step failed. For `stt`: `no-speech` (nothing transcribed) or `other-speaker` (the voice is not the session speaker): the turn is dropped.',
+  })
   error?: string;
 }

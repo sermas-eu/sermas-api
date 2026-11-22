@@ -43,4 +43,48 @@ describe('DialogueSpeechService.speechToText', () => {
       'checks done: true',
     ]);
   });
+
+  // T-08: a dropped turn is reported, so the kiosk can say so instead of waiting
+  describe('convertToText drops a turn and says why', () => {
+    const run = async (text: string, expectedSpeaker: boolean) => {
+      const progress = vi.fn(async () => undefined);
+      const service = Object.create(DialogueSpeechService.prototype);
+      Object.assign(service, {
+        logger: { debug: () => undefined },
+        sttProvider: {
+          convertToText: async () => ({
+            text,
+            dialogueMessagePayload: { appId: 'a', sessionId: 's' },
+          }),
+        },
+        continueAgentSpeech: async () => undefined,
+        asyncApi: { dialogueProgress: progress },
+      });
+      const ok = await service.convertToText(
+        { appId: 'a', sessionId: 's', language: 'en-GB' },
+        async () => expectedSpeaker,
+      );
+      return { ok, progress };
+    };
+
+    it('no-speech when nothing was transcribed', async () => {
+      const { ok, progress } = await run('', true);
+      expect(ok).toBe(false);
+      expect(progress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'stt',
+          status: 'error',
+          error: 'no-speech',
+        }),
+      );
+    });
+
+    it('other-speaker when the voice is not the session speaker', async () => {
+      const { ok, progress } = await run('hello', false);
+      expect(ok).toBe(false);
+      expect(progress).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error: 'other-speaker' }),
+      );
+    });
+  });
 });
