@@ -47,6 +47,8 @@ export class DialogueSpeechService implements OnModuleInit {
 
   outgoingMessageSemaphore: Set<string> = new Set<string>();
   outgoingMessageQueue: Record<string, OutgoingChunkQueue> = {};
+  // per request: the delivery of its last agent chunk (keeps the stream order)
+  private agentDelivery: Record<string, Promise<void>> = {};
 
   constructor(
     private readonly emotion: DialogueEmotionService,
@@ -424,14 +426,39 @@ export class DialogueSpeechService implements OnModuleInit {
       return;
     }
 
-    try {
-      await this.handleAgentMessage(ev);
-    } catch (e) {
-      this.logger.error(`Failed to handle agent message: ${e.stack}`);
-    }
+    await this.handleAgentMessageInOrder(ev);
+  }
+
+  /**
+   * The chunks of an answer arrive in order but are handled concurrently: each is
+   * prepared (language, translation, avatar) at once, and delivered (text and
+   * speech queued) only after the previous chunk of the same request. Without
+   * this a short chunk that translated faster was spoken first ("e tu?" before
+   * "Ciao, sto bene").
+   */
+  private handleAgentMessageInOrder(ev: DialogueMessageDto) {
+    const key = ev.requestId || ev.sessionId;
+    // prepared now, in parallel with the other chunks
+    const prepared = this.prepareAgentMessage(ev);
+    const previous = this.agentDelivery[key] || Promise.resolve();
+    const delivered = previous
+      .then(async () => this.deliverAgentMessage(await prepared))
+      .catch((e) =>
+        this.logger.error(`Failed to handle agent message: ${e.stack}`),
+      );
+    this.agentDelivery[key] = delivered;
+    return delivered.finally(() => {
+      if (this.agentDelivery[key] === delivered) delete this.agentDelivery[key];
+    });
   }
 
   async handleAgentMessage(ev: DialogueMessageDto) {
+    await this.deliverAgentMessage(await this.prepareAgentMessage(ev));
+  }
+
+  private async prepareAgentMessage(
+    ev: DialogueMessageDto,
+  ): Promise<DialogueMessageDto> {
     const sessionLanguage = await this.session.getLanguage(ev);
     await this.asyncApi.dialogueProgress({
       event: 'translate',
@@ -447,7 +474,7 @@ export class DialogueSpeechService implements OnModuleInit {
 
     const avatar = await this.session.getAvatar(ev);
 
-    const agentResponseEvent: DialogueMessageDto = {
+    return {
       ...ev,
       gender: avatar?.gender,
       messageId: ev.messageId || getMessageId(ev.ts),
@@ -455,7 +482,9 @@ export class DialogueSpeechService implements OnModuleInit {
       text: translation,
       language: sessionLanguage,
     };
+  }
 
+  private async deliverAgentMessage(agentResponseEvent: DialogueMessageDto) {
     await this.sendAgentSpeech(agentResponseEvent);
 
     this.emitter.emit('dialogue.chat.message.agent', agentResponseEvent);

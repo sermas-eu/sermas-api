@@ -87,4 +87,53 @@ describe('DialogueSpeechService.speechToText', () => {
       );
     });
   });
+
+  // the chunks of one answer reach the client in stream order, even when the
+  // first one takes longer to translate ("e tu?" was spoken before "Ciao, sto bene")
+  it('delivers agent chunks in stream order', async () => {
+    const spoken: string[] = [];
+    const published: string[] = [];
+    const slowFirst = deferred<void>();
+    const service = Object.create(DialogueSpeechService.prototype);
+    Object.assign(service, {
+      agentDelivery: {},
+      logger: { error: () => undefined, debug: () => undefined },
+      isRequestOngoing: () => true,
+      session: {
+        getLanguage: async () => 'it-IT',
+        getAvatar: async () => ({ gender: 'F' }),
+      },
+      asyncApi: {
+        dialogueProgress: async () => undefined,
+        dialogueMessages: (m: any) => published.push(m.text),
+      },
+      emitter: { emit: () => undefined },
+      translateMessage: async (ev: any) => {
+        if (ev.text === 'Hi, I am fine') await slowFirst.promise;
+        return ev.text === 'Hi, I am fine' ? 'Ciao, sto bene' : 'e tu?';
+      },
+      sendAgentSpeech: async (m: any) => {
+        spoken.push(m.text);
+      },
+    });
+    const chunk = (text: string) => ({
+      actor: 'agent',
+      appId: 'a',
+      sessionId: 's',
+      requestId: 'r1',
+      language: 'en-GB',
+      text,
+    });
+
+    // as the event handler does: not awaited, one call per streamed chunk
+    const first = service.handleMessage(chunk('Hi, I am fine'));
+    const second = service.handleMessage(chunk('and you?'));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(spoken).toEqual([]); // the second waits for the first
+    slowFirst.resolve();
+    await Promise.all([first, second]);
+
+    expect(spoken).toEqual(['Ciao, sto bene', 'e tu?']);
+    expect(published).toEqual(['Ciao, sto bene', 'e tu?']);
+  });
 });
