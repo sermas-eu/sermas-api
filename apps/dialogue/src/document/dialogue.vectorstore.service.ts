@@ -16,7 +16,11 @@ import { PlatformAppChangedDto } from '#apps/platform/src/app/platform.app.dto';
 import { createHash } from 'crypto';
 import { LLMProviderService } from '#libs/llm/llm.provider.service';
 import { MonitorService } from '#libs/monitor/monitor.service';
-import { parseByBlock, parseBySentence } from './text-parsers.js';
+import {
+  parseByBlock,
+  parseByParagraph,
+  parseBySentence,
+} from './text-parsers.js';
 
 const hash = (x: string) => createHash('sha1').update(x).digest('hex');
 
@@ -158,8 +162,10 @@ export class DialogueVectorStoreService {
       case 'double-line':
         return parseByBlock(raw, '\n\n');
       case 'sentence':
-      default:
         return parseBySentence(raw);
+      case 'paragraph':
+      default:
+        return parseByParagraph(raw);
     }
   }
 

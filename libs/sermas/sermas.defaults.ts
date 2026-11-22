@@ -232,6 +232,8 @@ export const SermasDefaultConfig = {
   STT_MIN_DURATION_MS: 250,
   // STT_MIN_RMS_DBFS voice clips quieter than this RMS level (dBFS) are dropped before STT (no-speech)
   STT_MIN_RMS_DBFS: -55,
+  // DIALOGUE_KNOWLEDGE_RESULTS document chunks (paragraphs) given to the chat for each message
+  DIALOGUE_KNOWLEDGE_RESULTS: 8,
   // DIALOGUE_NOISY_THRESHOLD dropped voice turns in a row that make the avatar suggest the keyboard; 0 disables it
   DIALOGUE_NOISY_THRESHOLD: 3,
   // DIALOGUE_NOISY_WINDOW_SEC the window, in seconds, in which those dropped turns are counted

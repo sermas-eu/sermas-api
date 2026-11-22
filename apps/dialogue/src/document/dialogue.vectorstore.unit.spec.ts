@@ -106,7 +106,8 @@ describe('DialogueVectorStoreService (unit)', () => {
   });
 
   it.each([
-    ['parser-sentence.txt', undefined, (n: number) => n > 10],
+    ['parser-sentence.txt', 'sentence', (n: number) => n > 10],
+    ['parser-two-line.txt', undefined, (n: number) => n >= 1 && n <= 4],
     ['parser-one-line.txt', 'single-line', (n: number) => n === 4],
     ['parser-two-line.txt', 'double-line', (n: number) => n === 4],
   ] as const)('splits %s by %s', async (file, mode, check) => {
@@ -115,6 +116,33 @@ describe('DialogueVectorStoreService (unit)', () => {
       await readFile(`${import.meta.dirname}/tests/${file}`)
     ).toString();
     expect(check(service.extractChunks(text, mode).length)).toBe(true);
+  });
+
+  describe('paragraph chunks (the default)', () => {
+    const { service } = createService(fakeCollection());
+    const chunks = (text: string) => service.extractChunks(text, undefined);
+    const sentence = (i: number) =>
+      `Sentence number ${i} of a long paragraph talks about something.`;
+
+    it('keeps each paragraph whole', () => {
+      const a = `${sentence(1)} ${sentence(2)}`;
+      const b = `${sentence(3)} ${sentence(4)}`;
+      expect(chunks(`${a}\n\n${b}\n`)).toEqual([a, b]);
+    });
+
+    it('joins a short heading to the paragraph after it', () => {
+      expect(chunks(`Pilots\n\n${sentence(1)}`)).toEqual([
+        `Pilots\n${sentence(1)}`,
+      ]);
+    });
+
+    it('cuts a long paragraph into whole sentences of at most 800 characters', () => {
+      const long = Array.from({ length: 40 }, (_, i) => sentence(i)).join(' ');
+      const out = chunks(long);
+      expect(out.length).toBeGreaterThan(2);
+      expect(out.every((c) => c.length <= 800)).toBe(true);
+      expect(out.join(' ').replace(/\s+/g, ' ')).toBe(long);
+    });
   });
 
   // Chroma as seen by the service: each getOrCreate after a delete is a new collection

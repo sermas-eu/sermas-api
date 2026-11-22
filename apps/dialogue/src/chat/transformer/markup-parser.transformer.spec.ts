@@ -245,3 +245,106 @@ describe('MarkupParser', () => {
     });
   });
 });
+
+// the model reasoned between the blocks, under the prompt's section titles (live,
+// 2026-11-22): only the answer may be spoken
+describe('PreambleTransformer with the expected blocks', () => {
+  const run = async (content: string, expect: string[]) => {
+    const got: Record<string, unknown> = {};
+    let stream: any = Readable.from(content.match(/[\s\S]{1,5}/g) || []);
+    for (const t of [
+      new PreambleTransformer({ expect }),
+      new StreamingMarkupParserTransformer(
+        'filter',
+        (r) => (got.filter = parseJSON(r)),
+      ),
+      new StreamingMarkupParserTransformer(
+        'intents',
+        (r) => (got.intents = r && parseJSON(r)),
+      ),
+      new StreamingMarkupParserTransformer(
+        'tools',
+        (r) => (got.tools = parseJSON(r)),
+      ),
+    ])
+      stream = stream.pipe(t);
+    let spoken = '';
+    await new Promise((res) => {
+      stream.on('data', (d: any) => (spoken += d.toString()));
+      stream.on('end', res);
+    });
+    return { got, spoken: spoken.replace(/\s+/g, ' ').trim() };
+  };
+
+  const ALL = ['filter', 'intents', 'tools'];
+
+  it('drops reasoning between the blocks and speaks the answer', async () => {
+    const { got, spoken } = await run(
+      `## FILTER
+The user is asking a specific question. It is not background noise.
+
+<filter>
+{ "skip": false, "answer": "" }
+</filter>
+
+## INTENTS
+The user is asking about the pilots.
+Looking at the TASKS:
+- \`feedback\`: No.
+
+<intents>
+{ "taskId": "", "match": false, "trigger": false, "cancel": false }
+</intents>
+
+## TOOLS
+Looking at the TOOLS:
+- \`start-quiz\`: No.
+
+<tools>
+{ "matches": {} }
+</tools>
+
+CHAT RESPONSE: SERMAS was tested in three pilots.`,
+      ALL,
+    );
+    expect(spoken).toBe('CHAT RESPONSE: SERMAS was tested in three pilots.');
+    expect(got.filter).toEqual({ skip: false, answer: '' });
+    expect(got.intents).toBeTruthy();
+    expect(got.tools).toEqual({ matches: {} });
+  });
+
+  it('starts the answer at the marker even with a block left out', async () => {
+    const { spoken } = await run(
+      `<filter>
+{ "skip": false, "answer": "" }
+</filter>
+Thinking about the tasks: none match.
+CHAT RESPONSE: Hello!`,
+      ALL,
+    );
+    expect(spoken).toBe('CHAT RESPONSE: Hello!');
+  });
+
+  it('a block left out and no marker: the text after the last block is the answer', async () => {
+    const { spoken, got } = await run(
+      `<filter>
+{ "skip": false, "answer": "" }
+</filter>
+Hello, I am Pip.`,
+      ALL,
+    );
+    expect(spoken).toBe('Hello, I am Pip.');
+    expect(got.filter).toEqual({ skip: false, answer: '' });
+  });
+
+  it('without tasks and tools the answer follows the filter at once', async () => {
+    const { spoken } = await run(
+      `<filter>
+{ "skip": false, "answer": "" }
+</filter>
+Hello, I am Pip.`,
+      ['filter'],
+    );
+    expect(spoken).toBe('Hello, I am Pip.');
+  });
+});

@@ -11,7 +11,10 @@ export class DialogueDocumentOptionsDto {
   [k: string]: any;
   @ApiPropertyOptional({
     description:
-      'Define the document splitting strategy. "phrase" split by sentence, "single-line" use each line as document, "double-line" use double break-line as document',
+      'How the document is split into chunks for retrieval. "paragraph" (default): one chunk per ' +
+      'paragraph (blank-line separated), long paragraphs cut into groups of sentences, a short one ' +
+      'joined to the next; "sentence": one chunk per sentence; "single-line": one per line; ' +
+      '"double-line": one per blank-line separated block, as is',
   })
   parser?: DocumentParseMode;
 }
@@ -31,6 +34,7 @@ export class DialogueDocumentMetadataDto {
 }
 
 export const DocumentParseModeList = [
+  'paragraph',
   'sentence',
   'single-line',
   'double-line',

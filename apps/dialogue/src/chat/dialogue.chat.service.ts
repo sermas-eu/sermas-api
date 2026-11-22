@@ -392,7 +392,18 @@ export class DialogueChatService {
     const avatar = await this.session.getAvatar(message, message.avatar);
     perf('session');
 
-    const knowledge = await this.vectorStore.search(appId, message.text);
+    // paragraph chunks: a few more of them reach the right one when the question's
+    // words are not the document's ("where was it used" for the pilots)
+    const knowledgeResults = Number(
+      this.config.get('DIALOGUE_KNOWLEDGE_RESULTS') ?? 8,
+    );
+    const knowledge = await this.vectorStore.search(
+      appId,
+      message.text,
+      Number.isFinite(knowledgeResults) && knowledgeResults > 0
+        ? knowledgeResults
+        : 8,
+    );
     perf('knowledge');
     let summaryOrHistory: string;
     if (this.config.get('LLM_DISABLE_SUMMARY') === '1') {
@@ -484,8 +495,14 @@ export class DialogueChatService {
           user: avatarChatPrompt(chatPromptParams),
 
           transformers: [
-            // reasoning written before the blocks must never be spoken
-            new PreambleTransformer(),
+            // reasoning written before or between the blocks must never be spoken
+            new PreambleTransformer({
+              expect: [
+                'filter',
+                ...(systemPromptParams.hasTasks ? ['intents'] : []),
+                ...(systemPromptParams.hasTools ? ['tools'] : []),
+              ],
+            }),
             new StreamingMarkupParserTransformer(
               'filter',
               (res: string | undefined) => {

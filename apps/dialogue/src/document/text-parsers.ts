@@ -5,6 +5,47 @@ export const parseByBlock = (buffer: string, splitter = '\n') => {
     .filter((chunck) => chunck.length > 0);
 };
 
+/**
+ * One chunk per paragraph (blank-line separated): a paragraph is the unit that answers
+ * a question on its own. A long paragraph is cut into groups of whole sentences, a very
+ * short one (a heading) joins the next. Retrieval returns a few chunks: single
+ * sentences left the model with fragments, and it filled the gaps with inventions.
+ */
+export const parseByParagraph = (
+  buffer: string,
+  maxChars = 800,
+  minChars = 60,
+) => {
+  const chunks: string[] = [];
+  let carry = '';
+  for (const block of parseByBlock(buffer.replace(/\r/g, ''), '\n\n')) {
+    const paragraph = (carry ? `${carry}\n${block}` : block).trim();
+    carry = '';
+    if (paragraph.length < minChars) {
+      carry = paragraph;
+      continue;
+    }
+    if (paragraph.length <= maxChars) {
+      chunks.push(paragraph);
+      continue;
+    }
+    let group = '';
+    for (const sentence of parseBySentence(paragraph)) {
+      if (group && group.length + sentence.length + 1 > maxChars) {
+        chunks.push(group);
+        group = '';
+      }
+      group = group ? `${group} ${sentence}` : sentence;
+    }
+    if (group) chunks.push(group);
+  }
+  if (carry) {
+    if (chunks.length) chunks[chunks.length - 1] += `\n${carry}`;
+    else chunks.push(carry);
+  }
+  return chunks;
+};
+
 export const parseBySentence = (buffer: string) => {
   const chunks: string[] = [];
   // buffer = (buffer || '').replace(/\n/gim, ' ');
