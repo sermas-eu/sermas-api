@@ -80,6 +80,8 @@ describe('libs/auth', () => {
   const verifier = (extra: Record<string, string> = {}) =>
     new JwtVerifierService(
       config({
+        // the JWKS path; local auth (the default) is covered in libs/auth/local
+        AUTH_PROVIDER: 'keycloak',
         AUTH_KEYCLOAK_REALM: REALM,
         AUTH_KEYCLOAK_URL: BACKCHANNEL,
         ...extra,

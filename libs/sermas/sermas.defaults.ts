@@ -1,14 +1,18 @@
 import { getConfigPath } from './sermas.utils.js';
 
 export const SermasDefaultConfig = {
-  // AUTH_PROVIDER keycloak, or local: the API issues its own tokens (single instance, no user management; clients and the admin from env, a signing key in memory)
-  AUTH_PROVIDER: 'keycloak',
+  // AUTH_PROVIDER local (default): the API issues its own tokens (single instance, no user management; clients and the admin from env, a signing key kept across restarts); keycloak: a Keycloak realm the API administers
+  AUTH_PROVIDER: 'local',
   // AUTH_LOCAL_CLIENTS with AUTH_PROVIDER=local, extra service clients as name:secret, comma separated (system clients if listed in AUTH_KEYCLOAK_SYSTEM_CLIENT_ID)
   AUTH_LOCAL_CLIENTS: '',
   // AUTH_LOCAL_TOKEN_TTL_SEC with AUTH_PROVIDER=local, access token lifetime in seconds (12h, as the Keycloak realm: the kiosk does not refresh its app token)
   AUTH_LOCAL_TOKEN_TTL_SEC: 43200,
   // AUTH_LOCAL_REFRESH_TTL_SEC with AUTH_PROVIDER=local, refresh token lifetime in seconds
   AUTH_LOCAL_REFRESH_TTL_SEC: 43200,
+  // AUTH_LOCAL_SIGNING_KEY with AUTH_PROVIDER=local, the token signing key as a PEM private key (newlines may be escaped as \\n). Empty: a key generated once and kept in AUTH_LOCAL_SIGNING_KEY_FILE
+  AUTH_LOCAL_SIGNING_KEY: '',
+  // AUTH_LOCAL_SIGNING_KEY_FILE with AUTH_PROVIDER=local and no AUTH_LOCAL_SIGNING_KEY, where the generated key is kept so tokens survive a restart. Empty: sermas-auth-local-key.pem in the OS temp directory
+  AUTH_LOCAL_SIGNING_KEY_FILE: '',
   // IMPORT_USER default user used when importing apps
   IMPORT_USER: 'admin',
   // API_URL public API url

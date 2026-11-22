@@ -39,4 +39,6 @@ edited to say something else.
 | ADR | Decision | Status |
 |---|---|---|
 | [ADR-0001](ADR-0001-validate-tokens-as-oidc-jwts.md) | Validate access tokens as plain OIDC JWTs; keep Keycloak permission evaluation | accepted |
-| [ADR-0002](ADR-0002-local-auth-provider.md) | An optional local auth provider (`AUTH_PROVIDER=local`) for single-instance deployments | accepted |
+| [ADR-0002](ADR-0002-local-auth-provider.md) | An optional local auth provider (`AUTH_PROVIDER=local`) for single-instance deployments | accepted; its default superseded by ADR-0003, its in-memory key by ADR-0004 |
+| [ADR-0003](ADR-0003-local-auth-is-the-default.md) | Local auth is the default; Keycloak is opt-in | accepted |
+| [ADR-0004](ADR-0004-local-signing-key-survives-restarts.md) | The local auth signing key survives a restart | accepted |

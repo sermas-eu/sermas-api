@@ -1,7 +1,7 @@
 # ADR-0002 — An optional local auth provider for single-instance deployments
 
 **Date:** 2026-11-22
-**Status:** accepted
+**Status:** accepted; the default (Keycloak) superseded by ADR-0003
 
 ## Context
 
