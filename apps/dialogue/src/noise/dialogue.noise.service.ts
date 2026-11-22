@@ -75,14 +75,9 @@ export class DialogueNoiseService {
   @OnEvent('dialogue.chat.validation')
   onValidation(ev: DialogueChatValidationEvent) {
     if (!ev?.sessionId) return;
-    if (ev.skip) {
-      // chatter or a fragment the LLM filter ignored: a dropped turn too
-      return this.onTurnDropped({
-        appId: ev.appId,
-        sessionId: ev.sessionId,
-        reason: 'skipped',
-      });
-    }
+    // a phrase the LLM heard and skipped (chatter nearby) is not a hearing failure:
+    // it neither counts towards the noisy-room line nor resets the run
+    if (ev.skip) return;
     this.tracker.answered(ev.sessionId);
   }
 

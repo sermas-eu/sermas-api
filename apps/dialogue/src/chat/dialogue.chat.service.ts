@@ -40,6 +40,7 @@ import {
 } from './dialogue.chat.prompt.js';
 import { SelectedTool } from './dialogue.chat.tools.dto.js';
 import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer.js';
+import { PreambleTransformer } from './transformer/preamble.transformer.js';
 import { SentenceTransformer } from './transformer/sentence.transformer.js';
 
 const TrimmablePrefixes = [
@@ -170,35 +171,22 @@ export class DialogueChatService {
     }
 
     if (response?.filter?.skip) {
-      this.logger.debug(`Skipping user request message=${message.text}`);
+      // overheard speech (chatter, fragments) gets no spoken reply, even when the
+      // model wrote one in filter.answer: a "could you repeat?" for every phrase
+      // caught nearby is noise. The client shows the turn was not caught.
+      this.logger.debug(
+        `Skipping user request message=${message.text}${response.filter.answer ? ` (answer dropped: ${response.filter.answer})` : ''}`,
+      );
 
-      if (response?.filter?.answer) {
-        this.logger.debug(
-          `Sending generated answer ${response?.filter?.answer}`,
-        );
-        const mId = getMessageId();
-        const cId = getChunkId();
-        this.sendMessage(message, mId, cId, response?.filter?.answer);
-        this.emitChatProgress({
-          completed: false,
-          messageId: mId,
-          chunkId: cId,
-          sessionId: message.sessionId,
-          appId: message.appId,
-          requestId: message.requestId,
-        });
-      } else {
-        await this.asynApi.dialogueProgress({
-          event: 'llm',
-          sessionId: message.sessionId,
-          appId: message.appId,
-          status: 'error',
-          // the turn is dropped: the client shows it was not caught
-          error: 'skipped',
-        });
+      await this.asynApi.dialogueProgress({
+        event: 'llm',
+        sessionId: message.sessionId,
+        appId: message.appId,
+        status: 'error',
+        error: 'skipped',
+      });
 
-        this.emitRequestStatus(message, 'cancelled');
-      }
+      this.emitRequestStatus(message, 'cancelled');
 
       return;
     }
@@ -493,6 +481,8 @@ export class DialogueChatService {
           user: avatarChatPrompt(chatPromptParams),
 
           transformers: [
+            // reasoning written before the blocks must never be spoken
+            new PreambleTransformer(),
             new StreamingMarkupParserTransformer(
               'filter',
               (res: string | undefined) => {

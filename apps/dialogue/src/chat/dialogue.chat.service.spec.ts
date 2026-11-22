@@ -72,4 +72,44 @@ describe('DialogueChatService', () => {
       });
     });
   });
+
+  describe('skipped message', () => {
+    it('never speaks filter.answer: reports skipped and cancels', async () => {
+      const progress = vi.fn(async () => undefined);
+      const emit = vi.fn();
+      const service = new DialogueChatService(
+        {} as any,
+        { emit } as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        { performance: () => () => undefined, log: vi.fn() } as any,
+        { dialogueProgress: progress } as any,
+      );
+      vi.spyOn(service as any, 'send').mockResolvedValue({
+        filter: { skip: true, answer: 'Sorry, could you repeat that?' },
+      });
+      const sendMessage = vi.spyOn(service, 'sendMessage');
+
+      await service.inference(
+        { appId: 'a', sessionId: 's', text: 'look, it answers' } as any,
+        { chatArgs: undefined, toolsArgs: undefined },
+      );
+
+      expect(sendMessage).not.toHaveBeenCalled();
+      expect(progress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'llm',
+          status: 'error',
+          error: 'skipped',
+        }),
+      );
+      expect(emit).toHaveBeenCalledWith(
+        'session.request',
+        expect.objectContaining({ status: 'cancelled' }),
+      );
+    });
+  });
 });

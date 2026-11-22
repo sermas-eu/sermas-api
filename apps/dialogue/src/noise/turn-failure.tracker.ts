@@ -1,4 +1,4 @@
-export type TurnDropReason = 'no-speech' | 'other-speaker' | 'skipped';
+export type TurnDropReason = 'no-speech' | 'other-speaker';
 
 export type TurnFailureTrackerOptions = {
   /** dropped turns within the window that make a room "noisy" */

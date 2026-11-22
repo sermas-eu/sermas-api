@@ -168,26 +168,24 @@ describe('DialogueNoiseService', () => {
     );
   });
 
-  it('counts LLM-skipped chatter and resets on an answered turn', async () => {
+  it('ignores LLM-skipped chatter: it neither counts nor resets the run', async () => {
     const { service, chat } = make('x');
-    await service.onValidation({
-      appId: 'a',
-      sessionId: 's',
-      skip: true,
-    } as any);
-    service.onValidation({ appId: 'a', sessionId: 's', skip: false } as any);
-    await service.onValidation({
-      appId: 'a',
-      sessionId: 's',
-      skip: true,
-    } as any);
+    const skip = { appId: 'a', sessionId: 's', skip: true } as any;
+    for (let i = 0; i < 5; i++) await service.onValidation(skip);
     expect(chat).not.toHaveBeenCalled();
-    await service.onValidation({
-      appId: 'a',
-      sessionId: 's',
-      skip: true,
-    } as any);
+    // a hearing failure before and after the chatter still makes a run
+    await service.onTurnDropped(drop);
+    await service.onValidation(skip);
+    await service.onTurnDropped(drop);
     expect(chat).toHaveBeenCalledTimes(1);
+  });
+
+  it('an answered turn resets the run', async () => {
+    const { service, chat } = make('x');
+    await service.onTurnDropped(drop);
+    service.onValidation({ appId: 'a', sessionId: 's', skip: false } as any);
+    await service.onTurnDropped(drop);
+    expect(chat).not.toHaveBeenCalled();
   });
 
   it('threshold 0 disables it', async () => {

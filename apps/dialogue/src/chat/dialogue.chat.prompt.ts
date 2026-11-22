@@ -54,14 +54,18 @@ Execute sequentially the following sections delimited by markdown titles.
 Identify if USER MESSAGE could be relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS.
 Populate the field 'filter' in response.
 
-Set 'skip' to true when messagean incomplete formulation (like from background noise), leave 'answer' empty.
+The microphone also catches people talking near the avatar: only messages addressed to the avatar deserve an answer.
+Set 'skip' to true when message is an incomplete formulation (like from background noise).
 Set 'skip' to true when message is clearly self-talking or possibly chattering with someone else.
-Set 'skip' to false when message is a well formatted and correct message, even if not relevant.
+Set 'skip' to true when message talks about the avatar in the third person, or is a reaction or remark to another person (for example "look, it answers", "come on, let's go").
+Set 'skip' to false when message is a well formatted request or question that could be addressed to the avatar, even if not relevant.
+Set 'skip' to false when message answers the last question of the avatar.
+Set 'skip' to false for greetings, thanks and goodbyes, and for short replies (yes, no, ok, how are you) right after the avatar spoke: they are addressed to the avatar.
 Set 'skip' to false when message matches one of in TOOLS.
 
 <% if (data.explain) { %>Set the field 'explain' describing your decision.<% } %>
-If skip is true and the last CONVERSATION messagge was not from the avatar, set the field 'answer' to provide feedback to the user.
-If skip is false, leave 'answer' empty and write the answer in CHAT RESPONSE.
+Always leave 'answer' empty: a skipped message gets no reply.
+If skip is false, write the answer in CHAT RESPONSE.
 If message is skipped, do not continue with other sections. 
 
 <% if (data.hasTasks) { %>
