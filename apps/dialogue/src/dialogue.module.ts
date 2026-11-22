@@ -14,6 +14,7 @@ import { DialogueSpeechController } from './dialogue.speech.controller.js';
 import { DialogueSpeechEventService } from './dialogue.speech.events.service.js';
 import { DialogueSpeechService } from './dialogue.speech.service.js';
 import { DialogueWelcomeService } from './dialogue.speech.welcome.service.js';
+import { DialogueNoiseService } from './noise/dialogue.noise.service.js';
 import { DialogueDocumentController } from './document/dialogue.document.controller.js';
 import { DialogueDocumentModule } from './document/dialogue.document.module.js';
 import {
@@ -47,6 +48,7 @@ import { DialogueTaskModule } from './tasks/dialogue.tasks.module.js';
     LLMTranslationService,
     DialogueChatService,
     DialogueWelcomeService,
+    DialogueNoiseService,
     SpeechBrainService,
     IdentityTrackerService,
     DialogueRequestMonitorService,

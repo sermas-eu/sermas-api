@@ -19,6 +19,8 @@ import { MonitorService } from '#libs/monitor/monitor.service';
 import { getChunkId, getMessageId } from '#libs/sermas/sermas.utils';
 import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
 import { STTProviderService } from '#libs/stt/stt.provider.service';
+import { TurnDropReason } from './noise/turn-failure.tracker.js';
+import { wavStats } from './noise/wav.stats.js';
 import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
 import { TTSProviderService } from '#libs/tts/tts.provider.service';
 import { LLMTranslationService } from '../../../libs/translation/translation.service.js';
@@ -220,6 +222,15 @@ export class DialogueSpeechService implements OnModuleInit {
 
     ev.buffer = await this.convert(ev);
 
+    // too short or too quiet to hold speech: drop it without asking STT, which
+    // tends to hallucinate a phrase out of room noise
+    const tooQuiet = this.isBelowSpeechLevel(ev.buffer);
+    if (tooQuiet) {
+      this.logger.debug(`STT: turn dropped before STT (${tooQuiet})`);
+      await this.dropTurn(ev, 'no-speech');
+      return;
+    }
+
     // the speaker check runs while STT transcribes; convertToText awaits it
     const checks = this.isExpectedSpeaker(ev.sessionId, ev.buffer);
     // handled where awaited; avoid an unhandled rejection if STT fails first
@@ -233,6 +244,44 @@ export class DialogueSpeechService implements OnModuleInit {
       // cancel active requests, excepts for the current one
       this.requestMonitor.cancelRequests(ev.sessionId, ev.requestId);
     }
+  }
+
+  /**
+   * The turn ends here: the agent resumes, the client is told why (so it can say so
+   * instead of waiting), and the noise tracker counts it.
+   */
+  private async dropTurn(
+    payload: { appId: string; sessionId: string },
+    reason: TurnDropReason,
+  ) {
+    await this.continueAgentSpeech(payload.appId, payload.sessionId);
+    await this.asyncApi.dialogueProgress({
+      event: 'stt',
+      sessionId: payload.sessionId,
+      appId: payload.appId,
+      status: 'error',
+      error: reason,
+    });
+    this.emitter.emit('dialogue.turn.dropped', {
+      appId: payload.appId,
+      sessionId: payload.sessionId,
+      reason,
+    });
+  }
+
+  /** why the clip cannot hold speech, or undefined when it may */
+  isBelowSpeechLevel(buffer?: Buffer): string | undefined {
+    const stats = wavStats(buffer);
+    if (!stats) return undefined;
+    const minMs = Number(this.configService.get('STT_MIN_DURATION_MS') ?? 250);
+    const minDb = Number(this.configService.get('STT_MIN_RMS_DBFS') ?? -55);
+    if (Number.isFinite(minMs) && stats.durationMs < minMs) {
+      return `duration ${Math.round(stats.durationMs)}ms < ${minMs}ms`;
+    }
+    if (Number.isFinite(minDb) && stats.rmsDbfs < minDb) {
+      return `level ${stats.rmsDbfs.toFixed(1)}dBFS < ${minDb}dBFS`;
+    }
+    return undefined;
   }
 
   async isExpectedSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
@@ -351,15 +400,7 @@ export class DialogueSpeechService implements OnModuleInit {
       if (!validSpeaker || !text) {
         const reason = text ? 'other-speaker' : 'no-speech';
         this.logger.debug(`STT: turn dropped (${reason})`);
-        await this.continueAgentSpeech(payload.appId, payload.sessionId);
-        // the turn ends here: tell the client, so it can say so instead of waiting
-        await this.asyncApi.dialogueProgress({
-          event: 'stt',
-          sessionId: payload.sessionId,
-          appId: payload.appId,
-          status: 'error',
-          error: reason,
-        });
+        await this.dropTurn(payload, reason);
         return false;
       }
 

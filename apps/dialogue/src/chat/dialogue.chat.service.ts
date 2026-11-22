@@ -193,7 +193,8 @@ export class DialogueChatService {
           sessionId: message.sessionId,
           appId: message.appId,
           status: 'error',
-          error: `${message.text}`,
+          // the turn is dropped: the client shows it was not caught
+          error: 'skipped',
         });
 
         this.emitRequestStatus(message, 'cancelled');
