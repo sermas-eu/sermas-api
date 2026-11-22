@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { UiModule } from '#apps/ui/src/ui.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DialogueToolsAsyncApiService } from './dialogue.tools.async.service.js';
 import { DialogueToolsEventsService } from './dialogue.tools.events.service.js';
@@ -13,6 +14,7 @@ import { DialogueToolsController } from './dialogue.tools.controller.js';
 
 @Module({
   imports: [
+    UiModule,
     MongooseModule.forFeature([
       {
         name: DialogueToolsRepository.name,

@@ -17,3 +17,6 @@ export const extractToolValues = (
 
   return values;
 };
+
+/** The tools repository holding an app's tasks enabled as tools (D-46). */
+export const taskToolsRepositoryId = (appId: string) => `${appId}-tasks`;

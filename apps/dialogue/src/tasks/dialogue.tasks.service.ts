@@ -8,6 +8,7 @@ import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto
 import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service.js';
 import { DialogueTaskDto } from './store/dialogue.tasks.store.dto.js';
 import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service.js';
+import { taskToolsRepositoryId } from '../tools/utils.js';
 
 @Injectable()
 export class DialogueTasksService implements OnModuleInit {
@@ -92,8 +93,13 @@ export class DialogueTasksService implements OnModuleInit {
 
       if (task.options?.enableTool) {
         task.options = task.options || {};
+        // not the app's own repository (repositoryId = appId): the app change
+        // handler rewrites that one while the tasks are imported, and the two
+        // writes dropped each other's tools (D-46)
         task.options.repositoryId =
-          task.options?.repositoryId || task.sessionId || task.appId;
+          task.options?.repositoryId ||
+          task.sessionId ||
+          taskToolsRepositoryId(task.appId);
       }
 
       await this.store.save(task);

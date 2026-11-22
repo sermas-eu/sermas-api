@@ -381,7 +381,9 @@ Return the matching 'value' field from options`;
     const res = await this.llm.chat<ValidationResponse>({
       stream: false,
       json: true,
-      system: this.replaceValues(prompt, {
+      // the user turn: an OpenAI-compatible server (vLLM) refuses a request with
+      // only a system message ("No user query found in messages")
+      user: this.replaceValues(prompt, {
         [values.field]: values.value,
       }),
       tag: 'tasks',

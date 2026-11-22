@@ -32,6 +32,9 @@ export class DialogueTasksEventsService {
     if (!task) return;
 
     if (!task.options?.repositoryId) return;
+    // an app-wide task stays available to the next user: only a session's own
+    // task tools go. Deleting here removed the app's tools for everyone (D-46)
+    if (!task.sessionId) return;
 
     this.logger.debug(
       `Removing tools for closed record taskId=${ev.record.taskId}`,

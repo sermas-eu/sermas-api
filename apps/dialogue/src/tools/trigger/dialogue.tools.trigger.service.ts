@@ -11,6 +11,8 @@ import {
 } from '#apps/platform/src/app/platform.app.dto';
 import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
 import { PlatformKeycloakService } from '#apps/platform/src/platform.keycloack.service';
+import { UIService } from '#apps/ui/src/ui.service';
+import type { UIContentDto } from '#apps/ui/src/ui.content.dto';
 import axios, { AxiosError, AxiosRequestConfig, isAxiosError } from 'axios';
 import { DialogueToolsAsyncApiService } from '../dialogue.tools.async.service.js';
 import { DialogueToolTriggeredEventDto } from '../dialogue.tools.dto.js';
@@ -28,6 +30,7 @@ export class DialogueToolsTriggerService {
     private readonly platformKeycloakService: PlatformKeycloakService,
 
     private readonly dialogueToolsAsyncApiService: DialogueToolsAsyncApiService,
+    private readonly ui: UIService,
   ) {}
 
   onAgentToolRequest(payload: DialogueToolTriggeredEventDto) {
@@ -39,6 +42,27 @@ export class DialogueToolsTriggerService {
       await this.trigger(ev);
     } catch (e) {
       this.logger.error(`Tool ${ev.name} trigger failed: ${e.stack}`);
+    }
+  }
+
+  /** The tool's UI content (`ui`), shown in the session that triggered it. */
+  private async showContent(payload: ToolTriggerEventDto) {
+    const { appId, sessionId, schema } = payload;
+    if (!sessionId) {
+      this.logger.warn(`[${schema.name}] no session: UI content not shown`);
+      return;
+    }
+    try {
+      await this.ui.showContent({
+        appId,
+        sessionId,
+        contentType: schema.ui.contentType,
+        content: schema.ui.content,
+        description: schema.ui.description,
+        options: schema.ui.options || {},
+      } as UIContentDto);
+    } catch (e: any) {
+      this.logger.warn(`[${schema.name}] UI content failed: ${e.message}`);
     }
   }
 
@@ -77,6 +101,8 @@ export class DialogueToolsTriggerService {
     };
 
     this.emitter.emit('agent.tools.request', ev);
+
+    if (schema.ui?.contentType) await this.showContent(payload);
 
     if (!schema.request) return;
 

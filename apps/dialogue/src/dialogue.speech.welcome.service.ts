@@ -68,12 +68,17 @@ export class DialogueWelcomeService {
     const emotion =
       (await this.emotion.getUserEmotion(ev.record.sessionId)) || undefined;
 
+    // a task enabled as a tool is listed once, as a task
+    const isTaskTool = (t: { schema?: { parameter: string }[] }) =>
+      (t.schema || []).some((p) => p.parameter === 'taskId');
     const toolsList = [
-      ...(tools || []).map((t) => ({
-        label: t.description,
-        value: `tool/${t.name}`,
-        rephrase: true,
-      })),
+      ...(tools || [])
+        .filter((t) => !isTaskTool(t))
+        .map((t) => ({
+          label: t.description,
+          value: `tool/${t.name}`,
+          rephrase: true,
+        })),
       ...(tasks || [])
         .filter((t) => t.options?.list !== false)
         .map((t) => ({
@@ -115,13 +120,13 @@ export class DialogueWelcomeService {
       sessionContext: createSessionContext(ev),
     });
 
-    if (response.message) {
+    if (response?.message) {
       const msg: DialogueMessageDto = {
         actor: 'agent',
         appId: ev.appId,
         language: settings.language,
         sessionId: ev.record.sessionId,
-        text: response.message,
+        text: response?.message,
         gender: avatar.gender,
         emotion,
         ts: new Date(),
@@ -137,48 +142,44 @@ export class DialogueWelcomeService {
 
     await sleep(100);
 
-    if (response.labels) {
-      let buttonsList = response.labels;
-      if (!buttonsList || !buttonsList.length) {
-        this.logger.warn(
-          `Failed to generate welcome buttons, invalid response`,
+    // one button per tool and task; the LLM only rephrases their labels, so a
+    // missing or short answer falls back to the original label (D-44)
+    if (toolsList.length) {
+      const labels = Array.isArray(response?.labels) ? response.labels : [];
+      if (labels.length !== toolsList.length) {
+        this.logger.debug(
+          `Welcome labels: ${labels.length} for ${toolsList.length} buttons, using the original labels for the rest`,
         );
-        buttonsList = [];
       }
+      const buttons: ButtonsUIContentDto = {
+        appId: ev.appId,
+        sessionId: ev.record.sessionId,
+        ts: new Date(),
+        metadata: {
+          context: 'welcome-tools',
+        },
+        options: {
+          ttsEnabled: false,
+          clearScreen: true,
+          language: settings.language,
+        },
+        content: {
+          label: '',
+          list: toolsList.map((t, i) => ({
+            label:
+              (typeof labels[i] === 'string' && labels[i].trim()) || t.label,
+            value: t.value,
+          })),
+        },
 
-      buttonsList.filter((b) => b && b.length);
-      if (buttonsList.length) {
-        const buttons: ButtonsUIContentDto = {
-          appId: ev.appId,
-          sessionId: ev.record.sessionId,
-          ts: new Date(),
-          metadata: {
-            context: 'welcome-tools',
-          },
-          options: {
-            ttsEnabled: false,
-            clearScreen: true,
-            language: settings.language,
-          },
-          content: {
-            label: '',
-            list: toolsList.map((t, i) => ({
-              label: buttonsList[i] || t.label,
-              value: t.value,
-            })),
-          },
+        contentType: 'buttons',
+        messageId: getMessageId(),
+        chunkId: getChunkId(),
 
-          contentType: 'buttons',
-          messageId: getMessageId(),
-          chunkId: getChunkId(),
+        requestId: ulid(),
+      };
 
-          requestId: ulid(),
-        };
-
-        await this.uiService.showContent(buttons);
-      } else {
-        this.logger.debug('Welcome buttons are empty, skipping');
-      }
+      await this.uiService.showContent(buttons);
     }
 
     perf();

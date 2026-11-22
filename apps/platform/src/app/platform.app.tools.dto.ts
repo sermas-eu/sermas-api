@@ -107,6 +107,27 @@ export class ToolsRequestSchema implements ToolRequestConfig {
   headers?: Record<string, any>;
 }
 
+/**
+ * UI content a tool shows when it matches: `contentType` and `content` as in a UI
+ * content message (e.g. `image` with `{ src, alt }`, `quiz`, `link`, `video`).
+ * Kept as plain fields here: importing the UI DTOs would cycle (see D-23).
+ */
+export class ToolUIContentDto {
+  @ApiProperty({
+    description:
+      'A UI content type: image, video, link, quiz, buttons, html, webpage, pdf, …',
+  })
+  contentType: string;
+  @ApiProperty({
+    description: 'The content for that type, e.g. `{ src, alt }` for an image',
+  })
+  content: Record<string, any>;
+  @ApiPropertyOptional()
+  description?: string;
+  @ApiPropertyOptional({ description: 'UI content options' })
+  options?: Record<string, any>;
+}
+
 export class AppToolsDTO implements LLMTool {
   @ApiProperty({
     description:
@@ -128,9 +149,11 @@ export class AppToolsDTO implements LLMTool {
   })
   request?: ToolsRequestSchema;
   @ApiPropertyOptional({
-    description: 'Internal event emitted on match',
+    description:
+      'UI content shown in the client when the tool matches (an image, a quiz, a link…)',
+    type: ToolUIContentDto,
   })
-  emitter?: string;
+  ui?: ToolUIContentDto;
   @ApiPropertyOptional({
     description: '',
   })

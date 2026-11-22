@@ -80,7 +80,13 @@ export class DialogueToolsEventsService {
       `Received app change operation=${ev.operation} appId=${ev.record.appId}`,
     );
     if (ev.operation === 'deleted') {
-      await this.tools.delete(ev.record.appId);
+      // every repository of the app: its tools, its tasks as tools, sessions
+      await this.tools.search(
+        { appId: ev.record.appId },
+        async (repository) => {
+          await this.tools.delete(repository.repositoryId);
+        },
+      );
     }
     if (ev.operation === 'updated' || ev.operation === 'created') {
       await this.tools.delete(ev.record.appId);
