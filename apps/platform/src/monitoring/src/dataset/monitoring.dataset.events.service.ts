@@ -34,8 +34,9 @@ export class MonitoringDatasetEventsService {
       );
     }
     if (ev.type === 'log') {
+      // a log may carry only its label (MonitorService.log sets value to null)
       await this.dataset.save(
-        ev.value.toString(),
+        ev.value?.toString() ?? ev.label,
         {
           ...ev,
           sessionId: ev.sessionId,

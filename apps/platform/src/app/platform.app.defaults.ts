@@ -16,7 +16,8 @@ export const ModuleAvatar: AppModuleConfigDto = {
 
 // Pip, the robot the kiosk ships at /avatars/pip.glb (sermas-eu/sermas-avatar-pip). A
 // path starting with "/" is loaded from the kiosk's own origin; cameras are framed for
-// Pip: landscape in the left half of the screen, portrait centred. modelType only selects the bone names (Head, LeftEye, RightEye) its rig uses.
+// Pip: landscape in the left half of the screen, viewed 30° from its right so it turns
+// toward the screen centre; portrait centred. modelType only selects the bone names (Head, LeftEye, RightEye) its rig uses.
 export const RepositoryAvatarDefault: RepositoryAvatarDto = {
   id: 'default',
   type: 'avatars',
@@ -25,8 +26,8 @@ export const RepositoryAvatarDefault: RepositoryAvatarDto = {
   gender: 'F',
   path: '/avatars/pip.glb',
   camera: {
-    position: { x: 0.62, y: 0.278, z: 1.664 },
-    rotation: { x: -0.1235, y: 0, z: 0 },
+    position: { x: -0.2951, y: 0.278, z: 1.7511 },
+    rotation: { x: -0.1424, y: -0.5192, z: -0.071 },
   },
   cameraMobile: {
     position: { x: -0.0001, y: 0.168, z: 2.464 },
@@ -36,11 +37,13 @@ export const RepositoryAvatarDefault: RepositoryAvatarDto = {
     'You are Pip, a small friendly robot assistant. Keep answers short and clear.',
 };
 
+// The kiosk ships the default background at /backgrounds/default.jpg; like the avatar, a
+// path starting with "/" is loaded from the kiosk's own origin, not from the repository.
 export const RepositoryBackgroundDefault: RepositoryBackgroundDto = {
   id: 'default',
   type: 'backgrounds',
   name: 'default',
-  path: 'default',
+  path: '/backgrounds/default.jpg',
 };
 
 export const RepositoryDefaults: RepositoryConfigDto = {
