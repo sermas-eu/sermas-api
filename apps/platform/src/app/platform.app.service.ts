@@ -574,6 +574,13 @@ export class PlatformAppService implements OnModuleInit {
 
     // add app client, used for users roles control
     data.clients = data.clients || [];
+    const anonymous = data.clients.filter((c) => !c?.clientId);
+    if (anonymous.length) {
+      this.logger.warn(
+        `Dropping ${anonymous.length} client(s) without clientId for appId=${app.appId}`,
+      );
+      data.clients = data.clients.filter((c) => c?.clientId);
+    }
 
     // attempt to merge clients on update
     if (data.clients && data.clients.length) {

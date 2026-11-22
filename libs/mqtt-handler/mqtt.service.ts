@@ -87,7 +87,14 @@ export class MqttService {
           if (args.record.agentId) args.agentId = args.record.agentId;
         }
 
-        topic = mapMqttTopic(topic, args);
+        try {
+          topic = mapMqttTopic(topic, args);
+        } catch (e: any) {
+          // publish never rejects: callers fire and forget, and an unhandled
+          // rejection ends the process (D-39)
+          this.logger.error(`Not published, ${e.message}`);
+          return resolve(null);
+        }
 
         if (topic.indexOf(':') > -1) {
           this.logger.warn(

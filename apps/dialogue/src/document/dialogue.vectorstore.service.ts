@@ -54,6 +54,8 @@ export class DialogueVectorStoreService {
 
   private readonly client: ChromaClient;
   private readonly collections: Record<string, Promise<Collection | null>> = {};
+  // collections being deleted: a load waits for it, or it would cache the deleted one
+  private readonly deleting: Record<string, Promise<void>> = {};
 
   private readonly embeddingFunction: EmbeddingFunction;
 
@@ -111,13 +113,18 @@ export class DialogueVectorStoreService {
 
   private async deleteCollection(appId: string) {
     const name = hash(appId);
+    const run = (this.deleting[name] || Promise.resolve()).then(async () => {
+      try {
+        await this.client.deleteCollection({ name });
+        this.logger.log(`Removed collection appId=${appId} name=${name}`);
+      } catch (e) {
+        this.logger.debug(`No collection removed appId=${appId}: ${e.message}`);
+      }
+    });
+    this.deleting[name] = run;
     delete this.collections[name];
-    try {
-      await this.client.deleteCollection({ name });
-      this.logger.log(`Removed collection appId=${appId} name=${name}`);
-    } catch (e) {
-      this.logger.debug(`No collection removed appId=${appId}: ${e.message}`);
-    }
+    await run;
+    if (this.deleting[name] === run) delete this.deleting[name];
   }
 
   async recreateCollection(appId: string) {
@@ -235,12 +242,15 @@ export class DialogueVectorStoreService {
     if (!appId) return null;
     const name = hash(appId);
     if (!this.collections[name]) {
-      this.collections[name] = this.loadCollection(appId, name).catch((e) => {
-        this.logger.error(`Failed to get collection ${appId} (name=${name})`);
-        this.logger.warn(e.stack);
-        delete this.collections[name];
-        return null;
-      });
+      const deleted = this.deleting[name] || Promise.resolve();
+      this.collections[name] = deleted
+        .then(() => this.loadCollection(appId, name))
+        .catch((e) => {
+          this.logger.error(`Failed to get collection ${appId} (name=${name})`);
+          this.logger.warn(e.stack);
+          delete this.collections[name];
+          return null;
+        });
     }
     return this.collections[name];
   }
@@ -274,6 +284,20 @@ export class DialogueVectorStoreService {
   }
 
   async search(appId: string, qs: string, limit = 4) {
+    try {
+      return await this.searchOnce(appId, qs, limit);
+    } catch (e: any) {
+      // a cached collection can be stale (deleted or recreated in Chroma since it
+      // was loaded): load it again and retry once
+      this.logger.warn(
+        `Search failed for appId=${appId}, reloading the collection: ${e.message}`,
+      );
+      delete this.collections[hash(appId)];
+      return await this.searchOnce(appId, qs, limit);
+    }
+  }
+
+  private async searchOnce(appId: string, qs: string, limit: number) {
     const collection = await this.getCollection(appId);
     if (!collection) return '';
 

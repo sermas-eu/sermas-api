@@ -116,4 +116,78 @@ describe('DialogueVectorStoreService (unit)', () => {
     ).toString();
     expect(check(service.extractChunks(text, mode).length)).toBe(true);
   });
+
+  // Chroma as seen by the service: each getOrCreate after a delete is a new collection
+  const fakeChroma = () => {
+    let current: any = null;
+    let n = 0;
+    let releaseDelete: () => void = () => undefined;
+    const chroma = {
+      getOrCreateCollection: vi.fn(async ({ metadata }) => {
+        if (!current) current = { id: `c${++n}`, metadata: { ...metadata } };
+        return current;
+      }),
+      deleteCollection: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            releaseDelete = () => {
+              current = null;
+              resolve();
+            };
+          }),
+      ),
+    };
+    return { chroma, release: () => releaseDelete() };
+  };
+
+  const realService = (chroma: any) => {
+    const llm = {
+      embeddings: vi.fn(async (texts: string[]) => texts.map(() => [0.1, 0.2])),
+      embeddingsFingerprint: vi.fn().mockResolvedValue('openai/test-model'),
+    };
+    const service = new DialogueVectorStoreService(
+      { get: () => 'http://chroma.local:8000' } as any,
+      llm as any,
+      { performance: () => () => undefined } as any,
+      { emit: vi.fn() } as any,
+    );
+    (service as any).client = chroma;
+    return service;
+  };
+
+  // a new app: the "created" event recreates the collection while its documents
+  // are being uploaded; the upload must not get (and cache) the deleted collection
+  it('loads a collection only after its deletion has finished', async () => {
+    const { chroma, release } = fakeChroma();
+    const service = realService(chroma);
+    await service.getCollection('app1'); // c1, about to be deleted
+
+    const recreating = service.recreateCollection('app1');
+    await vi.waitFor(() => expect(chroma.deleteCollection).toHaveBeenCalled());
+    const uploading = service.getCollection('app1'); // during the delete
+    // the delete ends only after the upload had its chance to reach Chroma
+    await new Promise((r) => setTimeout(r, 20));
+    release();
+    await recreating;
+
+    const used = await uploading;
+    expect(used.id).toBe('c2');
+    expect((await service.getCollection('app1')).id).toBe('c2');
+  });
+
+  it('reloads a stale collection once when a search fails', async () => {
+    const stale = {
+      query: vi.fn().mockRejectedValue(new Error('Nothing found on disk')),
+    };
+    const fresh = {
+      query: vi.fn().mockResolvedValue({ documents: [['answer']] }),
+    };
+    const service = realService({});
+    const get = vi
+      .spyOn(service, 'getCollection')
+      .mockResolvedValueOnce(stale as any)
+      .mockResolvedValueOnce(fresh as any);
+    await expect(service.search('app1', 'question')).resolves.toBe('answer');
+    expect(get).toHaveBeenCalledTimes(2);
+  });
 });

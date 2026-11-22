@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { DialogueTaskDto } from '#apps/dialogue/src/tasks/store/dialogue.tasks.store.dto';
 import { KeycloakUser } from '#apps/keycloak/src/keycloak.admin.dto';
-import { Transform, TransformFnParams } from 'class-transformer';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
 import {
   Allow,
   Contains,
@@ -367,7 +367,10 @@ export class PlatformAppDto {
   // optional: the service defaults to none
   @IsOptional()
   @IsArray()
-  @ValidateNested()
+  // @Type: without it the items stay plain objects and the whitelist strips every
+  // field (D-39)
+  @ValidateNested({ each: true })
+  @Type(() => AppModuleConfigDto)
   @ApiProperty({
     type: [AppModuleConfigDto],
   })
@@ -380,7 +383,8 @@ export class PlatformAppDto {
 
   @IsOptional()
   @IsArray()
-  @ValidateNested()
+  @ValidateNested({ each: true })
+  @Type(() => AppClientDto)
   @ApiProperty({
     type: [AppClientDto],
   })

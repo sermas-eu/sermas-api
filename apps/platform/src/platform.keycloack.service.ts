@@ -319,6 +319,11 @@ export class PlatformKeycloakService implements OnModuleInit {
   }
 
   async removeAppModuleClient(appId: string, clientId: string) {
+    if (!clientId) {
+      // a client saved without id (D-39) never reached Keycloak
+      this.logger.warn(`Skipping a client without clientId for appId=${appId}`);
+      return;
+    }
     const client: AppClientDto = { appId, clientId, permissions: [] };
     try {
       await this.keycloack.removeClient(getKeycloakClientId(client));
