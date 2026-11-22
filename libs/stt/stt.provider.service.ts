@@ -1,15 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { AzureSpeechToText } from './providers/stt.azure.service';
-import { GoogleSpeechToText } from './providers/stt.google.service';
-import { MmsSpeechToText } from './providers/stt.mms.service';
-import { OpenAISpeechToText } from './providers/stt.openai.service';
-import { OraiSpeechToText } from './providers/stt.orai.service';
-import { WhisperSpeechToText } from './providers/stt.whisper.service';
-import { DialogueSpeechToTextDto } from './stt.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { AzureSpeechToText } from './providers/stt.azure.service.js';
+import { GoogleSpeechToText } from './providers/stt.google.service.js';
+import { WhisperSpeechToText } from './providers/stt.whisper.service.js';
+import { DialogueSpeechToTextDto } from './stt.dto.js';
 
 export type STTResponse = {
   provider: string;
@@ -23,11 +20,8 @@ export class STTProviderService {
 
   constructor(
     private readonly googlestt: GoogleSpeechToText,
-    private readonly openaistt: OpenAISpeechToText,
     private readonly whisperstt: WhisperSpeechToText,
     private readonly azurestt: AzureSpeechToText,
-    private readonly mmsstt: MmsSpeechToText,
-    private readonly oraistt: OraiSpeechToText,
 
     private readonly configService: ConfigService,
 
@@ -38,7 +32,7 @@ export class STTProviderService {
     const { buffer, language } = payload;
 
     const provider = this.configService.get('STT_SERVICE');
-    let text = '';
+    let text: string;
 
     this.logger.verbose(
       `Processing speech input with ${provider} language=${language}`,
@@ -77,19 +71,10 @@ export class STTProviderService {
           response = await this.whisperstt.text(buffer, language);
           perf('whisper');
           break;
-        case 'mms':
-          response = await this.mmsstt.text(buffer, language);
-          perf('mms');
-          break;
-        case 'orai':
-          response = await this.oraistt.text(buffer, language);
-          perf('orai');
-          break;
-        case 'openai':
         default:
-          response = await this.openaistt.text(buffer, language);
-          perf('openai');
-          break;
+          throw new Error(
+            `Unsupported STT_SERVICE=${provider}: use google, azure or whisper`,
+          );
       }
       text = response.text;
     } catch (e) {

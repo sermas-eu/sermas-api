@@ -16,9 +16,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Request } from 'express';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser, Public } from '#libs/auth/auth.decorators';
 import {
   AuthJwtUser,
   LoginRequestDto,
@@ -27,8 +27,8 @@ import {
   RegistrationRequestDto,
   RegistrationResponseDto,
   UpdateUserRequestDto,
-} from './auth.dto';
-import { AuthService } from './auth.service';
+} from './auth.dto.js';
+import { AuthService } from './auth.service.js';
 
 @Controller('auth')
 @ApiResource('auth')
@@ -79,7 +79,7 @@ export class AuthController {
   @ApiScopes('register')
   @ApiOperationName()
   async register(
-    @Body() userData: RegistrationRequestDto,
+    @Body() _userData: RegistrationRequestDto,
   ): Promise<RegistrationResponseDto> {
     throw new NotImplementedException();
   }
@@ -119,8 +119,8 @@ export class AuthController {
   @ApiScopes('management')
   @ApiOperationName()
   async edit(
-    @Param('userId') user: string,
-    @Body() updateUserData: UpdateUserRequestDto,
+    @Param('userId') _user: string,
+    @Body() _updateUserData: UpdateUserRequestDto,
   ): Promise<void> {
     throw new NotImplementedException();
   }
@@ -139,7 +139,7 @@ export class AuthController {
   })
   @ApiScopes('management')
   @ApiOperationName()
-  async delete(@Param('userId') userId: string): Promise<void> {
+  async delete(@Param('userId') _userId: string): Promise<void> {
     throw new NotImplementedException();
   }
 }

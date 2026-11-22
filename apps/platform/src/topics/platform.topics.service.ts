@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { PlatformTopic, PlatformTopicMap } from './platform.topics.dto';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { PlatformTopic, PlatformTopicMap } from './platform.topics.dto.js';
 
 @Injectable()
 export class PlatformTopicsService {

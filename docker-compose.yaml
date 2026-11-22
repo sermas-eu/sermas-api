@@ -1,20 +1,20 @@
-networks:
-  sermas_dev:
-    external: true
+# The API as a container, on :3000. Started by sermas-dev's `task docker:start`, which
+# also runs the infrastructure it needs. Every reference in its configuration goes
+# through the docker host (172.17.0.1), so nothing here depends on a shared network.
 
 services:
   api:
-    entrypoint: npm
-    command: run start:debug
-    networks:
-      default:
-        aliases:
-          - api
-          - sermas-toolkit-api-api-1
-      sermas_dev:
-    image: ghcr.io/sermas-eu/api:dev
     build: .
-    volumes:
-      - ./:/app
+    image: sermas-api:local
+    restart: unless-stopped
     ports:
-      - 9229:9229
+      - 3000:3000
+    env_file:
+      - path: ${SERMAS_DEV_ROOT:-.}/config/api/.env
+        required: false
+    environment:
+      ENV_PATH: /config/.env
+      CONFIG_BASEPATH: /config
+    volumes:
+      - ${SERMAS_DEV_ROOT:-.}/config/api:/config:ro
+    command: ["dist/apps/api/src/main.js"]

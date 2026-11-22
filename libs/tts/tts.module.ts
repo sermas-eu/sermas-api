@@ -1,12 +1,10 @@
 import { Global, Module } from '@nestjs/common';
-import { MonitorModule } from 'libs/monitor/monitor.module';
-import { BarkAITextToSpeech } from './providers/tts.bark-ai.provider';
-import { ElevenIOTextToSpeech } from './providers/tts.elevenio.provider';
-import { GoogleTextToSpeech } from './providers/tts.google.provider';
-import { OpenAITextToSpeech } from './providers/tts.openai.provider';
-import { SSMLService } from './ssml/ssml.service';
-import { TTSProviderService } from './tts.provider.service';
-import { AzureTextToSpeech } from './providers/tts.azure.provider';
+import { MonitorModule } from '#libs/monitor/monitor.module';
+import { GoogleTextToSpeech } from './providers/tts.google.provider.js';
+import { SSMLService } from './ssml/ssml.service.js';
+import { TTSProviderService } from './tts.provider.service.js';
+import { AzureTextToSpeech } from './providers/tts.azure.provider.js';
+import { OpenAITextToSpeech } from './providers/tts.openai.provider.js';
 
 @Global()
 @Module({
@@ -14,11 +12,9 @@ import { AzureTextToSpeech } from './providers/tts.azure.provider';
   providers: [
     SSMLService,
     TTSProviderService,
-    BarkAITextToSpeech,
-    ElevenIOTextToSpeech,
-    OpenAITextToSpeech,
     GoogleTextToSpeech,
     AzureTextToSpeech,
+    OpenAITextToSpeech,
   ],
   exports: [TTSProviderService],
 })

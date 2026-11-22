@@ -1,4 +1,4 @@
-import { SermasBaseDto } from 'libs/sermas/sermas.dto';
+import { SermasBaseDto } from '#libs/sermas/sermas.dto';
 
 export class PlatformContextDto extends SermasBaseDto {
   token: string;

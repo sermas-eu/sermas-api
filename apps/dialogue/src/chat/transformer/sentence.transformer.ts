@@ -25,6 +25,12 @@ export class SentenceTransformer extends Transform {
     const data = chunk?.toString?.() || '';
 
     if (this.buffer === undefined) {
+      // Whitespace between markup blocks is not the answer yet: starting on it
+      // would report the result before the remaining blocks are parsed.
+      if (!data.trim()) {
+        callback();
+        return;
+      }
       this.logger.verbose('init');
       if (this.onInit) this.onInit();
       this.buffer = '';

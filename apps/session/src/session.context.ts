@@ -1,4 +1,4 @@
-import { uuidv4 } from 'libs/util';
+import { uuidv4 } from '#libs/util';
 
 export type SessionContext = {
   sessionId?: string;

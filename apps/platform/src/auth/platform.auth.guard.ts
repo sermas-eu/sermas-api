@@ -1,22 +1,20 @@
 // based on https://github.com/ferrerojosh/nest-keycloak-connect/blob/master/src/guards/resource.guard.ts
 import {
   CanActivate,
-  ContextType,
   ExecutionContext,
   Injectable,
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import {
+  META_CREATES_APP,
+  META_PUBLIC,
   META_RESOURCE,
   META_SCOPES,
-  META_UNPROTECTED,
-} from 'nest-keycloak-connect';
-import { PlatformContextDto } from './platform.auth.dto';
-import { PlatformAuthService } from './platform.auth.service';
-
-type GqlContextType = 'graphql' | ContextType;
+} from '#libs/auth/auth.constants';
+import { PlatformContextDto } from './platform.auth.dto.js';
+import { PlatformAuthService } from './platform.auth.service.js';
 
 @Injectable()
 export class PlatformGuard implements CanActivate {
@@ -36,12 +34,12 @@ export class PlatformGuard implements CanActivate {
       context.getHandler(),
     );
     const isUnprotected = this.reflector.getAllAndOverride<boolean>(
-      META_UNPROTECTED,
+      META_PUBLIC,
       [context.getClass(), context.getHandler()],
     );
 
     // Extract request/response
-    const [request, response] = extractRequest(context);
+    const [request] = extractRequest(context);
 
     // if is not an HTTP request ignore this guard
     if (!request) {
@@ -82,24 +80,39 @@ export class PlatformGuard implements CanActivate {
       `Protecting resource [ ${resource} ] with scopes: [ ${scopes} ]`,
     );
 
-    if (!request.user && isUnprotected) {
-      this.logger.verbose(
-        `Route ${request.path} has no user, and is public, allowed`,
-      );
+    // Public means anyone: a valid token must not get less than no token.
+    // Routes that act on the caller's identity check it themselves.
+    if (isUnprotected) {
+      this.logger.verbose(`Route ${request.path} is public, allowed`);
       return true;
     }
 
-    let appId: string;
-    if (request.body && request.body.appId) {
-      appId = request.body.appId;
+    // every appId the request names: path, query, body (or each body item)
+    const appIds = collectAppIds(request);
+    if (appIds.length > 1) {
+      this.logger.warn(
+        `Conflicting appId in request path=${request.path}: ${appIds.join(',')}`,
+      );
+      return false;
     }
-    if (request.params && request.params.appId) {
-      appId = request.params.appId;
+    let [appId] = appIds;
+
+    // a session named by the request must belong to that app; when the request
+    // names no app, the session's app is the one checked
+    for (const sessionId of collectSessionIds(request)) {
+      const sessionAppId = await this.auth.getSessionAppId(sessionId);
+      if (!sessionAppId) continue;
+      if (appId && sessionAppId !== appId) {
+        this.logger.warn(
+          `Session ${sessionId} is not in app ${appId} path=${request.path}`,
+        );
+        return false;
+      }
+      appId = sessionAppId;
     }
 
     if (!appId) {
       this.logger.verbose(`Failed to detect appId path=${request.path}`);
-      // return false;
     }
 
     const user: AuthJwtUser = request.user;
@@ -113,11 +126,27 @@ export class PlatformGuard implements CanActivate {
       token: request.accessTokenJWT,
     };
 
-    let isAllowed = false;
+    let isAllowed: boolean;
     try {
-      isAllowed = await this.auth.isAllowed(appContext);
-    } catch (e: any) {
-      //
+      // the scope: an app's own clients (kiosk, modules) may read that app's
+      // resources; anything else goes through the Keycloak permissions
+      isAllowed =
+        (request.method === 'GET' &&
+          (await this.auth.isOwnAppClient(appId, user.azp))) ||
+        (await this.auth.isAllowed(appContext)) ||
+        // owners manage their own apps (D-38): any user may use these scopes,
+        // the app checks below and in the controllers decide on which app
+        this.auth.isOwnerScope(user, resource, scopes);
+      // app isolation: the scope says what, this says on which app. Routes
+      // that name no app check the record they load themselves.
+      const createsApp = this.reflector.get<boolean>(
+        META_CREATES_APP,
+        context.getHandler(),
+      );
+      if (isAllowed && appId && !createsApp)
+        isAllowed = await this.auth.canAccessApp(user, appId);
+    } catch {
+      isAllowed = false;
     }
 
     if (process.env.LOG_REQUEST === '1') {
@@ -145,31 +174,44 @@ export class PlatformGuard implements CanActivate {
   }
 }
 
+/** The HTTP request and response; both undefined for other transports. */
 export const extractRequest = (context: ExecutionContext): [any, any] => {
-  let request: any, response: any;
+  if (context.getType() !== 'http') return [undefined, undefined];
+  const http = context.switchToHttp();
+  return [http.getRequest(), http.getResponse()];
+};
 
-  // Check if request is coming from graphql or http
-  if (context.getType() === 'http') {
-    // http request
-    const httpContext = context.switchToHttp();
+const appIdOf = (v: unknown): string | undefined =>
+  v && typeof v === 'object' && typeof (v as any).appId === 'string'
+    ? (v as any).appId
+    : undefined;
 
-    request = httpContext.getRequest();
-    response = httpContext.getResponse();
-  } else if (context.getType<GqlContextType>() === 'graphql') {
-    let gql: any;
-    // Check if graphql is installed
-    try {
-      gql = require('@nestjs/graphql');
-    } catch (er) {
-      throw new Error('@nestjs/graphql is not installed, cannot proceed');
-    }
+/** The distinct appIds a request names, in its path, query and body. */
+export const collectAppIds = (request: any): string[] => {
+  const ids = [
+    request.params?.appId,
+    typeof request.query?.appId === 'string' ? request.query.appId : undefined,
+    ...(Array.isArray(request.body)
+      ? request.body.map(appIdOf)
+      : [appIdOf(request.body)]),
+  ].filter((id): id is string => typeof id === 'string' && id !== '');
+  return [...new Set(ids)];
+};
 
-    // graphql request
-    const gqlContext = gql.GqlExecutionContext.create(context).getContext();
-
-    request = gqlContext.req;
-    response = gqlContext.res;
-  }
-
-  return [request, response];
+/** The distinct sessionIds a request names, in its path, query and body. */
+export const collectSessionIds = (request: any): string[] => {
+  const of = (v: any) =>
+    v && typeof v === 'object' && typeof v.sessionId === 'string'
+      ? v.sessionId
+      : undefined;
+  const ids = [
+    request.params?.sessionId,
+    typeof request.query?.sessionId === 'string'
+      ? request.query.sessionId
+      : undefined,
+    ...(Array.isArray(request.body)
+      ? request.body.map(of)
+      : [of(request.body)]),
+  ].filter((id): id is string => typeof id === 'string' && id !== '');
+  return [...new Set(ids)];
 };

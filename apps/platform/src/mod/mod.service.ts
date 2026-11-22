@@ -6,45 +6,44 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { OpenAPIObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import axios, { AxiosResponse } from 'axios';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
 import {
   AsyncApiDocument,
-  AsyncApiDocumentBuilder,
-  AsyncApiModule,
-  AsyncOperationObject,
-} from 'nestjs-asyncapi';
-import OpenAPIClientAxios, {
+  AsyncApiOperationObject,
+  createAsyncApiDocument,
+  serveAsyncApiDocument,
+} from '#libs/asyncapi/index';
+import {
+  OpenAPIClientAxios,
   Document,
   OpenAPIClient,
   Operation,
 } from 'openapi-client-axios';
 import * as url from 'url';
-import { SermasWellKnowDto } from '../platform.well-known.dto';
+import { SermasWellKnowDto } from '../platform.well-known.dto.js';
 import {
   ASYNCAPI_BASEURL,
   ASYNCAPI_PUBLIC_URL,
   OPENAPI_BASEURL,
   OPENAPI_PUBLIC_URL,
   WELL_KNOWN_PATH,
-} from './constants';
-import { AsyncApiUtils } from './libs/asyncapi-utils';
-import { SermasAsyncApiModule } from './libs/asyncapi.mod';
+} from './constants.js';
+import { AsyncApiUtils } from './libs/asyncapi-utils.js';
 import {
   OpenApiUtils,
   PlatformModuleSwaggerOperation,
-} from './libs/openapi-utils';
-import { PlatformModuleAsyncApiService } from './mod.async.service';
+} from './libs/openapi-utils.js';
+import { PlatformModuleAsyncApiService } from './mod.async.service.js';
 import {
   ModuleConfigEventDto,
   ModuleResourceDto,
   ModuleSettingsDto,
   PlatformModuleConfigDto,
-} from './mod.dto';
-import { PlatformModuleRegistryService } from './mod.registry.service';
+} from './mod.dto.js';
+import { PlatformModuleRegistryService } from './mod.registry.service.js';
 
 interface PlatformModuleWrapperOpenApi {
   client: OpenAPIClient;
@@ -55,7 +54,7 @@ interface PlatformModuleWrapperOpenApi {
 
 interface PlatformModuleWrapperAsyncApi {
   spec: AsyncApiDocument;
-  operation: AsyncOperationObject;
+  operation: AsyncApiOperationObject;
   topic: string;
   type: string;
 }
@@ -75,6 +74,7 @@ export class PlatformModuleService implements OnModuleInit {
 
   private readonly openapiUtils = new OpenApiUtils();
   private readonly asyncApiUtil = new AsyncApiUtils();
+  private asyncApiBase: AsyncApiDocument;
 
   private readonly moduleWrappers: {
     [moduleId: string]: PlatformModuleWrapper;
@@ -128,50 +128,27 @@ export class PlatformModuleService implements OnModuleInit {
   }
 
   async setupAsyncApi(app: INestApplication) {
-    try {
-      const asyncapiDocument = await this.getAsyncApiDocument();
-
-      // console.warn(JSON.stringify(asyncapiDocument));
-
-      await SermasAsyncApiModule.setup(
-        ASYNCAPI_BASEURL,
-        app,
-        asyncapiDocument,
-        undefined,
-        {
-          onRender: (doc: AsyncApiDocument) => this.getAsyncApiDocument(),
-        },
-      );
-    } catch (e: any) {
-      this.logger.error(`Failed to generate asyncApi docs: ${e.stack}`);
-    }
+    this.app = app;
+    serveAsyncApiDocument(app, ASYNCAPI_BASEURL, () =>
+      this.getAsyncApiDocument(),
+    );
   }
 
-  async getAsyncApiDocument() {
-    const app = this.app;
-    this.app = app;
-
-    const asyncApiOptions = new AsyncApiDocumentBuilder()
-      .setTitle('Sermas Events')
-      .setDescription('Sermas Events')
-      .setVersion('1.0')
-      .setDefaultContentType('application/json')
-      .addBearerAuth()
-      .addServer('sermas-broker', {
-        url: ASYNCAPI_PUBLIC_URL,
-        protocol: 'mqtt',
-      })
-      .build();
-
-    const asyncapiDocument = await AsyncApiModule.createDocument(
-      app,
-      asyncApiOptions,
-      {},
+  async getAsyncApiDocument(): Promise<AsyncApiDocument> {
+    // the platform part only changes on restart: build it once
+    if (!this.asyncApiBase) {
+      this.asyncApiBase = createAsyncApiDocument(this.app, {
+        title: 'Sermas Events',
+        description: 'Sermas Events',
+        version: '1.0',
+        servers: {
+          'sermas-broker': { url: ASYNCAPI_PUBLIC_URL, protocol: 'mqtt' },
+        },
+      });
+    }
+    return this.addPlatformModulesToAsyncApi(
+      structuredClone(this.asyncApiBase),
     );
-
-    this.addPlatformModulesToAsyncApi(asyncapiDocument);
-
-    return asyncapiDocument;
   }
 
   getOpenApiDocument() {
@@ -251,7 +228,7 @@ export class PlatformModuleService implements OnModuleInit {
 
         if (!wrapper.openapi?.swaggerOperation) continue;
 
-        const { path, method } = wrapper.openapi?.swaggerOperation;
+        const { method } = wrapper.openapi.swaggerOperation;
 
         this.logger.debug(
           `Add openAPI endpoint for ${method.toUpperCase()} /${moduleId}/${operationId}`,
@@ -465,7 +442,7 @@ export class PlatformModuleService implements OnModuleInit {
           const channel = asyncApiDocument.channels[topic];
 
           for (const type of ['publish', 'subscribe']) {
-            const operation: AsyncOperationObject = channel[type];
+            const operation: AsyncApiOperationObject = channel[type];
             if (!operation) continue;
 
             const operationId = operation.operationId;
@@ -494,7 +471,7 @@ export class PlatformModuleService implements OnModuleInit {
     return moduleRequestWrapper;
   }
 
-  async reload(moduleId: string, user?: AuthJwtUser) {
+  async reload(moduleId: string, _user?: AuthJwtUser) {
     if (this.moduleWrappers[moduleId]) {
       delete this.moduleWrappers[moduleId];
     }
@@ -502,11 +479,11 @@ export class PlatformModuleService implements OnModuleInit {
     return this.get(moduleId);
   }
 
-  async get(moduleId: string, user?: AuthJwtUser) {
+  async get(moduleId: string, _user?: AuthJwtUser) {
     return this.registry.get(moduleId);
   }
 
-  async remove(moduleId: string, user?: AuthJwtUser) {
+  async remove(moduleId: string, _user?: AuthJwtUser) {
     const record = await this.get(moduleId);
     if (!record) return;
 

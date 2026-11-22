@@ -1,5 +1,5 @@
-import { LLMModelAdapter } from './adapter';
-import { LLMProviderConfig } from './provider.dto';
+import { LLMModelAdapter } from './adapter.js';
+import { LLMProviderConfig } from './provider.dto.js';
 
 export abstract class LLMProvider<
   T extends LLMProviderConfig = LLMProviderConfig,

@@ -1,4 +1,4 @@
-import GroupRepresentation from '@keycloak/keycloak-admin-client/lib/defs/groupRepresentation';
+import GroupRepresentation from '@keycloak/keycloak-admin-client/lib/defs/groupRepresentation.js';
 import {
   Injectable,
   InternalServerErrorException,
@@ -8,11 +8,11 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformContextDto } from 'apps/platform/src/auth/platform.auth.dto';
-import { PlatformTopicsService } from 'apps/platform/src/topics/platform.topics.service';
+import { PlatformContextDto } from '#apps/platform/src/auth/platform.auth.dto';
+import { PlatformTopicsService } from '#apps/platform/src/topics/platform.topics.service';
 
-import { KEYCLOACK_TEST_REALM, sleep } from 'libs/test';
-import { isNodeEnv, jwtDecode, readJSON } from 'libs/util';
+import { KEYCLOACK_TEST_REALM, sleep } from '#libs/test';
+import { isNodeEnv, jwtDecode, readJSON } from '#libs/util';
 
 import {
   ClientCreatePolicy,
@@ -21,7 +21,7 @@ import {
   KeycloakClientResponseDto,
   KeycloakPolicyDto,
   KeycloakResourceDto,
-} from './keycloack.authz.dto';
+} from './keycloack.authz.dto.js';
 import {
   AssignClientRolesDto,
   AssignRealmRolesDto,
@@ -33,11 +33,11 @@ import {
   KeycloakUser,
   KeycloakUserRecord,
   RealmClientScopesDto,
-} from './keycloak.admin.dto';
+} from './keycloak.admin.dto.js';
 import {
   KeycloakAdminService,
   SAME_CLIENT_POLICY_NAME,
-} from './keycloak.admin.service';
+} from './keycloak.admin.service.js';
 import {
   AddAppClientDto,
   AddClientDto,
@@ -48,7 +48,7 @@ import {
   ClientRefreshTokenDto,
   KeycloakJwtTokenDto,
   SystemClientCreateDto,
-} from './keycloak.dto';
+} from './keycloak.dto.js';
 
 export const ROLE_APP_OWNER = 'app-owner';
 export const ROLE_ADMIN = 'platform-admin';
@@ -168,6 +168,33 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
       secret,
       authorizationEnabled: true,
     });
+  }
+
+  /**
+   * A confidential client with a service account and nothing else: no
+   * authorization services, no roles. Created, or its secret brought up to date.
+   */
+  async ensureServiceAccountClient(clientId: string, secret: string) {
+    await this.getToken();
+    const existing = await this.getClientByName(clientId);
+    if (existing) {
+      await this.kc.updateClientSecret({
+        realm: this.realm,
+        token: this.token,
+        id: existing.id,
+        secret,
+      });
+      return existing;
+    }
+    this.logger.log(`creating service account client ${clientId}`);
+    await this.kc.createClient({
+      token: this.token,
+      realm: this.realm,
+      name: clientId,
+      secret,
+      authorizationEnabled: false,
+    });
+    return await this.getClientByName(clientId);
   }
 
   async getClientAccessToken(req: ClientLoginDto) {
@@ -805,6 +832,14 @@ export class KeycloakService implements OnModuleInit, OnModuleDestroy {
       this.logger.verbose(
         `Client ${req.clientId} exists, updating scope-based permissions`,
       );
+      if (req.secret) {
+        await this.kc.updateClientSecret({
+          realm: this.realm,
+          token: this.token,
+          id: client.id,
+          secret: req.secret,
+        });
+      }
       await this.syncClientResources(client.clientId);
     }
 

@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { DialogueToolsService } from '../tools/dialogue.tools.service';
-import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto';
-import { DialogueTaskRecordChangedDto } from './dialogue.tasks.dto';
-import { DialogueTasksHandlerService } from './dialogue.tasks.handler.service';
-import { DialogueTasksService } from './dialogue.tasks.service';
-import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service';
+import { PlatformAppChangedDto } from '#apps/platform/src/app/platform.app.dto';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { DialogueToolsService } from '../tools/dialogue.tools.service.js';
+import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto.js';
+import { DialogueTaskRecordChangedDto } from './dialogue.tasks.dto.js';
+import { DialogueTasksHandlerService } from './dialogue.tasks.handler.service.js';
+import { DialogueTasksService } from './dialogue.tasks.service.js';
+import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service.js';
 
 @Injectable()
 export class DialogueTasksEventsService {
@@ -32,6 +32,9 @@ export class DialogueTasksEventsService {
     if (!task) return;
 
     if (!task.options?.repositoryId) return;
+    // an app-wide task stays available to the next user: only a session's own
+    // task tools go. Deleting here removed the app's tools for everyone (D-46)
+    if (!task.sessionId) return;
 
     this.logger.debug(
       `Removing tools for closed record taskId=${ev.record.taskId}`,
@@ -56,11 +59,12 @@ export class DialogueTasksEventsService {
   async onAppChanged(@Payload() payload: PlatformAppChangedDto) {
     switch (payload.operation) {
       case 'created':
-      case 'updated':
+      case 'updated': {
         const app = payload.record;
         await this.tasks.removeByApp(payload.appId);
         await this.tasks.importApp(app);
         break;
+      }
       case 'deleted':
         await this.tasks.removeByApp(payload.appId);
         break;

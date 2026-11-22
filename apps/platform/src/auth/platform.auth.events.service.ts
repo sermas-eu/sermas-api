@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ClientPermissionDto } from 'apps/keycloak/src/keycloak.dto';
-import { PlatformAuthService } from './platform.auth.service';
-import { OnEvent } from '@nestjs/event-emitter';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { PlatformAppClientChangedDto } from '../app/platform.app.dto';
+import { ClientPermissionDto } from '#apps/keycloak/src/keycloak.dto';
+import { PlatformAuthService } from './platform.auth.service.js';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { PlatformAppClientChangedDto } from '../app/platform.app.dto.js';
 
 interface TokenCache {
   expires: number;

@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { AsyncApi } from 'nestjs-asyncapi';
-import { PlatformAppModuleConfigEventDto } from './app.mod.dto';
+import { AsyncApiOperationName } from '#libs/decorator/asyncapi.operation.decorator';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { AsyncApi } from '#libs/asyncapi/index';
+import { PlatformAppModuleConfigEventDto } from './app.mod.dto.js';
 
 @AsyncApi()
 @Injectable()

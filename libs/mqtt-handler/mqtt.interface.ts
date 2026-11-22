@@ -1,6 +1,6 @@
 import { IClientOptions, Packet } from 'mqtt';
 import { LoggerService, Type } from '@nestjs/common';
-import { ModuleMetadata } from '@nestjs/common/interfaces';
+import { ModuleMetadata } from '@nestjs/common';
 
 export type MqttMessageTransformer = (payload: Buffer) => any;
 
@@ -76,8 +76,10 @@ export interface MqttOptionsFactory {
   createMqttConnectOptions(): Promise<MqttModuleOptions> | MqttModuleOptions;
 }
 
-export interface MqttModuleAsyncOptions
-  extends Pick<ModuleMetadata, 'imports'> {
+export interface MqttModuleAsyncOptions extends Pick<
+  ModuleMetadata,
+  'imports'
+> {
   inject?: any[];
   useExisting?: Type<MqttOptionsFactory>;
   useClass?: Type<MqttOptionsFactory>;

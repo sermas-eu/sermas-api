@@ -1,6 +1,18 @@
-import { getConfigPath } from './sermas.utils';
+import { getConfigPath } from './sermas.utils.js';
 
 export const SermasDefaultConfig = {
+  // AUTH_PROVIDER local (default): the API issues its own tokens (single instance, no user management; clients and the admin from env, a signing key kept across restarts); keycloak: a Keycloak realm the API administers
+  AUTH_PROVIDER: 'local',
+  // AUTH_LOCAL_CLIENTS with AUTH_PROVIDER=local, extra service clients as name:secret, comma separated (system clients if listed in AUTH_KEYCLOAK_SYSTEM_CLIENT_ID)
+  AUTH_LOCAL_CLIENTS: '',
+  // AUTH_LOCAL_TOKEN_TTL_SEC with AUTH_PROVIDER=local, access token lifetime in seconds (12h, as the Keycloak realm: the kiosk does not refresh its app token)
+  AUTH_LOCAL_TOKEN_TTL_SEC: 43200,
+  // AUTH_LOCAL_REFRESH_TTL_SEC with AUTH_PROVIDER=local, refresh token lifetime in seconds
+  AUTH_LOCAL_REFRESH_TTL_SEC: 43200,
+  // AUTH_LOCAL_SIGNING_KEY with AUTH_PROVIDER=local, the token signing key as a PEM private key (newlines may be escaped as \\n). Empty: a key generated once and kept in AUTH_LOCAL_SIGNING_KEY_FILE
+  AUTH_LOCAL_SIGNING_KEY: '',
+  // AUTH_LOCAL_SIGNING_KEY_FILE with AUTH_PROVIDER=local and no AUTH_LOCAL_SIGNING_KEY, where the generated key is kept so tokens survive a restart. Empty: sermas-auth-local-key.pem in the OS temp directory
+  AUTH_LOCAL_SIGNING_KEY_FILE: '',
   // IMPORT_USER default user used when importing apps
   IMPORT_USER: 'admin',
   // API_URL public API url
@@ -15,6 +27,8 @@ export const SermasDefaultConfig = {
   AUTH_KEYCLOAK_URL: 'http://172.17.0.1:8080/keycloak',
   // AUTH_KEYCLOAK_FRONTEND_URL set the keycloack realm frontend URL
   AUTH_KEYCLOAK_FRONTEND_URL: '',
+  // AUTH_KEYCLOAK_ISSUERS Accepted token issuers, comma separated. Empty means the realm URL under AUTH_KEYCLOAK_FRONTEND_URL, or AUTH_KEYCLOAK_URL
+  AUTH_KEYCLOAK_ISSUERS: '',
   // AUTH_KEYCLOAK_SKIP_HEALTHCHECK Skip /health endpoint checks on startup
   AUTH_KEYCLOAK_SKIP_HEALTHCHECK: '0',
   // AUTH_KEYCLOAK_ADMIN_URL set the keycloack admin URL. Required from keycloak v26.x
@@ -23,6 +37,8 @@ export const SermasDefaultConfig = {
   AUTH_KEYCLOAK_REALM: 'sermas-local',
   // AUTH_KEYCLOAK_CLIENT_ID set the keycloack client ID used for administrative purposes
   AUTH_KEYCLOAK_CLIENT_ID: 'platform',
+  // KEYCLOAK_WAIT_SEC how long the API waits at start for Keycloak to answer
+  KEYCLOAK_WAIT_SEC: 180,
   // AUTH_KEYCLOAK_SECRET set the keycloack client password used for administrative purposes
   AUTH_KEYCLOAK_SECRET: 'platform',
   // SHOW_KEYCLOAK_LOGS show verbose logging related to keycloak authentication for API endpoints
@@ -37,6 +53,13 @@ export const SermasDefaultConfig = {
   AUTH_KEYCLOAK_ADMIN_REALM: 'master',
   // AUTH_KEYCLOAK_SYSTEM_CLIENT_ID Additonal system clients, separated by comma
   AUTH_KEYCLOAK_SYSTEM_CLIENT_ID: '',
+  // AUTH_KEYCLOAK_KIOSK_CLIENT_ID the kiosk's client: it may only mint app tokens
+  // (POST /platform/token) for AUTH_KEYCLOAK_KIOSK_APP_CLIENTS, nothing else
+  AUTH_KEYCLOAK_KIOSK_CLIENT_ID: 'kiosk',
+  // AUTH_KEYCLOAK_KIOSK_CLIENT_SECRET its secret; empty: the client is not created
+  AUTH_KEYCLOAK_KIOSK_CLIENT_SECRET: '',
+  // AUTH_KEYCLOAK_KIOSK_APP_CLIENTS the app clients the kiosk may mint tokens for
+  AUTH_KEYCLOAK_KIOSK_APP_CLIENTS: 'avatar,robot',
 
   // MQTT_URL the mqtt service url
   MQTT_URL: 'mqtt',
@@ -68,7 +91,7 @@ export const SermasDefaultConfig = {
   // ADMIN_USER default admin username
 
   ADMIN_USER: `admin`,
-  // ADMIN_PASSWORD default admin password
+  // ADMIN_PASSWORD default admin password (with AUTH_PROVIDER=local a default value disables the admin login)
   ADMIN_PASSWORD: `admin`,
 
   // ASYNCAPI_PUBLIC_URL public URL path to mqtt over websocket
@@ -92,8 +115,10 @@ export const SermasDefaultConfig = {
 
   // TRANSLATION_SERVICE Provider name to translate messages
   TRANSLATION_SERVICE: 'openai',
-  // STT_SERVICE Service for Speech to Text. Provided are openai, google, whisper, azure. Each need it's own setup.
-  STT_SERVICE: 'openai',
+  // STT_SERVICE Service for Speech to Text: google, azure or whisper. Each needs its own setup.
+  STT_SERVICE: 'whisper',
+  // WHISPER_URL URL of a whisper ASR web service, used when STT_SERVICE=whisper
+  WHISPER_URL: '',
   // STT_GOOGLE_IMPROVED_RECOGNITION List of short words that need better recognition when using GOOGLE as STT
   STT_GOOGLE_IMPROVED_RECOGNITION: 'si,no,ok,fatto,sì,yes,done,continue,wait',
 
@@ -102,25 +127,29 @@ export const SermasDefaultConfig = {
   // STT_AZURE_REGION Azure region
   STT_AZURE_REGION: '',
 
-  // TTS_SERVICE Service for Text to Speech
-  TTS_SERVICE: 'openai',
+  // TTS_SERVICE Service for Text to Speech: google, azure or openai (any OpenAI-compatible /v1/audio/speech, such as a local Kokoro). An avatar may override it.
+  TTS_SERVICE: 'google',
 
   // GOOGLE_TTS_MODEL_TYPE Preferred Google TTS model type (such as Journey, Neural, Wavenet or Standard). See https://cloud.google.com/text-to-speech/docs/voices
   GOOGLE_TTS_MODEL_TYPE: 'Journey',
 
+  // TTS_OPENAI_BASEURL Base URL of the OpenAI-compatible speech API, used when TTS_SERVICE=openai. Empty means api.openai.com
+  TTS_OPENAI_BASEURL: '',
+  // TTS_OPENAI_API_KEY API key for TTS_OPENAI_BASEURL
+  TTS_OPENAI_API_KEY: '',
+  // TTS_OPENAI_MODEL Speech model name
+  TTS_OPENAI_MODEL: 'tts-1',
+  // TTS_OPENAI_VOICE Default voice
+  TTS_OPENAI_VOICE: 'alloy',
+  // TTS_OPENAI_VOICES Voices per language and gender, as `<lang>[-<gender>]=<voice>` separated by commas (it-F=if_sara,it-M=im_nicola,en=af_heart). An avatar's tts.model overrides them
+  TTS_OPENAI_VOICES: '',
   // TTS_AZURE_KEY Azure subscription key
   TTS_AZURE_KEY: '',
   // TTS_AZURE_REGION Azure region
   TTS_AZURE_REGION: '',
 
-  // ELEVENIO_APIKEY Elevenio API key
-  ELEVENIO_APIKEY: '',
-  // ELEVENIO_VOICEIDS Elevenio voice id, separated by comma
-  ELEVENIO_VOICEIDS: '',
-  // ELEVENIO_MODELS Elevenio models
-  ELEVENIO_MODELS: 'eleven_multilingual_v2',
-
-  // LLM_SERVICE default LLM service to use (supported: openai, groq, ollama, azure_openai, vertexai)
+  // LLM_SERVICE LLM service to use. Only `openai` is supported: any OpenAI-compatible
+  // endpoint (OpenAI, LiteLLM, vLLM, ...) selected with OPENAI_BASEURL
   LLM_SERVICE: 'openai',
 
   // LLM_SERVICE_CHAT LLM service to use for textual chat in format provider/model. If not provided will use LLM_SERVICE
@@ -151,11 +180,22 @@ export const SermasDefaultConfig = {
   // LLM_TOP_P only the most probable tokens which cumulative probability reaches top_p are used for next token sampling
   LLM_TOP_P: 0.3,
 
+  // LLM_REASONING_EFFORT reasoning_effort sent to reasoning models (none, minimal, low, medium, high). Empty leaves the model default. Thinking delays the first spoken word: `none` cut it from ~17s to ~1s on a local reasoning model
+  LLM_REASONING_EFFORT: '',
+  // LLM_EXPLAIN Ask the chat model to explain its filter, intent and tool decisions, for debugging. The explanations are logged and delay the answer
+  LLM_EXPLAIN: '0',
+
   // LLM_DISABLE_SUMMARY, when equals to '1', summarization is not used and the full conversation history is passed to the LLM instead
   LLM_DISABLE_SUMMARY: '0',
 
-  // OPENAI_API_KEY OpenAI api key
+  // OPENAI_BASEURL Base URL of the OpenAI-compatible endpoint, e.g. http://litellm:4000/v1. Empty uses api.openai.com
+  OPENAI_BASEURL: '',
+  // OPENAI_API_KEY API key for OPENAI_BASEURL
   OPENAI_API_KEY: '',
+  // OPENAI_EMBEDDINGS_BASEURL Base URL for embeddings, when they come from a different endpoint. Empty uses OPENAI_BASEURL
+  OPENAI_EMBEDDINGS_BASEURL: '',
+  // OPENAI_EMBEDDINGS_API_KEY API key for OPENAI_EMBEDDINGS_BASEURL. Empty uses OPENAI_API_KEY
+  OPENAI_EMBEDDINGS_API_KEY: '',
   // OPENAI_EMBEDDINGS_MODEL OpenAi Embedding model
   OPENAI_EMBEDDINGS_MODEL: 'text-embedding-3-small',
   // OPENAI_CHAT_MODELS Supported chat models from OpenAI. Leave empty to allow all available.
@@ -164,91 +204,6 @@ export const SermasDefaultConfig = {
   // OPENAI_MODEL Default OpenAI model used as fallback
   OPENAI_MODEL: 'gpt-4o',
 
-  // OPENAI_TTS_MODEL OpenAI TTS model, one of tts-1 or tts-1-hd
-  OPENAI_TTS_MODEL: 'tts-1',
-  // OPENAI_TTS_VOICE_F Openai female TTS voice model
-  OPENAI_TTS_VOICE_F: 'shimmer',
-  // OPENAI_TTS_VOICE_M Openai male TTS voice model
-  OPENAI_TTS_VOICE_M: 'onyx',
-
-  // LITELLM_URL LiteLLM endpoint URL
-  LITELLM_URL: 'http://litellm',
-
-  // OLLAMA_BASEURL Url to Ollama
-  OLLAMA_BASEURL: 'http://ollama:11434',
-  // OLLAMA_MODEL Default Ollama model used as fallback
-  OLLAMA_MODEL: 'sermas-llama3',
-  // OLLAMA_CHAT_MODELS Supported chat models from Ollama. Leave empty to allow all available.
-  OLLAMA_CHAT_MODELS: '',
-  // OLLAMA_EMBEDDINGS_MODEL Default embedding model
-  OLLAMA_EMBEDDINGS_MODEL: 'nomic-embed-text',
-
-  // GROQ_API_KEY Groq api key
-  GROQ_API_KEY: '',
-  // GROQ_MODEL Default Groq model used as fallback
-  GROQ_MODEL: 'llama3-70b-8192',
-  // GROQ_CHAT_MODELS Supported chat models from Groq. Leave empty to allow all available.
-  GROQ_CHAT_MODELS: '',
-
-  // MISTRAL_API_KEY Mistral api key
-  MISTRAL_API_KEY: '',
-  // MISTRAL_EMBEDDINGS_MODEL Mistral Embedding model
-  MISTRAL_EMBEDDINGS_MODEL: 'mistral-embed',
-  // MISTRAL_CHAT_MODELS Supported chat models from Mistral. Leave empty to allow all available.
-  MISTRAL_CHAT_MODELS: '',
-  // MISTRAL_MODEL Default Mistral model used as fallback
-  MISTRAL_MODEL: 'open-mistral-nemo',
-
-  // ANTROPHIC_API_KEY Antrophic api key
-  ANTROPHIC_API_KEY: '',
-  // ANTROPHIC_MODEL Default Antrophic model used as fallback
-  ANTROPHIC_MODEL: 'claude-3-haiku-20240307',
-  // ANTROPHIC_MODELS Supported chat models from Antrophic. Leave empty to allow all available.
-  ANTROPHIC_CHAT_MODELS: '',
-
-  // GEMINI_API_KEY Provide a Google Gemini api key for chat and embedding services
-  GEMINI_API_KEY: '',
-  // GEMINI_EMBEDDINGS_MODEL Supported embedding models from Google Gemini. Leave empty to allow all available.
-  GEMINI_EMBEDDINGS_MODEL: '',
-  // GEMINI_CHAT_MODELS Supported chat models from Google Gemini. Leave empty to allow all available.
-  GEMINI_CHAT_MODELS: '',
-
-  // HUGGINGFACE_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
-  HUGGINGFACE_API_KEY: '',
-  // HUGGINGFACE_CHAT_MODELS Supported chat models from Hugging Face. Leave empty to allow any.
-  HUGGINGFACE_CHAT_MODELS: '',
-  // HUGGINGFACE_BASEURL Base URL for Hugging Face inference service
-  HUGGINGFACE_BASEURL: '',
-
-  // AZURE_OPENAI_BASEURL Azure resoure endpoint URL
-  AZURE_OPENAI_BASEURL: '',
-  // AZURE_OPENAI_API_KEY  Azure resource API KEY
-  AZURE_OPENAI_API_KEY: '',
-  // AZURE_OPENAI_MODEL Supported chat models from OpenAI on Azure.
-  AZURE_OPENAI_CHAT_MODELS: '',
-  // AZURE_OPENAI_CHAT_API_VERSION Version of chat model distributed in Azure
-  AZURE_OPENAI_CHAT_API_VERSION: '2024-08-01-preview',
-  // AZURE_OPENAI_MODEL Supported embeddings models from OpenAI on Azure.
-  AZURE_OPENAI_EMBEDDINGS_MODEL: 'text-embedding-ada-002',
-  // AZURE_OPENAI_CHAT_API_VERSION Version of embeddings model distributed in Azure
-  AZURE_OPENAI_EMBEDDINGS_API_VERSION: '2023-05-15',
-
-  // VERTEXAI_API_KEY Provide a Hugging Face token. Note: HF_TOKEN will as fallback, if set
-  VERTEXAI_API_KEY: '',
-  // VERTEXAI_CHAT_MODELS Supported Google chat models under Vertex AI. Leave empty to allow any.
-  VERTEXAI_CHAT_MODELS: 'mistral-small-2503',
-  // VERTEXAI_REGION Google Cloud Processing region for Vertex AI
-  VERTEXAI_REGION: '',
-  // VERTEXAI_PROJECT Google Cloud project ID for Vertex AI
-  VERTEXAI_PROJECT: '',
-
-  // GCP_MISTRAL_CHAT_MODELS Supported Mistral chat models under Google Cloud. Leave empty to allow any.
-  GCP_MISTRAL_CHAT_MODELS: 'mistral-small-2503',
-  // GCP_MISTRAL_REGION Google Cloud Processing region for Mistral
-  GCP_MISTRAL_REGION: '',
-  // GCP_MISTRAL_PROJECT Google Cloud project ID for Mistral
-  GCP_MISTRAL_PROJECT: '',
-
   // DATASET_ENABLED Enable data logging
   DATASET_ENABLED: '0',
   // DATASET_BUCKET Data logger bucket name
@@ -256,7 +211,7 @@ export const SermasDefaultConfig = {
 
   // SSML_GENERATE Enable empathic LLM-generated SSML for TTS
   SSML_GENERATE: '0',
-  // SSML_GENERATE Log generated SSML content
+  // SSML_PRINT Log generated SSML content
   SSML_PRINT: '0',
 
   // AZURE_KEY Azure subscription key (used as fallback to more specific ones)
@@ -271,13 +226,22 @@ export const SermasDefaultConfig = {
 
   // SPEAKER_VERIFICATION enables speaker verifiaction by comparing audio embeddings
   SPEAKER_VERIFICATION: '1',
+  // SPEAKER_RESET_AFTER_DROPS dropped voice turns in a row that reset the session's voice signature; 0 never resets it
+  SPEAKER_RESET_AFTER_DROPS: 2,
+  // STT_MIN_DURATION_MS voice clips shorter than this are dropped before STT (no-speech)
+  STT_MIN_DURATION_MS: 250,
+  // STT_MIN_RMS_DBFS voice clips quieter than this RMS level (dBFS) are dropped before STT (no-speech)
+  STT_MIN_RMS_DBFS: -55,
+  // DIALOGUE_NOISY_THRESHOLD dropped voice turns in a row that make the avatar suggest the keyboard; 0 disables it
+  DIALOGUE_NOISY_THRESHOLD: 3,
+  // DIALOGUE_NOISY_WINDOW_SEC the window, in seconds, in which those dropped turns are counted
+  DIALOGUE_NOISY_WINDOW_SEC: 60,
+  // DIALOGUE_NOISY_COOLDOWN_SEC minimum seconds between two keyboard suggestions in a session; a second one also needs an answered turn in between
+  DIALOGUE_NOISY_COOLDOWN_SEC: 120,
   // MIN_EMBEDDINGS_NUMBER set the minimum number of audio samples to use for creating speaker embedding
   MIN_EMBEDDINGS_NUMBER: '3',
   // SPEECH_SIMILARITY_THRESHOLD value used for comparing embedding, same speaker if above threshold
   SPEECH_SIMILARITY_THRESHOLD: '0.25',
-
-  // SPEAKER_COUNTER enable or disable the speaker counter over audio
-  SPEAKER_COUNTER: '1',
 
   // SPEECH_VERIFY_TIMEOUT_MSEC timeout for speaker verification request
   SPEECH_VERIFY_TIMEOUT_MSEC: 1000,

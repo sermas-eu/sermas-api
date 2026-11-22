@@ -1,13 +1,18 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { DialogueToolRequestDto } from 'apps/dialogue/src/dialogue.speech.dto';
-import { UIAsyncApiService } from 'apps/ui/src/ui.async.service';
+import { DialogueToolRequestDto } from '#apps/dialogue/src/dialogue.speech.dto';
+import { UIAsyncApiService } from '#apps/ui/src/ui.async.service';
 import { readFile } from 'fs/promises';
-import { getConfigPath } from 'libs/sermas/sermas.utils';
-import { fileExists } from 'libs/util';
+import { getConfigPath } from '#libs/sermas/sermas.utils';
+import { fileExists } from '#libs/util';
 import { compareTwoStrings } from 'string-similarity';
-import { PoseDto, StatusDto, StatusEventDto } from '../robotics.dto';
-import { AreaDto, NavigationSpaceDto } from './navigation.dto';
+import { PoseDto, StatusDto, StatusEventDto } from '../robotics.dto.js';
+import { AreaDto, NavigationSpaceDto } from './navigation.dto.js';
 
 const MATCH_AREA_THRESH = 0.8;
 
@@ -35,7 +40,7 @@ export class NavigationService {
     let lastPos = 0;
     setInterval(() => {
       this.onStatusUpdate({
-        appId: 'spindoxlabs',
+        appId: 'example-app',
         status: {
           actualPosition: positions[lastPos],
           velocity: {
@@ -65,7 +70,7 @@ export class NavigationService {
   }
 
   async import() {
-    let spaces: NavigationSpaceDto[] = [];
+    let spaces: NavigationSpaceDto[];
 
     try {
       const spacesPath = `${getConfigPath()}/spaces.json`;
@@ -94,7 +99,7 @@ export class NavigationService {
 
     if (space.map && space.options) {
       if (space.options.mapType === 'svg') {
-        const raw = await readFile(space.map);
+        // placeholder: SVG maps are not parsed yet
         /*const svgPaths = await getSvgPaths(
           raw,
           space.options?.svgAreaMatch?.tag,
@@ -137,19 +142,28 @@ export class NavigationService {
       }
     }
 
-    await this.save(space);
+    await this.save(space.appId, space);
   }
 
-  async save(space: NavigationSpaceDto) {
+  async save(appId: string, space: NavigationSpaceDto) {
+    const existing = this.spaces[space.spaceId];
+    if (existing && existing.appId !== appId)
+      throw new ConflictException(`spaceId in use`);
     this.spaces[space.spaceId] = space;
   }
 
-  async remove(spaceId: string) {
-    if (this.spaces[spaceId]) delete this.spaces[spaceId];
+  async remove(appId: string, spaceId: string) {
+    if (this.spaces[spaceId]?.appId === appId) delete this.spaces[spaceId];
   }
 
-  async getById(spaceId: string): Promise<NavigationSpaceDto | null> {
-    return this.spaces[spaceId] || null;
+  /** The space, if it exists and, when appId is given, belongs to that app. */
+  async getById(
+    spaceId: string,
+    appId?: string,
+  ): Promise<NavigationSpaceDto | null> {
+    const space = this.spaces[spaceId];
+    if (!space || (appId && space.appId !== appId)) return null;
+    return space;
   }
 
   async getSpaceByName(
@@ -164,7 +178,6 @@ export class NavigationService {
   }
 
   async getAreaByName(appId: string, name: string): Promise<AreaDto | null> {
-    console.log('SPACES: ' + JSON.stringify(this.spaces));
     for (const spaceId in this.spaces) {
       if (this.spaces[spaceId].appId !== appId) continue;
       for (const area of this.spaces[spaceId].areas) {
@@ -196,6 +209,6 @@ export class NavigationService {
     if (!this.status) {
       throw new NotFoundException();
     }
-    return this.status[appId][robotId];
+    return this.status?.[appId]?.[robotId] ?? null;
   }
 }

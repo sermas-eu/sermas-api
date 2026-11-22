@@ -21,27 +21,27 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { DetectionService } from 'apps/detection/src/detection.service';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { DetectionService } from '#apps/detection/src/detection.service';
 import {
   DetectionStreamerRequest,
   VideoFrame,
   VideoFrameEvent,
-} from 'apps/detection/src/detection.streamer.dto';
-import { DetectionStreamingService } from 'apps/detection/src/detection.streamer.service';
-import { MJPEG_BOUNDARY } from 'apps/detection/src/libs/constants';
+} from '#apps/detection/src/detection.streamer.dto';
+import { DetectionStreamingService } from '#apps/detection/src/detection.streamer.service';
+import { MJPEG_BOUNDARY } from '#apps/detection/src/libs/constants';
 import { Response } from 'express';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
 import {
   ObjectDetectionRequest,
   ObjectDetectionResponse,
   SentimentAnalysisRequest,
   SentimentAnalysisResponse,
   UserInteractionIntentionDto,
-} from './detection.dto';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { createSessionContext } from 'apps/session/src/session.context';
+} from './detection.dto.js';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { createSessionContext } from '#apps/session/src/session.context';
 
 @ApiBearerAuth()
 @Controller('detection')

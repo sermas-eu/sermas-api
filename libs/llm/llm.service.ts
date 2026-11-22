@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { ConfigService } from '@nestjs/config';
 import OpenAI, { ClientOptions } from 'openai';
-import { LLMParams } from './llm.dto';
+import { LLMParams } from './llm.dto.js';
 
 @Injectable()
 export class LLMService {

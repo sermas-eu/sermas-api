@@ -1,6 +1,6 @@
-import { VideoFrame } from 'apps/detection/src/detection.streamer.dto';
+import { VideoFrame } from '#apps/detection/src/detection.streamer.dto';
 import * as fs from 'fs/promises';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 
 export interface BoxOverlayTemplate {
   title: string;
@@ -83,8 +83,8 @@ export class BoxedFrame {
         box.height
       }" x="${box.x}" y="${box.y}" />
                         <text class="label" x="${labelPosX}" y="${labelPosY}">${
-        box.label || 'object'
-      }</text>`;
+                          box.label || 'object'
+                        }</text>`;
     });
 
     return Buffer.from(head + boxes.join('') + tail);

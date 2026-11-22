@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { SessionStorageAsyncApiService } from './session.storage.async.service';
-import { SessionStorageController } from './session.storage.controller';
-import { SessionStorage, SessionStorageSchema } from './session.storage.schema';
-import { SessionStorageService } from './session.storage.service';
+import { SessionStorageAsyncApiService } from './session.storage.async.service.js';
+import { SessionStorageController } from './session.storage.controller.js';
+import {
+  SessionStorage,
+  SessionStorageSchema,
+} from './session.storage.schema.js';
+import { SessionStorageService } from './session.storage.service.js';
 
 @Module({
   imports: [

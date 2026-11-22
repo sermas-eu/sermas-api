@@ -1,35 +1,50 @@
-import {
-  Cache,
-  CACHE_MANAGER,
-  CacheKey,
-  CacheTTL,
-} from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { md5 } from 'libs/util';
+import { createKeyv } from '@keyv/redis';
+import { md5 } from '#libs/util';
+import { Cache, createCache } from 'cache-manager';
 import { Transform } from 'stream';
-import { LLMMessage } from './providers/provider.dto';
+import { LLMMessage } from './providers/provider.dto.js';
 
-const cacheTTL = +process.env.CACHE_TTL_SEC || 86400;
+/** Redis key prefix of cached LLM responses. */
+export const LLM_CACHE_NAMESPACE = 'llm';
 
+/**
+ * Caches LLM responses in their own Redis namespace, so that clearing them
+ * (CLEAR_CACHE_ON_START) leaves sessions and the other cached records alone.
+ */
 @Injectable()
-@CacheTTL(cacheTTL)
-@CacheKey('llm')
-export class LLMCacheService {
+export class LLMCacheService implements OnModuleDestroy {
   private readonly logger = new Logger(LLMCacheService.name);
 
-  private enabled = true;
+  private readonly enabled: boolean;
+  private readonly cache: Cache;
 
-  constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private readonly config: ConfigService,
-  ) {
-    if (config.get('CLEAR_CACHE_ON_START') === '1') {
-      this.logger.log('Clearing REDIS LLM responses cache');
-      this.cacheManager.reset();
-    }
+  constructor(private readonly config: ConfigService) {
+    const redisUrl = config.get<string>('REDIS_URL');
+    this.cache = createCache({
+      ttl: (+config.get('CACHE_TTL_SEC') || 86400) * 1000,
+      // no Redis (unit tests): in memory
+      stores: redisUrl
+        ? [createKeyv(redisUrl, { namespace: LLM_CACHE_NAMESPACE })]
+        : undefined,
+    });
+
     this.enabled = config.get('LLM_CACHE_ENABLED') !== '0';
     this.logger.log(`LLM caching ${this.enabled ? 'enabled' : 'disabled'}`);
+
+    if (config.get('CLEAR_CACHE_ON_START') === '1') {
+      this.logger.log('Clearing the LLM responses cache');
+      this.cache
+        .clear()
+        .catch((e) =>
+          this.logger.warn(`Failed to clear the LLM cache: ${e.message}`),
+        );
+    }
+  }
+
+  async onModuleDestroy() {
+    await this.cache.disconnect().catch(() => undefined);
   }
 
   hashMessage(messages: LLMMessage[]) {
@@ -38,14 +53,12 @@ export class LLMCacheService {
 
   async save(messages: LLMMessage[], data: any) {
     if (!this.enabled) return;
-    const hash = this.hashMessage(messages);
-    await this.cacheManager.set(hash, data);
+    await this.cache.set(this.hashMessage(messages), data);
   }
 
   async get(messages: LLMMessage[]) {
     if (!this.enabled) return null;
-    const hash = this.hashMessage(messages);
-    return await this.cacheManager.get(hash);
+    return await this.cache.get(this.hashMessage(messages));
   }
 }
 

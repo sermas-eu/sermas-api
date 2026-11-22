@@ -1,4 +1,4 @@
-import { MqttMessageTransformer } from './mqtt.interface';
+import { MqttMessageTransformer } from './mqtt.interface.js';
 
 export const JsonTransform: MqttMessageTransformer = (payload) => {
   return JSON.parse(payload.toString('utf-8'));

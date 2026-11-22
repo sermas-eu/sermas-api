@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { UserPrivacy, UserPrivacySchemaDocument } from './ui.privacy.schema';
+import { UserPrivacy, UserPrivacySchemaDocument } from './ui.privacy.schema.js';
 import { Model } from 'mongoose';
 
 @Injectable()

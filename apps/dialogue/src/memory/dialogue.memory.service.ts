@@ -1,10 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { DialogueMemoryMessageDto } from './dialogue.memory.dto';
-import { DialogueMemory } from './dialogue.memory.schema';
-import { DialogueMemorySummaryService } from './dialogue.memory.summary.service';
-import { conversationToText } from './util';
+import { DialogueMemoryMessageDto } from './dialogue.memory.dto.js';
+import { DialogueMemory } from './dialogue.memory.schema.js';
+import { DialogueMemorySummaryService } from './dialogue.memory.summary.service.js';
+import { conversationToText } from './util.js';
 
 @Injectable()
 export class DialogueMemoryService implements OnModuleInit {

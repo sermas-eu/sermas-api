@@ -7,17 +7,18 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ClientLoginDto } from 'apps/keycloak/src/keycloak.dto';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { getKeycloakClientId } from 'apps/keycloak/src/util';
-import { PlatformAuthService } from './platform.auth.service';
-import { PlatformTokenAsyncApiService } from './platform.token.async.service';
+import type { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { ClientLoginDto } from '#apps/keycloak/src/keycloak.dto';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { getKeycloakClientId } from '#apps/keycloak/src/util';
+import { PlatformAuthService } from './platform.auth.service.js';
+import { PlatformTokenAsyncApiService } from './platform.token.async.service.js';
 import {
   AccessTokenRequestDto,
   JwtTokenDto,
   PlatformTokenDto,
   RefreshTokenRequestDto,
-} from './platform.token.dto';
+} from './platform.token.dto.js';
 
 @Injectable()
 export class PlatformAuthTokenService {
@@ -28,9 +29,17 @@ export class PlatformAuthTokenService {
     private readonly auth: PlatformAuthService,
   ) {}
 
-  async getClientAccessToken(req: AccessTokenRequestDto, bearerToken?: string) {
+  /**
+   * `caller` is the identity the JWT guard verified, never a token parsed
+   * here: an unverified token would let anyone claim any client or user.
+   */
+  async getClientAccessToken(
+    req: AccessTokenRequestDto,
+    caller?: { user: AuthJwtUser; token: string },
+  ) {
+    const bearerToken = caller?.token;
     if (!req.appId) throw new BadRequestException('appId missing');
-    if (!req.clientId) throw new BadRequestException('appId missing');
+    if (!req.clientId) throw new BadRequestException('clientId missing');
 
     if (!req.clientSecret && !bearerToken)
       throw new BadRequestException(
@@ -42,19 +51,18 @@ export class PlatformAuthTokenService {
       clientSecret: req.clientSecret,
     };
 
-    if (bearerToken) {
-      const jwt = this.auth.parseToken(bearerToken);
-      if (jwt === null)
-        throw new BadRequestException(`Failed to parse bearer token`);
+    if (caller) {
+      const jwt = caller.user;
 
-      const isAllowed = await this.auth.isAllowed({
-        appId: req.appId,
-        clientId: req.clientId,
-        resource: 'platform',
-        scopes: ['token'],
-        token: bearerToken,
-        userId: jwt.sub,
-      });
+      // The route is public, so no guard ran. A system client's service account
+      // (AUTH_KEYCLOAK_CLIENT_ID, AUTH_KEYCLOAK_SYSTEM_CLIENT_ID) may mint tokens
+      // for any app, the kiosk client for its app clients, a user for the apps
+      // they own (admins for all). Keycloak's evaluation of the target client's
+      // policies is not used here: it permits any realm user.
+      const isAllowed =
+        this.auth.isSystemClient(jwt) ||
+        this.auth.isKioskTokenRequest(jwt, req.clientId) ||
+        (await this.auth.isAppOwnerOrAdmin(jwt, req.appId));
 
       if (!isAllowed) throw new ForbiddenException();
 
@@ -91,7 +99,7 @@ export class PlatformAuthTokenService {
 
       return token;
     } catch (e: any) {
-      if (e.stack.toString().indexOf('status code 401')) {
+      if (String(e?.stack).includes('status code 401')) {
         this.logger.debug(
           `Unauthorized client=${req.clientId} appId=${req.appId}`,
         );

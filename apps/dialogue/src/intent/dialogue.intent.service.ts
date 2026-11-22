@@ -1,38 +1,38 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { DialogueTasksService } from 'apps/dialogue/src/tasks/dialogue.tasks.service';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
+import { DialogueTasksService } from '#apps/dialogue/src/tasks/dialogue.tasks.service';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
 import {
   DialogueToolNotMatchingDto,
   ToolsWrapper,
-} from '../chat/dialogue.chat.dto';
+} from '../chat/dialogue.chat.dto.js';
 import {
   DialogueTaskDto,
   TaskFieldDto,
-} from '../tasks/store/dialogue.tasks.store.dto';
+} from '../tasks/store/dialogue.tasks.store.dto.js';
 
 import {
   TOOL_CATCH_ALL,
   TOOL_CATCH_ALL_VALUE,
-} from '../tools/dialogue.tools.dto';
+} from '../tools/dialogue.tools.dto.js';
 
 import {
   AppSettingsDto,
   AppToolsDTO,
-} from 'apps/platform/src/app/platform.app.dto';
-import { SelectedTool } from '../chat/dialogue.chat.tools.dto';
-import { DialogueTasksHandlerService } from '../tasks/dialogue.tasks.handler.service';
-import { DialogueToolsService } from '../tools/dialogue.tools.service';
-import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto';
-import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto';
-import { extractToolValues } from '../tools/utils';
+} from '#apps/platform/src/app/platform.app.dto';
+import { SelectedTool } from '../chat/dialogue.chat.tools.dto.js';
+import { DialogueTasksHandlerService } from '../tasks/dialogue.tasks.handler.service.js';
+import { DialogueToolsService } from '../tools/dialogue.tools.service.js';
+import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto.js';
+import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto.js';
+import { extractToolValues } from '../tools/utils.js';
 import {
   ActiveTaskRecord,
   IntentActiveTools,
   TaskIntentResult,
   TaskIntentsList,
   TaskIntentWrapper,
-} from './dialogue.intent.dto';
+} from './dialogue.intent.dto.js';
 
 @Injectable()
 export class DialogueIntentService {
@@ -63,13 +63,11 @@ export class DialogueIntentService {
   async getTaskIntentList(appId: string) {
     const tasks = await this.tasks.search({ appId });
 
-    const intents: TaskIntentsList[] = tasks.map(
-      (t): TaskIntentsList => ({
-        taskId: t.taskId,
-        taskDescription: t.description,
-        intents: t.intents.filter((i) => i.name && i.description),
-      }),
-    );
+    const intents: TaskIntentsList[] = tasks.map((t): TaskIntentsList => ({
+      taskId: t.taskId,
+      taskDescription: t.description,
+      intents: t.intents.filter((i) => i.name && i.description),
+    }));
 
     return { tasks, intents };
   }
@@ -378,7 +376,7 @@ export class DialogueIntentService {
 
     // load tools repositories
     const sessionRepositories = await this.tools.loadFromSession(message);
-    let repositories: DialogueToolsRepositoryDto[] = [];
+    let repositories: DialogueToolsRepositoryDto[];
 
     if (currentTask) {
       repositories = sessionRepositories.filter((r) => {

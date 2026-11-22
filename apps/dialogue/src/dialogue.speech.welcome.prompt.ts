@@ -1,8 +1,8 @@
-import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
+import { PromptTemplate } from '#libs/llm/prompt/prompt.template';
 import {
   BaseSystemPromptParams,
   createBaseSystemPrompt,
-} from './dialogue.system.prompt';
+} from './dialogue.system.prompt.js';
 
 export const welcomeMessageSystemPrompt =
   PromptTemplate.create<BaseSystemPromptParams>(

@@ -1,4 +1,4 @@
-import { DialogueTaskDto } from './store/dialogue.tasks.store.dto';
+import { DialogueTaskDto } from './store/dialogue.tasks.store.dto.js';
 
 export const convertTaskToPrompt = (
   tasks?: DialogueTaskDto[],

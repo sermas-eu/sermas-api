@@ -5,8 +5,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformKeycloakService } from 'apps/platform/src/platform.keycloack.service';
-import { jwtDecode } from 'libs/util';
+import { PlatformKeycloakService } from '#apps/platform/src/platform.keycloack.service';
+import { jwtDecode } from '#libs/util';
 
 import {
   AuthJwtUser,
@@ -15,7 +15,7 @@ import {
   RefreshTokenRequestDto,
   RegistrationRequestDto,
   RegistrationResponseDto,
-} from './auth.dto';
+} from './auth.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -58,12 +58,16 @@ export class AuthService {
   async login(payload: LoginRequestDto): Promise<LoginResponseDto> {
     if (!payload.username || payload.username.length < 3)
       throw new BadRequestException('missing username');
-    if (!payload.password || payload.username.length < 3)
-      throw new BadRequestException('missing password');
+    if (!payload.password) throw new BadRequestException('missing password');
+
+    // Users log in through the platform client, or an app's `application`
+    // client. Any other client is refused: the API supplies the client secret
+    // itself, so a free choice would hand out tokens of app and module clients.
+    const platformClient = this.config.get('AUTH_KEYCLOAK_CLIENT_ID');
+    if (payload.clientId && payload.clientId !== platformClient)
+      throw new BadRequestException('clientId not allowed');
 
     let clientId = payload.clientId;
-
-    // use {appId}-application to login
     if (!clientId && payload.appId) {
       clientId = `${payload.appId}-application`;
     }
@@ -91,7 +95,7 @@ export class AuthService {
     if (!payload.refreshToken || payload.refreshToken.length < 3)
       throw new BadRequestException('missing refreshToken');
 
-    const clientId = payload.clientId || user.clientId;
+    const clientId = payload.clientId || user?.clientId;
 
     const res = await this.keycloak.refreshToken(
       accessToken,

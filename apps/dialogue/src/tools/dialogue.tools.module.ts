@@ -1,18 +1,20 @@
 import { Module } from '@nestjs/common';
+import { UiModule } from '#apps/ui/src/ui.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DialogueToolsAsyncApiService } from './dialogue.tools.async.service';
-import { DialogueToolsEventsService } from './dialogue.tools.events.service';
-import { DialogueToolsService } from './dialogue.tools.service';
+import { DialogueToolsAsyncApiService } from './dialogue.tools.async.service.js';
+import { DialogueToolsEventsService } from './dialogue.tools.events.service.js';
+import { DialogueToolsService } from './dialogue.tools.service.js';
 import {
   DialogueToolsRepository,
   DialogueToolsRepositorySchema,
-} from './repository/dialogue.tools.repository.schema';
-import { DialogueToolsRepositoryService } from './repository/dialogue.tools.repository.service';
-import { DialogueToolsTriggerService } from './trigger/dialogue.tools.trigger.service';
-import { DialogueToolsController } from './dialogue.tools.controller';
+} from './repository/dialogue.tools.repository.schema.js';
+import { DialogueToolsRepositoryService } from './repository/dialogue.tools.repository.service.js';
+import { DialogueToolsTriggerService } from './trigger/dialogue.tools.trigger.service.js';
+import { DialogueToolsController } from './dialogue.tools.controller.js';
 
 @Module({
   imports: [
+    UiModule,
     MongooseModule.forFeature([
       {
         name: DialogueToolsRepository.name,

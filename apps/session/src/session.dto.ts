@@ -1,7 +1,14 @@
+import {
+  Allow,
+  IsArray,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AppSettingsDto } from 'apps/platform/src/app/platform.app.dto';
-import { SermasBaseDto, SermasRecordChangedDto } from 'libs/sermas/sermas.dto';
-import { SearchFilter } from 'libs/sermas/sermas.query.dto';
+import { AppSettingsDto } from '#apps/platform/src/app/platform.app.dto';
+import { SermasBaseDto, SermasRecordChangedDto } from '#libs/sermas/sermas.dto';
+import { SearchFilter } from '#libs/sermas/sermas.query.dto';
 
 export const AgentStatusCodes: Record<AgentStatus, number> = {
   // ko
@@ -64,31 +71,44 @@ export class SessionProperties {
 
 export class SessionDto extends SermasBaseDto {
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   sessionId?: string;
   @ApiPropertyOptional({
     description: 'Agent instance associated to the session',
   })
+  @IsOptional()
+  @IsString()
   agentId?: string;
   @ApiPropertyOptional({
     description:
       'Collect inferred identifiers of user interacting with the agent during a session.',
   })
+  @IsOptional()
+  @IsArray()
   user: UserReferenceDto[];
   @ApiProperty()
+  @Allow()
   modifiedAt: Date;
   @ApiProperty()
+  @Allow()
   createdAt: Date;
   @ApiProperty()
+  @Allow()
   closedAt: Date | null;
 
   @ApiPropertyOptional({
     type: AppSettingsDto,
   })
+  @IsOptional()
+  @IsObject()
   settings?: Partial<AppSettingsDto>;
 
   @ApiPropertyOptional({
     type: SessionProperties,
   })
+  @IsOptional()
+  @IsObject()
   properties?: SessionProperties;
 }
 

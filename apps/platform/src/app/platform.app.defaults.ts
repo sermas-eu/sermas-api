@@ -3,7 +3,7 @@ import {
   RepositoryAvatarDto,
   RepositoryBackgroundDto,
   RepositoryConfigDto,
-} from './platform.app.dto';
+} from './platform.app.dto.js';
 
 export const ModuleRobot: AppModuleConfigDto = {
   moduleId: 'robot',
@@ -14,22 +14,36 @@ export const ModuleAvatar: AppModuleConfigDto = {
   supports: ['dialogue', 'detection', 'ui', 'session', 'platform'],
 };
 
+// Pip, the robot the kiosk ships at /avatars/pip.glb (sermas-eu/sermas-avatar-pip). A
+// path starting with "/" is loaded from the kiosk's own origin; cameras are framed for
+// Pip: landscape in the left half of the screen, viewed 30° from its right so it turns
+// toward the screen centre; portrait centred. modelType only selects the bone names (Head, LeftEye, RightEye) its rig uses.
 export const RepositoryAvatarDefault: RepositoryAvatarDto = {
   id: 'default',
   type: 'avatars',
-  name: 'Joy',
+  name: 'Pip',
   modelType: 'readyplayerme',
   gender: 'F',
-  path: 'https://models.readyplayer.me/654cc759f1a79ed2ebab0207.glb',
+  path: '/avatars/pip.glb',
+  camera: {
+    position: { x: -0.2951, y: 0.278, z: 1.7511 },
+    rotation: { x: -0.1424, y: -0.5192, z: -0.071 },
+  },
+  cameraMobile: {
+    position: { x: -0.0001, y: 0.168, z: 2.464 },
+    rotation: { x: -0.1107, y: 0, z: 0 },
+  },
   prompt:
-    'You are a digital avatar and your role is to be an helpful assistant',
+    'You are Pip, a small friendly robot assistant. Keep answers short and clear.',
 };
 
+// The kiosk ships the default background at /backgrounds/default.jpg; like the avatar, a
+// path starting with "/" is loaded from the kiosk's own origin, not from the repository.
 export const RepositoryBackgroundDefault: RepositoryBackgroundDto = {
   id: 'default',
   type: 'backgrounds',
   name: 'default',
-  path: 'default',
+  path: '/backgrounds/default.jpg',
 };
 
 export const RepositoryDefaults: RepositoryConfigDto = {

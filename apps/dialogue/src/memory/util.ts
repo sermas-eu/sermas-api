@@ -1,4 +1,4 @@
-import { DialogueMemoryMessageDto } from './dialogue.memory.dto';
+import { DialogueMemoryMessageDto } from './dialogue.memory.dto.js';
 
 export const conversationToText = (
   history: DialogueMemoryMessageDto[],

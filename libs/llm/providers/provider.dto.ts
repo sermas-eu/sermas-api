@@ -1,6 +1,6 @@
 // https://www.deskriders.dev/posts/1702742595-function-calling-ollama-models/
 import { Readable } from 'stream';
-import { PromptTemplateOutput } from '../prompt/prompt.template';
+import type { PromptTemplateOutput } from '../prompt/prompt.template.js';
 
 export const LLMPromptTagList = [
   // main chat prompt
@@ -17,15 +17,7 @@ export const LLMPromptTagList = [
 
 export type LLMPromptTag = (typeof LLMPromptTagList)[number];
 
-export const LLMProviderList = [
-  'ollama',
-  'openai',
-  'gemini',
-  'groq',
-  'antrophic',
-  'mistral',
-  'azure_openai',
-];
+export const LLMProviderList = ['openai'];
 export type LLMProvider = (typeof LLMProviderList)[number];
 
 export const LLMRoleList = ['system', 'user', 'assistant'] as const;
@@ -44,6 +36,8 @@ export interface LLMProviderConfig {
   project?: string;
   temperature?: number;
   top_p?: number;
+  // reasoning_effort for reasoning models (none, minimal, low, medium, high)
+  reasoningEffort?: string;
   timeout?: number;
 }
 

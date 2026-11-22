@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import {
   SermasApiConfig,
   SermasDefaultConfig,
-} from 'libs/sermas/sermas.defaults';
+} from '#libs/sermas/sermas.defaults';
 
 @Module({
   imports: [

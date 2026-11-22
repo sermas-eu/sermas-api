@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from 'node:timers/promises';
 import {
   BadRequestException,
   Injectable,
@@ -6,30 +7,30 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RegistrationRequestDto } from 'apps/auth/src/auth.dto';
+import { RegistrationRequestDto } from '#apps/auth/src/auth.dto';
 import {
   EvaluatePermissionResourceDto,
   KeycloakClientResponseDto,
-} from 'apps/keycloak/src/keycloack.authz.dto';
+} from '#apps/keycloak/src/keycloack.authz.dto';
 import {
   AssignClientRolesDto,
   AssignRealmRolesDto,
   KeycloakUser,
-} from 'apps/keycloak/src/keycloak.admin.dto';
+} from '#apps/keycloak/src/keycloak.admin.dto';
 import {
   AddClientOptions,
   ClientLoginDto,
-} from 'apps/keycloak/src/keycloak.dto';
+} from '#apps/keycloak/src/keycloak.dto';
 import {
   KeycloakService,
   ROLE_ADMIN,
   ROLE_APP_OWNER,
-} from 'apps/keycloak/src/keycloak.service';
-import { getKeycloakClientId } from 'apps/keycloak/src/util';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { fileExists, readJSON, toDTO } from 'libs/util';
-import { PlatformAppAsyncApiService } from './app/platform.app.async.service';
-import { AppClientDto } from './app/platform.app.dto';
+} from '#apps/keycloak/src/keycloak.service';
+import { getKeycloakClientId } from '#apps/keycloak/src/util';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { fileExists, readJSON, toDTO } from '#libs/util';
+import { PlatformAppAsyncApiService } from './app/platform.app.async.service.js';
+import { AppClientDto } from './app/platform.app.dto.js';
 
 export const APP_CLIENT_NAME = 'application';
 
@@ -44,7 +45,9 @@ export class PlatformKeycloakService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.ensurePlatformClient(true);
+    await this.waitForKeycloak();
+    await this.ensurePlatformClient();
+    await this.ensureKioskClient();
 
     const filename = this.config.get('IMPORT_USERS_FILENAME');
     await this.importUsersFromFile(filename);
@@ -316,6 +319,11 @@ export class PlatformKeycloakService implements OnModuleInit {
   }
 
   async removeAppModuleClient(appId: string, clientId: string) {
+    if (!clientId) {
+      // a client saved without id (D-39) never reached Keycloak
+      this.logger.warn(`Skipping a client without clientId for appId=${appId}`);
+      return;
+    }
     const client: AppClientDto = { appId, clientId, permissions: [] };
     try {
       await this.keycloack.removeClient(getKeycloakClientId(client));
@@ -428,18 +436,92 @@ export class PlatformKeycloakService implements OnModuleInit {
     return this.keycloack.getUserApps(userId);
   }
 
+  /**
+   * Keycloak may still be starting (a first boot, a stack restart): wait for
+   * it rather than fail the API start. KEYCLOAK_WAIT_SEC bounds the wait.
+   */
+  async waitForKeycloak() {
+    const waitSec = +(this.config.get('KEYCLOAK_WAIT_SEC') ?? 180);
+    const until = Date.now() + waitSec * 1000;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await this.keycloack.getToken(true);
+        return;
+      } catch (e: any) {
+        if (Date.now() >= until) throw e;
+        this.logger.warn(
+          `Keycloak not ready (${e.message}), retrying (attempt ${attempt})`,
+        );
+        await sleep(Math.min(10_000, 1000 * attempt));
+      }
+    }
+  }
+
+  /**
+   * Creates the platform client, or brings an existing one up to date. It is
+   * not removed first: a start that failed half-way would leave the realm
+   * without the client every other service authenticates with. A client that
+   * cannot be updated (left incomplete by such a start) is created again.
+   */
   async ensurePlatformClient(force = false) {
     await this.keycloack.ensureRealm(this.keycloack.getRealm());
 
-    const client = await this.keycloack.savePlatformClient({
-      clientId: this.keycloack.getPlatformClientName(),
-      adminRole: ROLE_ADMIN,
-      secret: this.config.get('AUTH_KEYCLOAK_SECRET'),
-      removeIfExists: force,
-      attributes: ['appId'],
-    });
+    const save = (removeIfExists: boolean) =>
+      this.keycloack.savePlatformClient({
+        clientId: this.keycloack.getPlatformClientName(),
+        adminRole: ROLE_ADMIN,
+        secret: this.config.get('AUTH_KEYCLOAK_SECRET'),
+        removeIfExists,
+        attributes: ['appId'],
+      });
+
+    let client: Awaited<ReturnType<typeof save>>;
+    try {
+      client = await save(force);
+    } catch (e: any) {
+      if (force) throw e;
+      this.logger.warn(
+        `Platform client could not be updated (${e.message}), creating it again`,
+      );
+      client = await save(true);
+    }
+
+    await this.grantPlatformAdmin(client.clientId);
 
     return await this.keycloack.getClientByName(client.clientId);
+  }
+
+  /**
+   * The kiosk's own client (D-28): it mints app tokens and can do nothing else,
+   * so the kiosk no longer needs the platform client's admin secret.
+   */
+  async ensureKioskClient() {
+    const secret = this.config.get('AUTH_KEYCLOAK_KIOSK_CLIENT_SECRET');
+    if (!secret) return;
+    await this.keycloack.ensureServiceAccountClient(
+      this.config.get('AUTH_KEYCLOAK_KIOSK_CLIENT_ID'),
+      secret,
+    );
+  }
+
+  /**
+   * The platform client mints app tokens for the kiosk and other services
+   * (POST /platform/token), which its own `has-admin-role` policy only allows
+   * to the admin realm role: give that role to its service account.
+   */
+  private async grantPlatformAdmin(clientId: string) {
+    const account = await this.keycloack.getUserByUsername(
+      `service-account-${clientId}`,
+    );
+    if (!account) {
+      this.logger.warn(`No service account for client ${clientId}`);
+      return;
+    }
+    await this.keycloack.getToken();
+    await this.keycloack.assignRealmRoles({
+      userId: account.id,
+      roles: [ROLE_ADMIN],
+    });
   }
 
   login(username: string, password: string, clientId?: string) {

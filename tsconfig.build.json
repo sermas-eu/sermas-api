@@ -1,4 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "compilerOptions": { "types": ["node", "multer"], "tsBuildInfoFile": "./dist/.tsbuildinfo" },
+  "include": ["apps/**/*.ts", "libs/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/tests/**", "libs/test.ts"]
 }

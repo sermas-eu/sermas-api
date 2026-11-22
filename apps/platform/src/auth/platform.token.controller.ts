@@ -1,4 +1,11 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type { AuthJwtUser } from '#apps/auth/src/auth.dto';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -8,15 +15,15 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Request } from 'express';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { Public } from 'nest-keycloak-connect';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { Public } from '#libs/auth/auth.decorators';
 import {
   AccessTokenRequestDto,
   JwtTokenDto,
   RefreshTokenRequestDto,
-} from './platform.token.dto';
-import { PlatformAuthTokenService } from './platform.token.service';
+} from './platform.token.dto.js';
+import { PlatformAuthTokenService } from './platform.token.service.js';
 
 @ApiBearerAuth()
 @Controller('platform/token')
@@ -39,7 +46,19 @@ export class PlatformAuthTokenController {
     @Body() payload: AccessTokenRequestDto,
     @Req() req: Request,
   ): Promise<JwtTokenDto> {
-    return this.token.getClientAccessToken(payload, req.headers?.authorization);
+    const verified = req as Request & {
+      user?: AuthJwtUser;
+      accessTokenJWT?: string;
+    };
+    // public route: a token that did not verify is not ignored, it is refused
+    if (req.headers?.authorization && !verified.user)
+      throw new UnauthorizedException();
+    return this.token.getClientAccessToken(
+      payload,
+      verified.user
+        ? { user: verified.user, token: verified.accessTokenJWT }
+        : undefined,
+    );
   }
 
   @Post(['refresh', 'refresh_token'])

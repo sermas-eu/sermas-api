@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { SermasApiModule } from './sermas.api.module';
-import { SermasBaseModule } from './sermas.base.module';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+import { SermasApiModule } from './sermas.api.module.js';
+import { SermasBaseModule } from './sermas.base.module.js';
 
 @Module({
   imports: [SermasBaseModule, SermasApiModule],

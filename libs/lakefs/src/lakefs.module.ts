@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { LakeFSService } from './lakefs.service';
+import { LakeFSService } from './lakefs.service.js';
 
 @Module({
   imports: [],

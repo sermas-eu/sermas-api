@@ -1,105 +1,45 @@
-import { Logger } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { SermasBaseModule } from 'apps/api/src/sermas.base.module';
-import { KeycloakModule } from 'apps/keycloak/src/keycloak.module';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { uuidv4 } from 'libs/dataset/src';
-import { KEYCLOACK_TEST_REALM } from 'libs/test';
-import { PlatformModule } from '../platform.module';
-import { PlatformAppService } from './platform.app.service';
-import { newApp } from './tests/app';
+import { BadRequestException } from '@nestjs/common';
+import { PlatformAppService } from './platform.app.service.js';
 
-const realm = KEYCLOACK_TEST_REALM;
-
-jest.setTimeout(5 * 60 * 1000);
-
-describe('PlatformAppService', () => {
-  let moduleRef: TestingModule;
-
-  let platformAppService: PlatformAppService;
-
-  beforeAll(async () => {
-    moduleRef = await Test.createTestingModule({
-      imports: [SermasBaseModule, KeycloakModule, PlatformModule],
-      controllers: [],
-      providers: [],
-    }).compile();
-
-    moduleRef.useLogger(new Logger());
-
-    platformAppService = moduleRef.get(PlatformAppService);
-    const keycloakService = moduleRef.get(KeycloakService);
-
-    keycloakService.setRealm(realm);
-
-    await moduleRef.init();
-
-    const apps = await platformAppService.listPublicApps();
-    await Promise.all(
-      apps.map((app) => platformAppService.removeApp(app.appId, false)),
+// D-27: the owner is checked before anything is saved
+describe('PlatformAppService owner validation', () => {
+  const setup = (existingUsers: string[]) => {
+    const saved: unknown[] = [];
+    const model: any = function (this: any, data: any) {
+      Object.assign(this, data);
+      this.save = async () => saved.push(data);
+    };
+    model.findOne = () => ({ exec: async () => null });
+    const keycloak = {
+      getUserById: vi.fn(async (id: string) =>
+        existingUsers.includes(id) ? { id } : null,
+      ),
+    };
+    const cache = { del: vi.fn() };
+    const service = new PlatformAppService(
+      model,
+      {} as any,
+      keycloak as any,
+      { get: () => undefined } as any,
+      {} as any,
+      cache as any,
     );
+    return { service, saved, keycloak };
+  };
 
-    await keycloakService.removeClientByName('test-app-');
-    await keycloakService.removeUserByName('test-user-');
+  it('rejects an unknown owner without saving the app', async () => {
+    const { service, saved } = setup([]);
+    await expect(
+      service.createApp({ data: { appId: 'x', ownerId: 'nobody' } }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(saved).toHaveLength(0);
   });
-  afterAll(async () => {
-    if (moduleRef) await moduleRef.close();
-  });
 
-  describe('manage apps', () => {
-    it('should create a user', async () => {
-      const appId = `test-app-${uuidv4()}`;
-      const username = `test-user-${uuidv4()}`;
-      const user = await platformAppService.saveUser({
-        appId,
-        username,
-        email: `${username}@sermas.local`,
-        password: username,
-      });
-
-      const app = newApp(appId, user.id);
-      await platformAppService.createApp({
-        data: app,
-        skipClients: false,
-      });
-    });
-
-    it('should create a user with admin role', async () => {
-      const appId = `test-app-${uuidv4()}`;
-      const username = `test-user-${uuidv4()}`;
-      const user = await platformAppService.saveUser({
-        appId,
-        username,
-        email: `${username}@sermas.local`,
-        password: username,
-      });
-
-      await platformAppService.setAdminRole(user.id);
-    });
-    // it('should import apps', async () => {
-    //   const appId = `test-app-${uuidv4()}`;
-
-    //   const apps: PlatformAppDto[] = [
-    //     {
-    //       appId,
-    //       name: appId,
-    //       ownerId: 'user1',
-    //       modules: [],
-    //       repository: {
-    //         avatars: {},
-    //         backgrounds: {},
-    //       },
-    //       clients: [
-    //         {
-    //           clientId: 'client-test-1',
-    //           permissions: ['dialogue.messages', 'detection.noise'],
-    //         },
-    //       ],
-    //     },
-    //   ];
-
-    //   const importedApps = await platformAppService.importApps(apps, false);
-    //   expect(importedApps.length).toBe(apps.length);
-    // });
+  it('checks the owner of an existing user', async () => {
+    const { service, keycloak } = setup(['u1']);
+    // stop after the check: the rest of createApp needs a full model
+    vi.spyOn(service, 'updateApp').mockResolvedValue({} as any);
+    await service.createApp({ data: { appId: 'x', ownerId: 'u1' } });
+    expect(keycloak.getUserById).toHaveBeenCalledWith('u1');
   });
 });

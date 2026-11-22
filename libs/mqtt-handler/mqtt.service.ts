@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { isNodeEnv, mapMqttTopic } from 'libs/util';
+import { isNodeEnv, mapMqttTopic } from '#libs/util';
 import {
   IClientPublishOptions,
   IClientSubscribeOptions,
@@ -8,7 +8,7 @@ import {
   MqttClient,
   Packet,
 } from 'mqtt';
-import { MQTT_CLIENT_INSTANCE } from './mqtt.constants';
+import { MQTT_CLIENT_INSTANCE } from './mqtt.constants.js';
 
 @Injectable()
 export class MqttService {
@@ -50,7 +50,7 @@ export class MqttService {
     message: string | Buffer | object,
     opts?: IClientPublishOptions,
   ): Promise<Packet> {
-    return new Promise<Packet>((resolve, reject) => {
+    return new Promise<Packet>((resolve, _reject) => {
       let payload: string | Buffer;
 
       let isBuffer = false;
@@ -87,7 +87,14 @@ export class MqttService {
           if (args.record.agentId) args.agentId = args.record.agentId;
         }
 
-        topic = mapMqttTopic(topic, args);
+        try {
+          topic = mapMqttTopic(topic, args);
+        } catch (e: any) {
+          // publish never rejects: callers fire and forget, and an unhandled
+          // rejection ends the process (D-39)
+          this.logger.error(`Not published, ${e.message}`);
+          return resolve(null);
+        }
 
         if (topic.indexOf(':') > -1) {
           this.logger.warn(

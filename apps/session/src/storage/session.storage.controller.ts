@@ -1,3 +1,4 @@
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -7,22 +8,25 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
 import {
   SessionStorageRecordDto,
   SessionStorageSearchDto,
-} from './session.storage.dto';
-import { SessionStorageService } from './session.storage.service';
+} from './session.storage.dto.js';
+import { SessionStorageService } from './session.storage.service.js';
 
 @ApiBearerAuth()
 @Controller('session')
 @ApiResource('session')
 @ApiTags('SESSION')
 export class SessionStorageController {
-  constructor(private readonly storage: SessionStorageService) {}
+  constructor(
+    private readonly storage: SessionStorageService,
+    private readonly auth: PlatformAuthService,
+  ) {}
 
   @Post('storage')
   @ApiOkResponse({
@@ -36,10 +40,12 @@ export class SessionStorageController {
   @ApiOperationName({
     description: 'Store user data',
   })
-  setRecord(
+  async setRecord(
     @Body() data: SessionStorageRecordDto,
     @AuthenticatedUser() user?: AuthJwtUser,
   ): Promise<SessionStorageRecordDto> {
+    // records are looked up within data.appId, which the guard checked
+    if (data?.appId) await this.auth.assertAppAccess(user, data.appId);
     return this.storage.set(data);
   }
 
@@ -56,11 +62,16 @@ export class SessionStorageController {
   @ApiOperationName({
     description: 'Store user data',
   })
-  findRecords(
+  async findRecords(
     @Body() data: SessionStorageSearchDto,
     @AuthenticatedUser() user?: AuthJwtUser,
   ): Promise<SessionStorageRecordDto[]> {
-    return this.storage.search(data);
+    const records = await this.storage.search(data);
+    // a search by sessionId alone may match other apps' records
+    const allowed = new Map<string, boolean>();
+    for (const appId of new Set(records.map((r) => r.appId)))
+      allowed.set(appId, await this.auth.canAccessApp(user, appId));
+    return records.filter((r) => allowed.get(r.appId));
   }
 
   @Get('storage/:storageId')
@@ -74,11 +85,13 @@ export class SessionStorageController {
   @ApiOperationName({
     description: 'Retrieve stored data',
   })
-  getRecord(
+  async getRecord(
     @Param('storageId') storageId: string,
     @AuthenticatedUser() user?: AuthJwtUser,
   ): Promise<SessionStorageRecordDto> {
-    return this.storage.get(storageId);
+    const record = await this.storage.get(storageId);
+    await this.auth.assertAppAccess(user, record.appId);
+    return record;
   }
 
   @Delete('storage/:storageId')
@@ -90,10 +103,14 @@ export class SessionStorageController {
   @ApiOperationName({
     description: 'Delete a record',
   })
-  deleteRecord(
+  async deleteRecord(
     @Param('storageId') storageId: string,
     @AuthenticatedUser() user?: AuthJwtUser,
   ): Promise<void> {
-    return this.storage.del(storageId, user?.sub);
+    const record = await this.storage.get(storageId);
+    await this.auth.assertAppAccess(user, record.appId);
+    // by app access, not by `sub`: kiosk callers are a service account,
+    // never the record's userId, so that filter never matched (D-36)
+    return this.storage.del(storageId);
   }
 }

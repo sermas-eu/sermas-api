@@ -7,9 +7,9 @@ import {
   UIContentDto,
   VideoUIContentDto,
   WebpageUIContentDto,
-} from '../ui.content.dto';
+} from '../ui.content.dto.js';
 
-const contents: UIContentDto[] = [
+export const contents: UIContentDto[] = [
   {
     appId: 'mimex',
     contentType: 'video',
@@ -57,8 +57,12 @@ const contents: UIContentDto[] = [
     appId: 'mimex',
     contentType: 'object',
     content: {
-      type: 'glb',
-      url: 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF-Binary/Duck.glb',
+      list: [
+        {
+          type: 'glb',
+          url: 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF-Binary/Duck.glb',
+        },
+      ],
     },
   } as ObjectUIContentDto,
 
@@ -88,4 +92,4 @@ const contents: UIContentDto[] = [
   } as LinkUIContentDto,
 ];
 
-export const getUiContent = (appId: string) => {};
+export const getUiContent = (_appId: string) => {};

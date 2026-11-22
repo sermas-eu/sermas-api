@@ -1,4 +1,4 @@
-import { SermasDefaultConfig } from 'libs/sermas/sermas.defaults';
+import { SermasDefaultConfig } from '#libs/sermas/sermas.defaults';
 
 export const WELL_KNOWN_PATH = '/.well-known/sermas.json';
 

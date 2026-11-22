@@ -1,10 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SessionContext } from 'apps/session/src/session.context';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { Emotion, EmotionTypes } from 'libs/sermas/sermas.dto';
-import { SentimentAnalysisResult } from './sentiment-analysis.dto';
-import { sentimentAnalysisPrompt } from './sentiment-analysis.prompt';
+import { SessionContext } from '#apps/session/src/session.context';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { Emotion, EmotionTypes } from '#libs/sermas/sermas.dto';
+import { SentimentAnalysisResult } from './sentiment-analysis.dto.js';
+import { sentimentAnalysisPrompt } from './sentiment-analysis.prompt.js';
 
 @Injectable()
 export class ChatGPTSentimentAnalysisService implements OnModuleInit {

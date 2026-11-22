@@ -18,19 +18,31 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
-import { SessionDto, SessionSearchFilter } from './session.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
+import { SessionService } from '#apps/session/src/session.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { SessionDto, SessionSearchFilter } from './session.dto.js';
 
 @ApiBearerAuth()
 @Controller('session')
 @ApiResource('session')
 @ApiTags('SESSION')
 export class SessionController {
-  constructor(private session: SessionService) {}
+  constructor(
+    private session: SessionService,
+    private auth: PlatformAuthService,
+  ) {}
+
+  /** The session, if it belongs to an app the caller may use. */
+  private async readOwnSession(sessionId: string, user: AuthJwtUser) {
+    if (!sessionId) throw new BadRequestException('Missing sessionId');
+    const session = await this.session.read(sessionId);
+    await this.auth.assertAppAccess(user, session.appId);
+    return session;
+  }
 
   @ApiOkResponse()
   @ApiUnauthorizedResponse()
@@ -75,9 +87,11 @@ export class SessionController {
     description: 'Load a session',
   })
   @Get(':sessionId')
-  readSession(@Param('sessionId') sessionId: string): Promise<SessionDto> {
-    if (!sessionId) throw new BadRequestException('Missing sessionId');
-    return this.session.read(sessionId);
+  readSession(
+    @Param('sessionId') sessionId: string,
+    @AuthenticatedUser() user: AuthJwtUser,
+  ): Promise<SessionDto> {
+    return this.readOwnSession(sessionId, user);
   }
 
   @ApiOkResponse()
@@ -87,7 +101,11 @@ export class SessionController {
     description: 'Remove session',
   })
   @Delete(':sessionId')
-  deleteSession(@Param('sessionId') sessionId: string): Promise<void> {
+  async deleteSession(
+    @Param('sessionId') sessionId: string,
+    @AuthenticatedUser() user: AuthJwtUser,
+  ): Promise<void> {
+    await this.readOwnSession(sessionId, user);
     return this.session.delete(sessionId);
   }
 
@@ -100,7 +118,12 @@ export class SessionController {
   @ApiOperationName({
     description: 'Create session',
   })
-  async createSession(@Body() session: SessionDto): Promise<SessionDto> {
+  async createSession(
+    @Body() session: SessionDto,
+    @AuthenticatedUser() user: AuthJwtUser,
+  ): Promise<SessionDto> {
+    // an absent appId is refused by create()
+    if (session?.appId) await this.auth.assertAppAccess(user, session.appId);
     return this.session.create(session);
   }
 
@@ -112,7 +135,11 @@ export class SessionController {
   @ApiOperationName({
     description: 'Update session',
   })
-  updateSession(@Body() session: SessionDto): Promise<SessionDto> {
+  async updateSession(
+    @Body() session: SessionDto,
+    @AuthenticatedUser() user: AuthJwtUser,
+  ): Promise<SessionDto> {
+    await this.readOwnSession(session.sessionId, user);
     return this.session.update(session);
   }
 }

@@ -1,17 +1,19 @@
 import { Logger, Provider } from '@nestjs/common';
 // import { getKeycloakAccessToken } from 'apps/auth/src/libs/token-client';
-import { KeycloakTokenDto } from 'apps/keycloak/src/keycloak.admin.dto';
-import { KeycloakService } from 'apps/keycloak/src/keycloak.service';
-import { isNodeEnv } from 'libs/util';
+import { KeycloakTokenDto } from '#apps/keycloak/src/keycloak.admin.dto';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import { isNodeEnv } from '#libs/util';
 import { IClientOptions, MqttClient, connect } from 'mqtt';
 import {
   MQTT_CLIENT_INSTANCE,
   MQTT_LOGGER_PROVIDER,
   MQTT_OPTION_PROVIDER,
-} from './mqtt.constants';
-import { MqttModuleOptions } from './mqtt.interface';
+} from './mqtt.constants.js';
+import { MqttModuleOptions } from './mqtt.interface.js';
 
+// after this many failures in a row, warn louder; retries never stop
 const MAX_CONN_RETRIES = 5;
+const MAX_RETRY_DELAY = 30 * 1000;
 const REFRESH_BEFORE = 60 * 1000;
 
 interface TokenResponse {
@@ -68,8 +70,12 @@ export function createClientProvider(): Provider {
       let reloadingToken = false;
       let retries = 0;
 
+      let lastReload = 0;
       const reloadToken = async () => {
         if (reloadingToken) return;
+        // every failed reconnect asks for a reload: one token request at most
+        // every 2s is enough
+        if (Date.now() - lastReload < 2000) return;
         if (
           tokenResponse?.expires &&
           tokenResponse?.expires.getTime() - Date.now() > REFRESH_BEFORE
@@ -77,25 +83,29 @@ export function createClientProvider(): Provider {
           return;
         }
 
-        if (!client) return;
+        if (!client || !tokenResponse) return;
 
         reloadingToken = true;
+        lastReload = Date.now();
+        try {
+          logger.debug(`Refreshing MQTT token`);
+          const { expires, token } = await getToken(keycloak, options, logger);
 
-        logger.debug(`Refreshing MQTT token`);
-        const { expires, token } = await getToken(keycloak, options, logger);
+          // update local expires reference
+          tokenResponse.token = token;
+          tokenResponse.expires = expires;
 
-        // update local expires reference
-        tokenResponse.token = token;
-        tokenResponse.expires = expires;
+          client.options = {
+            ...(client.options || mqttOptions),
+            username: tokenResponse.token || '',
+          };
 
-        client.options = {
-          ...(client.options || mqttOptions),
-          username: tokenResponse.token,
-        };
-
-        client.end();
-        client.reconnect();
-        reloadingToken = false;
+          // force: a graceful end of a never-connected client does not
+          // complete, and the deferred reconnect would never run
+          client.end(true, {}, () => client.reconnect());
+        } finally {
+          reloadingToken = false;
+        }
       };
 
       // setup mqtt options
@@ -118,12 +128,11 @@ export function createClientProvider(): Provider {
         if (!hasCredentials) {
           tokenResponse = await getToken(keycloak, options, logger);
           if (!tokenResponse.token) {
-            logger.error('Failed to obtain token');
-            return mqttOptions;
+            // e.g. the realm does not exist yet on a first boot: the refresh
+            // below retries until it does
+            logger.warn('No MQTT token yet, retrying');
           }
-          mqttOptions.username = tokenResponse.token;
-          // track next expires date
-
+          mqttOptions.username = tokenResponse.token || '';
           setInterval(reloadToken, 10 * 1000);
         } else {
           logger.debug(`Using configuration username/password`);
@@ -150,14 +159,12 @@ export function createClientProvider(): Provider {
         logger.error(`MQTT Error: ${error.message}`);
 
         retries++;
-        if (retries < MAX_CONN_RETRIES) {
-          setTimeout(reloadToken, 2000);
-        } else {
+        if (retries === MAX_CONN_RETRIES) {
           logger.error(
-            `MQTT connection failed after ${MAX_CONN_RETRIES}: Check mqtt and keycloak services are running. Exiting..`,
+            `MQTT connection failed ${retries} times: check that mqtt and keycloak are running. Still retrying.`,
           );
-          process.exit(0);
         }
+        setTimeout(reloadToken, Math.min(MAX_RETRY_DELAY, 2000 * retries));
       });
 
       client.on('reconnect', () => {

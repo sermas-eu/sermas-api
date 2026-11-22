@@ -1,30 +1,31 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { DialogueEmotionService } from './dialogue.emotion.service';
+import { DialogueEmotionService } from './dialogue.emotion.service.js';
 
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { ButtonsUIContentDto } from 'apps/ui/src/ui.content.dto';
-import { UIService } from 'apps/ui/src/ui.service';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { sleep } from 'libs/test';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { createSessionContext } from '#apps/session/src/session.context';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { SessionService } from '#apps/session/src/session.service';
+import { ButtonsUIContentDto } from '#apps/ui/src/ui.content.dto';
+import { UIService } from '#apps/ui/src/ui.service';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { getChunkId, getMessageId } from '#libs/sermas/sermas.utils';
+import { sleep } from '#libs/test';
 import { ulid } from 'ulidx';
-import { packAvatarObject } from './chat/utils';
-import { DialogueSpeechService } from './dialogue.speech.service';
+import { packAvatarObject } from './chat/utils.js';
+import { DialogueSpeechService } from './dialogue.speech.service.js';
 import {
   welcomeMessagePrompt,
   welcomeMessageSystemPrompt,
-} from './dialogue.speech.welcome.prompt';
-import { DialogueTasksService } from './tasks/dialogue.tasks.service';
-import { DialogueToolsService } from './tools/dialogue.tools.service';
-import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto';
+} from './dialogue.speech.welcome.prompt.js';
+import { DialogueTasksService } from './tasks/dialogue.tasks.service.js';
+import { DialogueToolsService } from './tools/dialogue.tools.service.js';
+import { DialogueToolContentService } from './tool-content/dialogue.tool-content.service.js';
+import { ToolTriggerEventDto } from './tools/trigger/dialogue.tools.trigger.dto.js';
 
 @Injectable()
 export class DialogueWelcomeService {
@@ -41,6 +42,7 @@ export class DialogueWelcomeService {
     private readonly monitor: MonitorService,
     private readonly broker: MqttService,
     private readonly uiService: UIService,
+    private readonly toolContent: DialogueToolContentService,
   ) {}
 
   async handleWelcomeText(ev: SessionChangedDto) {
@@ -68,12 +70,17 @@ export class DialogueWelcomeService {
     const emotion =
       (await this.emotion.getUserEmotion(ev.record.sessionId)) || undefined;
 
+    // a task enabled as a tool is listed once, as a task
+    const isTaskTool = (t: { schema?: { parameter: string }[] }) =>
+      (t.schema || []).some((p) => p.parameter === 'taskId');
     const toolsList = [
-      ...(tools || []).map((t) => ({
-        label: t.description,
-        value: `tool/${t.name}`,
-        rephrase: true,
-      })),
+      ...(tools || [])
+        .filter((t) => !isTaskTool(t))
+        .map((t) => ({
+          label: t.description,
+          value: `tool/${t.name}`,
+          rephrase: true,
+        })),
       ...(tasks || [])
         .filter((t) => t.options?.list !== false)
         .map((t) => ({
@@ -115,13 +122,13 @@ export class DialogueWelcomeService {
       sessionContext: createSessionContext(ev),
     });
 
-    if (response.message) {
+    if (response?.message) {
       const msg: DialogueMessageDto = {
         actor: 'agent',
         appId: ev.appId,
         language: settings.language,
         sessionId: ev.record.sessionId,
-        text: response.message,
+        text: response?.message,
         gender: avatar.gender,
         emotion,
         ts: new Date(),
@@ -137,48 +144,44 @@ export class DialogueWelcomeService {
 
     await sleep(100);
 
-    if (response.labels) {
-      let buttonsList = response.labels;
-      if (!buttonsList || !buttonsList.length) {
-        this.logger.warn(
-          `Failed to generate welcome buttons, invalid response`,
+    // one button per tool and task; the LLM only rephrases their labels, so a
+    // missing or short answer falls back to the original label (D-44)
+    if (toolsList.length) {
+      const labels = Array.isArray(response?.labels) ? response.labels : [];
+      if (labels.length !== toolsList.length) {
+        this.logger.debug(
+          `Welcome labels: ${labels.length} for ${toolsList.length} buttons, using the original labels for the rest`,
         );
-        buttonsList = [];
       }
+      const buttons: ButtonsUIContentDto = {
+        appId: ev.appId,
+        sessionId: ev.record.sessionId,
+        ts: new Date(),
+        metadata: {
+          context: 'welcome-tools',
+        },
+        options: {
+          ttsEnabled: false,
+          clearScreen: true,
+          language: settings.language,
+        },
+        content: {
+          label: '',
+          list: toolsList.map((t, i) => ({
+            label:
+              (typeof labels[i] === 'string' && labels[i].trim()) || t.label,
+            value: t.value,
+          })),
+        },
 
-      buttonsList.filter((b) => b && b.length);
-      if (buttonsList.length) {
-        const buttons: ButtonsUIContentDto = {
-          appId: ev.appId,
-          sessionId: ev.record.sessionId,
-          ts: new Date(),
-          metadata: {
-            context: 'welcome-tools',
-          },
-          options: {
-            ttsEnabled: false,
-            clearScreen: true,
-            language: settings.language,
-          },
-          content: {
-            label: '',
-            list: toolsList.map((t, i) => ({
-              label: buttonsList[i] || t.label,
-              value: t.value,
-            })),
-          },
+        contentType: 'buttons',
+        messageId: getMessageId(),
+        chunkId: getChunkId(),
 
-          contentType: 'buttons',
-          messageId: getMessageId(),
-          chunkId: getChunkId(),
+        requestId: ulid(),
+      };
 
-          requestId: ulid(),
-        };
-
-        await this.uiService.showContent(buttons);
-      } else {
-        this.logger.debug('Welcome buttons are empty, skipping');
-      }
+      await this.uiService.showContent(buttons);
     }
 
     perf();
@@ -201,16 +204,23 @@ export class DialogueWelcomeService {
       if (!repository) return;
       const filtered = (repository.tools || []).filter((t) => t.name === name);
       if (!filtered.length) return;
+      const tool = filtered[0];
       this.tools.trigger({
         appId: ev.appId,
         sessionId: ev.sessionId,
         name,
-        schema: filtered[0],
+        schema: tool,
         repositoryId: ev.appId,
         source: 'agent',
         values: {},
       });
       matches = true;
+      // the content appears without a word: say what it is
+      const choice =
+        `${this.tools.getSchemaValue(ev.schema, 'selection') || ''}`
+          .replace(/\s*:\s*$/, '')
+          .trim();
+      await this.toolContent.present(ev, tool, choice);
     }
 
     if (type === 'task') {

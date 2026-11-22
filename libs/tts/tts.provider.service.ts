@@ -2,25 +2,23 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { BarkAITextToSpeech } from './providers/tts.bark-ai.provider';
-import { ElevenIOTextToSpeech } from './providers/tts.elevenio.provider';
-import { GoogleTextToSpeech } from './providers/tts.google.provider';
-import { OpenAITextToSpeech } from './providers/tts.openai.provider';
+import { GoogleTextToSpeech } from './providers/tts.google.provider.js';
 
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SessionService } from 'apps/session/src/session.service';
+import { SessionService } from '#apps/session/src/session.service';
 import { Cache } from 'cache-manager';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { mapLanguageCode } from '../language/language';
-import { AzureTextToSpeech } from './providers/tts.azure.provider';
-import { SSMLService } from './ssml/ssml.service';
-import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { mapLanguageCode } from '../language/language.js';
+import { AzureTextToSpeech } from './providers/tts.azure.provider.js';
+import { OpenAITextToSpeech } from './providers/tts.openai.provider.js';
+import { SSMLService } from './ssml/ssml.service.js';
+import { DialogueTextToSpeechDto, SpeakParam } from './tts.dto.js';
 
 import {
   createSessionContext,
   SessionContext,
-} from 'apps/session/src/session.context';
-import { hash } from 'libs/util';
+} from '#apps/session/src/session.context';
+import { hash } from '#libs/util';
 
 @Injectable()
 export class TTSProviderService {
@@ -28,10 +26,8 @@ export class TTSProviderService {
 
   constructor(
     private readonly googletts: GoogleTextToSpeech,
-    private readonly barkaitts: BarkAITextToSpeech,
-    private readonly openaitts: OpenAITextToSpeech,
     private readonly azuretts: AzureTextToSpeech,
-    private readonly eleveniotts: ElevenIOTextToSpeech,
+    private readonly openaitts: OpenAITextToSpeech,
 
     private readonly configService: ConfigService,
     private readonly session: SessionService,
@@ -180,10 +176,6 @@ export class TTSProviderService {
 
     let data: Buffer;
     switch (ttsProvider) {
-      case 'barkai':
-        data = await this.barkaitts.speak(params);
-        perf('barkai');
-        break;
       case 'google':
         data = await this.googletts.speak(params);
         perf('google');
@@ -192,15 +184,14 @@ export class TTSProviderService {
         data = await this.azuretts.speak(params);
         perf('azure');
         break;
-      case 'elevenio':
-        data = await this.eleveniotts.speak(params);
-        perf('elevenio');
-        break;
       case 'openai':
-      default:
         data = await this.openaitts.speak(params);
         perf('openai');
         break;
+      default:
+        throw new Error(
+          `Unsupported TTS_SERVICE=${ttsProvider}: use google, azure or openai`,
+        );
     }
 
     this.cache.set(cacheKey, data);

@@ -1,10 +1,16 @@
-import { parseJSON } from 'libs/llm/util';
+import { parseJSON } from '#libs/llm/util';
 import { Readable } from 'stream';
-import { LLMParsedResult } from '../dialogue.chat.dto';
-import { StreamingMarkupParserTransformer } from './markup-parser.transformer';
-import { SentenceTransformer } from './sentence.transformer';
+import { LLMParsedResult } from '../dialogue.chat.dto.js';
+import { StreamingMarkupParserTransformer } from './markup-parser.transformer.js';
+import { PreambleTransformer } from './preamble.transformer.js';
+import { SentenceTransformer } from './sentence.transformer.js';
 
-const contents = [
+const contents: {
+  name: string;
+  content: string;
+  answer?: string;
+  completed: (r: LLMParsedResult) => void;
+}[] = [
   {
     name: 'complete sample',
     content: `<filter>
@@ -60,17 +66,131 @@ hello there`,
       expect(llmParsedResult?.tools).toBeFalsy();
     },
   },
+  {
+    // seen live: the model reasons in prose before the blocks
+    name: 'reasoning before the blocks',
+    content: `The user says "ok". Is it relevant? Rule: set 'skip' to false.
+Let's go with skip=false.
+
+<filter>
+{ "skip": false, "answer": "" }
+</filter>
+<intents>
+{ "taskId": "", "match": false, "trigger": false, "cancel": false }
+</intents>
+<tools>
+{ "matches": {} }
+</tools>
+CHAT RESPONSE: Sure! How can I help you today?`,
+    answer: 'CHAT RESPONSE: Sure! How can I help you today?',
+    completed: (llmParsedResult: LLMParsedResult) => {
+      expect(llmParsedResult?.filter).toEqual({ skip: false, answer: '' });
+      expect(llmParsedResult?.intent).toBeTruthy();
+      expect(llmParsedResult?.tools).toBeTruthy();
+    },
+  },
+  {
+    // seen live: the filter block alone, without its tags
+    name: 'bare filter JSON',
+    content: `{ "skip": false, "answer": "" }`,
+    answer: '',
+    completed: (llmParsedResult: LLMParsedResult) => {
+      expect(llmParsedResult?.filter).toEqual({ skip: false, answer: '' });
+    },
+  },
+  {
+    name: 'bare blocks then the answer',
+    content: `{ "skip": false, "answer": "" }
+{ "taskId": "quiz", "match": true, "trigger": false, "cancel": false }
+Would you like to take the quiz?`,
+    answer: 'Would you like to take the quiz?',
+    completed: (llmParsedResult: LLMParsedResult) => {
+      expect(llmParsedResult?.filter).toBeTruthy();
+      expect(llmParsedResult?.intent).toMatchObject({ taskId: 'quiz' });
+    },
+  },
+  {
+    // seen live: <intents>\n<intents>
+    name: 'repeated opening tag',
+    content: `<filter>
+{ "skip": false, "answer": "" }
+</filter>
+<intents>
+<intents>
+{ "taskId": "quiz", "match": false, "trigger": false, "cancel": false }
+</intents>
+Good morning!`,
+    answer: 'Good morning!',
+    completed: (llmParsedResult: LLMParsedResult) => {
+      expect(llmParsedResult?.intent).toMatchObject({ taskId: 'quiz' });
+    },
+  },
+  {
+    // seen live: garbled tags around the JSON
+    name: 'garbled tags',
+    content: `<filter>
+{
+    "skip": false,
+    "answer": ""
+}>
+
+</filter>
+<{
+    "taskId": "",
+    "match": false,
+    "trigger": false,
+    "cancel": false
+}>
+
+</intents>
+<tools>
+    {
+        "matches": {}
+    }
+</tools>
+CHAT RESPONSE: Nice to meet you too!`,
+    answer: 'CHAT RESPONSE: Nice to meet you too!',
+    completed: (llmParsedResult: LLMParsedResult) => {
+      expect(llmParsedResult?.filter).toEqual({ skip: false, answer: '' });
+      expect(llmParsedResult?.intent).toMatchObject({ match: false });
+      expect(llmParsedResult?.tools).toEqual({ matches: {} });
+    },
+  },
+  {
+    // seen live: the closing tag replaced by the block again
+    name: 'block repeated as closing tag',
+    content: `<filter>
+{ "skip": false, "answer": "" }>
+</{ "skip": false, "answer": "" }>
+<intents>
+{ "taskId": null, "match": false, "trigger": false, "cancel": false }
+</intents>
+CHAT RESPONSE: I am Pip.`,
+    answer: 'CHAT RESPONSE: I am Pip.',
+    completed: (llmParsedResult: LLMParsedResult) => {
+      expect(llmParsedResult?.filter).toEqual({ skip: false, answer: '' });
+      expect(llmParsedResult?.intent).toMatchObject({ match: false });
+    },
+  },
+  {
+    name: 'plain answer without blocks',
+    content: `Hello there, how can I help?`,
+    answer: 'Hello there, how can I help?',
+    completed: () => {},
+  },
 ];
 
 describe('MarkupParser', () => {
   beforeEach(() => {});
-  contents.forEach(({ name, content, completed }) => {
+  contents.forEach(({ name, content, answer, completed }) => {
     describe(`parse tags for ${name}`, () => {
       it('should return a structured output', async () => {
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
           const llmParsedResult: LLMParsedResult = {};
 
+          let spoken = '';
           const transformers = [
+            new PreambleTransformer(),
             new StreamingMarkupParserTransformer(
               'filter',
               (res: string | undefined) => {
@@ -89,10 +209,7 @@ describe('MarkupParser', () => {
                 llmParsedResult.tools = parseJSON(res);
               },
             ),
-            new SentenceTransformer(() => {
-              completed(llmParsedResult);
-              resolve(true);
-            }),
+            new SentenceTransformer(() => {}),
           ];
 
           const sourceStream = Readable.from([]);
@@ -105,8 +222,21 @@ describe('MarkupParser', () => {
             stream = stream.pipe(transformer);
           }
 
-          stream.on('data', (chunk) => {
-            console.log('data', chunk.toString());
+          stream.on('data', (chunk) => (spoken += chunk.toString()));
+          stream.on('end', () => {
+            try {
+              completed(llmParsedResult);
+              // the sentence splitter drops the spaces between sentences
+              const squash = (t: string) => t.replace(/\s+/g, '');
+              if (answer !== undefined)
+                expect(squash(spoken)).toBe(squash(answer));
+              expect(spoken).not.toMatch(
+                /<\/?(filter|intents|tools)>|"skip"|"taskId"/,
+              );
+              resolve(true);
+            } catch (e) {
+              reject(e);
+            }
           });
 
           sourceStream.push(null);

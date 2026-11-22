@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import {
   DialogueToolsRepositoryOptionsDto,
   DialogueToolsRepositoryRecordDto,
-} from './dialogue.tools.repository.dto';
+} from './dialogue.tools.repository.dto.js';
 
 export type DialogueToolsRepositoryDocument =
   HydratedDocument<DialogueToolsRepository>;

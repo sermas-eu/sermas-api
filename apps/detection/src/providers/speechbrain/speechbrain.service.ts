@@ -1,17 +1,22 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import * as FormData from 'form-data';
-import { Emotion } from 'libs/sermas/sermas.dto';
+import FormData from 'form-data';
+import { Emotion } from '#libs/sermas/sermas.dto';
 import {
   SpeechBrainClassification,
   SpeechBrainSpeakerVerification,
-  SpeechBrainSeparation,
-  SpeechBrainSpeakerCount,
   SpeechBrainSimilarityMatrix,
   SpeechBrainEmbeddings,
-} from './speechbrain.dto';
+} from './speechbrain.dto.js';
 import { Interval } from '@nestjs/schedule';
+
+/** A classification as speechbrain sends it. */
+type SpeechBrainLabel = { label: string; score: number };
+type SpeechBrainLabels = {
+  language: SpeechBrainLabel;
+  emotion: SpeechBrainLabel;
+};
 
 @Injectable()
 export class SpeechBrainService implements OnModuleInit {
@@ -35,7 +40,7 @@ export class SpeechBrainService implements OnModuleInit {
   mapEmotion(em: string): Emotion {
     switch (em) {
       case 'ang':
-        return 'disgust';
+        return 'angry';
       case 'hap':
         return 'happy';
       case 'sad':
@@ -102,41 +107,23 @@ export class SpeechBrainService implements OnModuleInit {
     try {
       const form = this.buildFormData(audio);
 
-      const result = await this.post<SpeechBrainClassification>('/', form);
+      const result = await this.post<SpeechBrainLabels>('/', form);
 
       if (result === null) return null;
 
-      result.emotion.value = this.mapEmotion(result.emotion.value as string);
-      return result;
+      // speechbrain answers { label, score }; the API speaks { value, probability }
+      return {
+        language: {
+          value: result.language.label,
+          probability: result.language.score,
+        },
+        emotion: {
+          value: this.mapEmotion(result.emotion.label),
+          probability: result.emotion.score,
+        },
+      };
     } catch (err) {
       this.logger.error(`Speech classification error: ${err.message}`);
-    }
-    return null;
-  }
-
-  async separate(audio: Buffer): Promise<SpeechBrainSeparation | null> {
-    try {
-      const form = this.buildFormData(audio);
-      const result = await this.post<SpeechBrainSeparation>('/separate', form);
-      if (result === null) return null;
-      return result;
-    } catch (err) {
-      this.logger.error(`Speech separation error: ${err.message}`);
-    }
-    return null;
-  }
-
-  async countSpeakers(audio: Buffer): Promise<SpeechBrainSpeakerCount> {
-    try {
-      const form = this.buildFormData(audio);
-      const result = await this.post<SpeechBrainSpeakerCount>(
-        '/count_speakers',
-        form,
-      );
-      if (result === null) return null;
-      return result;
-    } catch (err) {
-      this.logger.error(`Speech speaker count error: ${err.message}`);
     }
     return null;
   }

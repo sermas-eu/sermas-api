@@ -1,9 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { uuidv4 } from 'libs/util';
-import { XRMarkerAsyncApiService } from './xr.marker.async.service';
-import { XRMarkerDto, XRMarkerListRequestDto } from './xr.marker.dto';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { uuidv4 } from '#libs/util';
+import { XRMarkerAsyncApiService } from './xr.marker.async.service.js';
+import { XRMarkerDto, XRMarkerListRequestDto } from './xr.marker.dto.js';
 
 @Injectable()
 export class XrMarkerService {
@@ -12,7 +12,7 @@ export class XrMarkerService {
 
   constructor(private readonly xrMarkerAsync: XRMarkerAsyncApiService) {}
 
-  async search(payload: XRMarkerListRequestDto, user?: AuthJwtUser) {
+  async search(payload: XRMarkerListRequestDto, _user?: AuthJwtUser) {
     return Object.values(this.markers)
       .filter((m) => m.appId === payload.appId)
       .filter((m) => {
@@ -25,7 +25,7 @@ export class XrMarkerService {
       })
       .filter((m) => {
         if (!payload.tags || !payload.tags.length) return true;
-        return payload.tags.filter((tag) => payload.tags.includes(tag)).length;
+        return (m.tags || []).some((tag) => payload.tags.includes(tag));
       });
   }
 
@@ -39,7 +39,7 @@ export class XrMarkerService {
     });
   }
 
-  async save(payload: XRMarkerDto, user?: AuthJwtUser) {
+  async save(payload: XRMarkerDto, _user?: AuthJwtUser) {
     const exists = payload.markerId ? true : false;
     payload.markerId = payload.markerId || uuidv4();
     this.markers[payload.markerId] = payload;
@@ -47,12 +47,12 @@ export class XrMarkerService {
     return payload;
   }
 
-  async read(markerId: string, user?: AuthJwtUser) {
+  async read(markerId: string, _user?: AuthJwtUser) {
     if (!this.markers[markerId]) throw new NotFoundException();
     return this.markers[markerId];
   }
 
-  async remove(markerId: string, user?: AuthJwtUser) {
+  async remove(markerId: string, _user?: AuthJwtUser) {
     if (!this.markers[markerId]) return;
     const record = this.markers[markerId];
     delete this.markers[markerId];

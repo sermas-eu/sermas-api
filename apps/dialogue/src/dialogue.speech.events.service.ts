@@ -1,28 +1,28 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { UIContentDto } from 'apps/ui/src/ui.content.dto';
-import { UIInteractionEventDto } from 'apps/ui/src/ui.dto';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { SessionService } from '#apps/session/src/session.service';
+import { UIContentDto } from '#apps/ui/src/ui.content.dto';
+import { UIInteractionEventDto } from '#apps/ui/src/ui.dto';
 import {
   UiInteractionButtonDto,
   UiInteractionQuizDto,
-} from 'apps/ui/src/ui.interaction.dto';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { Payload, Subscribe, Topic } from 'libs/mqtt-handler/mqtt.decorator';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { getChunkId } from 'libs/sermas/sermas.utils';
+} from '#apps/ui/src/ui.interaction.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { Payload, Subscribe, Topic } from '#libs/mqtt-handler/mqtt.decorator';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { getChunkId } from '#libs/sermas/sermas.utils';
 import {
   DialogueChatProgressEvent,
   DialogueChatValidationEvent,
-} from './chat/dialogue.chat.dto';
-import { DialogueAsyncApiService } from './dialogue.async.service';
-import { DialogueSessionRequestEvent } from './dialogue.request-monitor.dto';
-import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
-import { DialogueSpeechService } from './dialogue.speech.service';
-import { DialogueWelcomeService } from './dialogue.speech.welcome.service';
-import { DialogueSpeechStreamService } from './speech-stream/dialogue.speech.stream.service';
+} from './chat/dialogue.chat.dto.js';
+import { DialogueAsyncApiService } from './dialogue.async.service.js';
+import { DialogueSessionRequestEvent } from './dialogue.request-monitor.dto.js';
+import { DialogueRequestMonitorService } from './dialogue.request-monitor.service.js';
+import { DialogueSpeechService } from './dialogue.speech.service.js';
+import { DialogueWelcomeService } from './dialogue.speech.welcome.service.js';
+import { DialogueSpeechStreamService } from './speech-stream/dialogue.speech.stream.service.js';
 
 @Injectable()
 export class DialogueSpeechEventService {

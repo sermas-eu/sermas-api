@@ -1,11 +1,11 @@
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { DialogueTaskRecordDto } from '../tasks/record/dialogue.tasks.record.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
+import { DialogueTaskRecordDto } from '../tasks/record/dialogue.tasks.record.dto.js';
 import {
   DialogueTaskDto,
   TaskFieldDto,
   TaskIntentDto,
-} from '../tasks/store/dialogue.tasks.store.dto';
-import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto';
+} from '../tasks/store/dialogue.tasks.store.dto.js';
+import { DialogueToolsRepositoryDto } from '../tools/repository/dialogue.tools.repository.dto.js';
 
 export type TaskIntentWrapper = {
   taskId: string;

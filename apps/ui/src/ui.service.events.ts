@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { DialogueTaskProgressDto } from 'apps/dialogue/src/tasks/dialogue.tasks.dto';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { UIContentDto } from './ui.content.dto';
-import { UIService } from './ui.service';
+import { DialogueTaskProgressDto } from '#apps/dialogue/src/tasks/dialogue.tasks.dto';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { UIContentDto } from './ui.content.dto.js';
+import { UIService } from './ui.service.js';
 
 @Injectable()
 export class UIEventsService {

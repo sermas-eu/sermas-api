@@ -1,15 +1,15 @@
 // Imports the Google Cloud client library
 import { type SpeechClient as GSpeechClient } from '@google-cloud/speech';
-import type { google } from '@google-cloud/speech/build/protos/protos';
+import type { protos } from '@google-cloud/speech';
 import {
   Injectable,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { mapLanguageCode } from 'libs/language/language';
-import { ISpeechToText, SpeechToTextResponse } from '../stt.dto';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { mapLanguageCode } from '#libs/language/language';
+import { ISpeechToText, SpeechToTextResponse } from '../stt.dto.js';
 
 @Injectable()
 export class GoogleSpeechToText implements ISpeechToText {
@@ -59,7 +59,7 @@ export class GoogleSpeechToText implements ISpeechToText {
       .split(',')
       .map((t) => t.trim());
 
-    const request: google.cloud.speech.v1.IRecognizeRequest = {
+    const request: protos.google.cloud.speech.v1.IRecognizeRequest = {
       audio: audio,
       config: {
         encoding: 'LINEAR16',

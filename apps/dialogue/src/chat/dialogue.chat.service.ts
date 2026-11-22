@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { SessionService } from 'apps/session/src/session.service';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMBaseArgs } from 'libs/llm/llm.provider.dto';
-import { extractProviderName, parseJSON } from 'libs/llm/util';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
+import { createSessionContext } from '#apps/session/src/session.context';
+import { SessionService } from '#apps/session/src/session.service';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { LLMBaseArgs } from '#libs/llm/llm.provider.dto';
+import { extractProviderName, parseJSON } from '#libs/llm/util';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { getChunkId, getMessageId } from '#libs/sermas/sermas.utils';
+import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
 import {
   DialogueChatProgressEvent,
   DialogueChatValidationEvent,
@@ -16,31 +16,32 @@ import {
   LLMParsedResult,
   MatchingToolsResult,
   ToolsWrapper,
-} from './dialogue.chat.dto';
-import { convertToolsToPrompt, packAvatarObject } from './utils';
+} from './dialogue.chat.dto.js';
+import { convertToolsToPrompt, packAvatarObject } from './utils.js';
 
 import { ConfigService } from '@nestjs/config';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
-import { DialogueAsyncApiService } from '../dialogue.async.service';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { SermasSessionDto } from '#libs/sermas/sermas.dto';
+import { DialogueAsyncApiService } from '../dialogue.async.service.js';
 import {
   DialogueSessionRequestDto,
   DialogueSessionRequestStatus,
-} from '../dialogue.request-monitor.dto';
-import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service';
-import { DialogueIntentService } from '../intent/dialogue.intent.service';
-import { DialogueMemoryService } from '../memory/dialogue.memory.service';
-import { convertTaskToPrompt } from '../tasks/util';
+} from '../dialogue.request-monitor.dto.js';
+import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service.js';
+import { DialogueIntentService } from '../intent/dialogue.intent.service.js';
+import { DialogueMemoryService } from '../memory/dialogue.memory.service.js';
+import { convertTaskToPrompt } from '../tasks/util.js';
 import {
   avatarChatPrompt,
   AvatarChatSystemPromptParams,
   AvatarChatUserPromptParams,
   avatarSystemChatPrompt,
-} from './dialogue.chat.prompt';
-import { SelectedTool } from './dialogue.chat.tools.dto';
-import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer';
-import { SentenceTransformer } from './transformer/sentence.transformer';
+} from './dialogue.chat.prompt.js';
+import { SelectedTool } from './dialogue.chat.tools.dto.js';
+import { StreamingMarkupParserTransformer } from './transformer/markup-parser.transformer.js';
+import { PreambleTransformer } from './transformer/preamble.transformer.js';
+import { SentenceTransformer } from './transformer/sentence.transformer.js';
 
 const TrimmablePrefixes = [
   'ASSISTANT',
@@ -60,7 +61,7 @@ const RemoveTagsParts = [
   /<\/?filter>/gim,
   /<\/?intents>/gim,
   /<\/?tools>/gim,
-  /\`\`\`/,
+  /```/,
 ];
 
 @Injectable()
@@ -170,34 +171,22 @@ export class DialogueChatService {
     }
 
     if (response?.filter?.skip) {
-      this.logger.debug(`Skipping user request message=${message.text}`);
+      // overheard speech (chatter, fragments) gets no spoken reply, even when the
+      // model wrote one in filter.answer: a "could you repeat?" for every phrase
+      // caught nearby is noise. The client shows the turn was not caught.
+      this.logger.debug(
+        `Skipping user request message=${message.text}${response.filter.answer ? ` (answer dropped: ${response.filter.answer})` : ''}`,
+      );
 
-      if (response?.filter?.answer) {
-        this.logger.debug(
-          `Sending generated answer ${response?.filter?.answer}`,
-        );
-        const mId = getMessageId();
-        const cId = getChunkId();
-        this.sendMessage(message, mId, cId, response?.filter?.answer);
-        this.emitChatProgress({
-          completed: false,
-          messageId: mId,
-          chunkId: cId,
-          sessionId: message.sessionId,
-          appId: message.appId,
-          requestId: message.requestId,
-        });
-      } else {
-        await this.asynApi.dialogueProgress({
-          event: 'llm',
-          sessionId: message.sessionId,
-          appId: message.appId,
-          status: 'error',
-          error: `${message.text}`,
-        });
+      await this.asynApi.dialogueProgress({
+        event: 'llm',
+        sessionId: message.sessionId,
+        appId: message.appId,
+        status: 'error',
+        error: 'skipped',
+      });
 
-        this.emitRequestStatus(message, 'cancelled');
-      }
+      this.emitRequestStatus(message, 'cancelled');
 
       return;
     }
@@ -302,6 +291,10 @@ export class DialogueChatService {
       return;
     }
 
+    // set when a chunk is sent: the model sometimes puts its whole answer in
+    // filter.answer and writes no chat text
+    let answered = false;
+
     response.stream
       .on('data', (chunk: Buffer | string) => {
         perf('stream');
@@ -333,6 +326,11 @@ export class DialogueChatService {
           // chunkBuffer = chunkBuffer.substring(toSend.length);
 
           text = this.cleanTextWrappers(text, [response.data.avatar?.name]);
+          // a line holding only a wrapper (`CHAT RESPONSE`) is empty now: an empty
+          // agent message tells the kiosk the speech was not recognised, and it
+          // stops the answer that follows
+          if (!text.trim()) return;
+          answered = true;
 
           const chunkId = getChunkId();
           // this.sendMessage(message, messageId, chunkId, toSend);
@@ -355,6 +353,13 @@ export class DialogueChatService {
         if (chunkBuffer.length > 1) {
           chunkId = getChunkId();
           this.sendMessage(message, messageId, chunkId, chunkBuffer);
+        }
+
+        const fallback = response.filter?.answer?.trim();
+        if (!answered && fallback) {
+          this.logger.debug(`No chat text, answering with filter.answer`);
+          chunkId = getChunkId();
+          this.sendMessage(message, messageId, chunkId, fallback);
         }
 
         this.emitChatProgress({
@@ -380,16 +385,22 @@ export class DialogueChatService {
 
     const { appId, sessionId } = message;
 
+    // time each step before the LLM call: they run in sequence
+    const perf = this.monitor.performance({ ...message, label: 'chat.send' });
+
     const settings = await this.session.getSettings(message);
     const avatar = await this.session.getAvatar(message, message.avatar);
+    perf('session');
 
     const knowledge = await this.vectorStore.search(appId, message.text);
+    perf('knowledge');
     let summaryOrHistory: string;
     if (this.config.get('LLM_DISABLE_SUMMARY') === '1') {
       summaryOrHistory = await this.memory.getConversation(sessionId);
     } else {
       summaryOrHistory = await this.memory.getSummary(sessionId);
     }
+    perf('history');
 
     const activeTask = await this.intent.getActiveTaskRecord(message.sessionId);
     const currentTask = activeTask.task;
@@ -408,6 +419,7 @@ export class DialogueChatService {
       currentTask,
       message.sessionId,
     );
+    perf('tasks');
 
     const systemPromptParams: AvatarChatSystemPromptParams = {
       knowledge,
@@ -422,6 +434,9 @@ export class DialogueChatService {
         currentField && currentField?.hint
           ? `${currentField?.label || currentField?.name}: ${currentField?.hint}`
           : undefined,
+      hasTasks: Boolean(currentTask || tasks?.length),
+      hasTools: Boolean(activeTools.tools?.length),
+      explain: this.config.get('LLM_EXPLAIN') === '1',
     };
 
     const chatPromptParams: AvatarChatUserPromptParams = {
@@ -450,52 +465,58 @@ export class DialogueChatService {
     };
     const llmParsedResult: LLMParsedResult = {};
 
-    const promise = new Promise<LLMCombinedResult>(async (resolve) => {
-      const result = await this.llmProvider.chat({
-        tag: 'chat',
-        stream: true,
-        json: false,
+    // a failing LLM call must reject, or the turn would wait forever
+    const promise = new Promise<LLMCombinedResult>((resolve, reject) => {
+      (async () => {
+        const result = await this.llmProvider.chat({
+          tag: 'chat',
+          stream: true,
+          json: false,
 
-        provider: chatProvider,
-        model: chatModel,
-        sessionContext: createSessionContext(message),
+          provider: chatProvider,
+          model: chatModel,
+          sessionContext: createSessionContext(message),
 
-        system: avatarSystemChatPrompt(systemPromptParams),
-        user: avatarChatPrompt(chatPromptParams),
+          system: avatarSystemChatPrompt(systemPromptParams),
+          user: avatarChatPrompt(chatPromptParams),
 
-        transformers: [
-          new StreamingMarkupParserTransformer(
-            'filter',
-            (res: string | undefined) => {
-              llmParsedResult.filter = parseJSON(res) || undefined;
-            },
-          ),
-          new StreamingMarkupParserTransformer(
-            'intents',
-            (res: string | undefined) => {
-              if (res) {
-                llmParsedResult.intent = parseJSON(res) || undefined;
-              }
-            },
-          ),
-          new StreamingMarkupParserTransformer(
-            'tools',
-            (res: string | undefined) => {
-              llmParsedResult.tools = this.parseMatchingTools(
-                res,
-                activeTools.tools,
-              );
-            },
-          ),
-          new SentenceTransformer(() => {
-            resolve({
-              ...result,
-              ...llmParsedResult,
-              ...llmChatData,
-            });
-          }),
-        ],
-      });
+          transformers: [
+            // reasoning written before the blocks must never be spoken
+            new PreambleTransformer(),
+            new StreamingMarkupParserTransformer(
+              'filter',
+              (res: string | undefined) => {
+                llmParsedResult.filter = parseJSON(res) || undefined;
+              },
+            ),
+            new StreamingMarkupParserTransformer(
+              'intents',
+              (res: string | undefined) => {
+                if (res) {
+                  llmParsedResult.intent = parseJSON(res) || undefined;
+                }
+              },
+            ),
+            new StreamingMarkupParserTransformer(
+              'tools',
+              (res: string | undefined) => {
+                llmParsedResult.tools = this.parseMatchingTools(
+                  res,
+                  activeTools.tools,
+                );
+              },
+            ),
+            new SentenceTransformer(() => {
+              perf('first-sentence');
+              resolve({
+                ...result,
+                ...llmParsedResult,
+                ...llmChatData,
+              });
+            }),
+          ],
+        });
+      })().catch(reject);
     });
 
     return await promise;
@@ -512,7 +533,7 @@ export class DialogueChatService {
 
     for (const prefix of allPrefixes) {
       const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const pattern = new RegExp(`^\s*#*?${escapedPrefix}[:|\n]?\\s*`, 'igm'); // optional colon and trailing space/newlines
+      const pattern = new RegExp(`^\\s*#*?${escapedPrefix}[:|\n]?\\s*`, 'igm'); // optional colon and trailing space/newlines
 
       if (pattern.test(text)) {
         text = text.replace(pattern, '');

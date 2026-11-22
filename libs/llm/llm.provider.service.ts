@@ -2,37 +2,29 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { hash } from 'libs/util';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { hash } from '#libs/util';
 import { Readable } from 'stream';
 import { ulid } from 'ulidx';
-import { LLMCacheService, SaveToCacheTransformer } from './llm.cache.service';
+import {
+  LLMCacheService,
+  SaveToCacheTransformer,
+} from './llm.cache.service.js';
 import {
   LLMChatRequest,
   LLMResultEvent,
   LLMSendArgs,
-} from './llm.provider.dto';
-import { SessionContextHandler } from './llm.session-context.handler';
+} from './llm.provider.dto.js';
+import { SessionContextHandler } from './llm.session-context.handler.js';
 import {
   PromptTemplate,
   PromptTemplateOutput,
   PromptTemplateParams,
-} from './prompt/prompt.template';
-import { AntrophicChatProvider } from './providers/antrophic/antrophic.chat.provider';
-import { AzureOpenAIChatProvider } from './providers/azure-openai/azure-openai.chat.provider';
-import { AzureOpenAIEmbeddingProvider } from './providers/azure-openai/azure-openai.embeddings.provider';
-import { LLMChatProvider } from './providers/chat.provider';
-import { LLMEmbeddingProvider } from './providers/embeddings.provider';
-import { GeminiChatProvider } from './providers/gemini/gemini.chat.provider';
-import { GeminiEmbeddingProvider } from './providers/gemini/gemini.embeddings.provider';
-import { GroqChatProvider } from './providers/groq/groq.provider';
-import { HuggingfaceChatProvider } from './providers/huggingface/huggingface.chat.provider';
-import { MistralChatProvider } from './providers/mistral/mistral.chat.provider';
-import { MistralEmbeddingProvider } from './providers/mistral/mistral.embeddings.provider';
-import { OllamaEmbeddingProvider } from './providers/ollama/ollama.embeddings.provider';
-import { OllamaChatProvider } from './providers/ollama/ollama.provider';
-import { OpenAIChatProvider } from './providers/openai/openai.chat.provider';
-import { OpenAIEmbeddingProvider } from './providers/openai/openai.embeddings.provider';
+} from './prompt/prompt.template.js';
+import { LLMChatProvider } from './providers/chat.provider.js';
+import { LLMEmbeddingProvider } from './providers/embeddings.provider.js';
+import { OpenAIChatProvider } from './providers/openai/openai.chat.provider.js';
+import { OpenAIEmbeddingProvider } from './providers/openai/openai.embeddings.provider.js';
 import {
   LLMCallResult,
   LLMEmbeddingConfig,
@@ -40,31 +32,18 @@ import {
   LLMProvider,
   LLMProviderConfig,
   LLMProviderList,
-} from './providers/provider.dto';
-import { LogTransformer } from './stream/log.transformer';
-import { TextTransformer } from './stream/text-transformer.stream';
-import { readResponse } from './stream/util';
-import { extractProviderName, parseJSON } from './util';
-import { VertexAIChatProvider } from './providers/vertexai/vertexai.chat.provider';
-import { GCPMistralChatProvider } from './providers/gcp-mistral/gcp-mistral.chat.provider';
+} from './providers/provider.dto.js';
+import { LogTransformer } from './stream/log.transformer.js';
+import { TextTransformer } from './stream/text-transformer.stream.js';
+import { readResponse } from './stream/util.js';
+import { extractProviderName, parseJSON } from './util.js';
 
 export const chatModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'gpt-4o',
-  ollama: 'mistral:latest',
-  groq: 'mixtral-8x7b-32768',
-  mistral: 'open-mixtral-8x22b',
-  gemini: 'gemini-1.5-flash',
-  huggingface: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-  azure_openai: 'gpt-4o',
-  gcp_mistral: 'mistral-small-2503',
 };
 
 export const embeddingsModelsDefaults: { [provider: LLMProvider]: string } = {
   openai: 'text-embedding-3-small',
-  ollama: 'nomic-embed-text:latest',
-  mistral: 'mistral-embed',
-  gemini: 'text-embedding-004',
-  azure_openai: 'text-embedding-ada-002',
 };
 
 @Injectable()
@@ -181,7 +160,9 @@ export class LLMProviderService implements OnModuleInit {
         config.provider +
         (config.baseURL || '') +
         (config.apiKey || '') +
-        (config.model || ''),
+        (config.model || '') +
+        // sampling settings are fixed per instance
+        `${config.temperature ?? ''}/${config.top_p ?? ''}/${config.reasoningEffort ?? ''}`,
     );
     return providerId;
   }
@@ -193,6 +174,9 @@ export class LLMProviderService implements OnModuleInit {
       config.temperature = this.config.get<number>('LLM_TEMPERATURE');
     if (config.top_p === undefined)
       config.top_p = this.config.get<number>('LLM_TOP_P');
+    if (config.reasoningEffort === undefined)
+      config.reasoningEffort =
+        this.config.get<string>('LLM_REASONING_EFFORT') || undefined;
 
     if (!config.provider) {
       if (config.tag) {
@@ -237,14 +221,6 @@ export class LLMProviderService implements OnModuleInit {
     );
 
     switch (config.provider) {
-      case 'ollama':
-        provider = new OllamaChatProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('OLLAMA_BASEURL'),
-          model,
-          availableModels,
-        });
-        break;
       case 'openai':
         provider = new OpenAIChatProvider({
           provider: config.provider,
@@ -252,89 +228,9 @@ export class LLMProviderService implements OnModuleInit {
           model,
           apiKey: config.apiKey || this.config.get('OPENAI_API_KEY'),
           availableModels,
-        });
-        break;
-      case 'azure_openai':
-        provider = new AzureOpenAIChatProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('AZURE_OPENAI_BASEURL'),
-          model,
-          apiKey: config.apiKey || this.config.get('AZURE_OPENAI_API_KEY'),
-          availableModels,
-          apiVersion:
-            config.apiVersion ||
-            this.config.get('AZURE_OPENAI_CHAT_API_VERSION'),
-        });
-        break;
-      case 'gemini':
-        provider = new GeminiChatProvider({
-          provider: config.provider,
-          // baseURL: config.baseURL || this.config.get('GEMINI_BASEURL'),
-          model,
-          apiKey: config.apiKey || this.config.get('GEMINI_API_KEY'),
-          availableModels,
-        });
-        break;
-      case 'huggingface':
-        provider = new HuggingfaceChatProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('HUGGINGFACE_BASEURL'),
-          model,
-          apiKey:
-            config.apiKey ||
-            this.config.get('HUGGINGFACE_API_KEY') ||
-            this.config.get('HF_TOKEN'),
-          availableModels,
-        });
-        break;
-      case 'mistral':
-        provider = new MistralChatProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('MISTRAL_BASEURL'),
-          model,
-          apiKey: config.apiKey || this.config.get('MISTRAL_API_KEY'),
-          availableModels,
-        });
-        break;
-
-      case 'groq':
-        provider = new GroqChatProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('GROQ_BASEURL'),
-          model,
-          apiKey: config.apiKey || this.config.get('GROQ_API_KEY'),
-          availableModels,
-        });
-        break;
-
-      case 'antrophic':
-        provider = new AntrophicChatProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('ANTROPHIC_BASEURL'),
-          model,
-          apiKey: config.apiKey || this.config.get('ANTROPHIC_API_KEY'),
-          availableModels,
-        });
-        break;
-      case 'gcp_mistral':
-        provider = new GCPMistralChatProvider({
-          // No need to pass the API key: authentication uses the service account at GOOGLE_APPLICATION_CREDENTIALS
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('GCP_MISTRAL_BASEURL'),
-          model,
-          availableModels,
-          region: this.config.get('GCP_MISTRAL_REGION'),
-          project: this.config.get('GCP_MISTRAL_PROJECT'),
-        });
-        break;
-      case 'vertexai':
-        provider = new VertexAIChatProvider({
-          provider: config.provider,
-          model,
-          apiKey: config.apiKey || this.config.get('VERTEXAI_API_KEY'),
-          availableModels,
-          region: this.config.get('VERTEXAI_REGION'),
-          project: this.config.get('VERTEXAI_PROJECT'),
+          temperature: config.temperature,
+          top_p: config.top_p,
+          reasoningEffort: config.reasoningEffort,
         });
         break;
     }
@@ -432,69 +328,18 @@ export class LLMProviderService implements OnModuleInit {
           this.config.get('OPENAI_EMBEDDINGS_MODEL') ||
           embeddingsModelsDefaults.openai;
 
+        // Embeddings may come from a different endpoint than chat.
         provider = new OpenAIEmbeddingProvider({
           provider: config.provider,
-          baseURL: config.baseURL || this.config.get('OPENAI_BASEURL'),
+          baseURL:
+            config.baseURL ||
+            this.config.get('OPENAI_EMBEDDINGS_BASEURL') ||
+            this.config.get('OPENAI_BASEURL'),
           model,
-          apiKey: config.apiKey || this.config.get('OPENAI_API_KEY'),
-          binaryQuantization,
-        });
-        break;
-      case 'azure_openai':
-        model =
-          config.model ||
-          this.config.get('AZURE_OPENAI_EMBEDDINGS_MODEL') ||
-          embeddingsModelsDefaults.openai;
-
-        provider = new AzureOpenAIEmbeddingProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('AZURE_OPENAI_BASEURL'),
-          model,
-          apiKey: config.apiKey || this.config.get('AZURE_OPENAI_API_KEY'),
-          binaryQuantization,
-          apiVersion:
-            config.apiVersion ||
-            this.config.get('AZURE_OPENAI_EMBEDDINGS_API_VERSION'),
-        });
-        break;
-      case 'gemini':
-        model =
-          config.model ||
-          this.config.get('GEMINI_EMBEDDINGS_MODEL') ||
-          embeddingsModelsDefaults.gemini;
-
-        provider = new GeminiEmbeddingProvider({
-          provider: config.provider,
-          // baseURL: config.baseURL || this.config.get('GEMINI_BASEURL'),
-          model,
-          apiKey: config.apiKey || this.config.get('GEMINI_API_KEY'),
-          binaryQuantization,
-        });
-        break;
-      case 'ollama':
-        model =
-          config.model ||
-          this.config.get('OLLAMA_EMBEDDINGS_MODEL') ||
-          embeddingsModelsDefaults.ollama;
-
-        provider = new OllamaEmbeddingProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('OLLAMA_BASEURL'),
-          model,
-          binaryQuantization,
-        });
-        break;
-      case 'mistral':
-        model =
-          config.model ||
-          this.config.get('MISTRAL_EMBEDDINGS_MODEL') ||
-          embeddingsModelsDefaults.mistral;
-
-        provider = new MistralEmbeddingProvider({
-          provider: config.provider,
-          baseURL: config.baseURL || this.config.get('MISTRAL_BASEURL'),
-          model,
-          apiKey: config.apiKey || this.config.get('MISTRAL_API_KEY'),
+          apiKey:
+            config.apiKey ||
+            this.config.get('OPENAI_EMBEDDINGS_API_KEY') ||
+            this.config.get('OPENAI_API_KEY'),
           binaryQuantization,
         });
         break;
@@ -556,6 +401,18 @@ export class LLMProviderService implements OnModuleInit {
   //   }
   //   return this.createDefaultPrompt(promptArgs);
   // }
+
+  /**
+   * Identifies the embedding space: vectors from different fingerprints
+   * cannot be compared, and may differ in size.
+   */
+  async embeddingsFingerprint(args?: LLMEmbeddingConfig): Promise<string> {
+    const provider = await this.getEmbeddingsProvider(args);
+    const config = await provider.getConfig();
+    return [provider.getName(), config.model, config.binaryQuantization && 'bq']
+      .filter(Boolean)
+      .join('/');
+  }
 
   async embeddings(text: string | string[], args?: LLMEmbeddingConfig) {
     const provider = await this.getEmbeddingsProvider(args);

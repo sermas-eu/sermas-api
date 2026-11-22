@@ -3,18 +3,18 @@ import { OnEvent } from '@nestjs/event-emitter';
 import {
   UserCharacterizationEventDto,
   UserCharacterizationEventSource,
-} from 'apps/detection/src/detection.dto';
-import { DialogueTaskProgressDto } from 'apps/dialogue/src/tasks/dialogue.tasks.dto';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { MonitorRecordDto } from 'libs/monitor/monitor.dto';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
-import { MonitoringDatasetService } from './monitoring.dataset.service';
-import { LLMResultEvent } from 'libs/llm/llm.provider.dto';
+} from '#apps/detection/src/detection.dto';
+import { DialogueTaskProgressDto } from '#apps/dialogue/src/tasks/dialogue.tasks.dto';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { UIInteractionEventDto } from '#apps/ui/src/ui.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { MonitorRecordDto } from '#libs/monitor/monitor.dto';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
+import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
+import { MonitoringDatasetService } from './monitoring.dataset.service.js';
+import { LLMResultEvent } from '#libs/llm/llm.provider.dto';
 
 @Injectable()
 export class MonitoringDatasetEventsService {
@@ -34,8 +34,9 @@ export class MonitoringDatasetEventsService {
       );
     }
     if (ev.type === 'log') {
+      // a log may carry only its label (MonitorService.log sets value to null)
       await this.dataset.save(
-        ev.value.toString(),
+        ev.value?.toString() ?? ev.label,
         {
           ...ev,
           sessionId: ev.sessionId,

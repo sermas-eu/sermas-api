@@ -12,35 +12,35 @@ import {
   InteractionType,
   UserDetectionEventDto,
   UserInteractionIntentionDto,
-} from 'apps/detection/src/detection.dto';
-import { RepositoryAvatarDefault } from 'apps/platform/src/app/platform.app.defaults';
+} from '#apps/detection/src/detection.dto';
+import { RepositoryAvatarDefault } from '#apps/platform/src/app/platform.app.defaults';
 import {
   AppSettingsDto,
   LLMSettingsDto,
   RepositoryAvatarDto,
-} from 'apps/platform/src/app/platform.app.dto';
-import { PlatformAppService } from 'apps/platform/src/app/platform.app.service';
-import { UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { isDate, isNodeEnv, toDTO } from 'libs/util';
-import { FilterQuery, Model } from 'mongoose';
+} from '#apps/platform/src/app/platform.app.dto';
+import { PlatformAppService } from '#apps/platform/src/app/platform.app.service';
+import { UIInteractionEventDto } from '#apps/ui/src/ui.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { isDate, isNodeEnv, toDTO } from '#libs/util';
+import { QueryFilter, Model } from 'mongoose';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { v4 as uuidv4 } from 'uuid';
-import { AgentChangedDto } from './agent/session.agent.dto';
-import { SessionAgentService } from './agent/session.agent.service';
-import { SessionAsyncApiService } from './session.async.service';
+import { AgentChangedDto } from './agent/session.agent.dto.js';
+import { SessionAgentService } from './agent/session.agent.service.js';
+import { SessionAsyncApiService } from './session.async.service.js';
 import {
   SessionChangedDto,
   SessionDto,
   SessionSearchFilter,
   UserReferenceDto,
-} from './session.dto';
-import { Session, SessionDocument } from './session.schema';
+} from './session.dto.js';
+import { Session, SessionDocument } from './session.schema.js';
 import { ConfigService } from '@nestjs/config';
 
 type SessionEventHandlerPayload = {
@@ -126,7 +126,7 @@ export class SessionService {
 
   async search(appId: string, filter: SessionSearchFilter) {
     if (!appId) return [];
-    const q: FilterQuery<SessionDocument> = {
+    const q: QueryFilter<SessionDocument> = {
       appId,
       ...(filter.query || {}),
     };
@@ -319,6 +319,8 @@ export class SessionService {
 
     if (session.sessionId) {
       const exists = await this.load(session.sessionId);
+      if (exists && exists.appId !== session.appId)
+        throw new BadRequestException(`Session belongs to another app`);
       if (exists) {
         this.logger.warn(
           `Reusing session sessionId=${session.sessionId} exists appId=${session.appId}`,

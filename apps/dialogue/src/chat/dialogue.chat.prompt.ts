@@ -1,9 +1,9 @@
-import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
+import { PromptTemplate } from '#libs/llm/prompt/prompt.template';
 import {
   BaseSystemPromptParams,
   createDataPrompt,
-} from '../dialogue.system.prompt';
-import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto';
+} from '../dialogue.system.prompt.js';
+import { TOOL_CATCH_ALL } from '../tools/dialogue.tools.dto.js';
 
 export type AvatarChatSystemPromptParams = {
   suggestedTasks?: string;
@@ -11,6 +11,13 @@ export type AvatarChatSystemPromptParams = {
   activeTask?: string;
   field?: string;
   knowledge?: string;
+  // without tasks or tools the model would only answer "no match": the sections are
+  // left out, so the answer starts sooner
+  hasTasks?: boolean;
+  hasTools?: boolean;
+  // ask the model to explain its filter, intent and tool decisions (logged only).
+  // The explanations come after the decisions and delay the answer
+  explain?: boolean;
 };
 export type AvatarChatUserPromptParams = BaseSystemPromptParams;
 
@@ -27,14 +34,19 @@ Never add Notes or Explanations.
 
 ### Example
 <filter>
-{ "skip": boolean, "answer": string, "explain": string }
+{ "skip": boolean, "answer": string<% if (data.explain) { %>, "explain": string<% } %> }
 </filter>
+<% if (data.hasTasks) { %>
 <intents>
-{ "taskId": string, "match": boolean, "trigger": boolean, "cancel": boolean, "explain": string }
+{ "taskId": string, "match": boolean, "trigger": boolean, "cancel": boolean<% if (data.explain) { %>, "explain": string<% } %> }
 </intents>
+<% } %>
+<% if (data.hasTools) { %>
 <tools>
-{ "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }, "explain": string }
+{ "matches": { "tool name": { "argument name": "value extracted from USER MESSAGE" } }<% if (data.explain) { %>, "explain": string<% } %> }
 </tools>
+<% } %>
+CHAT RESPONSE: the answer to the user, as plain text
 
 Execute sequentially the following sections delimited by markdown titles.
 
@@ -42,15 +54,21 @@ Execute sequentially the following sections delimited by markdown titles.
 Identify if USER MESSAGE could be relevant to any of CONVERSATION, APPLICATION, TASKS or TOOLS.
 Populate the field 'filter' in response.
 
-Set 'skip' to true when messagean incomplete formulation (like from background noise), leave 'answer' empty.
+The microphone also catches people talking near the avatar: only messages addressed to the avatar deserve an answer.
+Set 'skip' to true when message is an incomplete formulation (like from background noise).
 Set 'skip' to true when message is clearly self-talking or possibly chattering with someone else.
-Set 'skip' to false when message is a well formatted and correct message, even if not relevant.
+Set 'skip' to true when message talks about the avatar in the third person, or is a reaction or remark to another person (for example "look, it answers", "come on, let's go").
+Set 'skip' to false when message is a well formatted request or question that could be addressed to the avatar, even if not relevant.
+Set 'skip' to false when message answers the last question of the avatar.
+Set 'skip' to false for greetings, thanks and goodbyes, and for short replies (yes, no, ok, how are you) right after the avatar spoke: they are addressed to the avatar.
 Set 'skip' to false when message matches one of in TOOLS.
 
-Set the field 'explain' describing your decision.
-If skip is true and the last CONVERSATION messagge was not from the avatar, set the field 'answer' to provide feedback to the user.
+<% if (data.explain) { %>Set the field 'explain' describing your decision.<% } %>
+Always leave 'answer' empty: a skipped message gets no reply.
+If skip is false, write the answer in CHAT RESPONSE.
 If message is skipped, do not continue with other sections. 
 
+<% if (data.hasTasks) { %>
 # INTENTS
 Analyze CONVERSATION and match one of TASKS based on user intention.
 Populate the field 'intent' in response only with information related to TASKS. 
@@ -96,8 +114,10 @@ If 'match' is true ensure to propose the task as part of answer in CHAT RESPONSE
   If a task 'match', skip the next section.
 <% } %>
 
-Set the field 'explain' describing why you set the values of match, trigger and cancel.
+<% if (data.explain) { %>Set the field 'explain' describing why you set the values of match, trigger and cancel.<% } %>
+<% } %>
 
+<% if (data.hasTools) { %>
 # TOOLS
 Find matches of provided TOOLS list with USER MESSAGE, ignore TASKS. A tool has always priority over a task.
 
@@ -110,9 +130,10 @@ Follow those rules sequentially, when one matches skip the following.
 Populate the 'matches' field with an object using the tool 'name' field as key and an object as value 
 with the key-value of tool param 'name' and value extracted from user message.
 Set 'matches' to an empty object if there is no match or no TOOLS are available. 
-Set the field 'explain' describing why you set those values, omit if 'tools' is empty.
+<% if (data.explain) { %>Set the field 'explain' describing why you set those values, omit if 'tools' is empty.<% } %>
 
 Never mention tools in the chat response. Skip the next section if a tool is found. 
+<% } %>
 
 # CHAT RESPONSE
 ## GENERAL RULES

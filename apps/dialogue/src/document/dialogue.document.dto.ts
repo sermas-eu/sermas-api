@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RepositoryAssetTypes } from 'apps/platform/src/app/platform.app.dto';
+import { RepositoryAssetTypes } from '#apps/platform/src/app/platform.app.dto';
 
 export interface RepositoryDocument {
   appId: string;
@@ -49,15 +49,4 @@ export class DialogueDocumentDto {
 
   @ApiPropertyOptional()
   metadata?: DialogueDocumentMetadataDto;
-}
-
-export class RagWebsiteDto {
-  @ApiProperty()
-  appId: string;
-
-  @ApiProperty()
-  url: string;
-
-  @ApiProperty({ type: [String] })
-  filterPaths: string[];
 }

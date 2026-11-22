@@ -8,9 +8,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as toBuffer from 'typedarray-to-buffer';
-import { fixSSML, stripTags } from '../ssml/util';
-import { ITextToSpeech, SpeakParam } from '../tts.dto';
+import { fixSSML, stripTags } from '../ssml/util.js';
+import { ITextToSpeech, SpeakParam } from '../tts.dto.js';
 
 // { lang: { gender: [ model names ] } }
 // { 'it-IT': { 'F': [ ... ] } }
@@ -41,9 +40,8 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
     }
 
     if (!this.client) {
-      const { TextToSpeechClient } = await import(
-        '@google-cloud/text-to-speech'
-      );
+      const { TextToSpeechClient } =
+        await import('@google-cloud/text-to-speech');
       // Creates a client
       this.client = new TextToSpeechClient();
     }
@@ -194,7 +192,7 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
     try {
       // Performs the text-to-speech request
       const [res] = await client.synthesizeSpeech(request);
-      return toBuffer(res.audioContent as Uint8Array);
+      return Buffer.from(res.audioContent as Uint8Array);
     } catch (e) {
       this.logger.error(`Google STT error: ${e.message}`);
 
@@ -206,7 +204,7 @@ export class GoogleTextToSpeech implements ITextToSpeech, OnModuleInit {
         request.input.ssml = undefined;
         request.input.text = text || stripTags(ssml);
         const [res] = await client.synthesizeSpeech(request);
-        return toBuffer(res.audioContent as Uint8Array);
+        return Buffer.from(res.audioContent as Uint8Array);
       }
     }
   }

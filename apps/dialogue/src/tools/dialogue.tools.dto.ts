@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
 import {
   SermasRecordChangedDto,
   SermasSessionDto,
-} from 'libs/sermas/sermas.dto';
-import { DialogueToolsRepositoryRecordDto } from './repository/dialogue.tools.repository.dto';
+} from '#libs/sermas/sermas.dto';
+import { DialogueToolsRepositoryRecordDto } from './repository/dialogue.tools.repository.dto.js';
 
 export const TOOL_CATCH_ALL = 'collect-user-message';
 export const TOOL_CATCH_ALL_VALUE = 'value';

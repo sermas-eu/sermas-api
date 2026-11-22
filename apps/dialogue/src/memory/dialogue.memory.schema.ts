@@ -3,7 +3,7 @@ import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import {
   DialogueMemoryDto,
   DialogueMemoryMessageDto,
-} from './dialogue.memory.dto';
+} from './dialogue.memory.dto.js';
 
 export type DialogueMemoryDocument = HydratedDocument<DialogueMemory>;
 

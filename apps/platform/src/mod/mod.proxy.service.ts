@@ -5,11 +5,10 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { jwtDecode } from 'libs/util';
-import { PlatformAuthService } from '../auth/platform.auth.service';
-import { ModuleProxyRequestDto } from './mod.dto';
-import { PlatformModuleService } from './mod.service';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { PlatformAuthService } from '../auth/platform.auth.service.js';
+import { ModuleProxyRequestDto } from './mod.dto.js';
+import { PlatformModuleService } from './mod.service.js';
 
 @Injectable()
 export class PlatformModuleProxyService {
@@ -20,7 +19,11 @@ export class PlatformModuleProxyService {
     private readonly auth: PlatformAuthService,
   ) {}
 
-  async proxyUserRequest(req: ModuleProxyRequestDto, token: string) {
+  async proxyUserRequest(
+    req: ModuleProxyRequestDto,
+    token: string,
+    user: AuthJwtUser,
+  ) {
     const wrapper = await this.platformModule.getModuleWrapper(req.moduleId);
     if (wrapper === null) {
       throw new NotFoundException(`Module ${req.moduleId} not found`);
@@ -41,17 +44,12 @@ export class PlatformModuleProxyService {
 
     // if (!appId) throw new BadRequestException(`Failed to find appId parameter`);
 
-    let user: AuthJwtUser;
-    try {
-      user = jwtDecode<AuthJwtUser>(token);
-    } catch (e: any) {
-      this.logger.warn(`Failed to parse token ${e.stack}`);
-      throw new UnauthorizedException(`Invalid token`);
-    }
+    // verified by JwtAuthGuard; never decode an unverified token here
+    if (!user?.sub) throw new UnauthorizedException();
 
     // enforce request
     const userId = user.sub;
-    const clientId = user.aud;
+    const clientId = user.azp;
     this.logger.log(
       `Enforcing request for ${operation.resource.resource}.${operation.resource.scope} userId=${userId} clientId=${clientId}`,
     );
@@ -60,7 +58,7 @@ export class PlatformModuleProxyService {
         appId: appId,
         token,
         userId: user.sub,
-        clientId: user.aud,
+        clientId: user.azp,
         resource: operation.resource.resource,
         scopes: [operation.resource.scope],
       });

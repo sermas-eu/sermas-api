@@ -3,20 +3,24 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   createSessionContext,
   SessionContext,
-} from 'apps/session/src/session.context';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { getChunkId } from 'libs/sermas/sermas.utils';
-import { LLMTranslationService } from 'libs/translation/translation.service';
+} from '#apps/session/src/session.context';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { SessionService } from '#apps/session/src/session.service';
+import { getChunkId } from '#libs/sermas/sermas.utils';
+import { LLMTranslationService } from '#libs/translation/translation.service';
 import { toDataURL } from 'qrcode';
 import { ulid } from 'ulidx';
-import { UIAsyncApiService } from './ui.async.service';
+import { UIAsyncApiService } from './ui.async.service.js';
 import {
   ButtonsContentDto,
   QuizContentDto,
   UIContentDto,
-} from './ui.content.dto';
-import { QrCodeDto, QrCodePayloadDto, UIInteractionEventDto } from './ui.dto';
+} from './ui.content.dto.js';
+import {
+  QrCodeDto,
+  QrCodePayloadDto,
+  UIInteractionEventDto,
+} from './ui.dto.js';
 
 @Injectable()
 export class UIService {

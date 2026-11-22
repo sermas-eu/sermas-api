@@ -1,16 +1,16 @@
 import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
 import {
   DatasetRecordDto,
   DatasetRecordFilterDto,
   AdvancedDatasetRecordFilterDto,
   MonitoringRecordDto,
-} from './monitoring.dataset.dto';
-import { MonitoringDatasetService } from './monitoring.dataset.service';
+} from './monitoring.dataset.dto.js';
+import { MonitoringDatasetService } from './monitoring.dataset.service.js';
 
 @ApiBearerAuth()
 @Controller('platform/monitoring')
@@ -59,6 +59,8 @@ export class MonitoringDatasetController {
     @AuthenticatedUser() user: AuthJwtUser,
     @Body() filter?: AdvancedDatasetRecordFilterDto,
   ): Promise<MonitoringRecordDto[]> {
+    // without an appId the search spans every app's records
+    if (!filter?.appId) throw new BadRequestException(`Missing appId`);
     return await this.datalogger.advancedSearch(filter);
   }
 }

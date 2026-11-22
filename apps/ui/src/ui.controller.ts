@@ -13,9 +13,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { UIAsyncApiService } from './ui.async.service';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { UIAsyncApiService } from './ui.async.service.js';
 import {
   BackgroundUIAudioDto,
   ButtonsUIContentDto,
@@ -35,10 +35,10 @@ import {
   UIContentDto,
   VideoUIContentDto,
   WebpageUIContentDto,
-} from './ui.content.dto';
-import { QrCodeDto, QrCodePayloadDto, UIInteractionDTO } from './ui.dto';
-import { UiInteractionButtonDto } from './ui.interaction.dto';
-import { UIService } from './ui.service';
+} from './ui.content.dto.js';
+import { QrCodeDto, QrCodePayloadDto, UIInteractionDTO } from './ui.dto.js';
+import { UiInteractionButtonDto } from './ui.interaction.dto.js';
+import { UIService } from './ui.service.js';
 
 @ApiBearerAuth()
 @Controller('ui')

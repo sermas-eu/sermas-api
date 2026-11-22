@@ -2,9 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import axios, { AxiosError, isAxiosError } from 'axios';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { VideoFrame, VideoFrameEvent } from '../../detection.streamer.dto';
-import { BoundingBox, BoxedFrame } from '../../libs/boxed-frame';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { VideoFrame } from '../../detection.streamer.dto.js';
+import { BoundingBox, BoxedFrame } from '../../libs/boxed-frame.js';
 import {
   DeepFaceAnalyzeDto,
   DeepFaceAnalyzeItemDto,
@@ -15,7 +15,7 @@ import {
   DeepFaceModel,
   DeepFaceVerifyDto,
   DeepFaceVerifyResultDto,
-} from './deepface.dto';
+} from './deepface.dto.js';
 
 @Injectable()
 export class DeepfaceService {

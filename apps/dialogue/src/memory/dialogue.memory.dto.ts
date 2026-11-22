@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ApiGenericPropertyOptional } from 'libs/decorator/openapi.decorator';
+import { ApiGenericPropertyOptional } from '#libs/decorator/openapi.generic.decorator';
 import {
   LLMMessage,
   LLMRole,
   LLMRoleList,
-} from 'libs/llm/providers/provider.dto';
+} from '#libs/llm/providers/provider.dto';
 
 const MemoryMessageTypeList = ['message', 'task', 'tool'] as const;
 export type MemoryMessageType = (typeof MemoryMessageTypeList)[number];

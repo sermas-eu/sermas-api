@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { DialogueTaskDto } from 'apps/dialogue/src/tasks/store/dialogue.tasks.store.dto';
+import { DialogueTaskDto } from '#apps/dialogue/src/tasks/store/dialogue.tasks.store.dto';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { ModuleSettingsDto } from '../mod/mod.dto';
+import { ModuleSettingsDto } from '../mod/mod.dto.js';
 import {
   AppClientDto,
   AppModuleConfigDto,
@@ -9,7 +9,7 @@ import {
   AppToolsDTO,
   PlatformAppDto,
   RepositoryConfigDto,
-} from './platform.app.dto';
+} from './platform.app.dto.js';
 
 export type PlatformAppDocument = HydratedDocument<PlatformApp>;
 

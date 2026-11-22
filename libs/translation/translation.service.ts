@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { ITranslate } from './itranslate';
-import { detectionPrompt, translationPrompt } from './translation.prompt';
-import { SessionContext } from 'apps/session/src/session.context';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { ITranslate } from './itranslate.js';
+import { detectionPrompt, translationPrompt } from './translation.prompt.js';
+import { SessionContext } from '#apps/session/src/session.context';
 
 @Injectable()
 export class LLMTranslationService implements ITranslate {

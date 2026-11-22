@@ -3,7 +3,13 @@ export interface LLMTool {
   description: string;
   schema?: ToolParam[];
   returnDirect?: boolean;
-  emitter?: string;
+  // UI content shown when the tool matches (AppToolsDTO.ui)
+  ui?: {
+    contentType: string;
+    content: Record<string, any>;
+    description?: string;
+    options?: Record<string, any>;
+  };
   request?: ToolRequestConfig;
 }
 

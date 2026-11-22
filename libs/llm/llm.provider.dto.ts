@@ -1,12 +1,12 @@
-import { SessionContext } from 'apps/session/src/session.context';
+import { SessionContext } from '#apps/session/src/session.context';
 import { Transform } from 'stream';
-import { PromptTemplateOutput } from './prompt/prompt.template';
+import { PromptTemplateOutput } from './prompt/prompt.template.js';
 import {
   LLMMessage,
   LLMPromptTag,
   LLMProvider,
   LLMProviderConfig,
-} from './providers/provider.dto';
+} from './providers/provider.dto.js';
 
 export type LLMSendArgs = LLMProviderConfig & {
   messages: LLMMessage[];

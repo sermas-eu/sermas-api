@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
+import { SermasSessionDto } from '#libs/sermas/sermas.dto';
 
 const DialogueSessionRequestStatusList = [
   'started',

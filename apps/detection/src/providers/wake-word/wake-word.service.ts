@@ -36,7 +36,7 @@ export class WakeWordService {
     if (!res.length) {
       res = this.wakeWords
         .filter((w) =>
-          text.toLowerCase().match(new RegExp(`\s?${w}\s?`, 'im')) ? w : null,
+          text.toLowerCase().match(new RegExp(`\\s?${w}\\s?`, 'im')) ? w : null,
         )
         .filter((w) => w !== null);
     }

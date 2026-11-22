@@ -4,13 +4,13 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { AuthJwtUser } from 'apps/auth/src/auth.dto';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { AppModuleConfigDto } from '../platform.app.dto';
-import { AppModuleConfig } from '../platform.app.schema';
-import { PlatformAppService } from '../platform.app.service';
-import { PlatformAppModuleAsyncApiService } from './app.mod.async.service';
-import { uuidv4 } from 'libs/util';
+import { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { AppModuleConfigDto } from '../platform.app.dto.js';
+import { AppModuleConfig } from '../platform.app.schema.js';
+import { PlatformAppService } from '../platform.app.service.js';
+import { PlatformAppModuleAsyncApiService } from './app.mod.async.service.js';
+import { uuidv4 } from '#libs/util';
 
 @Injectable()
 export class PlatformAppModuleService {
@@ -37,7 +37,7 @@ export class PlatformAppModuleService {
   async saveModule(
     appId: string,
     data: AppModuleConfigDto,
-    user?: AuthJwtUser,
+    _user?: AuthJwtUser,
   ) {
     if (!data) throw new BadRequestException(`Missing module`);
 
@@ -70,7 +70,7 @@ export class PlatformAppModuleService {
     return mod;
   }
 
-  async removeModule(appId: string, moduleId: string, user?: AuthJwtUser) {
+  async removeModule(appId: string, moduleId: string, _user?: AuthJwtUser) {
     const app = await this.getApp(appId);
 
     const filtered = (app.modules || [])
@@ -88,7 +88,7 @@ export class PlatformAppModuleService {
     this.logger.log(`Removed moduleId=${mod.moduleId} appId=${appId}`);
   }
 
-  async getModule(appId: string, moduleId: string, user?: AuthJwtUser) {
+  async getModule(appId: string, moduleId: string, _user?: AuthJwtUser) {
     if (!moduleId) throw new BadRequestException(`Missing moduleId`);
 
     const mod = await this.getAppModule(appId, moduleId);

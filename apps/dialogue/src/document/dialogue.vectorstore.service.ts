@@ -1,68 +1,94 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import {
   DialogueDocumentDto,
   DocumentParseMode,
-} from 'apps/dialogue/src/document/dialogue.document.dto';
-import { ChromaClient, Collection, IEmbeddingFunction } from 'chromadb';
+} from '#apps/dialogue/src/document/dialogue.document.dto';
+import {
+  ChromaClient,
+  Collection,
+  EmbeddingFunction,
+  Metadata,
+} from 'chromadb';
 
-import { PlatformAppChangedDto } from 'apps/platform/src/app/platform.app.dto';
+import { PlatformAppChangedDto } from '#apps/platform/src/app/platform.app.dto';
 import { createHash } from 'crypto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { parseByBlock, parseBySentence } from './text-parsers';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { parseByBlock, parseBySentence } from './text-parsers.js';
 
 const hash = (x: string) => createHash('sha1').update(x).digest('hex');
 
+/** Collection metadata keys recording the embedding space of its vectors. */
+const EMBEDDINGS_KEY = 'sermas_embeddings';
+const DIMENSION_KEY = 'sermas_dimension';
+
+export const parseChromaUrl = (chromaUrl: string) => {
+  const url = new URL(chromaUrl || 'http://localhost:8000');
+  const ssl = url.protocol === 'https:';
+  return {
+    host: url.hostname,
+    port: url.port ? +url.port : ssl ? 443 : 80,
+    ssl,
+  };
+};
+
+/** Chroma accepts only flat, primitive metadata values. */
+export const chunkMetadata = (
+  appId: string,
+  document: DialogueDocumentDto,
+  chunk: number,
+): Metadata => {
+  const meta: Metadata = { appId, documentId: document.documentId, chunk };
+  for (const [key, value] of Object.entries(document.metadata || {})) {
+    if (['string', 'number', 'boolean'].includes(typeof value))
+      meta[key] = value as string | number | boolean;
+  }
+  return meta;
+};
+
 @Injectable()
-export class DialogueVectorStoreService implements OnModuleInit {
+export class DialogueVectorStoreService {
   private readonly logger = new Logger(DialogueVectorStoreService.name);
 
-  private readonly chromaUrl: string;
-
   private readonly client: ChromaClient;
-  private readonly collections: Record<string, Collection> = {};
+  private readonly collections: Record<string, Promise<Collection | null>> = {};
+  // collections being deleted: a load waits for it, or it would cache the deleted one
+  private readonly deleting: Record<string, Promise<void>> = {};
 
-  private embeddingFunction: IEmbeddingFunction;
+  private readonly embeddingFunction: EmbeddingFunction;
 
   constructor(
     private readonly config: ConfigService,
     private readonly llmProvider: LLMProviderService,
     private readonly monitor: MonitorService,
+    private readonly emitter: EventEmitter2,
   ) {
-    this.chromaUrl = this.config.get('CHROMA_URL');
-    this.client = new ChromaClient({ path: this.chromaUrl });
-
+    this.client = new ChromaClient(
+      parseChromaUrl(this.config.get('CHROMA_URL')),
+    );
     this.embeddingFunction = {
-      generate: (texts: string[]): Promise<number[][]> =>
-        this.llmProvider.embeddings(texts),
+      generate: (texts: string[]) => this.llmProvider.embeddings(texts),
     };
   }
 
   @OnEvent('dialogue.document.saved')
   async onDocumentSaved(doc: DialogueDocumentDto | DialogueDocumentDto[]) {
-    doc = doc instanceof Array ? doc : [doc];
+    const docs = doc instanceof Array ? doc : [doc];
 
-    const docs: Record<string, DialogueDocumentDto[]> = doc.reduce(
-      (obj, doc) => {
-        obj[doc.appId] = obj[doc.appId] || [];
-        obj[doc.appId].push(doc);
-        return obj;
-      },
-      {},
-    );
+    const byApp: Record<string, DialogueDocumentDto[]> = {};
+    for (const d of docs) (byApp[d.appId] = byApp[d.appId] || []).push(d);
 
     await Promise.all(
-      Object.entries(docs).map(([appId, documents]) => {
-        return this.saveDocuments(appId, documents).catch((e) => {
+      Object.entries(byApp).map(([appId, documents]) =>
+        this.saveDocuments(appId, documents).catch((e) => {
           this.logger.error(
             `Failed to save docs for appId=${appId}: ${e.message}`,
           );
           this.logger.debug(e);
-          return Promise.resolve();
-        });
-      }),
+        }),
+      ),
     );
   }
 
@@ -85,63 +111,24 @@ export class DialogueVectorStoreService implements OnModuleInit {
     }
   }
 
-  async onModuleInit() {
-    //this.heartbeat()
-    // await this.init('mimex')
-    // await this.import('mimex', this.data)
-  }
-
   private async deleteCollection(appId: string) {
-    const appIdHash = hash(appId);
-
-    try {
-      this.logger.debug(`Removing documents for appId=${appId}`);
-      const coll = await this.getCollection(appId);
-      while (true) {
-        const res = await coll.peek({ limit: 100 });
-        if (!res || res.error || !res.ids.length) break;
-        this.logger.debug(
-          `Removing ${res.ids.length} documents for appId=${appId}`,
-        );
-        coll.delete({ ids: res.ids });
+    const name = hash(appId);
+    const run = (this.deleting[name] || Promise.resolve()).then(async () => {
+      try {
+        await this.client.deleteCollection({ name });
+        this.logger.log(`Removed collection appId=${appId} name=${name}`);
+      } catch (e) {
+        this.logger.debug(`No collection removed appId=${appId}: ${e.message}`);
       }
-    } catch (e) {
-      this.logger.error(
-        `Failed to remove records from collection=${appId}: ${e.stack}`,
-      );
-    }
-
-    try {
-      await this.client.deleteCollection({ name: appIdHash });
-      this.logger.log(`Removed collection appId=${appId} hash=${appIdHash}`);
-    } catch (e) {
-      this.logger.warn(
-        `Failed to remove collection appId=${appId}: ${e.stack}`,
-      );
-    }
+    });
+    this.deleting[name] = run;
+    delete this.collections[name];
+    await run;
+    if (this.deleting[name] === run) delete this.deleting[name];
   }
 
   async recreateCollection(appId: string) {
     await this.deleteCollection(appId);
-    const appIdHash = hash(appId);
-    try {
-      await this.client.getOrCreateCollection({
-        name: appIdHash,
-        embeddingFunction: this.embeddingFunction,
-      });
-      this.logger.log(`Created collection appId=${appId} hash=${appIdHash}`);
-    } catch (e) {
-      this.logger.error(
-        `Failed to create collection appId=${appId}: ${e.stack}`,
-      );
-      return;
-    }
-
-    this.logger.debug(
-      `Recreated collection for appId=${appId} (name=${appIdHash})`,
-    );
-
-    if (this.collections[appIdHash]) delete this.collections[appIdHash];
     await this.getCollection(appId);
   }
 
@@ -161,7 +148,7 @@ export class DialogueVectorStoreService implements OnModuleInit {
       this.logger.warn('Collection not found');
       return;
     }
-    await collection.delete({ ids });
+    await collection.delete({ where: { documentId: { $in: ids } } });
   }
 
   extractChunks(raw: string, parserMode?: DocumentParseMode) {
@@ -176,103 +163,141 @@ export class DialogueVectorStoreService implements OnModuleInit {
     }
   }
 
+  /** Replaces the chunks of each document: one embeddings call per document. */
   async saveDocuments(appId: string, documents: DialogueDocumentDto[]) {
-    const ids: string[] = [];
-    const docs: string[] = [];
-    const metadata: Record<string, any>[] = [];
-
-    const perf = this.monitor.performance({
-      appId,
-      label: 'document.save',
-      threshold: 10 * 1000,
-    });
+    const collection = await this.getCollection(appId);
+    if (!collection) {
+      this.logger.warn(
+        `Import error, no collection for appId=${appId}: ${documents.length} documents skipped`,
+      );
+      return;
+    }
 
     for (const document of documents) {
-      this.logger.debug(
-        `Saving document "${document.content.substring(0, 50).replace('\n', ' ')}..."`,
-      );
+      const perf = this.monitor.performance({
+        appId,
+        label: 'document.save',
+        threshold: 10 * 1000,
+      });
+
       const chunks = this.extractChunks(
-        document.content,
+        document.content || '',
         document.metadata?.options?.parser,
-      );
+      ).filter((chunk) => chunk.length);
 
-      let i = 0;
-      for (const chunk of chunks) {
-        if (!chunk.length) continue;
-        ids.push(document.documentId + '-' + i);
-        docs.push(chunk);
-        metadata.push(document.metadata);
-        i++;
-      }
+      await collection.delete({ where: { documentId: document.documentId } });
 
-      if (!docs.length) {
+      if (!chunks.length) {
         this.logger.debug(
           `Skip empty document ${document.documentId} appId=${appId}`,
-        );
-        return;
-      }
-
-      const embds: number[][] = await this.llmProvider.embeddings(docs);
-      // this.logger.debug(`embds: ${embds}`);
-      const collection = await this.getCollection(appId);
-      if (!collection) {
-        this.logger.warn(
-          `Import error, failed to get collection appId=${appId} docId=${document.documentId} with ${docs.length} chunks`,
         );
         continue;
       }
 
       try {
+        const embeddings = await this.llmProvider.embeddings(chunks);
+        await this.checkDimension(appId, collection, embeddings);
         await collection.add({
-          ids: ids,
-          documents: docs,
-          embeddings: embds,
-          metadatas: metadata,
+          ids: chunks.map((_, i) => `${document.documentId}-${i}`),
+          documents: chunks,
+          embeddings,
+          metadatas: chunks.map((_, i) => chunkMetadata(appId, document, i)),
         });
       } catch (e) {
         this.logger.error(
-          `Failed to add collection for appId=${appId}: ${e.message}`,
+          `Failed to index documentId=${document.documentId} appId=${appId}: ${e.message}`,
         );
         this.logger.debug(e);
+        continue;
       }
 
       perf();
-
       this.logger.debug(
-        `Imported appId=${appId} docId=${document.documentId} with ${docs.length} chunks`,
+        `Imported appId=${appId} docId=${document.documentId} with ${chunks.length} chunks`,
       );
     }
   }
 
-  async getCollection(
+  /** Records the vector size on first use; rejects vectors of another size. */
+  private async checkDimension(
     appId: string,
-    embeddingFunction?: IEmbeddingFunction | null,
+    collection: Collection,
+    embeddings: number[][],
   ) {
+    const size = embeddings[0]?.length;
+    const recorded = collection.metadata?.[DIMENSION_KEY];
+    if (recorded === undefined || recorded === null) {
+      await collection.modify({
+        metadata: { ...collection.metadata, [DIMENSION_KEY]: size },
+      });
+      return;
+    }
+    if (recorded !== size)
+      throw new Error(
+        `Embedding size ${size} does not match collection size ${recorded} for appId=${appId}`,
+      );
+  }
+
+  async getCollection(appId: string): Promise<Collection | null> {
     if (!appId) return null;
     const name = hash(appId);
-
     if (!this.collections[name]) {
-      try {
-        this.collections[name] = await this.client.getOrCreateCollection({
-          name,
-          // use default embedding function if param is set to null
-          embeddingFunction:
-            embeddingFunction === null
-              ? undefined
-              : embeddingFunction || this.embeddingFunction,
+      const deleted = this.deleting[name] || Promise.resolve();
+      this.collections[name] = deleted
+        .then(() => this.loadCollection(appId, name))
+        .catch((e) => {
+          this.logger.error(`Failed to get collection ${appId} (name=${name})`);
+          this.logger.warn(e.stack);
+          delete this.collections[name];
+          return null;
         });
-        this.logger.debug(`Loaded collection ${appId} (name=${name})`);
-      } catch (e) {
-        this.logger.error(`Failed to get collection ${appId} (name=${name})`);
-        this.logger.warn(e.stack);
-        return null;
-      }
     }
-
     return this.collections[name];
   }
 
+  /**
+   * Opens the app collection. A collection built with another embedding model
+   * (or by a version that did not record it) is dropped, and its documents
+   * are indexed again from the document store.
+   */
+  private async loadCollection(appId: string, name: string) {
+    const fingerprint = await this.llmProvider.embeddingsFingerprint();
+    const create = () =>
+      this.client.getOrCreateCollection({
+        name,
+        embeddingFunction: this.embeddingFunction,
+        metadata: { appId, [EMBEDDINGS_KEY]: fingerprint },
+      });
+
+    let collection = await create();
+    const built = collection.metadata?.[EMBEDDINGS_KEY];
+    if (built !== fingerprint) {
+      this.logger.warn(
+        `Collection for appId=${appId} was built with embeddings=${built || 'unknown'}, now ${fingerprint}: re-indexing`,
+      );
+      await this.client.deleteCollection({ name });
+      collection = await create();
+      this.emitter.emit('dialogue.document.reindex', { appId });
+    }
+    this.logger.debug(`Loaded collection ${appId} (name=${name})`);
+    return collection;
+  }
+
   async search(appId: string, qs: string, limit = 4) {
+    try {
+      return await this.searchOnce(appId, qs, limit);
+    } catch (e: any) {
+      // a cached collection can be stale (deleted or recreated in Chroma since it
+      // was loaded): load it again and retry once
+      this.logger.warn(
+        `Search failed for appId=${appId}, reloading the collection: ${e.message}`,
+      );
+      delete this.collections[hash(appId)];
+      return await this.searchOnce(appId, qs, limit);
+    }
+  }
+
+  private async searchOnce(appId: string, qs: string, limit: number) {
     const collection = await this.getCollection(appId);
     if (!collection) return '';
 
@@ -282,18 +307,18 @@ export class DialogueVectorStoreService implements OnModuleInit {
       threshold: 1000,
     });
 
+    const queryEmbeddings = await this.llmProvider.embeddings([qs]);
     const response = await collection.query({
       nResults: limit,
-      queryTexts: [qs],
+      queryEmbeddings,
     });
 
     perf();
 
-    // Using Set to filter out duplicates
-    const knowledgeSet = new Set<string>(response.documents?.flat() || []);
-
-    // Joining unique documents
-    const knowledge = Array.from(knowledgeSet).join('\n');
-    return knowledge;
+    // unique chunks, in rank order
+    const knowledge = new Set<string>(
+      (response.documents?.flat() || []).filter(Boolean),
+    );
+    return [...knowledge].join('\n');
   }
 }

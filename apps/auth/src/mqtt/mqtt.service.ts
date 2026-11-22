@@ -5,11 +5,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformContextDto } from 'apps/platform/src/auth/platform.auth.dto';
-import { PlatformAuthService } from 'apps/platform/src/auth/platform.auth.service';
+import { PlatformContextDto } from '#apps/platform/src/auth/platform.auth.dto';
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
 import { Request } from 'express';
-import { AuthJwtUser } from '../auth.dto';
-import { MqttAclAcc, MqttAclPayload } from './mqtt.dto';
+import { AuthJwtUser } from '../auth.dto.js';
+import { MqttAclAcc, MqttAclPayload } from './mqtt.dto.js';
 
 @Injectable()
 export class MqttService {
@@ -22,7 +22,7 @@ export class MqttService {
 
   async checkUser(user: AuthJwtUser, checkSuperUser = false) {
     if (checkSuperUser) {
-      if (!this.platform.isSystemClient(user.azp)) {
+      if (!this.platform.isSystemClient(user)) {
         throw new UnauthorizedException();
       }
     }
@@ -34,8 +34,8 @@ export class MqttService {
       payload.acc === MqttAclAcc.WRITE
         ? 'Write'
         : payload.acc === MqttAclAcc.READ
-        ? 'Read'
-        : 'Subscribe';
+          ? 'Read'
+          : 'Subscribe';
 
     if (process.env.LOG_REQUEST === '1')
       this.logger.debug(`ACL ${action} ${payload.topic} clientId=${user.azp}`);
@@ -55,6 +55,19 @@ export class MqttService {
     if (context === null) {
       this.logger.warn(`failed to load context topic=${payload.topic}`);
       throw new UnauthorizedException('failed to load context');
+    }
+
+    // app isolation: the topic's app must be one the caller may use. A
+    // wildcard app (`+`, `#`) spans every app: system service accounts only.
+    const wildcardApp = /[+#]/.test(context.appId);
+    const appAllowed = wildcardApp
+      ? this.platform.isSystemClient(user)
+      : await this.platform.canAccessApp(user, context.appId);
+    if (!appAllowed) {
+      this.logger.warn(
+        `ACL app not allowed appId=${context.appId} clientId=${user.azp} username=${user.preferred_username}`,
+      );
+      throw new UnauthorizedException();
     }
 
     // perform keycloak enforcing

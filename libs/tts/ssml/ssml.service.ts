@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LanguageCode } from 'libs/language/lang-codes';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { Emotion } from 'libs/sermas/sermas.dto';
-import { ssmlPrompt } from './ssml.prompt';
-import { SessionContext } from 'apps/session/src/session.context';
+import { LanguageCode } from '#libs/language/lang-codes';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { Emotion } from '#libs/sermas/sermas.dto';
+import { ssmlPrompt } from './ssml.prompt.js';
+import { SessionContext } from '#apps/session/src/session.context';
 
 export class SSMLParams {
   text: string;

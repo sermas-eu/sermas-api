@@ -2,16 +2,16 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SessionService } from 'apps/session/src/session.service';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { DialogueAsyncApiService } from '../dialogue.async.service';
-import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service';
-import { DialogueIntentService } from '../intent/dialogue.intent.service';
-import { DialogueMemoryService } from '../memory/dialogue.memory.service';
-import { DialogueChatService } from './dialogue.chat.service';
+import { SessionService } from '#apps/session/src/session.service';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { DialogueAsyncApiService } from '../dialogue.async.service.js';
+import { DialogueVectorStoreService } from '../document/dialogue.vectorstore.service.js';
+import { DialogueIntentService } from '../intent/dialogue.intent.service.js';
+import { DialogueMemoryService } from '../memory/dialogue.memory.service.js';
+import { DialogueChatService } from './dialogue.chat.service.js';
 
-jest.setTimeout(10 * 1000);
+vi.setConfig({ testTimeout: 10 * 1000 });
 
 describe('DialogueChatService', () => {
   let moduleRef: TestingModule;
@@ -33,15 +33,15 @@ describe('DialogueChatService', () => {
   describe('handle chat', () => {
     it('should trim prefixes', async () => {
       const dialogueChatService = new DialogueChatService(
-        jest.mocked(ConfigService) as any,
-        jest.mocked(EventEmitter2) as any,
-        jest.mocked(SessionService) as any,
-        jest.mocked(LLMProviderService) as any,
-        jest.mocked(DialogueIntentService) as any,
-        jest.mocked(DialogueMemoryService) as any,
-        jest.mocked(DialogueVectorStoreService) as any,
-        jest.mocked(MonitorService) as any,
-        jest.mocked(DialogueAsyncApiService) as any,
+        vi.mocked(ConfigService) as any,
+        vi.mocked(EventEmitter2) as any,
+        vi.mocked(SessionService) as any,
+        vi.mocked(LLMProviderService) as any,
+        vi.mocked(DialogueIntentService) as any,
+        vi.mocked(DialogueMemoryService) as any,
+        vi.mocked(DialogueVectorStoreService) as any,
+        vi.mocked(MonitorService) as any,
+        vi.mocked(DialogueAsyncApiService) as any,
       );
 
       const key = 'my message';
@@ -65,6 +65,51 @@ describe('DialogueChatService', () => {
         }
         expect(res).toBe(key);
       });
+
+      // a wrapper alone on its line cleans to nothing: the stream skips such chunks
+      ['CHAT RESPONSE', 'CHAT RESPONSE:\n', '<tools>'].forEach((text) => {
+        expect(dialogueChatService.cleanTextWrappers(text).trim()).toBe('');
+      });
+    });
+  });
+
+  describe('skipped message', () => {
+    it('never speaks filter.answer: reports skipped and cancels', async () => {
+      const progress = vi.fn(async () => undefined);
+      const emit = vi.fn();
+      const service = new DialogueChatService(
+        {} as any,
+        { emit } as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        { performance: () => () => undefined, log: vi.fn() } as any,
+        { dialogueProgress: progress } as any,
+      );
+      vi.spyOn(service as any, 'send').mockResolvedValue({
+        filter: { skip: true, answer: 'Sorry, could you repeat that?' },
+      });
+      const sendMessage = vi.spyOn(service, 'sendMessage');
+
+      await service.inference(
+        { appId: 'a', sessionId: 's', text: 'look, it answers' } as any,
+        { chatArgs: undefined, toolsArgs: undefined },
+      );
+
+      expect(sendMessage).not.toHaveBeenCalled();
+      expect(progress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'llm',
+          status: 'error',
+          error: 'skipped',
+        }),
+      );
+      expect(emit).toHaveBeenCalledWith(
+        'session.request',
+        expect.objectContaining({ status: 'cancelled' }),
+      );
     });
   });
 });

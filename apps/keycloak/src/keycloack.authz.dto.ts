@@ -1,5 +1,5 @@
-import { PlatformContextDto } from 'apps/platform/src/auth/platform.auth.dto';
-import { KeycloakPermissionUpdateDto } from './keycloak.admin.dto';
+import { PlatformContextDto } from '#apps/platform/src/auth/platform.auth.dto';
+import type { KeycloakPermissionUpdateDto } from './keycloak.admin.dto.js';
 
 export interface EvaluatePermissionResourceDto {
   name: string;
@@ -73,8 +73,10 @@ export interface KeycloakClientDataDto extends Record<string, any> {
 
 export type KeycloakStrategy = 'AFFIRMATIVE' | 'UNANIMOUS' | 'CONSENSUS';
 
-export interface KeycloakClientAuthorizationSettingsDto
-  extends Record<string, any> {
+export interface KeycloakClientAuthorizationSettingsDto extends Record<
+  string,
+  any
+> {
   allowRemoteResourceManagement: boolean;
   decisionStrategy: KeycloakStrategy;
   policyEnforcementMode: 'ENFORCING';

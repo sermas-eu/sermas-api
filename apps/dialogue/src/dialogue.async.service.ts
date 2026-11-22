@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AsyncApiOperationName } from 'libs/decorator/asyncapi.operation.decorator';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { mapMqttTopic } from 'libs/util';
-import { AsyncApi } from 'nestjs-asyncapi';
-import { DialogueSessionRequestDto } from './dialogue.request-monitor.dto';
+import { AsyncApiOperationName } from '#libs/decorator/asyncapi.operation.decorator';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
+import { mapMqttTopic } from '#libs/util';
+import { AsyncApi } from '#libs/asyncapi/index';
+import { DialogueSessionRequestDto } from './dialogue.request-monitor.dto.js';
 import {
   DialogueAvatarSpeechControlDto,
   DialogueProgressEventDto,
-} from './dialogue.speech.dto';
+} from './dialogue.speech.dto.js';
 
 @AsyncApi()
 @Injectable()

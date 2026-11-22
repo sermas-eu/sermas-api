@@ -1,4 +1,4 @@
-import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
+import { PromptTemplate } from '#libs/llm/prompt/prompt.template';
 
 export type CheckIfUserTalkingToAvatarPromptParam = {
   user: string;

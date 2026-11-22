@@ -1,5 +1,5 @@
-import { PromptTemplate } from 'libs/llm/prompt/prompt.template';
-import { TaskFieldDto } from './store/dialogue.tasks.store.dto';
+import { PromptTemplate } from '#libs/llm/prompt/prompt.template';
+import { TaskFieldDto } from './store/dialogue.tasks.store.dto.js';
 
 export const taskFieldConditionPrompt = PromptTemplate.create<{
   condition: string;

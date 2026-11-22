@@ -13,7 +13,7 @@ export class MonitorLogDto extends MonitorContextDto {
   type?: MonitorRecordType;
 }
 
-const MonitorRecordTypeList = [
+export const MonitorRecordTypeList = [
   'performance',
   'consumption',
   'error',

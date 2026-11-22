@@ -1,25 +1,23 @@
-import { Global, Logger, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { KeycloakModule } from 'apps/keycloak/src/keycloak.module';
-import { MqttModule } from 'libs/mqtt-handler/mqtt.module';
-import {
-  KEYCLOAK_CONNECT_OPTIONS,
-  KEYCLOAK_LOGGER,
-  KeycloakConnectModule,
-  KeycloakConnectOptions,
-  PolicyEnforcementMode,
-  TokenValidation,
-} from 'nest-keycloak-connect';
-import { PlatformAppClientService } from './app/client/platform.client.service';
-import { PlatformAppModule } from './app/platform.app.module';
-import { PlatformAuthModule } from './auth/platform.auth.module';
-import { PlatformTokenAsyncApiService } from './auth/platform.token.async.service';
-import { PlatformModuleModule } from './mod/mod.module';
-import { PlatformKeycloakService } from './platform.keycloack.service';
-import { PlatformController } from './platform.settings.controller';
-import { PlatformSettingsService } from './platform.settings.service';
-import { PlatformWellKnownController } from './platform.well-known.controller';
-import { PlatformTopicsModule } from './topics/platform.topics.module';
+import { Global, Module } from '@nestjs/common';
+import { KeycloakModule } from '#apps/keycloak/src/keycloak.module';
+import { MqttModule } from '#libs/mqtt-handler/mqtt.module';
+import { AuthJwtModule } from '#libs/auth/auth.module';
+import { PlatformAppClientService } from './app/client/platform.client.service.js';
+import { PlatformAppModule } from './app/platform.app.module.js';
+import { PlatformAuthModule } from './auth/platform.auth.module.js';
+import { PlatformTokenAsyncApiService } from './auth/platform.token.async.service.js';
+import { PlatformModuleModule } from './mod/mod.module.js';
+import { PlatformKeycloakService } from './platform.keycloack.service.js';
+import { LocalPlatformKeycloakService } from './local/local-platform-keycloak.service.js';
+import { ConfigService } from '@nestjs/config';
+import { KeycloakService } from '#apps/keycloak/src/keycloak.service';
+import type { LocalKeycloakService } from '#apps/keycloak/src/local/local-keycloak.service';
+import { isLocalAuth } from '#libs/auth/local/local-auth';
+import { PlatformAppAsyncApiService } from './app/platform.app.async.service.js';
+import { PlatformController } from './platform.settings.controller.js';
+import { PlatformSettingsService } from './platform.settings.service.js';
+import { PlatformWellKnownController } from './platform.well-known.controller.js';
+import { PlatformTopicsModule } from './topics/platform.topics.module.js';
 
 @Global()
 @Module({
@@ -41,22 +39,7 @@ import { PlatformTopicsModule } from './topics/platform.topics.module';
         keycloakServiceAccountPassword: null,
       }),
     }),
-    KeycloakConnectModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService): KeycloakConnectOptions => {
-        return {
-          authServerUrl: config.get('AUTH_KEYCLOAK_URL'),
-          realm: config.get('AUTH_KEYCLOAK_REALM'),
-          clientId: config.get('AUTH_KEYCLOAK_CLIENT_ID'),
-          secret: config.get('AUTH_KEYCLOAK_SECRET'),
-          cookieKey: 'KEYCLOAK_JWT',
-          useNestLogger: true,
-          policyEnforcement: PolicyEnforcementMode.ENFORCING,
-          tokenValidation: TokenValidation.OFFLINE,
-        };
-      },
-    }),
+    AuthJwtModule,
     PlatformAuthModule,
     PlatformAppModule,
     PlatformModuleModule,
@@ -64,35 +47,31 @@ import { PlatformTopicsModule } from './topics/platform.topics.module';
   controllers: [PlatformController, PlatformWellKnownController],
   providers: [
     {
-      provide: KEYCLOAK_LOGGER,
-      // useFactory: (opts: KeycloakConnectOptions) => {
-      useFactory: () => {
-        const logger = new Logger('KeycloakConnect');
-        // logger.localInstance.setLogLevels(['error', 'warn', 'log', 'debug']);
-        if (process.env.SHOW_KEYCLOAK_LOGS !== '1') {
-          // const verboseLog = logger.verbose;
-          // logger.verbose = (...args) => {
-          logger.verbose = () => {
-            // if (args[0].indexOf('Authenticated User') === -1) return;
-            // verboseLog.apply(logger, args);
-          };
-        }
-        return logger;
-      },
-      inject: [KEYCLOAK_CONNECT_OPTIONS],
+      provide: PlatformKeycloakService,
+      inject: [ConfigService, KeycloakService, PlatformAppAsyncApiService],
+      useFactory: (
+        config: ConfigService,
+        keycloak: KeycloakService,
+        asyncApi: PlatformAppAsyncApiService,
+      ) =>
+        isLocalAuth((k) => config.get(k))
+          ? new LocalPlatformKeycloakService(
+              config,
+              keycloak as unknown as LocalKeycloakService,
+              asyncApi,
+            )
+          : new PlatformKeycloakService(config, keycloak, asyncApi),
     },
-    PlatformKeycloakService,
     PlatformSettingsService,
     PlatformAppClientService,
     PlatformTokenAsyncApiService,
   ],
   exports: [
-    KEYCLOAK_LOGGER,
     PlatformAuthModule,
     PlatformAppModule,
 
     KeycloakModule,
-    KeycloakConnectModule,
+    AuthJwtModule,
 
     PlatformKeycloakService,
   ],

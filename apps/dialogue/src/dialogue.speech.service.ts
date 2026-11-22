@@ -2,56 +2,58 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { convertRawToWav, convertWav } from 'libs/language/audio';
+import { convertRawToWav, convertWav } from '#libs/language/audio';
 
-import { DialogueAsyncApiService } from './dialogue.async.service';
-import { DialogueEmotionService } from './dialogue.emotion.service';
+import { DialogueAsyncApiService } from './dialogue.async.service.js';
+import { DialogueEmotionService } from './dialogue.emotion.service.js';
 
-import { IdentityTrackerService } from 'apps/detection/src/providers/identify-tracker/identity-tracker.service';
-import { SpeechBrainService } from 'apps/detection/src/providers/speechbrain/speechbrain.service';
-import { createSessionContext } from 'apps/session/src/session.context';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
-import { SessionService } from 'apps/session/src/session.service';
-import { UIContentDto } from 'apps/ui/src/ui.content.dto';
-import { uiContentToText } from 'apps/ui/src/util';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { LLMProviderService } from 'libs/llm/llm.provider.service';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { getChunkId, getMessageId } from 'libs/sermas/sermas.utils';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { STTProviderService } from 'libs/stt/stt.provider.service';
-import { DialogueTextToSpeechDto } from 'libs/tts/tts.dto';
-import { TTSProviderService } from 'libs/tts/tts.provider.service';
-import { LLMTranslationService } from '../../../libs/translation/translation.service';
+import { IdentityTrackerService } from '#apps/detection/src/providers/identify-tracker/identity-tracker.service';
+import { createSessionContext } from '#apps/session/src/session.context';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
+import { SessionService } from '#apps/session/src/session.service';
+import { UIContentDto } from '#apps/ui/src/ui.content.dto';
+import { uiContentToText } from '#apps/ui/src/util';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { LLMProviderService } from '#libs/llm/llm.provider.service';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { getChunkId, getMessageId } from '#libs/sermas/sermas.utils';
+import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
+import { STTProviderService } from '#libs/stt/stt.provider.service';
+import { TurnDropReason } from './noise/turn-failure.tracker.js';
+import { wavStats } from './noise/wav.stats.js';
+
+/** the speaker check of one clip: whether to accept it, and its voice embedding */
+export type SpeakerCheck = { expected: boolean; embedding?: string };
+import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
+import { TTSProviderService } from '#libs/tts/tts.provider.service';
+import { LLMTranslationService } from '../../../libs/translation/translation.service.js';
 import {
   DialogueChatProgressEvent,
   DialogueChatValidationEvent,
-} from './chat/dialogue.chat.dto';
-import { DialogueChatService } from './chat/dialogue.chat.service';
+} from './chat/dialogue.chat.dto.js';
+import { DialogueChatService } from './chat/dialogue.chat.service.js';
 import {
   DialogueSessionRequestEvent,
   DialogueSessionRequestStatus,
-} from './dialogue.request-monitor.dto';
-import { DialogueRequestMonitorService } from './dialogue.request-monitor.service';
+} from './dialogue.request-monitor.dto.js';
+import { DialogueRequestMonitorService } from './dialogue.request-monitor.service.js';
 import {
   DialogueAvatarSpeechControlDto,
   OutgoingChunkQueue,
   OutgoingQueueMessage,
-} from './dialogue.speech.dto';
-import { DialogueMemoryService } from './memory/dialogue.memory.service';
-import { MqttService } from 'libs/mqtt-handler/mqtt.service';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-
-const STT_MESSAGE_CACHE = 30 * 1000; // 30 sec
+} from './dialogue.speech.dto.js';
+import { DialogueMemoryService } from './memory/dialogue.memory.service.js';
+import { MqttService } from '#libs/mqtt-handler/mqtt.service';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
 
 @Injectable()
 export class DialogueSpeechService implements OnModuleInit {
   private readonly logger = new Logger(DialogueSpeechService.name);
 
-  private sttMessagesCache: Record<string, Date> = {};
-
   outgoingMessageSemaphore: Set<string> = new Set<string>();
   outgoingMessageQueue: Record<string, OutgoingChunkQueue> = {};
+  // per request: the delivery of its last agent chunk (keeps the stream order)
+  private agentDelivery: Record<string, Promise<void>> = {};
 
   constructor(
     private readonly emotion: DialogueEmotionService,
@@ -71,8 +73,6 @@ export class DialogueSpeechService implements OnModuleInit {
 
     private readonly memory: DialogueMemoryService,
 
-    private readonly speechbrainProvider: SpeechBrainService,
-
     private readonly identiyTracker: IdentityTrackerService,
 
     private readonly monitor: MonitorService,
@@ -85,11 +85,6 @@ export class DialogueSpeechService implements OnModuleInit {
     if (this.configService.get('SPEAKER_VERIFICATION') == '0') {
       this.logger.warn(
         `Speaker verification disabled. To enable set SPEAKER_VERIFICATION env to 1`,
-      );
-    }
-    if (this.configService.get('SPEAKER_COUNTER') == '0') {
-      this.logger.warn(
-        `Speaker counter disabled. To enable set SPEAKER_COUNTER env to 1`,
       );
     }
   }
@@ -169,44 +164,6 @@ export class DialogueSpeechService implements OnModuleInit {
     return await this.ttsProvider.generateTTS(payload);
   }
 
-  async hasMultipleSpeakers(ev: DialogueSpeechToTextDto) {
-    if (this.configService.get('SPEAKER_COUNTER') == '0') {
-      return false;
-    }
-    const counter = await this.speechbrainProvider.countSpeakers(ev.buffer);
-    if (
-      counter &&
-      counter.speakerCount.value > 2 &&
-      counter.speakerCount.probability > 0.5
-    ) {
-      this.logger.warn(
-        `STT aborted: ${counter.speakerCount.value} speakers detected for sessionId=${ev.sessionId}`,
-      );
-
-      if (!this.sttMessagesCache[ev.sessionId]) {
-        this.sttMessagesCache[ev.sessionId] = new Date();
-      } else {
-        if (
-          Date.now() - this.sttMessagesCache[ev.sessionId].getTime() <
-          STT_MESSAGE_CACHE
-        ) {
-          return true;
-        } else {
-          // reset cache
-          delete this.sttMessagesCache[ev.sessionId];
-        }
-      }
-
-      await this.replyToUser(
-        'I cannot understand, could you try to use the keyboard',
-        ev,
-      );
-
-      return true;
-    }
-    return false;
-  }
-
   private trackRequest(
     status: DialogueSessionRequestStatus,
     ev: Omit<DialogueSessionRequestEvent, 'status'>,
@@ -268,14 +225,23 @@ export class DialogueSpeechService implements OnModuleInit {
 
     ev.buffer = await this.convert(ev);
 
-    const promise = Promise.all([
-      await this.isExpectedSpeaker(ev.sessionId, ev.buffer),
-      await this.hasMultipleSpeakers(ev),
-    ]);
+    // too short or too quiet to hold speech: drop it without asking STT, which
+    // tends to hallucinate a phrase out of room noise
+    const tooQuiet = this.isBelowSpeechLevel(ev.buffer);
+    if (tooQuiet) {
+      this.logger.debug(`STT: turn dropped before STT (${tooQuiet})`);
+      await this.dropTurn(ev, 'no-speech');
+      return;
+    }
+
+    // the speaker check runs while STT transcribes; convertToText awaits it
+    const checks = this.isExpectedSpeaker(ev.sessionId, ev.buffer);
+    // handled where awaited; avoid an unhandled rejection if STT fails first
+    checks.catch(() => undefined);
 
     this.emitter.emit('dialogue.speech.audio', ev);
 
-    const ok = await this.convertToText(ev, () => promise);
+    const ok = await this.convertToText(ev, () => checks);
 
     if (ok) {
       // cancel active requests, excepts for the current one
@@ -283,25 +249,103 @@ export class DialogueSpeechService implements OnModuleInit {
     }
   }
 
-  async isExpectedSpeaker(sessionId: string, audio: Buffer): Promise<boolean> {
+  /**
+   * The turn ends here: the agent resumes, the client is told why (so it can say so
+   * instead of waiting), and the noise tracker counts it.
+   */
+  private async dropTurn(
+    payload: { appId: string; sessionId: string },
+    reason: TurnDropReason,
+  ) {
+    this.countDroppedTurn(payload.sessionId);
+    await this.continueAgentSpeech(payload.appId, payload.sessionId);
+    await this.asyncApi.dialogueProgress({
+      event: 'stt',
+      sessionId: payload.sessionId,
+      appId: payload.appId,
+      status: 'error',
+      error: reason,
+    });
+    this.emitter.emit('dialogue.turn.dropped', {
+      appId: payload.appId,
+      sessionId: payload.sessionId,
+      reason,
+    });
+  }
+
+  /** why the clip cannot hold speech, or undefined when it may */
+  isBelowSpeechLevel(buffer?: Buffer): string | undefined {
+    const stats = wavStats(buffer);
+    if (!stats) return undefined;
+    const minMs = Number(this.configService.get('STT_MIN_DURATION_MS') ?? 250);
+    const minDb = Number(this.configService.get('STT_MIN_RMS_DBFS') ?? -55);
+    if (Number.isFinite(minMs) && stats.durationMs < minMs) {
+      return `duration ${Math.round(stats.durationMs)}ms < ${minMs}ms`;
+    }
+    if (Number.isFinite(minDb) && stats.rmsDbfs < minDb) {
+      return `level ${stats.rmsDbfs.toFixed(1)}dBFS < ${minDb}dBFS`;
+    }
+    return undefined;
+  }
+
+  /**
+   * Whether the clip is the session's speaker. The clip's embedding is returned, not
+   * learnt: `acceptedTurn` learns it once STT has transcribed the clip, so chatter
+   * and noise do not shape the voice signature.
+   */
+  async isExpectedSpeaker(
+    sessionId: string,
+    audio: Buffer,
+  ): Promise<SpeakerCheck> {
     if (this.configService.get('SPEAKER_VERIFICATION') == '0') {
-      return true;
+      return { expected: true };
     }
     const embeddings = [
       this.identiyTracker.getAgentEmbedding(sessionId),
       this.identiyTracker.getSpeakerEmbedding(sessionId),
     ];
     const res = await this.identiyTracker.verifySpeaker(audio, embeddings);
-    if (!res) return true;
-    // collect user audio embeddings
-    this.identiyTracker.update(sessionId, res.embeddings);
+    if (!res) return { expected: true };
     if (res.results[0] == true) {
       this.logger.debug('Agent self-speaking, skip');
-      return false;
+      return { expected: false };
     }
-    if (embeddings[1] == '') return true; // no result expected
+    const embedding = res.embeddings;
+    if (embeddings[1] == '') return { expected: true, embedding }; // no signature yet
     this.logger.debug(`${res.results[1] ? 'Same' : 'Different'} speaker`);
-    return res.results[1];
+    return { expected: res.results[1], embedding };
+  }
+
+  /** dropped turns in a row, per session: a run resets the voice signature */
+  private readonly droppedInARow = new Map<string, number>();
+
+  private acceptedTurn(sessionId: string, embedding?: string) {
+    this.droppedInARow.delete(sessionId);
+    if (embedding) this.identiyTracker.update(sessionId, embedding);
+  }
+
+  /**
+   * A run of hearing failures means a noisy room, or a signature learnt from the
+   * wrong voice: forget it, so the visitor is heard again and the signature is
+   * learnt anew from the next transcribed clips.
+   */
+  private countDroppedTurn(sessionId: string) {
+    const limit = Number(
+      this.configService.get('SPEAKER_RESET_AFTER_DROPS') ?? 2,
+    );
+    if (!Number.isFinite(limit) || limit <= 0) return;
+    const count = (this.droppedInARow.get(sessionId) || 0) + 1;
+    if (count < limit) {
+      this.droppedInARow.set(sessionId, count);
+      return;
+    }
+    this.droppedInARow.delete(sessionId);
+    if (this.identiyTracker.getSpeakerEmbedding(sessionId) !== '') {
+      this.logger.debug(
+        `${count} dropped turns in a row: voice signature reset sessionId=${sessionId}`,
+      );
+    }
+    this.identiyTracker.resetSpeaker(sessionId);
   }
 
   async handleSessionChanged(ev: SessionChangedDto) {
@@ -311,6 +355,7 @@ export class DialogueSpeechService implements OnModuleInit {
     if (!ev.record?.closedAt) return;
 
     this.identiyTracker.clearSessionEmbeddings(ev.record.sessionId);
+    this.droppedInARow.delete(ev.record.sessionId);
   }
 
   async chat(ev: DialogueMessageDto): Promise<void> {
@@ -378,7 +423,7 @@ export class DialogueSpeechService implements OnModuleInit {
 
   async convertToText(
     payload: DialogueSpeechToTextDto,
-    validAudioChecks?: () => Promise<boolean[]>,
+    expectedSpeaker?: () => Promise<SpeakerCheck>,
   ): Promise<boolean> {
     try {
       // set default
@@ -389,26 +434,20 @@ export class DialogueSpeechService implements OnModuleInit {
       const { text, dialogueMessagePayload } =
         await this.sttProvider.convertToText(payload);
 
-      // parallelize audio checks with speechbrain
+      // the speaker check (speechbrain) ran in parallel with STT
 
-      let validSpeaker = false;
-      if (validAudioChecks) {
-        const [isExpectedSpeaker, skipAudio] = await validAudioChecks();
-        validSpeaker = isExpectedSpeaker;
-        if (skipAudio) return false;
-      }
+      const speaker = expectedSpeaker
+        ? await expectedSpeaker()
+        : { expected: false };
 
-      if (!validSpeaker || !text) {
-        this.logger.debug(`STT: cannot detect text from audio clip.`);
-        await this.continueAgentSpeech(payload.appId, payload.sessionId);
-        await this.asyncApi.dialogueProgress({
-          event: 'stt',
-          sessionId: payload.sessionId,
-          appId: payload.appId,
-          status: 'ended',
-        });
+      if (!speaker.expected || !text) {
+        const reason = text ? 'other-speaker' : 'no-speech';
+        this.logger.debug(`STT: turn dropped (${reason})`);
+        await this.dropTurn(payload, reason);
         return false;
       }
+
+      this.acceptedTurn(payload.sessionId, speaker.embedding);
 
       if (!this.isRequestOngoing(payload)) {
         return false;
@@ -473,14 +512,39 @@ export class DialogueSpeechService implements OnModuleInit {
       return;
     }
 
-    try {
-      await this.handleAgentMessage(ev);
-    } catch (e) {
-      this.logger.error(`Failed to handle agent message: ${e.stack}`);
-    }
+    await this.handleAgentMessageInOrder(ev);
+  }
+
+  /**
+   * The chunks of an answer arrive in order but are handled concurrently: each is
+   * prepared (language, translation, avatar) at once, and delivered (text and
+   * speech queued) only after the previous chunk of the same request. Without
+   * this a short chunk that translated faster was spoken first ("e tu?" before
+   * "Ciao, sto bene").
+   */
+  private handleAgentMessageInOrder(ev: DialogueMessageDto) {
+    const key = ev.requestId || ev.sessionId;
+    // prepared now, in parallel with the other chunks
+    const prepared = this.prepareAgentMessage(ev);
+    const previous = this.agentDelivery[key] || Promise.resolve();
+    const delivered = previous
+      .then(async () => this.deliverAgentMessage(await prepared))
+      .catch((e) =>
+        this.logger.error(`Failed to handle agent message: ${e.stack}`),
+      );
+    this.agentDelivery[key] = delivered;
+    return delivered.finally(() => {
+      if (this.agentDelivery[key] === delivered) delete this.agentDelivery[key];
+    });
   }
 
   async handleAgentMessage(ev: DialogueMessageDto) {
+    await this.deliverAgentMessage(await this.prepareAgentMessage(ev));
+  }
+
+  private async prepareAgentMessage(
+    ev: DialogueMessageDto,
+  ): Promise<DialogueMessageDto> {
     const sessionLanguage = await this.session.getLanguage(ev);
     await this.asyncApi.dialogueProgress({
       event: 'translate',
@@ -496,7 +560,7 @@ export class DialogueSpeechService implements OnModuleInit {
 
     const avatar = await this.session.getAvatar(ev);
 
-    const agentResponseEvent: DialogueMessageDto = {
+    return {
       ...ev,
       gender: avatar?.gender,
       messageId: ev.messageId || getMessageId(ev.ts),
@@ -504,7 +568,9 @@ export class DialogueSpeechService implements OnModuleInit {
       text: translation,
       language: sessionLanguage,
     };
+  }
 
+  private async deliverAgentMessage(agentResponseEvent: DialogueMessageDto) {
     await this.sendAgentSpeech(agentResponseEvent);
 
     this.emitter.emit('dialogue.chat.message.agent', agentResponseEvent);

@@ -3,12 +3,12 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   createSessionContext,
   SessionContext,
-} from 'apps/session/src/session.context';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { MonitorService } from 'libs/monitor/monitor.service';
-import { Emotion, EmotionInferenceValue } from 'libs/sermas/sermas.dto';
-import { DialogueSpeechToTextDto } from 'libs/stt/stt.dto';
-import { DetectionAsyncApiService } from './detection.async.service';
+} from '#apps/session/src/session.context';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { MonitorService } from '#libs/monitor/monitor.service';
+import { Emotion, EmotionInferenceValue } from '#libs/sermas/sermas.dto';
+import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
+import { DetectionAsyncApiService } from './detection.async.service.js';
 import {
   InteractionType,
   ObjectDetectionDto,
@@ -20,15 +20,15 @@ import {
   UserDetectionDto,
   UserDetectionEventDto,
   UserInteractionIntentionDto,
-} from './detection.dto';
-import { VideoFrameEvent } from './detection.streamer.dto';
-import { DeepFaceDetectionEvent } from './providers/deepface/deepface.dto';
-import { DeepfaceService } from './providers/deepface/deepface.service';
-import { EmotionTrackerService } from './providers/emotion-tracker/emotion-tracker.service';
-import { ChatGPTObjectDetectionService } from './providers/object-detection/object-detection.chatgpt.service';
-import { ChatGPTSentimentAnalysisService } from './providers/sentiment-analysis/sentiment-analysis.llm.service';
-import { SpeechBrainService } from './providers/speechbrain/speechbrain.service';
-import { WakeWordService } from './providers/wake-word/wake-word.service';
+} from './detection.dto.js';
+import { VideoFrameEvent } from './detection.streamer.dto.js';
+import { DeepFaceDetectionEvent } from './providers/deepface/deepface.dto.js';
+import { DeepfaceService } from './providers/deepface/deepface.service.js';
+import { EmotionTrackerService } from './providers/emotion-tracker/emotion-tracker.service.js';
+import { ChatGPTObjectDetectionService } from './providers/object-detection/object-detection.chatgpt.service.js';
+import { ChatGPTSentimentAnalysisService } from './providers/sentiment-analysis/sentiment-analysis.llm.service.js';
+import { SpeechBrainService } from './providers/speechbrain/speechbrain.service.js';
+import { WakeWordService } from './providers/wake-word/wake-word.service.js';
 
 @Injectable()
 export class DetectionService {
@@ -256,12 +256,12 @@ export class DetectionService {
     this.asyncApi.userCharacterization(userCharacterizationEventDto);
   }
 
-  async verifyFaces(frame: VideoFrameEvent) {
+  async verifyFaces(_frame: VideoFrameEvent) {
     this.logger.log(`TODO: upgrade to handle each detection`);
     // this.faceMatch.verify(frame);
   }
 
-  async matchFaces(ev: DeepFaceDetectionEvent) {
+  async matchFaces(_ev: DeepFaceDetectionEvent) {
     // const event = await this.faceMatch.matchFaces(ev);
     // this.emitter.emit('detection.face.match', event);
     // this.mqtt.publish(MQTTtopics.faceMatch, event);

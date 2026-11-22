@@ -14,11 +14,14 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { ApiResource, ApiScopes } from 'libs/decorator/openapi.decorator';
-import { ApiOperationName } from 'libs/decorator/openapi.operation.decorator';
-import { DialogueToolsService } from './dialogue.tools.service';
-import { DialogueToolsRepositoryDto } from './repository/dialogue.tools.repository.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.dto';
+import { PlatformAuthService } from '#apps/platform/src/auth/platform.auth.service';
+import type { AuthJwtUser } from '#apps/auth/src/auth.dto';
+import { AuthenticatedUser } from '#libs/auth/auth.decorators';
+import { ApiResource, ApiScopes } from '#libs/decorator/openapi.decorator';
+import { ApiOperationName } from '#libs/decorator/openapi.operation.decorator';
+import { DialogueToolsService } from './dialogue.tools.service.js';
+import { DialogueToolsRepositoryDto } from './repository/dialogue.tools.repository.dto.js';
 
 @ApiBearerAuth()
 @Controller('dialogue/tools')
@@ -26,7 +29,16 @@ import { DialogueToolsRepositoryDto } from './repository/dialogue.tools.reposito
 @ApiResource('dialogue')
 @ApiExtraModels(AppToolsDTO)
 export class DialogueToolsController {
-  constructor(private readonly tools: DialogueToolsService) {}
+  constructor(
+    private readonly tools: DialogueToolsService,
+    private readonly auth: PlatformAuthService,
+  ) {}
+
+  /** An existing repository may only be changed by its own app. */
+  private async assertRepositoryApp(repositoryId: string, user: AuthJwtUser) {
+    const existing = await this.tools.get(repositoryId, false);
+    if (existing) await this.auth.assertAppAccess(user, existing.appId);
+  }
 
   @Post(':repositoryId')
   @ApiScopes('tool')
@@ -37,10 +49,13 @@ export class DialogueToolsController {
   @ApiBody({
     type: DialogueToolsRepositoryDto,
   })
-  setTools(
+  async setTools(
     @Param('repositoryId') repositoryId: string,
     @Body() repository: DialogueToolsRepositoryDto,
+    @AuthenticatedUser() user: AuthJwtUser,
   ) {
+    await this.auth.assertAppAccess(user, repository?.appId);
+    await this.assertRepositoryApp(repositoryId, user);
     if (repositoryId !== repository.repositoryId)
       throw new BadRequestException(
         `repositoryId mismatch between query and payload`,
@@ -61,10 +76,13 @@ export class DialogueToolsController {
   @ApiBody({
     type: DialogueToolsRepositoryDto,
   })
-  addTools(
+  async addTools(
     @Param('repositoryId') repositoryId: string,
     @Body() repository: DialogueToolsRepositoryDto,
+    @AuthenticatedUser() user: AuthJwtUser,
   ) {
+    await this.auth.assertAppAccess(user, repository?.appId);
+    await this.assertRepositoryApp(repositoryId, user);
     if (repositoryId !== repository.repositoryId)
       throw new BadRequestException(
         `repositoryId mismatch between query and payload`,
@@ -81,7 +99,11 @@ export class DialogueToolsController {
   @ApiOperationName({
     description: 'Remove a set of tools',
   })
-  removeRepository(@Param('repositoryId') repositoryId: string) {
+  async removeRepository(
+    @Param('repositoryId') repositoryId: string,
+    @AuthenticatedUser() user: AuthJwtUser,
+  ) {
+    await this.assertRepositoryApp(repositoryId, user);
     return this.tools.delete(repositoryId);
   }
 }

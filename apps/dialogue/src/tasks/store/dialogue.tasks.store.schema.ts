@@ -6,7 +6,7 @@ import {
   TaskFieldDto,
   TaskIntentDto,
   TaskOptionsDto,
-} from './dialogue.tasks.store.dto';
+} from './dialogue.tasks.store.dto.js';
 
 export type DialogueTaskStoreDocument = HydratedDocument<DialogueTaskStore>;
 

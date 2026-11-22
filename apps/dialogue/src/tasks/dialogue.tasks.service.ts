@@ -1,13 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PlatformAppDto } from 'apps/platform/src/app/platform.app.dto';
-import { readYAML, uuidv4 } from 'libs/util';
-import { DialogueToolsService } from '../tools/dialogue.tools.service';
-import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto';
-import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service';
-import { DialogueTaskDto } from './store/dialogue.tasks.store.dto';
-import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service';
+import { PlatformAppDto } from '#apps/platform/src/app/platform.app.dto';
+import { readYAML, uuidv4 } from '#libs/util';
+import { DialogueToolsService } from '../tools/dialogue.tools.service.js';
+import { ToolTriggerEventDto } from '../tools/trigger/dialogue.tools.trigger.dto.js';
+import { DialogueTaskRecordService } from './record/dialogue.tasks.record.service.js';
+import { DialogueTaskDto } from './store/dialogue.tasks.store.dto.js';
+import { DialogueTaskStoreService } from './store/dialogue.tasks.store.service.js';
+import { taskToolsRepositoryId } from '../tools/utils.js';
 
 @Injectable()
 export class DialogueTasksService implements OnModuleInit {
@@ -92,8 +93,13 @@ export class DialogueTasksService implements OnModuleInit {
 
       if (task.options?.enableTool) {
         task.options = task.options || {};
+        // not the app's own repository (repositoryId = appId): the app change
+        // handler rewrites that one while the tasks are imported, and the two
+        // writes dropped each other's tools (D-46)
         task.options.repositoryId =
-          task.options?.repositoryId || task.sessionId || task.appId;
+          task.options?.repositoryId ||
+          task.sessionId ||
+          taskToolsRepositoryId(task.appId);
       }
 
       await this.store.save(task);
@@ -178,7 +184,7 @@ export class DialogueTasksService implements OnModuleInit {
   async getCurrentRecord(sessionId: string) {
     const records = await this.records.search({
       sessionId,
-      status: ['status', 'ongoing'],
+      status: ['started', 'ongoing'],
     });
 
     if (!records.length) return null;
@@ -197,7 +203,7 @@ export class DialogueTasksService implements OnModuleInit {
     const records = await this.records.search({
       sessionId,
       taskId,
-      status: ['status', 'ongoing'],
+      status: ['started', 'ongoing'],
     });
 
     if (!records.length) return null;

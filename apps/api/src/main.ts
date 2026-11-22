@@ -1,9 +1,9 @@
-import { LogLevel, Logger, ValidationPipe } from '@nestjs/common';
+import { LogLevel, Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { PlatformModuleService } from 'apps/platform/src/mod/mod.service';
-import { isNodeEnv } from 'libs/util';
-import { ValidationPipeOptions } from 'libs/validation/validation-options';
-import { AppModule } from './app.module';
+import { PlatformModuleService } from '#apps/platform/src/mod/mod.service';
+import { isNodeEnv } from '#libs/util';
+import { SermasValidationPipe } from '#libs/validation/validation-options';
+import { AppModule } from './app.module.js';
 
 const logger = new Logger('bootstrap');
 
@@ -20,7 +20,7 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
-  app.useGlobalPipes(new ValidationPipe(new ValidationPipeOptions()));
+  app.useGlobalPipes(new SermasValidationPipe());
 
   try {
     await app.get(PlatformModuleService).setupApiDocs(app);
@@ -33,4 +33,9 @@ async function bootstrap() {
   logger.log(`Application is running on: ${await app.getUrl()}`);
 }
 
-bootstrap().catch((e) => logger.error(e.stack));
+bootstrap().catch((e) => {
+  logger.error(e.stack);
+  // timers (MQTT, schedules) would keep a half-started process alive without
+  // an HTTP server: exit, so the supervisor restarts it
+  process.exit(1);
+});

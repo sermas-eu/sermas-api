@@ -5,10 +5,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ISpeechToText, SpeechToTextResponse } from '../stt.dto';
+import { ISpeechToText, SpeechToTextResponse } from '../stt.dto.js';
 
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { mapLanguageCode } from 'libs/language/language';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { mapLanguageCode } from '#libs/language/language';
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 
 @Injectable()
@@ -76,11 +76,12 @@ export class AzureSpeechToText implements ISpeechToText {
             break;
           case sdk.ResultReason.NoMatch:
             break;
-          case sdk.ResultReason.Canceled:
+          case sdk.ResultReason.Canceled: {
             const cancellation = sdk.CancellationDetails.fromResult(result);
             failureMessage = `STT cancelled reason=${cancellation.reason} ErrorCode=${cancellation.ErrorCode} ErrorDetails=${cancellation.errorDetails}`;
             this.logger.error(failureMessage);
             break;
+          }
         }
 
         speechRecognizer.close();

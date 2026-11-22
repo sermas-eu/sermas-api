@@ -1,4 +1,4 @@
-import { Cache, CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
@@ -11,33 +11,35 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
-import { RegistrationRequestDto } from 'apps/auth/src/auth.dto';
-import { KeycloakUserRecord } from 'apps/keycloak/src/keycloak.admin.dto';
+import { RegistrationRequestDto } from '#apps/auth/src/auth.dto';
+import { KeycloakUserRecord } from '#apps/keycloak/src/keycloak.admin.dto';
 import { createHash } from 'crypto';
-import { DefaultLanguage } from 'libs/language/lang-codes';
-import { DefaultLLMs } from 'libs/llm/constants';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { getConfigPath } from 'libs/sermas/sermas.utils';
-import { isNodeEnv, loadFile, toDTO, uuidv4 } from 'libs/util';
-import { FilterQuery, Model } from 'mongoose';
+import { DefaultLanguage } from '#libs/language/lang-codes';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { getConfigPath } from '#libs/sermas/sermas.utils';
+import { isNodeEnv, loadFile, toDTO, uuidv4 } from '#libs/util';
+import { QueryFilter, Model } from 'mongoose';
 import {
   APP_CLIENT_NAME,
   PlatformKeycloakService,
-} from '../platform.keycloack.service';
-import { PlatformAppAsyncApiService } from './platform.app.async.service';
-import { RepositoryDefaults } from './platform.app.defaults';
+} from '../platform.keycloack.service.js';
+import { PlatformAppAsyncApiService } from './platform.app.async.service.js';
+import { RepositoryDefaults } from './platform.app.defaults.js';
 import {
+  AppClientDto,
   AppModuleConfigDto,
   AppSettingsDto,
   AppToolsDTO,
   PlatformAppChangedDto,
   PlatformAppDto,
   PlatformAppExportFilterDto,
-} from './platform.app.dto';
-import { PlatformApp, PlatformAppDocument } from './platform.app.schema';
+} from './platform.app.dto.js';
+import { PlatformApp, PlatformAppDocument } from './platform.app.schema.js';
+
+// apps change rarely and are read on every request
+const APP_CACHE_TTL = 10 * 60 * 1000;
 
 @Injectable()
-@CacheTTL(10 * 60 * 1000)
 export class PlatformAppService implements OnModuleInit {
   private readonly logger = new Logger(PlatformAppService.name);
 
@@ -79,7 +81,9 @@ export class PlatformAppService implements OnModuleInit {
     try {
       const adminUser = await this.keycloack.getUser(username);
       if (adminUser) return adminUser;
-    } catch {}
+    } catch {
+      // not found: create it below
+    }
 
     const user = await this.keycloack.saveUser({
       email: `${username}@sermas.local`,
@@ -96,7 +100,7 @@ export class PlatformAppService implements OnModuleInit {
   }
 
   async exportApps(filter: PlatformAppExportFilterDto) {
-    const q: FilterQuery<PlatformApp> = {};
+    const q: QueryFilter<PlatformApp> = {};
 
     if (filter.appId && filter.appId.length) {
       q.appId = filter.appId;
@@ -160,10 +164,7 @@ export class PlatformAppService implements OnModuleInit {
         }
         imported.push(savedApp);
 
-        await this.publishApp(
-          { rag: importApp.rag, ...savedApp },
-          exists ? 'updated' : 'created',
-        );
+        await this.publishApp(savedApp, exists ? 'updated' : 'created');
 
         this.logger.log(
           `Imported "${savedApp.name}" with appId=${savedApp.appId}`,
@@ -202,7 +203,7 @@ export class PlatformAppService implements OnModuleInit {
   }
 
   async removeApps(query?: PlatformAppExportFilterDto, skipClients = false) {
-    const filter: FilterQuery<PlatformApp> = {};
+    const filter: QueryFilter<PlatformApp> = {};
 
     if (query) {
       if (query.appId && query.appId.length) {
@@ -254,7 +255,7 @@ export class PlatformAppService implements OnModuleInit {
     const app = toDTO(doc);
 
     // set cache
-    this.cacheManager.set(cacheKey, app);
+    this.cacheManager.set(cacheKey, app, APP_CACHE_TTL);
 
     return app;
   }
@@ -295,6 +296,9 @@ export class PlatformAppService implements OnModuleInit {
       if (exists) throw new ConflictException('appId already exists');
     }
 
+    // before saving: a missing owner would leave a half-created app
+    await this.assertOwnerExists(data.ownerId);
+
     data.appId = data.appId || uuidv4();
     data.updatedAt = data.createdAt = new Date();
 
@@ -324,6 +328,11 @@ export class PlatformAppService implements OnModuleInit {
     });
 
     return toDTO(updatedApp);
+  }
+
+  private async assertOwnerExists(ownerId: string) {
+    const owner = await this.keycloack.getUserById(ownerId);
+    if (!owner) throw new BadRequestException(`Owner ${ownerId} not found`);
   }
 
   async updateAppTools(appId: string, tools: AppToolsDTO[]) {
@@ -407,8 +416,9 @@ export class PlatformAppService implements OnModuleInit {
       };
     }
 
+    // empty: each tag falls back to LLM_SERVICE_<TAG>, then the default model
     if (!settings.llm) {
-      settings.llm = DefaultLLMs;
+      settings.llm = {};
     }
 
     app.settings = settings;
@@ -448,16 +458,16 @@ export class PlatformAppService implements OnModuleInit {
         app.ownerId = data.ownerId;
       } else {
         // if previous user does not exists, update with the one provided
-        try {
-          await this.keycloack.getUserById(app.ownerId);
-        } catch (e: any) {
-          this.logger.warn(
-            `App userId=${app.ownerId} does not exists: ${e.message}`,
-          );
+        const currentOwner = app.ownerId
+          ? await this.keycloack.getUserById(app.ownerId)
+          : null;
+        if (!currentOwner) {
+          this.logger.warn(`App userId=${app.ownerId} does not exists`);
           app.ownerId = undefined;
         }
 
         if (!app.ownerId) {
+          await this.assertOwnerExists(data.ownerId);
           this.logger.log(`Updated userId=${data.ownerId}`);
           app.ownerId = data.ownerId;
         } else {
@@ -495,7 +505,12 @@ export class PlatformAppService implements OnModuleInit {
         removedModulesMap = oldModulesMap;
       }
 
-      const updatedModules = Object.values(updatedModulesMap);
+      // modules new to the app (D-37: they used to be dropped)
+      const addedModules = Object.values(newModulesMap) as AppModuleConfigDto[];
+      const updatedModules = [
+        ...Object.values(updatedModulesMap),
+        ...addedModules,
+      ];
       const removedModules = Object.values(removedModulesMap);
 
       if (updatedModules.length)
@@ -507,23 +522,33 @@ export class PlatformAppService implements OnModuleInit {
           `Removed modules: ${removedModules.map((m) => m.moduleId)}`,
         );
 
-      if (updatedModules.length) {
-        app.modules = [...updatedModules];
+      app.modules = [...updatedModules];
 
-        data.clients = data.clients || [];
-        // drop removed modules clients
-        data.clients = data.clients.filter(
-          (c) => removedModules.filter((m) => m.moduleId === c.clientId).length,
-        );
-        data.clients.push(
-          ...updatedModules.map((m) => ({
-            clientId: m.moduleId,
-            secret: m.secret,
-            name: m.name || m.moduleId,
-            permissions: (m.supports || []).map((s) => `${s}.*`),
-          })),
-        );
+      // Each module runs as a client of the same id. Drop the clients of
+      // removed modules; a client passed in for a module keeps its own
+      // permissions, otherwise they come from what the module supports (D-37:
+      // the filter was inverted and dropped every client passed in).
+      const removedIds = new Set(removedModules.map((m) => m.moduleId));
+      const given = (data.clients || []).filter(
+        (c) => !removedIds.has(c.clientId),
+      );
+      const byId = new Map(given.map((c) => [c.clientId, c]));
+      for (const m of updatedModules) {
+        const derived = (m.supports || []).map((s) => `${s}.*`);
+        const client = byId.get(m.moduleId);
+        if (client) {
+          if (!client.permissions?.length) client.permissions = derived;
+          client.secret = client.secret || m.secret;
+          continue;
+        }
+        byId.set(m.moduleId, {
+          clientId: m.moduleId,
+          secret: m.secret,
+          name: m.name || m.moduleId,
+          permissions: derived,
+        } as AppClientDto);
       }
+      data.clients = [...byId.values()];
 
       if (removedModules.length) {
         app.clients = app.clients || [];
@@ -549,6 +574,13 @@ export class PlatformAppService implements OnModuleInit {
 
     // add app client, used for users roles control
     data.clients = data.clients || [];
+    const anonymous = data.clients.filter((c) => !c?.clientId);
+    if (anonymous.length) {
+      this.logger.warn(
+        `Dropping ${anonymous.length} client(s) without clientId for appId=${app.appId}`,
+      );
+      data.clients = data.clients.filter((c) => c?.clientId);
+    }
 
     // attempt to merge clients on update
     if (data.clients && data.clients.length) {
@@ -601,7 +633,7 @@ export class PlatformAppService implements OnModuleInit {
     return toDTO(app);
   }
 
-  async searchApps(q: FilterQuery<PlatformApp>) {
+  async searchApps(q: QueryFilter<PlatformApp>) {
     const apps = await this.platformApp.find(q).exec();
     return apps.map((app) => toDTO<PlatformAppDto>(app));
   }

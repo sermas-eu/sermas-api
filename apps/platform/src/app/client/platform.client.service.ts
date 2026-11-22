@@ -4,11 +4,11 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { PlatformKeycloakService } from '../../platform.keycloack.service';
-import { PlatformTopicsService } from '../../topics/platform.topics.service';
-import { AppClientDto } from '../platform.app.dto';
-import { PlatformAppService } from '../platform.app.service';
-import { uuidv4 } from 'libs/util';
+import { PlatformKeycloakService } from '../../platform.keycloack.service.js';
+import { PlatformTopicsService } from '../../topics/platform.topics.service.js';
+import { AppClientDto } from '../platform.app.dto.js';
+import { PlatformAppService } from '../platform.app.service.js';
+import { uuidv4 } from '#libs/util';
 
 @Injectable()
 export class PlatformAppClientService {

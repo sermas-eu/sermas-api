@@ -3,8 +3,8 @@ import { OnEvent } from '@nestjs/event-emitter';
 import {
   UserCharacterizationEventDto,
   UserCharacterizationEventSource,
-} from 'apps/detection/src/detection.dto';
-import { Emotion } from 'libs/sermas/sermas.dto';
+} from '#apps/detection/src/detection.dto';
+import { Emotion } from '#libs/sermas/sermas.dto';
 
 @Injectable()
 export class DialogueEmotionService {

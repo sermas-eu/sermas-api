@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DialogueMemoryController } from './dialogue.memory.controller';
-import { DialogueMemoryEventsService } from './dialogue.memory.events.service';
-import { DialogueMemory, DialogueMemorySchema } from './dialogue.memory.schema';
-import { DialogueMemoryService } from './dialogue.memory.service';
-import { DialogueMemorySummaryService } from './dialogue.memory.summary.service';
+import { DialogueMemoryController } from './dialogue.memory.controller.js';
+import { DialogueMemoryEventsService } from './dialogue.memory.events.service.js';
+import {
+  DialogueMemory,
+  DialogueMemorySchema,
+} from './dialogue.memory.schema.js';
+import { DialogueMemoryService } from './dialogue.memory.service.js';
+import { DialogueMemorySummaryService } from './dialogue.memory.summary.service.js';
 
 @Module({
   imports: [

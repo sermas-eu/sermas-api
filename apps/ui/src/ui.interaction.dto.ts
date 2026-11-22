@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ButtonDto } from './ui.content.dto';
-import { UIInteractionDTO } from './ui.dto';
+import { ButtonDto } from './ui.content.dto.js';
+import { UIInteractionDTO } from './ui.dto.js';
 
 export class UiInteractionButtonDto extends UIInteractionDTO {
   @ApiProperty({

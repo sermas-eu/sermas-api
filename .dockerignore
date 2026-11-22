@@ -8,3 +8,5 @@
 .env.production
 google_apis.json
 .git
+coverage
+*.log

@@ -3,29 +3,29 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import {
   ToolParamType,
   ToolSchemaTypeList,
-} from 'apps/dialogue/src/chat/dialogue.chat.tools.dto';
+} from '#apps/dialogue/src/chat/dialogue.chat.tools.dto';
 import {
   AppToolsDTO,
   PlatformAppChangedDto,
   ToolsParameterSchema,
-} from 'apps/platform/src/app/platform.app.dto';
-import { SessionChangedDto } from 'apps/session/src/session.dto';
+} from '#apps/platform/src/app/platform.app.dto';
+import { SessionChangedDto } from '#apps/session/src/session.dto';
 import {
   ButtonsContentDto,
   QuizContentDto,
   UIContentDto,
-} from 'apps/ui/src/ui.content.dto';
-import { UIInteractionDTO, UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { hash, uuidv4 } from 'libs/util';
-import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto';
-import { DialogueTaskChangedDto } from '../tasks/dialogue.tasks.dto';
-import { DialogueToolTriggeredEventDto } from './dialogue.tools.dto';
-import { DialogueToolsService } from './dialogue.tools.service';
-import { ToolTriggerEventDto } from './trigger/dialogue.tools.trigger.dto';
-import { DialogueToolsTriggerService } from './trigger/dialogue.tools.trigger.service';
-import { extractToolValues } from './utils';
+} from '#apps/ui/src/ui.content.dto';
+import { UIInteractionDTO, UIInteractionEventDto } from '#apps/ui/src/ui.dto';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { hash, uuidv4 } from '#libs/util';
+import { DialogueToolNotMatchingDto } from '../chat/dialogue.chat.dto.js';
+import { DialogueTaskChangedDto } from '../tasks/dialogue.tasks.dto.js';
+import { DialogueToolTriggeredEventDto } from './dialogue.tools.dto.js';
+import { DialogueToolsService } from './dialogue.tools.service.js';
+import { ToolTriggerEventDto } from './trigger/dialogue.tools.trigger.dto.js';
+import { DialogueToolsTriggerService } from './trigger/dialogue.tools.trigger.service.js';
+import { extractToolValues } from './utils.js';
 
 type UiToolParam = {
   description: string;
@@ -80,7 +80,13 @@ export class DialogueToolsEventsService {
       `Received app change operation=${ev.operation} appId=${ev.record.appId}`,
     );
     if (ev.operation === 'deleted') {
-      await this.tools.delete(ev.record.appId);
+      // every repository of the app: its tools, its tasks as tools, sessions
+      await this.tools.search(
+        { appId: ev.record.appId },
+        async (repository) => {
+          await this.tools.delete(repository.repositoryId);
+        },
+      );
     }
     if (ev.operation === 'updated' || ev.operation === 'created') {
       await this.tools.delete(ev.record.appId);
@@ -193,7 +199,7 @@ export class DialogueToolsEventsService {
     }
 
     switch (ev.contentType) {
-      case 'buttons':
+      case 'buttons': {
         const buttons = ev.content as ButtonsContentDto;
 
         await addTools(
@@ -221,11 +227,13 @@ export class DialogueToolsEventsService {
             }),
         );
         break;
-      case 'quiz':
+      }
+      case 'quiz': {
         const quiz = ev.content as QuizContentDto;
         await addTools(
           quiz.answers.map((answer) => ({
             description: answer.answer,
+            // what the quiz comment (DialogueQuizService) needs once answered
             schema: [
               {
                 description: 'Ignore: answerId',
@@ -234,10 +242,32 @@ export class DialogueToolsEventsService {
                 value: answer.answerId,
                 ignore: true,
               },
+              {
+                description: 'Ignore: question',
+                parameter: 'question',
+                type: 'string',
+                value: quiz.question || '',
+                ignore: true,
+              },
+              {
+                description: 'Ignore: correct',
+                parameter: 'correct',
+                type: 'boolean',
+                value: answer.correct === true,
+                ignore: true,
+              },
+              {
+                description: 'Ignore: reason',
+                parameter: 'reason',
+                type: 'string',
+                value: answer.reason || '',
+                ignore: true,
+              },
             ],
           })),
         );
         break;
+      }
       case 'clear-screen':
         await resetTools();
         break;

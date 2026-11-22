@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 import {
   DialogueDocumentDto,
   DialogueDocumentMetadataDto,
-} from './dialogue.document.dto';
+} from './dialogue.document.dto.js';
 
 export type DialogueDocumentDocument = HydratedDocument<DialogueDocument>;
 

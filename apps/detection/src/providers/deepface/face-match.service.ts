@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as sharp from 'sharp';
-import { VideoFrame, VideoFrameEvent } from '../../detection.streamer.dto';
-import { BoundingBox, BoxedFrame } from '../../libs/boxed-frame';
-import { DeepFaceDetectionEvent } from './deepface.dto';
-import { DeepfaceService } from './deepface.service';
-import { FaceMatch, FaceMatchEvent } from './face-match.dto';
+import sharp from 'sharp';
+import { VideoFrame, VideoFrameEvent } from '../../detection.streamer.dto.js';
+import { BoundingBox, BoxedFrame } from '../../libs/boxed-frame.js';
+import { DeepFaceDetectionEvent } from './deepface.dto.js';
+import { DeepfaceService } from './deepface.service.js';
+import { FaceMatch, FaceMatchEvent } from './face-match.dto.js';
 
 @Injectable()
 export class FaceMatchService {

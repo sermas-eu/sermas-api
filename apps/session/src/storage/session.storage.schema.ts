@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { SessionStorageRecordDto } from './session.storage.dto';
+import { SessionStorageRecordDto } from './session.storage.dto.js';
 
 export type SessionStorageDocument = HydratedDocument<SessionStorage>;
 

@@ -3,13 +3,13 @@ import { OnEvent } from '@nestjs/event-emitter';
 import {
   UserDetectionEventDto,
   UserInteractionIntentionDto,
-} from 'apps/detection/src/detection.dto';
-import { UIInteractionEventDto } from 'apps/ui/src/ui.dto';
-import { DialogueMessageDto } from 'libs/language/dialogue.message.dto';
-import { Payload, Subscribe } from 'libs/mqtt-handler/mqtt.decorator';
-import { SermasTopics } from 'libs/sermas/sermas.topic';
-import { AgentChangedDto } from './agent/session.agent.dto';
-import { SessionService } from './session.service';
+} from '#apps/detection/src/detection.dto';
+import { UIInteractionEventDto } from '#apps/ui/src/ui.dto';
+import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
+import { Payload, Subscribe } from '#libs/mqtt-handler/mqtt.decorator';
+import { SermasTopics } from '#libs/sermas/sermas.topic';
+import { AgentChangedDto } from './agent/session.agent.dto.js';
+import { SessionService } from './session.service.js';
 
 @Injectable()
 export class SessionEventsService {

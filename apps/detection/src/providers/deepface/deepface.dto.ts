@@ -1,4 +1,4 @@
-import { VideoFrameEvent } from '../../detection.streamer.dto';
+import { VideoFrameEvent } from '../../detection.streamer.dto.js';
 
 export type DeepFaceModel =
   | 'VGG-Face'
@@ -14,12 +14,7 @@ export type DeepFaceModel =
 export type DeepFaceMetric = 'cosine' | 'euclidean' | 'euclidean_l2';
 
 export type DeepFaceBackend =
-  | 'opencv'
-  | 'ssd'
-  | 'dlib'
-  | 'mtcnn'
-  | 'retinaface'
-  | 'mediapipe';
+  'opencv' | 'ssd' | 'dlib' | 'mtcnn' | 'retinaface' | 'mediapipe';
 
 export interface DeepFaceAnalyzeDto {
   img_path: string;
@@ -51,13 +46,7 @@ export interface DeepFaceAnalyzeItemDto {
 }
 
 export type DeepFaceEmotion =
-  | 'happy'
-  | 'fear'
-  | 'sad'
-  | 'surprise'
-  | 'disgust'
-  | 'angry'
-  | 'neutral';
+  'happy' | 'fear' | 'sad' | 'surprise' | 'disgust' | 'angry' | 'neutral';
 
 export interface DeepFaceDetectionEvent extends VideoFrameEvent {
   detections: DeepFaceAnalyzeItemDto[];

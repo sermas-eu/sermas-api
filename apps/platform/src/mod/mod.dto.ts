@@ -1,7 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-import { SermasRecordChangedOperation } from 'libs/sermas/sermas.dto';
-import { PlatformTopic } from '../topics/platform.topics.dto';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { SermasRecordChangedOperation } from '#libs/sermas/sermas.dto';
+import { PlatformTopic } from '../topics/platform.topics.dto.js';
 
 export class ModuleResourceDto extends PlatformTopic {
   @ApiProperty({
@@ -84,6 +90,8 @@ export class PlatformModuleConfigDto {
     description:
       'Status of the module. `enabled` by default. can be `disabled`. Set to `failure` if loading generates errors.',
   })
+  @IsOptional()
+  @IsString()
   status?: 'enabled' | 'disabled' | 'failure';
 
   @IsString()
@@ -97,6 +105,8 @@ export class PlatformModuleConfigDto {
   description?: string;
 
   @ApiProperty()
+  @IsOptional()
+  @IsArray()
   supports: string[];
 
   @IsOptional()

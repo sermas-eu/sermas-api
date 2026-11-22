@@ -1,4 +1,4 @@
-import type GroupRepresentation from '@keycloak/keycloak-admin-client/lib/defs/groupRepresentation';
+import type GroupRepresentation from '@keycloak/keycloak-admin-client/lib/defs/groupRepresentation.js';
 import {
   BadRequestException,
   Injectable,
@@ -8,11 +8,11 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformTopicsService } from 'apps/platform/src/topics/platform.topics.service';
+import { PlatformTopicsService } from '#apps/platform/src/topics/platform.topics.service';
 import axios, { AxiosError, AxiosInstance, isAxiosError } from 'axios';
 import * as https from 'https';
-import { isNodeEnv, uuidv4 } from 'libs/util';
-import { clientDefaultConfiguration } from './config/defaultConf';
+import { isNodeEnv, uuidv4 } from '#libs/util';
+import { clientDefaultConfiguration } from './config/defaultConf.js';
 import {
   ClientCreateResource,
   ClientCreateResourceReq,
@@ -42,7 +42,7 @@ import {
   ListPoliciesRequestDto,
   UpdatePermissionRequestDto,
   UpdateResourcePermissionRequestDto,
-} from './keycloack.authz.dto';
+} from './keycloack.authz.dto.js';
 import {
   AssignClientRolesRequestDto,
   AssignRealmRolesRequestDto,
@@ -78,8 +78,8 @@ import {
   ListClientResourcesRequestDto,
   ListClientScopesRequestDto,
   RealmClientScopesDto,
-} from './keycloak.admin.dto';
-import { ClientPermissionDto } from './keycloak.dto';
+} from './keycloak.admin.dto.js';
+import { ClientPermissionDto } from './keycloak.dto.js';
 
 type KcApiBaseParams = {
   realm: string;
@@ -705,7 +705,7 @@ export class KeycloakAdminService implements OnModuleInit {
           scopes: scopes.map((r) => r.name),
           resources: resources.map((r) => r.name),
           config: {
-            clients: `[\"${data.name}\"]`,
+            clients: `["${data.name}"]`,
           },
         },
       ];
@@ -879,6 +879,27 @@ export class KeycloakAdminService implements OnModuleInit {
       }),
     );
     this.logger.verbose(`Permissions created for clientId=${clientId}.`);
+  }
+
+  /**
+   * Sets the secret of an existing client (`id` is the client UUID). The PUT
+   * carries the full representation: Keycloak reads absent fields as unset,
+   * and an absent authorizationServicesEnabled removes the resource server.
+   */
+  async updateClientSecret(data: {
+    realm: string;
+    token: string;
+    id: string;
+    secret: string;
+  }): Promise<void> {
+    const url = `${this.keycloakUrl}/admin/realms/${data.realm}/clients/${data.id}`;
+    const headers = {
+      'content-type': 'application/json',
+      Authorization: `bearer ${data.token}`,
+    };
+    const { data: client } = await this.client.get(url, { headers });
+    if (client.secret === data.secret) return;
+    await this.client.put(url, { ...client, secret: data.secret }, { headers });
   }
 
   async deleteClient(data: KeycloakClientsCreationDto): Promise<any> {

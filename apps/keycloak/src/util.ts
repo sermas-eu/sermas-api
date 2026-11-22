@@ -1,4 +1,4 @@
-import { AppClientDto } from 'apps/platform/src/app/platform.app.dto';
+import { AppClientDto } from '#apps/platform/src/app/platform.app.dto';
 
 export const getKeycloakClientId = (
   appId: string | AppClientDto | { appId: string; clientId: string },

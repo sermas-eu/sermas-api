@@ -1,6 +1,7 @@
+import { IsArray, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AppToolsDTO } from 'apps/platform/src/app/platform.app.dto';
-import { SermasSessionDto } from 'libs/sermas/sermas.dto';
+import { AppToolsDTO } from '#apps/platform/src/app/platform.app.tools.dto';
+import { SermasSessionDto } from '#libs/sermas/sermas.dto';
 
 export class DialogueToolsRepositoryOptionsDto {
   [key: string]: any;
@@ -21,11 +22,15 @@ export class DialogueToolsRepositoryDto extends SermasSessionDto {
   @ApiPropertyOptional({
     description: 'Tool repository ID',
   })
+  @IsOptional()
+  @IsString()
   repositoryId?: string;
 
   @ApiPropertyOptional({
     description: 'Tool repository options',
   })
+  @IsOptional()
+  @IsObject()
   options?: DialogueToolsRepositoryOptionsDto;
 
   @ApiPropertyOptional({
@@ -33,6 +38,8 @@ export class DialogueToolsRepositoryDto extends SermasSessionDto {
     type: AppToolsDTO,
     isArray: true,
   })
+  @IsOptional()
+  @IsArray()
   tools?: AppToolsDTO[];
 }
 
