@@ -5,6 +5,7 @@ import { SSMLService } from './ssml/ssml.service.js';
 import { TTSProviderService } from './tts.provider.service.js';
 import { AzureTextToSpeech } from './providers/tts.azure.provider.js';
 import { OpenAITextToSpeech } from './providers/tts.openai.provider.js';
+import { HttpTextToSpeech } from './providers/tts.http.provider.js';
 
 @Global()
 @Module({
@@ -15,6 +16,7 @@ import { OpenAITextToSpeech } from './providers/tts.openai.provider.js';
     GoogleTextToSpeech,
     AzureTextToSpeech,
     OpenAITextToSpeech,
+    HttpTextToSpeech,
   ],
   exports: [TTSProviderService],
 })

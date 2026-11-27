@@ -115,10 +115,12 @@ export const SermasDefaultConfig = {
 
   // TRANSLATION_SERVICE Provider name to translate messages
   TRANSLATION_SERVICE: 'openai',
-  // STT_SERVICE Service for Speech to Text: google, azure or whisper. Each needs its own setup.
+  // STT_SERVICE Service for Speech to Text: google, azure, whisper or http. Each needs its own setup.
   STT_SERVICE: 'whisper',
   // WHISPER_URL URL of a whisper ASR web service, used when STT_SERVICE=whisper
   WHISPER_URL: '',
+  // STT_HTTP_URL Base URL of a generic HTTP speech service (POST /v1/transcribe), used when STT_SERVICE=http
+  STT_HTTP_URL: '',
   // STT_GOOGLE_IMPROVED_RECOGNITION List of short words that need better recognition when using GOOGLE as STT
   STT_GOOGLE_IMPROVED_RECOGNITION: 'si,no,ok,fatto,sì,yes,done,continue,wait',
 
@@ -127,7 +129,7 @@ export const SermasDefaultConfig = {
   // STT_AZURE_REGION Azure region
   STT_AZURE_REGION: '',
 
-  // TTS_SERVICE Service for Text to Speech: google, azure or openai (any OpenAI-compatible /v1/audio/speech, such as a local Kokoro). An avatar may override it.
+  // TTS_SERVICE Service for Text to Speech: google, azure, openai (any OpenAI-compatible /v1/audio/speech, such as a local Kokoro) or http (a generic HTTP speech service). An avatar may override it.
   TTS_SERVICE: 'google',
 
   // GOOGLE_TTS_MODEL_TYPE Preferred Google TTS model type (such as Journey, Neural, Wavenet or Standard). See https://cloud.google.com/text-to-speech/docs/voices
@@ -143,6 +145,14 @@ export const SermasDefaultConfig = {
   TTS_OPENAI_VOICE: 'alloy',
   // TTS_OPENAI_VOICES Voices per language and gender, as `<lang>[-<gender>]=<voice>` separated by commas (it-F=if_sara,it-M=im_nicola,en=af_heart). An avatar's tts.model overrides them
   TTS_OPENAI_VOICES: '',
+  // TTS_HTTP_URL Base URL of a generic HTTP speech service (POST /v1/synthesize, answering WAV), used when TTS_SERVICE=http
+  TTS_HTTP_URL: '',
+  // TTS_HTTP_LANGUAGES Languages the TTS_HTTP_URL service speaks, comma-separated two-letter codes. Any other language fails
+  TTS_HTTP_LANGUAGES: 'it,en',
+  // TTS_HTTP_VOICE Default voice id; empty means the service default
+  TTS_HTTP_VOICE: '',
+  // TTS_HTTP_VOICES Voices per language and gender, as for TTS_OPENAI_VOICES. An avatar's tts.model overrides them
+  TTS_HTTP_VOICES: '',
   // TTS_AZURE_KEY Azure subscription key
   TTS_AZURE_KEY: '',
   // TTS_AZURE_REGION Azure region

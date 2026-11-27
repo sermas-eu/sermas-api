@@ -5,6 +5,7 @@ import { DefaultLanguage } from '#libs/language/lang-codes';
 import { MonitorService } from '#libs/monitor/monitor.service';
 import { AzureSpeechToText } from './providers/stt.azure.service.js';
 import { GoogleSpeechToText } from './providers/stt.google.service.js';
+import { HttpSpeechToText } from './providers/stt.http.service.js';
 import { WhisperSpeechToText } from './providers/stt.whisper.service.js';
 import { DialogueSpeechToTextDto } from './stt.dto.js';
 
@@ -22,6 +23,7 @@ export class STTProviderService {
     private readonly googlestt: GoogleSpeechToText,
     private readonly whisperstt: WhisperSpeechToText,
     private readonly azurestt: AzureSpeechToText,
+    private readonly httpstt: HttpSpeechToText,
 
     private readonly configService: ConfigService,
 
@@ -71,9 +73,13 @@ export class STTProviderService {
           response = await this.whisperstt.text(buffer, language);
           perf('whisper');
           break;
+        case 'http':
+          response = await this.httpstt.text(buffer, language);
+          perf('http');
+          break;
         default:
           throw new Error(
-            `Unsupported STT_SERVICE=${provider}: use google, azure or whisper`,
+            `Unsupported STT_SERVICE=${provider}: use google, azure, whisper or http`,
           );
       }
       text = response.text;
