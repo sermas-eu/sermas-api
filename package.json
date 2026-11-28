@@ -33,7 +33,6 @@
     "test:int": "NODE_ENV=test SERMAS_TEST=int vitest run"
   },
   "dependencies": {
-    "@breezystack/lamejs": "^1.2.7",
     "@google-cloud/speech": "^6.5.0",
     "@google-cloud/text-to-speech": "^5.2.0",
     "@keycloak/keycloak-admin-client": "^24.0.3",

@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import wavefile from 'wavefile';
 import { HttpTextToSpeech, supportedLanguage } from './tts.http.provider.js';
-import { wavToMp3 } from '../utils/wav-to-mp3.js';
 
 vi.mock('axios');
 const mockedAxios = axios as Mocked<typeof axios>;
@@ -21,23 +20,8 @@ const toneWav = (seconds = 0.5, sampleRate = 24000, channels = 1): Buffer => {
   return Buffer.from(wave.toBuffer());
 };
 
-/** True when the buffer opens with an MPEG audio frame sync. */
-const isMp3 = (b: Buffer) =>
-  b.length > 4 && b[0] === 0xff && (b[1] & 0xe0) === 0xe0;
-
 const config = (values: Record<string, string>) =>
   ({ get: (key: string) => values[key] }) as unknown as ConfigService;
-
-describe('wavToMp3', () => {
-  it('encodes a mono WAV as mp3', () => {
-    const mp3 = wavToMp3(toneWav());
-    expect(isMp3(mp3)).toBe(true);
-  });
-
-  it('accepts a stereo WAV', () => {
-    expect(isMp3(wavToMp3(toneWav(0.2, 16000, 2)))).toBe(true);
-  });
-});
 
 describe('supportedLanguage', () => {
   it('takes the language part of the code, case-insensitively', () => {
@@ -57,7 +41,7 @@ describe('HttpTextToSpeech', () => {
     mockedAxios.post.mockResolvedValue({ data: toneWav() });
   });
 
-  it('posts text, language and voice and returns mp3', async () => {
+  it('posts text, language and voice and returns the WAV unchanged', async () => {
     const tts = new HttpTextToSpeech(
       config({
         TTS_HTTP_URL: 'http://speech.example.org:8444/',
@@ -75,7 +59,7 @@ describe('HttpTextToSpeech', () => {
       { text: 'Ciao', language: 'it', voice: 'im_nicola' },
       { responseType: 'arraybuffer' },
     );
-    expect(isMp3(out)).toBe(true);
+    expect(out.equals(toneWav())).toBe(true);
   });
 
   it('sends a null voice when none is configured, and the avatar model when set', async () => {

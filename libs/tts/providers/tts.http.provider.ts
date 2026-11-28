@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { ITextToSpeech, SpeakParam } from '../tts.dto.js';
-import { wavToMp3 } from '../utils/wav-to-mp3.js';
 import { parseVoiceMap, selectVoice } from './tts.openai.provider.js';
 
 /** The two-letter language for a code such as `it-IT`, if the service supports it. */
@@ -21,7 +20,7 @@ export const supportedLanguage = (
 /**
  * Text to speech over a generic HTTP speech service:
  * `POST {TTS_HTTP_URL}/v1/synthesize` with JSON `{text, language, voice}`, answering
- * with a WAV. The WAV is encoded to mp3, the format every TTS provider returns.
+ * with a WAV, returned as it is: browsers play WAV, and encoding would only add latency.
  */
 @Injectable()
 export class HttpTextToSpeech implements ITextToSpeech {
@@ -64,6 +63,6 @@ export class HttpTextToSpeech implements ITextToSpeech {
       { responseType: 'arraybuffer' },
     );
 
-    return wavToMp3(Buffer.from(res.data));
+    return Buffer.from(res.data);
   }
 }

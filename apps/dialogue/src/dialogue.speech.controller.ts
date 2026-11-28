@@ -3,7 +3,6 @@ import {
   Body,
   Controller,
   Get,
-  Header,
   Param,
   Post,
   Query,
@@ -28,6 +27,7 @@ import { DialogueMessageDto } from '#libs/language/dialogue.message.dto';
 import { DefaultLanguage } from '#libs/language/lang-codes';
 import { getChunkId } from '#libs/sermas/sermas.utils';
 import { DialogueSpeechToTextDto } from '#libs/stt/stt.dto';
+import { audioType } from '#libs/tts/utils/audio-type';
 import { DialogueTextToSpeechDto } from '#libs/tts/tts.dto';
 import { AuthenticatedUser, Public } from '#libs/auth/auth.decorators';
 import { ulid } from 'ulidx';
@@ -45,10 +45,9 @@ export class DialogueSpeechController {
   @ApiOkResponse()
   @ApiBadRequestResponse()
   @ApiOperationName({
-    description: 'Converts a text to voice as mp3',
+    description:
+      'Converts a text to voice: mp3, or WAV from a provider that answers WAV (Content-Type says which)',
   })
-  @Header('Content-Type', 'audio/mpeg')
-  @Header('Content-Disposition', `attachment; filename="speech.mp3"`)
   async speak(
     @AuthenticatedUser() user: AuthJwtUser,
     @Body() payload: DialogueTextToSpeechDto,
@@ -65,7 +64,11 @@ export class DialogueSpeechController {
     payload.ts = new Date();
 
     const speech = await this.speech.textToSpeech(payload);
-    return new StreamableFile(speech);
+    const { contentType, extension } = audioType(speech);
+    return new StreamableFile(speech, {
+      type: contentType,
+      disposition: `attachment; filename="speech.${extension}"`,
+    });
   }
 
   @Post('stt/:appId/:sessionId')
